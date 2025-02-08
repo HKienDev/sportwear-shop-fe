@@ -1,0 +1,1 @@
+// Template hiển thị danh sách các đánh giá sản phẩm
