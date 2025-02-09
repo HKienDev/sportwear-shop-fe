@@ -124,7 +124,7 @@ const LoginTemplate = () => {
                 </div>
 
                 <div className="flex items-center justify-end">
-                  <Link href="/forgot-password" className="text-base text-black hover:text-blue-500">
+                  <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">
                     Quên mật khẩu?
                   </Link>
                 </div>
