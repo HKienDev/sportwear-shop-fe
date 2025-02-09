@@ -41,7 +41,7 @@ export default function ForgotPasswordReset() {
     setIsLoading(true);
     try {
       console.log('Password reset successful');
-      router.push('/login');
+      router.push('/user/auth/login');
     } catch (error) {
       console.error('Error:', error);
       setError('Có lỗi xảy ra. Vui lòng thử lại.');
