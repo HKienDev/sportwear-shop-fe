@@ -85,7 +85,7 @@ const LoginTemplate = () => {
 
               <div className="text-center text-sm">
                   <span className="text-gray-600">Chưa có tài khoản? </span>
-                  <Link href="/user/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
+                  <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">
                     Đăng ký ngay
                   </Link>
                 </div>
