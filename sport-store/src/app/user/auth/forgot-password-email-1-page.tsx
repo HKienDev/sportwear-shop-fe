@@ -1,1 +1,0 @@
-// Template nhập email để gửi mã xác nhận để reset mật khẩu
