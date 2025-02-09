@@ -8,7 +8,7 @@ export default function ForgotPasswordOTP() {
   const router = useRouter();
   const [otp, setOtp] = useState(['', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
-  const inputRefs = useRef<HTMLInputElement[]>([]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(4).fill(null));
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -34,8 +34,8 @@ export default function ForgotPasswordOTP() {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 4).split('');
-    setOtp([...pastedData, ...Array(4 - pastedData.length).fill('')]);
+    const pastedData = e.clipboardData.getData('text').slice(0, 4);
+    setOtp(pastedData.split('').concat(Array(4 - pastedData.length).fill('')));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +45,7 @@ export default function ForgotPasswordOTP() {
     try {
       const otpString = otp.join('');
       console.log('Verifying OTP:', otpString);
+      // await verifyOTP(otpString);
       router.push('/reset-password');
     } catch (error) {
       console.error('Error:', error);
@@ -73,11 +74,10 @@ export default function ForgotPasswordOTP() {
               <input
                 key={index}
                 ref={(el) => {
-                  if (el) inputRefs.current[index] = el;
+                  inputRefs.current[index] = el;
                 }}
                 type="text"
                 maxLength={1}
-                aria-label={`OTP digit ${index + 1}`}
                 className="w-16 h-16 text-center text-2xl font-semibold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
@@ -107,7 +107,7 @@ export default function ForgotPasswordOTP() {
         </div>
 
         <div className="text-center">
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
+          <Link href="\user\auth\login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
