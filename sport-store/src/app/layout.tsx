@@ -1,24 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { IBM_Plex_Sans } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Thêm trọng số cho IBM Plex Sans
-const ibmPlexSans = IBM_Plex_Sans({
-  weight: ['400', '500', '700'], // Định nghĩa các trọng số cần sử dụng
-  variable: "--font-ibm-plex-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -32,9 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} antialiased`}
-      >
+      <body className="font-sans antialiased">
+        <Toaster />  
         {children}
       </body>
     </html>
