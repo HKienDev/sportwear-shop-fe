@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/app/context/AuthContext"; // Thêm AuthProvider
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,14 +10,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <Toaster />  
-        {children}
+        <AuthProvider> {/* Bọc toàn bộ ứng dụng trong AuthProvider */}
+          <Toaster />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

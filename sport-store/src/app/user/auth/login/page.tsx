@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
-const LoginTemplate = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+const LoginTemplate: React.FC = () => {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -20,16 +22,23 @@ const LoginTemplate = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const loggedInUser = localStorage.getItem('user');
+    if (loggedInUser) {
+      router.push('/');
+    }
+  }, [router]);
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[A-Z]).{8,25}$/; // Ít nhất 1 chữ in hoa, 8-25 ký tự
+  const validatePassword = (password: string): boolean => {
+    const passwordRegex = /^(?=.*[A-Z]).{8,25}$/;
     return passwordRegex.test(password);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
@@ -40,26 +49,23 @@ const LoginTemplate = () => {
 
     setLoading(true);
     try {
-      // Gọi API lấy danh sách user
       const response = await axios.get('https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user');
-      
-      const users = response.data; // Lấy danh sách user từ API
+      const users: { username: string; email: string; password: string }[] = response.data;
 
-      // Kiểm tra xem user nhập vào có tồn tại không
-      const user = users.find(
-        (u: { username: string; email: string; password: string }) =>
-          (u.username === usernameOrEmail || u.email === usernameOrEmail) && u.password === password
+      const user = users.find((u) => 
+        (u.username === usernameOrEmail || u.email === usernameOrEmail) && u.password === password
       );
 
       if (user) {
         console.log('Đăng nhập thành công:', user);
-        window.location.href = '/home';
+        localStorage.setItem('user', JSON.stringify(user));
+        router.push('/');
       } else {
         setError('Sai thông tin đăng nhập. Vui lòng kiểm tra lại.');
       }
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);
-      setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      setError('Không thể kết nối đến server. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -84,17 +90,13 @@ const LoginTemplate = () => {
               {error && <div className="text-red-500 text-center">{error}</div>}
 
               <div className="text-center text-sm">
-                  <span className="text-gray-600">Chưa có tài khoản? </span>
-                  <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">
-                    Đăng ký ngay
-                  </Link>
-                </div>
+                <span className="text-gray-600">Chưa có tài khoản? </span>
+                <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">Đăng ký ngay</Link>
+              </div>
 
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700">
-                    Email / Tên đăng nhập
-                  </label>
+                  <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700">Email / Tên đăng nhập</label>
                   <input
                     id="usernameOrEmail"
                     name="usernameOrEmail"
@@ -107,9 +109,7 @@ const LoginTemplate = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Mật khẩu
-                  </label>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mật khẩu</label>
                   <div className="mt-1 relative">
                     <input
                       id="password"
@@ -131,9 +131,7 @@ const LoginTemplate = () => {
                 </div>
 
                 <div className="flex items-center justify-end">
-                  <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">
-                    Quên mật khẩu?
-                  </Link>
+                  <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">Quên mật khẩu?</Link>
                 </div>
               </div>
 
@@ -145,25 +143,6 @@ const LoginTemplate = () => {
                 >
                   {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </button>
-
-                <div className="text-center">
-                  <span className="text-sm text-gray-500">Hoặc</span>
-                </div>
-
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <Image
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt="Google"
-                    width={20}
-                    height={20}
-                    className="mr-2"
-                  />
-                  Đăng nhập với Google
-                </button>
-
               </div>
             </form>
           </div>

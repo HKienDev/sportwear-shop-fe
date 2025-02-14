@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { Search, ShoppingCart, Phone, MapPin } from "lucide-react";
-import React, { useState, useEffect, useMemo } from 'react';
-import debounce from 'lodash/debounce';
+import React, { useState, useEffect, useMemo } from "react";
+import debounce from "lodash/debounce";
+import { useAuth } from "@/app/context/AuthContext"; // Import useAuth()
+import { useRouter } from "next/navigation";
 
 type Product = {
   id: number;
@@ -14,21 +16,25 @@ type Product = {
 };
 
 const Header = () => {
+  const { user, logout } = useAuth(); // Lấy user từ AuthContext
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/Products');
+        const response = await fetch(
+          "https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user"
+        );
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const data = await response.json();
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products:", error);
-      }      
+      }
     };
     fetchProducts();
   }, []);
@@ -37,16 +43,17 @@ const Header = () => {
     const handler = debounce((value) => {
       setDebouncedSearch(value);
     }, 300);
-    
+
     handler(searchTerm);
     return () => handler.cancel();
   }, [searchTerm]);
 
   const filteredProducts = useMemo(() => {
     if (!debouncedSearch.trim()) return [];
-    return products.filter((product) =>
-      product?.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-      product?.category?.toLowerCase().includes(debouncedSearch.toLowerCase())
+    return products.filter(
+      (product) =>
+        product?.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        product?.category?.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
   }, [debouncedSearch, products]);
 
@@ -84,14 +91,14 @@ const Header = () => {
           <ContactInfo icon={Phone} text="Gọi mua hàng" subtext="1800.0244" />
           <ContactInfo icon={MapPin} text="Cửa hàng" subtext="Gần bạn" />
           <ShoppingCartButton />
-          <AuthButtons />
+          <AuthButtons user={user} logout={logout} router={router} />
         </div>
       </div>
     </header>
   );
 };
 
-const ContactInfo = ({ icon: Icon, text, subtext }: { icon: React.ElementType, text: string, subtext: string }) => (
+const ContactInfo = ({ icon: Icon, text, subtext }: { icon: React.ElementType; text: string; subtext: string }) => (
   <div className="flex items-center gap-3 text-lg">
     <Icon className="w-6 h-6 text-black" />
     <div>
@@ -109,13 +116,43 @@ const ShoppingCartButton = () => (
   </div>
 );
 
-const AuthButtons = () => (
-  <div className="flex gap-4">
-    <button className="text-lg px-5 py-2 w-30 border rounded-xl hover:bg-gray-100 font-semibold">Đăng Nhập</button>
-    <button className="text-lg px-5 py-2 w-30 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-semibold shadow-md">
-      Đăng Ký
-    </button>
-  </div>
-);
+const AuthButtons = ({ user, logout, router }: { user: any; logout: () => void; router: any }) => {
+  const handleLogin = () => {
+    router.push("/user/auth/login");
+  };
+
+  return (
+    <div className="flex gap-4">
+      {user ? (
+        <div className="flex items-center gap-4">
+          <span className="font-semibold">{user.name || "User"}</span>
+          <button
+            onClick={() => {
+              logout();
+              router.push("/");
+            }}
+            className="text-lg px-5 py-2 w-30 border rounded-xl hover:bg-gray-100 font-semibold"
+          >
+            Đăng Xuất
+          </button>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={handleLogin}
+            className="text-lg px-5 py-2 w-30 border rounded-xl hover:bg-gray-100 font-semibold"
+          >
+            Đăng Nhập
+          </button>
+          <Link href="/user/auth/register">
+            <button className="text-lg px-5 py-2 w-30 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-semibold shadow-md">
+              Đăng Ký
+            </button>
+          </Link>
+        </>
+      )}
+    </div>
+  );
+};
 
 export default Header;
