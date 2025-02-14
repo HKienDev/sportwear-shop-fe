@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { Search, ShoppingCart, Phone, MapPin } from "lucide-react";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import debounce from "lodash/debounce";
 import { useAuth } from "@/app/context/AuthContext"; // Import useAuth()
 import { useRouter } from "next/navigation";
 
-type Product = {
+interface Product {
   id: number;
   title: string;
   price: number;
   salePrice?: number;
   category: string;
-};
+}
 
 const Header = () => {
   const { user, logout } = useAuth(); // Lấy user từ AuthContext
@@ -21,39 +21,52 @@ const Header = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(
-          "https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user"
-        );
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-        const data = await response.json();
+        const url = "https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/Products";
+        const response = await fetch(url);
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status} - ${response.statusText}`);
+        }
+  
+        const data: Product[] = await response.json();
         setProducts(data);
       } catch (error) {
-        console.error("Error fetching products:", error);
+        // Ép kiểu 'error' về Error để tránh lỗi TypeScript
+        const errMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("❌ Lỗi khi lấy sản phẩm:", errMessage);
       }
     };
+  
     fetchProducts();
   }, []);
+  
+  
+
+  const debouncedHandler = useCallback(
+    debounce((value: string) => setDebouncedSearch(value), 300),
+    []
+  );
 
   useEffect(() => {
-    const handler = debounce((value) => {
-      setDebouncedSearch(value);
-    }, 300);
-
-    handler(searchTerm);
-    return () => handler.cancel();
-  }, [searchTerm]);
+    debouncedHandler(searchTerm);
+    return () => debouncedHandler.cancel();
+  }, [searchTerm, debouncedHandler]);
 
   const filteredProducts = useMemo(() => {
     if (!debouncedSearch.trim()) return [];
     return products.filter(
       (product) =>
-        product?.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        product?.category?.toLowerCase().includes(debouncedSearch.toLowerCase())
+        product.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        product.category.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
   }, [debouncedSearch, products]);
 
@@ -91,7 +104,7 @@ const Header = () => {
           <ContactInfo icon={Phone} text="Gọi mua hàng" subtext="1800.0244" />
           <ContactInfo icon={MapPin} text="Cửa hàng" subtext="Gần bạn" />
           <ShoppingCartButton />
-          <AuthButtons user={user} logout={logout} router={router} />
+          {!loading && <AuthButtons />} {/* Chỉ hiển thị AuthButtons khi đã kiểm tra user */}
         </div>
       </div>
     </header>
@@ -116,7 +129,10 @@ const ShoppingCartButton = () => (
   </div>
 );
 
-const AuthButtons = ({ user, logout, router }: { user: any; logout: () => void; router: any }) => {
+const AuthButtons = () => {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
   const handleLogin = () => {
     router.push("/user/auth/login");
   };
