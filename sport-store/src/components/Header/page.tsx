@@ -7,6 +7,7 @@ import debounce from "lodash/debounce";
 import { useAuth } from "@/app/context/AuthContext"; // Import useAuth()
 import { useRouter } from "next/navigation";
 
+
 interface Product {
   id: number;
   title: string;
@@ -16,15 +17,16 @@ interface Product {
 }
 
 const Header = () => {
-  const { user, logout } = useAuth(); // Lấy user từ AuthContext
-  const router = useRouter();
+  const { user } = useAuth(); // Chỉ lấy user, không lấy logout
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(false);
+    if (user !== undefined) {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -32,24 +34,21 @@ const Header = () => {
       try {
         const url = "https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/Products";
         const response = await fetch(url);
-  
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status} - ${response.statusText}`);
         }
-  
+
         const data: Product[] = await response.json();
         setProducts(data);
       } catch (error) {
-        // Ép kiểu 'error' về Error để tránh lỗi TypeScript
         const errMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("❌ Lỗi khi lấy sản phẩm:", errMessage);
       }
     };
-  
+
     fetchProducts();
   }, []);
-  
-  
 
   const debouncedHandler = useCallback(
     debounce((value: string) => setDebouncedSearch(value), 300),
@@ -104,7 +103,7 @@ const Header = () => {
           <ContactInfo icon={Phone} text="Gọi mua hàng" subtext="1800.0244" />
           <ContactInfo icon={MapPin} text="Cửa hàng" subtext="Gần bạn" />
           <ShoppingCartButton />
-          {!loading && <AuthButtons />} {/* Chỉ hiển thị AuthButtons khi đã kiểm tra user */}
+          {!loading && <AuthButtons />} 
         </div>
       </div>
     </header>
