@@ -131,6 +131,11 @@ const ShoppingCartButton = () => (
 const AuthButtons = () => {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState(user);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
 
   const handleLogin = () => {
     router.push("/user/auth/login");
@@ -138,20 +143,7 @@ const AuthButtons = () => {
 
   return (
     <div className="flex gap-4">
-      {user ? (
-        <div className="flex items-center gap-4">
-          <span className="font-semibold">{user.name || "User"}</span>
-          <button
-            onClick={() => {
-              logout();
-              router.push("/");
-            }}
-            className="text-lg px-5 py-2 w-30 border rounded-xl hover:bg-gray-100 font-semibold"
-          >
-            Đăng Xuất
-          </button>
-        </div>
-      ) : (
+      {!currentUser ? ( 
         <>
           <button
             onClick={handleLogin}
@@ -165,6 +157,20 @@ const AuthButtons = () => {
             </button>
           </Link>
         </>
+      ) : (
+        <div className="flex items-center gap-4">
+          <span className="font-semibold">{currentUser.name || "User"}</span>
+          <button
+            onClick={() => {
+              logout();
+              setCurrentUser(null); // Cập nhật ngay khi đăng xuất
+              router.push("/");
+            }}
+            className="text-lg px-5 py-2 w-30 border rounded-xl hover:bg-gray-100 font-semibold"
+          >
+            Đăng Xuất
+          </button>
+        </div>
       )}
     </div>
   );
