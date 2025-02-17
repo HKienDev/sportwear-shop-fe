@@ -40,34 +40,34 @@ const LoginTemplate: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
-
+    setError("");
+  
     if (!validatePassword(password)) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.');
+      setError("Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.");
       return;
     }
-
+  
     setLoading(true);
     try {
-      const response = await axios.get('https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user');
-      const users: { username: string; email: string; password: string }[] = response.data;
-
-      const user = users.find((u) => 
-        (u.username === usernameOrEmail || u.email === usernameOrEmail) && u.password === password
-      );
-
-      if (user) {
-        console.log('Đăng nhập thành công:', user);
-        localStorage.setItem('user', JSON.stringify(user));
-        router.push('/');
-      } else {
-        setError('Sai thông tin đăng nhập. Vui lòng kiểm tra lại.');
-      }
+      // Gọi API đúng method POST
+      const response = await axios.post("http://localhost:4000/api/auth/login", {
+        email: usernameOrEmail, // FE đang gửi `usernameOrEmail`, nhưng BE nhận `email`
+        password,
+      });
+  
+      const { token, user } = response.data;
+  
+      console.log("Đăng nhập thành công:", user);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
+  
+      router.push("/");
     } catch (err) {
-      console.error('Lỗi khi gọi API:', err);
-      setError('Không thể kết nối đến server. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Không thể kết nối đến server. Vui lòng thử lại sau.");
+      } else {
+        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
+      }
     }
   };
 
