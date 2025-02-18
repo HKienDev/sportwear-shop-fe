@@ -41,7 +41,7 @@ const RegisterTemplate = () => {
 
     setLoading(true);
     try {
-      const response = await axios.get('https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user');
+      const response = await axios.get('http://localhost:4000/api/users/');
       const users = response.data;
 
       // Kiểm tra xem username hoặc email đã tồn tại chưa
@@ -53,10 +53,10 @@ const RegisterTemplate = () => {
         // Nếu không tồn tại, tiến hành lưu vào database
         const newUser = { username, email, password };
 
-        await axios.post('https://676383e717ec5852cae91a1b.mockapi.io/sports-shop/api/v1/user', newUser);
+        await axios.post('http://localhost:4000/api/auth/register', newUser);
 
-        alert('Đăng ký thành công! Chuyển hướng đến trang chủ...');
-        window.location.href = '/home';
+        alert('Xác thực đăng ký...');
+        window.location.href = '/user/auth/otp-verify-register';
       }
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);

@@ -6,11 +6,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const LoginTemplate: React.FC = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
+  const [username, setUsername] = useState<string>('');  
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -50,8 +51,8 @@ const LoginTemplate: React.FC = () => {
     setLoading(true);
     try {
       // Gọi API đúng method POST
-      const response = await axios.post("http://localhost:4000/api/auth/login", {
-        email: usernameOrEmail, // FE đang gửi `usernameOrEmail`, nhưng BE nhận `email`
+      const response = await axios.post("https://localhost:4000/api/auth/login", {
+        username,  
         password,
       });
   
@@ -71,84 +72,121 @@ const LoginTemplate: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async (response: any) => {
+    try {
+      const googleToken = response.credential;
+      console.log("Google token received:", googleToken); // Kiểm tra giá trị token
+  
+      const loginResponse = await axios.post("http://localhost:4000/api/auth/google", {
+        token: googleToken,
+      });
+  
+      console.log("Google login response from backend:", loginResponse.data); // Log chi tiết phản hồi từ backend
+  
+      if (loginResponse.data.token) {
+        const { token, user } = loginResponse.data;
+        console.log("Đăng nhập Google thành công:", user);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", token);
+  
+        router.push("/"); // Điều hướng người dùng sau khi đăng nhập thành công
+      } else {
+        setError("Không nhận được thông tin người dùng từ server.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi đăng nhập với Google:", error);
+      setError("Đã xảy ra lỗi khi đăng nhập với Google. Vui lòng thử lại!");
+    }
+  };      
+
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-[calc(100vw-40px)] h-[calc(100vh-40px)] bg-white rounded-[12px] shadow-lg overflow-hidden flex">
-        <div className="hidden lg:flex lg:w-1/2 bg-gray-100 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/10 to-gray-900/30">
-            <Image src="/image.png" alt="Sports Player" layout="fill" objectFit="cover" priority />
-          </div>
-        </div>
-
-        <div className="w-full bg-white lg:w-1/2 flex items-center justify-center p-8">
-          <div className="w-full max-w-md space-y-8">
-            <div className="text-center">
-              <h2 className="text-4xl text-black font-bold">Đăng nhập</h2>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <div className="w-[calc(100vw-40px)] h-[calc(100vh-40px)] bg-white rounded-[12px] shadow-lg overflow-hidden flex">
+          <div className="hidden lg:flex lg:w-1/2 bg-gray-100 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/10 to-gray-900/30">
+              <Image src="/image.png" alt="Sports Player" layout="fill" objectFit="cover" priority />
             </div>
+          </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-              {error && <div className="text-red-500 text-center">{error}</div>}
-
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Chưa có tài khoản? </span>
-                <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">Đăng ký ngay</Link>
+          <div className="w-full bg-white lg:w-1/2 flex items-center justify-center p-8">
+            <div className="w-full max-w-md space-y-8">
+              <div className="text-center">
+                <h2 className="text-4xl text-black font-bold">Đăng nhập</h2>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700">Email / Tên đăng nhập</label>
-                  <input
-                    id="usernameOrEmail"
-                    name="usernameOrEmail"
-                    type="text"
-                    value={usernameOrEmail}
-                    onChange={(e) => setUsernameOrEmail(e.target.value)}
-                    placeholder="Nhập Email / Tên đăng nhập"
-                    className="mt-1 text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {error && <div className="text-red-500 text-center">{error}</div>}
+
+                <div className="text-center text-sm">
+                  <span className="text-gray-600">Chưa có tài khoản? </span>
+                  <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">Đăng ký ngay</Link>
                 </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                  <div className="mt-1 relative">
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="username" className="block text-sm font-medium text-gray-700">Tên đăng nhập</label>
                     <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Nhập mật khẩu"
-                      className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      id="username"
+                      name="username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Tên đăng nhập"
+                      className="mt-1 text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <button
-                      type="button"
-                      onClick={togglePasswordVisibility}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
-                    </button>
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Nhập mật khẩu"
+                        className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">Quên mật khẩu?</Link>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end">
-                  <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">Quên mật khẩu?</Link>
-                </div>
-              </div>
+                <div className="space-y-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  >
+                    {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  </button>
 
-              <div className="space-y-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                </button>
-              </div>
-            </form>
+                  {/* Button Google Login */}
+                  <div className="flex justify-center mt-4">
+                    <GoogleLogin 
+                      onSuccess={handleGoogleLogin} 
+                      onError={() => setError("Lỗi khi đăng nhập Google")} 
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </GoogleOAuthProvider>
   );
 };
 

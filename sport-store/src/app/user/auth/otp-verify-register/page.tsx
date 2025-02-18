@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import axios, { AxiosError } from 'axios';
 import Link from 'next/link';
 
-export default function ForgotPasswordOTP() {
+export default function RegisterVerificationOTP() {
   const router = useRouter();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
   useEffect(() => {
@@ -16,11 +18,11 @@ export default function ForgotPasswordOTP() {
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) value = value[0];
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
+
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -41,32 +43,79 @@ export default function ForgotPasswordOTP() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+    setError('');
+
     try {
       const otpString = otp.join('');
-      console.log('Verifying OTP:', otpString);
-      // await verifyOTP(otpString);
-      router.push('/user/auth/forgot-password-reset-3');
-    } catch (error) {
-      console.error('Error:', error);
+      console.log("OTP gửi đi:", otpString); // Kiểm tra OTP gửi đi
+
+      // Gọi API xác thực OTP
+      const response = await axios.post('http://localhost:4000/api/auth/verify-account', {
+        email: 'abc@gmail.com', // TODO: Truyền email thực tế của user
+        otp: otpString,
+      });
+
+      // Lưu token vào localStorage
+      localStorage.setItem('auth_token', response.data.token);
+
+      console.log('OTP xác thực thành công:', response.data);
+      router.push('/user/auth/login');
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Lỗi xác thực OTP:', error.response?.data?.message || error.message);
+        setError(error.response?.data?.message || 'Xác thực thất bại. Vui lòng thử lại.');
+      } else if (error instanceof Error) {
+        console.error('Lỗi không xác định:', error.message);
+        setError(error.message);
+      } else {
+        console.error('Lỗi không xác định:', error);
+        setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    console.log('Resending code to abc@gmail.com');
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Gọi API gửi lại OTP
+      await axios.post('http://localhost:4000/api/auth/resend-otp', {
+        email: 'abc@gmail.com', // TODO: Truyền email thực tế của user
+      });
+
+      console.log('Mã OTP đã được gửi lại.');
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Lỗi gửi lại mã OTP:', error.response?.data?.message || error.message);
+        setError(error.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
+      } else if (error instanceof Error) {
+        console.error('Lỗi không xác định:', error.message);
+        setError(error.message);
+      } else {
+        console.error('Lỗi không xác định:', error);
+        setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Cài lại mật khẩu</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Xác thực đăng ký</h2>
           <p className="mt-2 text-sm text-gray-600">
             Chúng tôi đã gửi mã đến <span className="text-blue-600">abc@gmail.com</span>
           </p>
         </div>
+
+        {error && (
+          <div className="text-red-600 text-sm text-center">{error}</div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="flex justify-center gap-4">
