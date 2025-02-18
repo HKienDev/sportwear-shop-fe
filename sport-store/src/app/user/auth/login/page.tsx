@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { CredentialResponse } from "@react-oauth/google";
 
 const LoginTemplate: React.FC = () => {
   const router = useRouter();
@@ -72,16 +73,21 @@ const LoginTemplate: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = async (response: any) => {
+  const handleGoogleLogin = async (response: CredentialResponse) => {
+    if (!response.credential) {
+      setError("Không thể lấy thông tin đăng nhập từ Google.");
+      return;
+    }
+  
     try {
       const googleToken = response.credential;
-      console.log("Google token received:", googleToken); // Kiểm tra giá trị token
+      console.log("Google token received:", googleToken); 
   
       const loginResponse = await axios.post("http://localhost:4000/api/auth/google", {
         token: googleToken,
       });
   
-      console.log("Google login response from backend:", loginResponse.data); // Log chi tiết phản hồi từ backend
+      console.log("Google login response from backend:", loginResponse.data); 
   
       if (loginResponse.data.token) {
         const { token, user } = loginResponse.data;
@@ -89,7 +95,7 @@ const LoginTemplate: React.FC = () => {
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", token);
   
-        router.push("/"); // Điều hướng người dùng sau khi đăng nhập thành công
+        router.push("/"); 
       } else {
         setError("Không nhận được thông tin người dùng từ server.");
       }
@@ -97,7 +103,8 @@ const LoginTemplate: React.FC = () => {
       console.error("Lỗi khi đăng nhập với Google:", error);
       setError("Đã xảy ra lỗi khi đăng nhập với Google. Vui lòng thử lại!");
     }
-  };      
+  };
+          
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
