@@ -7,12 +7,17 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { CredentialResponse } from "@react-oauth/google";
+import { CredentialResponse } from '@react-oauth/google';
+
+// ✅ Tạo một instance axios để gọn code hơn
+const api = axios.create({
+  baseURL: "http://localhost:4000/api/auth",
+});
 
 const LoginTemplate: React.FC = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [username, setUsername] = useState<string>('');  
+  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -30,7 +35,12 @@ const LoginTemplate: React.FC = () => {
       router.push('/');
     }
   }, [router]);
-  
+
+  // ✅ Kiểm tra xem biến môi trường có được load đúng không
+  useEffect(() => {
+    console.log('Google Client ID:', process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+  }, []);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -42,38 +52,42 @@ const LoginTemplate: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-  
+    setError('');
+
     if (!validatePassword(password)) {
-      setError("Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.");
+      setError('Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.');
       return;
     }
-  
+
     setLoading(true);
     try {
-      // Gọi API đúng method POST
-      const response = await axios.post("https://localhost:4000/api/auth/login", {
-        username,  
+      const response = await axios.post('http://localhost:4000/api/auth/login', {
+        username,
         password,
       });
-  
+
       const { token, user } = response.data;
-  
-      console.log("Đăng nhập thành công:", user);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
-  
-      router.push("/");
+
+      console.log('Đăng nhập thành công:', user);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+
+      router.push('/');
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Không thể kết nối đến server. Vui lòng thử lại sau.");
+        setError(err.response?.data?.message || 'Không thể kết nối đến server. Vui lòng thử lại sau.');
       } else {
-        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
+        setError('Đã xảy ra lỗi không xác định. Vui lòng thử lại!');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ✅ Tối ưu hàm đăng nhập Google
   const handleGoogleLogin = async (response: CredentialResponse) => {
+    console.log("Google response:", response);
+  
     if (!response.credential) {
       setError("Không thể lấy thông tin đăng nhập từ Google.");
       return;
@@ -81,30 +95,33 @@ const LoginTemplate: React.FC = () => {
   
     try {
       const googleToken = response.credential;
-      console.log("Google token received:", googleToken); 
+      console.log("Google token received:", googleToken);
   
-      const loginResponse = await axios.post("http://localhost:4000/api/auth/google", {
-        token: googleToken,
-      });
+      // Gửi token lên backend
+      const { data } = await api.post("/google", { token: googleToken });
   
-      console.log("Google login response from backend:", loginResponse.data); 
+      console.log("Google login response from backend:", data);
   
-      if (loginResponse.data.token) {
-        const { token, user } = loginResponse.data;
-        console.log("Đăng nhập Google thành công:", user);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", token);
+      if (data?.token && data?.user) {
+        console.log("Đăng nhập Google thành công:", data.user);
   
-        router.push("/"); 
+        // Lưu vào localStorage (hoặc cookie nếu muốn)
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+  
+        // Chuyển hướng về trang chủ hoặc trang bạn muốn sau khi đăng nhập thành công
+        router.push("/");
       } else {
         setError("Không nhận được thông tin người dùng từ server.");
       }
     } catch (error) {
-      console.error("Lỗi khi đăng nhập với Google:", error);
-      setError("Đã xảy ra lỗi khi đăng nhập với Google. Vui lòng thử lại!");
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || "Đã xảy ra lỗi khi đăng nhập với Google. Vui lòng thử lại!");
+      } else {
+        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
+      }
     }
   };
-          
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
@@ -175,17 +192,13 @@ const LoginTemplate: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800"
                   >
                     {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                   </button>
 
-                  {/* Button Google Login */}
                   <div className="flex justify-center mt-4">
-                    <GoogleLogin 
-                      onSuccess={handleGoogleLogin} 
-                      onError={() => setError("Lỗi khi đăng nhập Google")} 
-                    />
+                    <GoogleLogin onSuccess={handleGoogleLogin} onError={() => setError('Lỗi khi đăng nhập Google')} />
                   </div>
                 </div>
               </form>
