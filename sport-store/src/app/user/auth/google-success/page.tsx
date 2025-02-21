@@ -1,29 +1,35 @@
-"use client"; // Vì đang dùng useEffect
-import { useEffect } from "react";
-import { useRouter } from "next/navigation"; // App Router dùng next/navigation
+"use client";
 
-const GoogleSuccess = () => {
+import { useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+
+const GoogleSuccessPage = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // Chạy trên server thì dừng
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
+    const token = searchParams.get("token");
 
     if (token) {
-      // ✅ Lưu token vào localStorage
-      localStorage.setItem("access_token", token);
+      try {
+        const decodedToken = jwtDecode(token);
+        console.log("✅ Decoded Token:", decodedToken);
 
-      // ✅ Chuyển hướng về trang chủ hoặc dashboard
-      router.push("/");
+        // Lưu token vào localStorage để sử dụng sau này
+        localStorage.setItem("token", token);
+
+        // Chuyển hướng đến trang chính
+        router.push("/");
+      } catch (error) {
+        console.error("❌ Lỗi khi decode token:", error);
+      }
     } else {
-      console.error("Không tìm thấy token!");
-      router.push("/login"); // Nếu không có token, quay về login
+      console.error("❌ Không nhận được token trong URL");
     }
-  }, [router]); // ✅ Fix ESLint: Thêm `router` vào dependency array
+  }, [searchParams, router]);
 
-  return <p>Đang xác thực...</p>;
+  return <div className="text-center mt-10">Đang xử lý đăng nhập...</div>;
 };
 
-export default GoogleSuccess;
+export default GoogleSuccessPage;

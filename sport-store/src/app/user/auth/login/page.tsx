@@ -6,10 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { CredentialResponse } from '@react-oauth/google';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import GoogleLoginButton from '@/components/GoogleLoginButton/page';
 
-// ✅ Tạo một instance axios để gọn code hơn
 const api = axios.create({
   baseURL: "http://localhost:4000/api/auth",
 });
@@ -36,7 +35,6 @@ const LoginTemplate: React.FC = () => {
     }
   }, [router]);
 
-  // ✅ Kiểm tra xem biến môi trường có được load đúng không
   useEffect(() => {
     console.log('Google Client ID:', process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
   }, []);
@@ -61,13 +59,9 @@ const LoginTemplate: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:4000/api/auth/login', {
-        username,
-        password,
-      });
+      const response = await api.post('/login', { username, password });
 
       const { token, user } = response.data;
-
       console.log('Đăng nhập thành công:', user);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
@@ -81,45 +75,6 @@ const LoginTemplate: React.FC = () => {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  // ✅ Tối ưu hàm đăng nhập Google
-  const handleGoogleLogin = async (response: CredentialResponse) => {
-    console.log("Google response:", response);
-  
-    if (!response.credential) {
-      setError("Không thể lấy thông tin đăng nhập từ Google.");
-      return;
-    }
-  
-    try {
-      const googleToken = response.credential;
-      console.log("Google token received:", googleToken);
-  
-      // Gửi token lên backend
-      const { data } = await api.post("/google", { token: googleToken });
-  
-      console.log("Google login response from backend:", data);
-  
-      if (data?.token && data?.user) {
-        console.log("Đăng nhập Google thành công:", data.user);
-  
-        // Lưu vào localStorage (hoặc cookie nếu muốn)
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token);
-  
-        // Chuyển hướng về trang chủ hoặc trang bạn muốn sau khi đăng nhập thành công
-        router.push("/");
-      } else {
-        setError("Không nhận được thông tin người dùng từ server.");
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Đã xảy ra lỗi khi đăng nhập với Google. Vui lòng thử lại!");
-      } else {
-        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
-      }
     }
   };
 
@@ -144,7 +99,9 @@ const LoginTemplate: React.FC = () => {
 
                 <div className="text-center text-sm">
                   <span className="text-gray-600">Chưa có tài khoản? </span>
-                  <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">Đăng ký ngay</Link>
+                  <Link href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">
+                    Đăng ký ngay
+                  </Link>
                 </div>
 
                 <div className="space-y-6">
@@ -184,7 +141,9 @@ const LoginTemplate: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-end">
-                    <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">Quên mật khẩu?</Link>
+                    <Link href="/user/auth/forgot-password-email-1" className="text-base text-black hover:text-blue-500">
+                      Quên mật khẩu?
+                    </Link>
                   </div>
                 </div>
 
@@ -198,7 +157,7 @@ const LoginTemplate: React.FC = () => {
                   </button>
 
                   <div className="flex justify-center mt-4">
-                    <GoogleLogin onSuccess={handleGoogleLogin} onError={() => setError('Lỗi khi đăng nhập Google')} />
+                    <GoogleLoginButton />
                   </div>
                 </div>
               </form>
