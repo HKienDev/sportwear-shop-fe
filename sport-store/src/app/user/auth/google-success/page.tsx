@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
-const GoogleSuccessPage = () => {
+const GoogleAuthHandler = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -30,6 +30,14 @@ const GoogleSuccessPage = () => {
   }, [searchParams, router]);
 
   return <div className="text-center mt-10">Đang xử lý đăng nhập...</div>;
+};
+
+const GoogleSuccessPage = () => {
+  return (
+    <Suspense fallback={<div className="text-center mt-10">Đang tải...</div>}>
+      <GoogleAuthHandler />
+    </Suspense>
+  );
 };
 
 export default GoogleSuccessPage;
