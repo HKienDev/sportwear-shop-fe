@@ -14,7 +14,7 @@ const GoogleAuthHandler = () => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        console.log("✅ Decoded Token:", decodedToken);
+        console.log("Decoded Token:", decodedToken);
 
         // Lưu token vào localStorage để sử dụng sau này
         localStorage.setItem("token", token);
@@ -25,7 +25,7 @@ const GoogleAuthHandler = () => {
         console.error("❌ Lỗi khi decode token:", error);
       }
     } else {
-      console.error("❌ Không nhận được token trong URL");
+      console.error("Không nhận được token trong URL");
     }
   }, [searchParams, router]);
 
