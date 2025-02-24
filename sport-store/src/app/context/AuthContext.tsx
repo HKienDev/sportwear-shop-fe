@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -8,10 +8,12 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  setUser: (user: User | null) => void;
   login: (userData: User) => void;
   logout: () => void;
 }
@@ -20,33 +22,46 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); 
   const router = useRouter();
 
-  // Load user từ localStorage và trigger re-render
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser) as User);
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser) as User);
+      }
     }
+    setIsLoading(false); 
   }, []);
 
-  const login = (userData: User) => {
+  const login = useCallback((userData: User) => {
     localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData); // Cập nhật state để trigger re-render ngay lập tức
-    router.push("/"); // Chuyển hướng về trang chính
-  };
+    setUser(userData);
 
-  const logout = () => {
+    if (userData.role === "admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/");
+    }
+  }, [router]);
+
+  const logout = useCallback(() => {
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setUser(null);
     router.push("/");
-  };
+  }, [router]);
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const authValue = useMemo(
+    () => ({ user, setUser, login, logout }),
+    [user, login, logout]
   );
+
+  if (isLoading) return <></>; 
+
+  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Phone, MapPin } from "lucide-react";
+import { Search, Phone } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 import debounce from "lodash/debounce";
 import Image from "next/image";
@@ -17,7 +17,6 @@ interface Product {
   salePrice?: number;
   category: string;
 }
-
 const Header = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -35,7 +34,7 @@ const Header = () => {
         setProducts(await response.json());
       } catch (error) {
         console.error(
-          "❌ Lỗi khi lấy sản phẩm:",
+          "Lỗi khi lấy sản phẩm:",
           error instanceof Error ? error.message : "Unknown error"
         );
       }
@@ -55,11 +54,16 @@ const Header = () => {
 
   const filteredProducts = useMemo(() => {
     if (!debouncedSearch.trim()) return [];
-    return products.filter(
-      (product) =>
-        product.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        product.category.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
+  
+    return products.filter((product) => {
+      const title = product.title ? product.title.toLowerCase() : "";
+      const category = product.category ? product.category.toLowerCase() : "";
+  
+      return (
+        title.includes(debouncedSearch.toLowerCase()) ||
+        category.includes(debouncedSearch.toLowerCase())
+      );
+    });
   }, [debouncedSearch, products]);
 
   return (
@@ -96,14 +100,17 @@ const Header = () => {
           )}
         </div>
 
-        {/* Thông tin liên hệ + User + Giỏ hàng */}
-        <div className="flex items-center gap-4 lg:gap-10 flex-wrap justify-center lg:justify-end">
+        {/* Giỏ hàng + Thông tin liên hệ */}
+        <div className="flex items-center gap-6 lg:gap-12 flex-wrap justify-center lg:justify-end">
+          <ShoppingCartButton />
           <ContactInfo icon={Phone} text="Gọi mua hàng" subtext="1800.0244" />
-          <ContactInfo icon={MapPin} text="Cửa hàng" subtext="Gần bạn" />
+        </div>
 
-          {user ? (
+        {/* User */}
+        <div className="flex items-center gap-4 lg:gap-6">
+          {user && (
             <div className="flex items-center gap-3">
-              <span className="text-gray-700 text-sm">Xin chào, {user.name}!</span>
+              <span className="text-gray-700 text-sm">{user.name}</span>
               {user.avatar ? (
                 <Image
                   src={user.avatar}
@@ -118,11 +125,8 @@ const Header = () => {
                 </div>
               )}
             </div>
-          ) : (
-            <AuthButtons />
           )}
-
-          <ShoppingCartButton />
+          <AuthButtons />
         </div>
       </div>
     </header>

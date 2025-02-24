@@ -14,7 +14,11 @@ const AuthButtons = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
     logout();
+    router.push("/");
   };
 
   return (
@@ -30,6 +34,28 @@ const AuthButtons = () => {
             </button>
           </Link>
         </>
+      ) : user.role === "admin" ? (
+        <div className="flex items-center gap-4">
+          <Image
+            src={user.avatar || "/default-avatar.png"}
+            alt="User Avatar"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+          <span className="font-semibold">{user.name} (Admin)</span>
+          <Link href="/admin/dashboard">
+            <button className="text-lg px-5 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold shadow-md">
+              Quản lý
+            </button>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold"
+          >
+            Đăng Xuất
+          </button>
+        </div>
       ) : (
         <div className="flex items-center gap-4">
           <Image

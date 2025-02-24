@@ -6,6 +6,7 @@ import Image from "next/image";
 interface Product {
   id: number;
   name: string;
+  category: string;
   price: string;
   salePrice: string;
   subtitle: string;
@@ -26,7 +27,7 @@ const fetchProducts = async (): Promise<Product[]> => {
     }
 
     const data: Product[] = await res.json();
-    console.log("Fetched Products:", data); // Kiểm tra dữ liệu nhận về
+    console.log("Fetched Products:", data);
     return data;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -34,16 +35,36 @@ const fetchProducts = async (): Promise<Product[]> => {
   }
 };
 
-const ProductCard = ({ name, price, subtitle, image }: Product) => (
-  <div className="bg-white p-4 rounded-lg shadow-md mb-4"> {/* Thêm mb-4 để tạo khoảng cách */}
-    <div className="relative">
-      <Image src={image || "/shoes.png"} alt={name} width={400} height={150} className="object-cover" />
+const ProductCard = ({ name, category, price, salePrice, subtitle, image }: Product) => (
+  <div className="bg-[#F8F8F8] p-5 rounded-lg shadow-md mb-4 border">
+    {/* Image Wrapper */}
+    <div className="relative w-full h-52 overflow-hidden rounded-lg">
+      <Image 
+        src={image || "/shoes.png"} 
+        alt={name} 
+        fill
+        sizes="(max-width: 768px) 100vw, 400px"
+        className="object-cover rounded-lg"
+        priority // Giúp tránh loading delay
+      />
     </div>
-    <div className="mt-3">
+
+    {/* Nội dung sản phẩm */}
+    <div className="mt-4">
       <h3 className="text-sm font-bold">{name}</h3>
+      <p className="text-gray-500 font-semibold text-xs mt-1">{category}</p> {/* Thể loại sản phẩm */}
       <p className="text-gray-500 font-medium text-xs mt-1">{subtitle}</p>
       <div className="flex justify-between items-center mt-2">
-        <div className="text-red-500 font-medium">{price}</div> {/* Chỉ hiển thị giá gốc */}
+        <div className="text-red-500 font-medium">
+          {salePrice ? (
+            <>
+              <span className="line-through text-gray-400 mr-2">{price}</span>
+              {salePrice}
+            </>
+          ) : (
+            price
+          )}
+        </div>
         <button className="text-red-500 font-semibold text-sm">Yêu thích ♡</button>
       </div>
     </div>
@@ -51,7 +72,7 @@ const ProductCard = ({ name, price, subtitle, image }: Product) => (
 );
 
 const ProductList = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,7 +95,7 @@ const ProductList = () => {
         <p className="text-center text-gray-500">Đang tải...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
+          {products?.map((product) => (
             <ProductCard key={product.id} {...product} />
           ))}
         </div>

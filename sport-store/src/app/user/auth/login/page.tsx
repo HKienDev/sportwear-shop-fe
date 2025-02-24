@@ -1,16 +1,67 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GoogleLoginButton from '@/components/GoogleLoginButton/page';
 import LoginForm from '@/components/LoginForm/page';
+import { useAuth } from "@/app/context/AuthContext";
 
 const LoginPage = () => {
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { setUser } = useAuth();
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'auto'; };
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
   }, []);
+
+  const handleLogin = async (username: string, password: string) => {
+    setLoading(true);
+    setError('');
+  
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Đăng nhập thất bại');
+      }
+  
+      const { user, accessToken, refreshToken } = await res.json();
+  
+      // Lưu token vào localStorage
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+  
+      // Cập nhật user vào AuthContext
+      setUser(user);
+  
+      // Điều hướng dựa trên role
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/');
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Đã xảy ra lỗi không xác định.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
@@ -28,7 +79,8 @@ const LoginPage = () => {
                 <h2 className="text-4xl text-black font-bold">Đăng nhập</h2>
               </div>
 
-              <LoginForm />
+              {/* Truyền handleLogin, error, loading xuống LoginForm */}
+              <LoginForm handleLogin={handleLogin} error={error} loading={loading} />
 
               <div className="flex justify-center mt-4">
                 <GoogleLoginButton />
