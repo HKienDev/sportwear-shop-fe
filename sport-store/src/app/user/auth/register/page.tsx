@@ -174,6 +174,7 @@ const RegisterTemplate = () => {
                 {loading ? 'Đang đăng ký...' : 'Đăng ký'}
               </button>
 
+
               <div className="text-center text-sm">
                 <span className="text-gray-600">Đã có tài khoản? </span>
                 <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
