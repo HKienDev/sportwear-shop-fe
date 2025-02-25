@@ -45,14 +45,14 @@ const ProductCard = ({ name, category, price, salePrice, subtitle, image }: Prod
         fill
         sizes="(max-width: 768px) 100vw, 400px"
         className="object-cover rounded-lg"
-        priority // Giúp tránh loading delay
+        priority 
       />
     </div>
 
     {/* Nội dung sản phẩm */}
     <div className="mt-4">
       <h3 className="text-sm font-bold">{name}</h3>
-      <p className="text-gray-500 font-semibold text-xs mt-1">{category}</p> {/* Thể loại sản phẩm */}
+      <p className="text-gray-500 font-semibold text-xs mt-1">{category}</p> 
       <p className="text-gray-500 font-medium text-xs mt-1">{subtitle}</p>
       <div className="flex justify-between items-center mt-2">
         <div className="text-red-500 font-medium">
