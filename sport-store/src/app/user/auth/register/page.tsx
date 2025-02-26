@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import GoogleLoginButton from '@/components/GoogleLoginButton/page';
 
 const RegisterTemplate = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -26,41 +27,46 @@ const RegisterTemplate = () => {
   };
 
   const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[A-Z]).{8,25}$/; // Ít nhất 1 chữ in hoa, 8-25 ký tự
+    const passwordRegex = /^(?=.*[A-Z]).{8,25}$/; 
     return passwordRegex.test(password);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
+  
     if (!validatePassword(password)) {
       setError('Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.');
       return;
     }
-
+  
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:4000/api/users/');
-      const users = response.data;
-
-      // Kiểm tra xem username hoặc email đã tồn tại chưa
-      const userExists = users.find((u: { username: string; email: string }) => u.username === username || u.email === email);
-
-      if (userExists) {
-        setError('Tên đăng nhập hoặc email đã tồn tại. Vui lòng chọn thông tin khác.');
-      } else {
-        // Nếu không tồn tại, tiến hành lưu vào database
-        const newUser = { username, email, password };
-
-        await axios.post('http://localhost:4000/api/auth/register', newUser);
-
-        alert('Xác thực đăng ký...');
-        window.location.href = '/user/auth/otp-verify-register';
-      }
-    } catch (err) {
+      const newUser = { username, email, password };
+  
+      await axios.post('http://localhost:4000/api/auth/register', newUser, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      // Lưu email vào localStorage
+      localStorage.setItem('registerEmail', email);
+  
+      alert('Xác thực đăng ký...');
+      window.location.href = '/user/auth/otp-verify-register';
+    } catch (err: unknown) {
       console.error('Lỗi khi gọi API:', err);
-      setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+  
+      if (err instanceof Error && 'response' in err && err.response && typeof err.response === 'object') {
+        const response = err.response as { status?: number };
+  
+        if (response.status === 401) {
+          setError('Bạn không có quyền truy cập. Vui lòng kiểm tra lại.');
+        } else {
+          setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+        }
+      } else {
+        setError('Lỗi không xác định. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
     }
@@ -82,19 +88,7 @@ const RegisterTemplate = () => {
             </div>
 
             {/* Nút Đăng nhập với Google */}
-            <button
-              type="button"
-              className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Image
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                alt="Google"
-                width={20}
-                height={20}
-                className="mr-2"
-              />
-              Đăng nhập với Google
-            </button>
+            <GoogleLoginButton/>
 
             {/* Chữ "Hoặc" với gạch ngang 2 bên */}
             <div className="flex items-center gap-4">

@@ -3,17 +3,24 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
-import Link from 'next/link';
 
 export default function RegisterVerificationOTP() {
   const router = useRouter();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState<string | null>(null); // Lưu email của user
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
+  
+    const storedEmail = localStorage.getItem('registerEmail'); 
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      setError('Không tìm thấy email. Vui lòng đăng ký lại.');
+    }
   }, []);
 
   const handleChange = (index: number, value: string) => {
@@ -44,21 +51,34 @@ export default function RegisterVerificationOTP() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
+  
     try {
       const otpString = otp.join('');
-      console.log("OTP gửi đi:", otpString); // Kiểm tra OTP gửi đi
-
+      const storedEmail = localStorage.getItem('registerEmail'); // Lấy email từ localStorage
+  
+      if (!storedEmail) {
+        setError('Không tìm thấy email để xác thực.');
+        setIsLoading(false);
+        return;
+      }
+  
+      console.log("Email gửi đi:", storedEmail);
+      console.log("OTP gửi đi:", otpString);
+  
       // Gọi API xác thực OTP
       const response = await axios.post('http://localhost:4000/api/auth/verify-account', {
-        email: 'abc@gmail.com', // TODO: Truyền email thực tế của user
+        email: storedEmail,
         otp: otpString,
       });
-
+  
       // Lưu token vào localStorage
       localStorage.setItem('auth_token', response.data.token);
-
+  
       console.log('OTP xác thực thành công:', response.data);
+  
+      // Thêm thông báo đăng ký thành công
+      alert('Đăng ký thành công! Bạn sẽ được chuyển đến trang đăng nhập.');
+  
       router.push('/user/auth/login');
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -81,21 +101,21 @@ export default function RegisterVerificationOTP() {
       setIsLoading(true);
       setError('');
 
+      if (!email) {
+        setError('Không tìm thấy email để gửi lại mã OTP.');
+        setIsLoading(false);
+        return;
+      }
+
       // Gọi API gửi lại OTP
-      await axios.post('http://localhost:4000/api/auth/resend-otp', {
-        email: 'abc@gmail.com', // TODO: Truyền email thực tế của user
-      });
+      await axios.post('http://localhost:4000/api/auth/resend-otp', { email });
 
       console.log('Mã OTP đã được gửi lại.');
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error('Lỗi gửi lại mã OTP:', error.response?.data?.message || error.message);
         setError(error.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
-      } else if (error instanceof Error) {
-        console.error('Lỗi không xác định:', error.message);
-        setError(error.message);
       } else {
-        console.error('Lỗi không xác định:', error);
         setError('Đã xảy ra lỗi. Vui lòng thử lại.');
       }
     } finally {
@@ -109,7 +129,7 @@ export default function RegisterVerificationOTP() {
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Xác thực đăng ký</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Chúng tôi đã gửi mã đến <span className="text-blue-600">abc@gmail.com</span>
+            Chúng tôi đã gửi mã đến <span className="text-blue-600">{email || 'Không có email'}</span>
           </p>
         </div>
 
@@ -153,15 +173,6 @@ export default function RegisterVerificationOTP() {
           >
             Ấn để nhận lại mã
           </button>
-        </div>
-
-        <div className="text-center">
-          <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Quay lại trang đăng nhập
-          </Link>
         </div>
       </div>
     </div>
