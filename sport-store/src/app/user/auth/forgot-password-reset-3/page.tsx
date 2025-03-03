@@ -19,14 +19,13 @@ export default function ForgotPasswordReset() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      let token = searchParams.get('token');
-      if (!token) {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        token = hashParams.get('token');
+      const storedToken = localStorage.getItem('resetPasswordToken');
+      if (storedToken) {
+        setResetToken(storedToken);
+        console.log("Token lấy từ localStorage:", storedToken);
+      } else {
+        setError('Token không hợp lệ hoặc đã hết hạn');
       }
-      setResetToken(token);
-      console.log("Token nhận được:", token);
     }
   }, []);
 
@@ -82,6 +81,10 @@ export default function ForgotPasswordReset() {
       }
 
       console.log('Password reset successful');
+
+      // Xóa resetToken khỏi localStorage sau khi đặt lại mật khẩu thành công
+      localStorage.removeItem('resetPasswordToken');
+
       router.push('/user/auth/login');
     } catch (error) {
       if (error instanceof Error) {
