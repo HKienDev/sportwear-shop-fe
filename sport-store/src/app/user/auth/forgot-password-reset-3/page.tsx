@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
@@ -15,6 +15,20 @@ export default function ForgotPasswordReset() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      let token = searchParams.get('token');
+      if (!token) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        token = hashParams.get('token');
+      }
+      setResetToken(token);
+      console.log("Token nhận được:", token);
+    }
+  }, []);
 
   const validatePassword = (password: string) => password.length >= 8;
 
@@ -38,13 +52,44 @@ export default function ForgotPasswordReset() {
       return;
     }
 
+    if (!resetToken || resetToken.trim() === '') {
+      setError('Token không hợp lệ hoặc đã hết hạn');
+      console.error("Lỗi: Token không tồn tại hoặc bị trống");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      const response = await fetch('http://localhost:4000/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ resetToken, newPassword: password }),
+      });
+
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (jsonError) {
+        console.error("Lỗi khi parse JSON:", jsonError);
+        throw new Error("Lỗi không xác định từ server.");
+      }
+
+      if (!response.ok) {
+        console.error("Lỗi từ server:", responseData);
+        throw new Error(responseData.message || `Server error (${response.status})`);
+      }
+
       console.log('Password reset successful');
       router.push('/user/auth/login');
     } catch (error) {
-      console.error('Error:', error);
-      setError('Có lỗi xảy ra. Vui lòng thử lại.');
+      if (error instanceof Error) {
+        console.error("Lỗi khi gửi yêu cầu:", error.message);
+        setError(error.message);
+      } else {
+        setError('Có lỗi xảy ra. Vui lòng thử lại.');
+      }
     } finally {
       setIsLoading(false);
     }

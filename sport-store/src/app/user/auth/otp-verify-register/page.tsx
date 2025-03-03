@@ -9,7 +9,7 @@ export default function RegisterVerificationOTP() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [email, setEmail] = useState<string | null>(null); // Lưu email của user
+  const [email, setEmail] = useState<string | null>(null); 
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
   useEffect(() => {
@@ -54,8 +54,7 @@ export default function RegisterVerificationOTP() {
   
     try {
       const otpString = otp.join('');
-      const storedEmail = localStorage.getItem('registerEmail'); // Lấy email từ localStorage
-  
+      const storedEmail = localStorage.getItem('registerEmail'); 
       if (!storedEmail) {
         setError('Không tìm thấy email để xác thực.');
         setIsLoading(false);
@@ -65,7 +64,7 @@ export default function RegisterVerificationOTP() {
       console.log("Email gửi đi:", storedEmail);
       console.log("OTP gửi đi:", otpString);
   
-      // Gọi API xác thực OTP
+      
       const response = await axios.post('http://localhost:4000/api/auth/verify-account', {
         email: storedEmail,
         otp: otpString,

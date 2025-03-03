@@ -8,10 +8,18 @@ export default function ForgotPasswordOTP() {
   const router = useRouter();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [email, setEmail] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
+    const storedEmail = localStorage.getItem('forgotPasswordEmail');
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      setError('Không tìm thấy email. Vui lòng thử lại.');
+    }
   }, []);
 
   const handleChange = (index: number, value: string) => {
@@ -41,21 +49,63 @@ export default function ForgotPasswordOTP() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
+    const otpString = otp.join('');
+    if (otpString.length !== 6) {
+      setError('Vui lòng nhập đầy đủ mã OTP.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const otpString = otp.join('');
-      console.log('Verifying OTP:', otpString);
-      // await verifyOTP(otpString);
+      const response = await fetch('http://localhost:4000/api/auth/verify-forgot-password-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: otpString })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+        return;
+      }
+
+      // Tạo resetToken ngẫu nhiên
+      const resetToken = data.resetToken || Math.random().toString(36).substr(2, 10);
+
+      // Lưu resetToken vào localStorage để sử dụng ở bước tiếp theo
+      localStorage.setItem('resetPasswordToken', resetToken);
+
+      // Điều hướng sang trang đặt lại mật khẩu
       router.push('/user/auth/forgot-password-reset-3');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Lỗi khi xác thực OTP:', error);
+      setError('Lỗi hệ thống, vui lòng thử lại sau.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    console.log('Resending code to abc@gmail.com');
+    if (!email) {
+      setError('Không tìm thấy email để gửi lại mã.');
+      return;
+    }
+    setError('');
+    try {
+      const response = await fetch('http://localhost:4000/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (!response.ok) {
+        setError('Không thể gửi lại mã OTP, vui lòng thử lại.');
+      }
+    } catch (err: unknown) {
+      console.error('Lỗi khi xác thực OTP:', err);
+      setError('Lỗi hệ thống, vui lòng thử lại sau.');
+    }
   };
 
   return (
@@ -64,9 +114,11 @@ export default function ForgotPasswordOTP() {
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Cài lại mật khẩu</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Chúng tôi đã gửi mã đến <span className="text-blue-600">abc@gmail.com</span>
+            Chúng tôi đã gửi mã đến <span className="text-blue-600">{email || 'email của bạn'}</span>
           </p>
         </div>
+
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="flex justify-center gap-4">
@@ -107,10 +159,7 @@ export default function ForgotPasswordOTP() {
         </div>
 
         <div className="text-center">
-          <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+          <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
             Quay lại trang đăng nhập
           </Link>
         </div>
