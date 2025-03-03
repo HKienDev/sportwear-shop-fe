@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@shadcn/ui": "^0.0.4",
+    "antd": "^5.24.0"
+  }
+}

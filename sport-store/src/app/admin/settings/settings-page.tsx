@@ -1,0 +1,1 @@
+// Template hiển thị trang cấu hình hệ thống trang web
