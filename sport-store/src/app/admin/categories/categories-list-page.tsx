@@ -1,1 +1,0 @@
-// Template hiển thị trang quản lý danh mục, hiển thị các danh mục (thể loại) của sản phẩm

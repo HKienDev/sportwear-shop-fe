@@ -1,1 +1,0 @@
-// Template hiển thị trang thông tin danh mục (thể loại) chi tiết
