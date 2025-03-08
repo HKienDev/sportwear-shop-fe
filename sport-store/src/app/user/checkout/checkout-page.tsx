@@ -1,1 +1,0 @@
-// Template hiển thị giao diện thanh toán

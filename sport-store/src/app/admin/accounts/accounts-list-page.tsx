@@ -1,1 +1,0 @@
-// Template hiển thị danh sách các tài khoản admin và nhân viên

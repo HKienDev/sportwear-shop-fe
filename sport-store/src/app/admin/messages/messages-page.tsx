@@ -1,1 +1,0 @@
-// Template hiển thị trang chat live với khách hàng

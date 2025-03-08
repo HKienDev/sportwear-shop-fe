@@ -1,1 +1,0 @@
-// Template hiển thị danh sách các mã khuyến mãi (mã giảm giá)

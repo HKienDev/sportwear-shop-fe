@@ -1,1 +1,0 @@
-// Template hiển thị trang hiển thị chi tiết sản phẩm trong trang quản lý sản phẩm
