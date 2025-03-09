@@ -21,6 +21,10 @@ const AuthButtons = () => {
     router.push("/");
   };
 
+  const handleProfile = () => {
+    router.push("/user/profile");
+  };
+
   return (
     <div className="flex gap-4 flex-wrap justify-center lg:justify-start">
       {!user ? (
@@ -37,7 +41,7 @@ const AuthButtons = () => {
       ) : user.role === "admin" ? (
         <div className="flex items-center gap-4">
           <Image
-            src={user.avatar || "/default-avatar.png"}
+            src={user.avatar || "/Cuoc.png"}
             alt="User Avatar"
             width={32}
             height={32}
@@ -59,11 +63,12 @@ const AuthButtons = () => {
       ) : (
         <div className="flex items-center gap-4">
           <Image
-            src={user.avatar || "/default-avatar.png"}
+            src={user.avatar || "/Cuoc.png"}
             alt="User Avatar"
             width={32}
             height={32}
-            className="rounded-full"
+            className="rounded-full cursor-pointer"
+            onClick={handleProfile}
           />
           <span className="font-semibold">{user.name}</span>
           <button
