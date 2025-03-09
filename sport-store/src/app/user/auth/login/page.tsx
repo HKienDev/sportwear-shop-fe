@@ -57,13 +57,13 @@ const LoginPage = () => {
 
       // Điều hướng dựa trên role
       if (user.role === 'admin') {
-        router.push('/user/profile');
+        router.push('/admin');
       } else {
         router.push("/");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        console.error("🔥 Lỗi đăng nhập:", err.message);
+        console.error("Lỗi đăng nhập:", err.message);
         setError(err.message);
       } else {
         setError("Đã xảy ra lỗi không xác định.");
