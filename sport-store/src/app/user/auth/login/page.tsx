@@ -56,8 +56,8 @@ const LoginPage = () => {
       setUser(user);
 
       // Điều hướng dựa trên role
-      if (user.role === "admin") {
-        router.push("/admin/orders/orders-list-page");
+      if (user.role === 'admin') {
+        router.push('/user/profile');
       } else {
         router.push("/");
       }

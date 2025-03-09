@@ -1,4 +1,3 @@
-// app/forgot-password-success/page.tsx
 'use client';
 
 import Link from 'next/link';
