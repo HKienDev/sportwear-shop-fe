@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { fetchWithAuth } from "@/lib/api";
 
 type Order = {
   _id: string;
+  shortId: string;
   user: string;
   items: {
     product: { _id: string; name: string; price: number };
@@ -26,26 +28,21 @@ type Order = {
 export default function OrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState(""); // Tìm kiếm
+  const [statusFilter, setStatusFilter] = useState(""); // Bộ lọc trạng thái
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          throw new Error("Không có token. Vui lòng đăng nhập lại.");
-        }
+        setLoading(true);
+        setError(null);
 
-        const response = await fetch("http://localhost:4000/api/orders/admin", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetchWithAuth("http://localhost:4000/api/orders/admin", { method: "GET" });
 
-        if (!response.ok) {
+        if (!response || !response.ok) {
           throw new Error("Lỗi khi lấy danh sách đơn hàng");
         }
 
@@ -53,7 +50,9 @@ export default function OrdersPage() {
         if (!Array.isArray(data)) {
           throw new Error("Dữ liệu API không hợp lệ");
         }
+
         setOrders(data);
+        setFilteredOrders(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.");
       } finally {
@@ -64,9 +63,28 @@ export default function OrdersPage() {
     fetchOrders();
   }, []);
 
+  // Tìm kiếm đơn hàng theo mã đơn hoặc tên khách hàng
+  useEffect(() => {
+    const filtered = orders.filter(
+      (order) =>
+        order.shortId.includes(searchTerm) || 
+        order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredOrders(filtered);
+  }, [searchTerm, orders]);
+
+  // Lọc đơn hàng theo trạng thái
+  useEffect(() => {
+    if (!statusFilter) {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter((order) => order.status === statusFilter));
+    }
+  }, [statusFilter, orders]);
+
   // Chọn tất cả đơn hàng
   const toggleSelectAll = () => {
-    setSelectedOrders(selectedOrders.length === orders.length ? [] : orders.map((order) => order._id));
+    setSelectedOrders(selectedOrders.length === filteredOrders.length ? [] : filteredOrders.map((order) => order._id));
   };
 
   // Chọn một đơn hàng
@@ -93,13 +111,43 @@ export default function OrdersPage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Danh sách đơn hàng</h1>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Danh sách đơn hàng</h1>
+
+      {/* Thanh tìm kiếm & Bộ lọc */}
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Bạn cần tìm gì?"
+          className="border border-gray-300 rounded-md px-4 py-2 w-1/3"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <div className="flex gap-4">
+          {/* Lọc theo trạng thái */}
+          <select
+            className="border border-gray-300 rounded-md px-4 py-2"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">Chờ xác nhận</option>
+            <option value="processing">Đang xử lý</option>
+            <option value="shipped">Đang giao hàng</option>
+            <option value="delivered">Giao hàng thành công</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
+
+          {/* Nút thêm đơn hàng */}
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md">+ Thêm Đơn Hàng</button>
+        </div>
+      </div>
 
       {loading && <p>Đang tải...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
-      {!loading && !error && orders.length > 0 && (
+      {!loading && !error && filteredOrders.length > 0 && (
         <div className="bg-white rounded-md shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
@@ -107,14 +155,13 @@ export default function OrdersPage() {
                 <th className="px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={selectedOrders.length === orders.length}
+                    checked={selectedOrders.length === filteredOrders.length}
                     onChange={toggleSelectAll}
                     className="w-4 h-4"
                   />
                 </th>
                 <th className="px-4 py-3 text-left">Mã Đơn</th>
                 <th className="px-4 py-3 text-left">Người Đặt</th>
-                <th className="px-4 py-3 text-left">SĐT</th>
                 <th className="px-4 py-3 text-left">Địa Chỉ</th>
                 <th className="px-4 py-3 text-left">Tổng Tiền</th>
                 <th className="px-4 py-3 text-left">Thanh Toán</th>
@@ -123,9 +170,8 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order._id}>
-                  {/* Chọn đơn hàng */}
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -134,59 +180,19 @@ export default function OrdersPage() {
                       className="w-4 h-4"
                     />
                   </td>
-
-                  {/* Mã đơn hàng */}
-                  <td className="px-4 py-3 text-blue-500">{order._id}</td>
-
-                  {/* Người đặt hàng */}
+                  <td className="px-4 py-3 text-blue-500">{order.shortId}</td>
                   <td className="px-4 py-3">{order.shippingAddress?.fullName || "Không có dữ liệu"}</td>
-
-                  {/* Số điện thoại */}
-                  <td className="px-4 py-3">{order.shippingAddress?.phone || "Không có dữ liệu"}</td>
-
-                  {/* Địa chỉ giao hàng */}
-                  <td className="px-4 py-3">
-                    {order.shippingAddress
-                      ? `${order.shippingAddress.address}, ${order.shippingAddress.city}`
-                      : "Không có địa chỉ"}
-                  </td>
-
-                  {/* Tổng tiền đơn hàng */}
-                  <td className="px-4 py-3">
-                    {order.totalPrice !== undefined ? `${order.totalPrice.toLocaleString()} Vnđ` : "Chưa cập nhật"}
-                  </td>
-
-                  {/* Phương thức và trạng thái thanh toán */}
-                  <td className="px-4 py-3">
-                    {order.paymentMethod} -{" "}
-                    <span className={order.paymentStatus === "paid" ? "text-green-500" : "text-red-500"}>
-                      {order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
-                    </span>
-                  </td>
-
-                  {/* Trạng thái đơn hàng */}
+                  <td className="px-4 py-3">{order.shippingAddress?.city || "Không có dữ liệu"}</td>
+                  <td className="px-4 py-3">{order.totalPrice.toLocaleString()} Vnđ</td>
+                  <td className="px-4 py-3">{order.paymentMethod} - <span className={order.paymentStatus === "paid" ? "text-green-500" : "text-red-500"}>{order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</span></td>
                   <td className={`px-4 py-3 ${getStatusColor(order.status)}`}>{order.status}</td>
-
-                  {/* Ngày đặt hàng */}
-                  <td className="px-4 py-3">
-                    {order.createdAt
-                      ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "Không có dữ liệu"}
-                  </td>
+                  <td className="px-4 py-3">{new Date(order.createdAt).toLocaleString("vi-VN")}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-
-      {!loading && !error && orders.length === 0 && <p className="text-center text-gray-500">Không có đơn hàng nào.</p>}
     </div>
   );
 }
