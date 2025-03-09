@@ -88,7 +88,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-[#FAFAFA] border-r border-gray-200 min-h-screen p-4">
+    <div className="w-64 bg-[#FAFAFA] border-r border-gray-200 h-screen fixed left-0 top-0 p-4">
       {/* Logo + Gạch dưới */}
       <div className="text-lg font-bold text-center pb-3 border-b border-gray-300">
         VJU SPORT
