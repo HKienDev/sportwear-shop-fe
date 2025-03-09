@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-//import Link from "next/link";
+import AdminLayout from "@/app/admin/Layout";
 
 type Order = {
   _id: string;
@@ -34,23 +34,22 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-    
         if (!token) {
           throw new Error("Không có token. Vui lòng đăng nhập lại.");
         }
-    
+
         const response = await fetch("http://localhost:4000/api/orders/admin", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-    
+
         if (!response.ok) {
           throw new Error("Lỗi khi lấy danh sách đơn hàng");
         }
-    
+
         const data: Order[] = await response.json();
         if (!Array.isArray(data)) {
           throw new Error("Dữ liệu API không hợp lệ");
@@ -62,7 +61,7 @@ export default function OrdersPage() {
         setLoading(false);
       }
     };
-  
+
     fetchOrders();
   }, []);
 
@@ -95,112 +94,100 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-56 bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-lg font-bold">VJU SPORT</h1>
-        </div>
-      </div>
+    <AdminLayout>
+      <h1 className="text-2xl font-bold mb-6">Danh sách đơn hàng</h1>
 
-      {/* Main Content */}
-      <div className="flex-1">
-        <header className="bg-white border-b border-gray-200 flex justify-between items-center p-4">
-          <h1 className="text-2xl font-bold">DANH SÁCH ĐƠN HÀNG</h1>
-        </header>
+      {loading && <p>Đang tải...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
-        <div className="p-6">
-          {loading && <p>Đang tải...</p>}
-          {error && <p className="text-red-500">{error}</p>}
+      {!loading && !error && orders.length > 0 && (
+        <div className="bg-white rounded-md shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.length === orders.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">Mã Đơn</th>
+                <th className="px-4 py-3 text-left">Người Đặt</th>
+                <th className="px-4 py-3 text-left">SĐT</th>
+                <th className="px-4 py-3 text-left">Địa Chỉ</th>
+                <th className="px-4 py-3 text-left">Tổng Tiền</th>
+                <th className="px-4 py-3 text-left">Thanh Toán</th>
+                <th className="px-4 py-3 text-left">Trạng Thái</th>
+                <th className="px-4 py-3 text-left">Ngày Đặt</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {orders.map((order) => (
+                <tr key={order._id}>
+                  {/* Chọn đơn hàng */}
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedOrders.includes(order._id)}
+                      onChange={() => toggleSelectOrder(order._id)}
+                      className="w-4 h-4"
+                    />
+                  </td>
 
-          {!loading && !error && orders.length > 0 && (
-            <div className="bg-white rounded-md shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedOrders.length === orders.length}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4"
-                      />
-                    </th>
-                    <th className="px-4 py-3 text-left">Mã Đơn</th>
-                    <th className="px-4 py-3 text-left">Người Đặt</th>
-                    <th className="px-4 py-3 text-left">SĐT</th>
-                    <th className="px-4 py-3 text-left">Địa Chỉ</th>
-                    <th className="px-4 py-3 text-left">Tổng Tiền</th>
-                    <th className="px-4 py-3 text-left">Thanh Toán</th>
-                    <th className="px-4 py-3 text-left">Trạng Thái</th>
-                    <th className="px-4 py-3 text-left">Ngày Đặt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {orders.map((order) => (
-                    <tr key={order._id}>
-                      {/* Chọn đơn hàng */}
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedOrders.includes(order._id)}
-                          onChange={() => toggleSelectOrder(order._id)}
-                          className="w-4 h-4"
-                        />
-                      </td>
+                  {/* Mã đơn hàng */}
+                  <td className="px-4 py-3 text-blue-500">{order._id}</td>
 
-                      {/* Mã đơn hàng */}
-                      <td className="px-4 py-3 text-blue-500">{order._id}</td>
+                  {/* Người đặt hàng */}
+                  <td className="px-4 py-3">{order.shippingAddress?.fullName || "Không có dữ liệu"}</td>
 
-                      {/* Người đặt hàng */}
-                      <td className="px-4 py-3">{order.shippingAddress?.fullName || "Không có dữ liệu"}</td>
+                  {/* Số điện thoại */}
+                  <td className="px-4 py-3">{order.shippingAddress?.phone || "Không có dữ liệu"}</td>
 
-                      {/* Số điện thoại */}
-                      <td className="px-4 py-3">{order.shippingAddress?.phone || "Không có dữ liệu"}</td>
+                  {/* Địa chỉ giao hàng */}
+                  <td className="px-4 py-3">
+                    {order.shippingAddress
+                      ? `${order.shippingAddress.address}, ${order.shippingAddress.city}`
+                      : "Không có địa chỉ"}
+                  </td>
 
-                      {/* Địa chỉ giao hàng */}
-                      <td className="px-4 py-3">
-                        {order.shippingAddress
-                          ? `${order.shippingAddress.address}, ${order.shippingAddress.city}`
-                          : "Không có địa chỉ"}
-                      </td>
+                  {/* Tổng tiền đơn hàng */}
+                  <td className="px-4 py-3">
+                    {order.totalPrice !== undefined ? `${order.totalPrice.toLocaleString()} Vnđ` : "Chưa cập nhật"}
+                  </td>
 
-                      {/* Tổng tiền đơn hàng */}
-                      <td className="px-4 py-3">
-                        {order.totalPrice !== undefined ? `${order.totalPrice.toLocaleString()} Vnđ` : "Chưa cập nhật"}
-                      </td>
+                  {/* Phương thức và trạng thái thanh toán */}
+                  <td className="px-4 py-3">
+                    {order.paymentMethod} -{" "}
+                    <span className={order.paymentStatus === "paid" ? "text-green-500" : "text-red-500"}>
+                      {order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+                    </span>
+                  </td>
 
-                      {/* Phương thức và trạng thái thanh toán */}
-                      <td className="px-4 py-3">
-                        {order.paymentMethod} -{" "}
-                        <span className={order.paymentStatus === "paid" ? "text-green-500" : "text-red-500"}>
-                          {order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
-                        </span>
-                      </td>
+                  {/* Trạng thái đơn hàng */}
+                  <td className={`px-4 py-3 ${getStatusColor(order.status)}`}>{order.status}</td>
 
-                      {/* Trạng thái đơn hàng */}
-                      <td className={`px-4 py-3 ${getStatusColor(order.status)}`}>{order.status}</td>
-
-                      {/* Ngày đặt hàng */}
-                      <td className="px-4 py-3">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
+                  {/* Ngày đặt hàng */}
+                  <td className="px-4 py-3">
+                    {order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
                           year: "numeric",
                           month: "2-digit",
                           day: "2-digit",
                           hour: "2-digit",
                           minute: "2-digit",
-                        }) : "Không có dữ liệu"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {!loading && !error && orders.length === 0 && <p className="text-center text-gray-500">Không có đơn hàng nào.</p>}
+                        })
+                      : "Không có dữ liệu"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
+      )}
+
+      {!loading && !error && orders.length === 0 && <p className="text-center text-gray-500">Không có đơn hàng nào.</p>}
+    </AdminLayout>
   );
 }
