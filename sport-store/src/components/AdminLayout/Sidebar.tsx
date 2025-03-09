@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
+import { logout } from "@/lib/api"; // Import hàm logout
 
 const menuItems = [
   { name: "Trang Chủ", path: "/admin", subMenu: [] },
@@ -72,6 +73,11 @@ const menuItems = [
       { name: "Bảo Mật", path: "/admin/settings/security" },
     ],
   },
+  {
+    name: "Đăng Xuất",
+    path: "logout", // Dùng path đặc biệt để xử lý riêng
+    subMenu: [],
+  },
 ];
 
 export default function Sidebar() {
@@ -88,13 +94,13 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-[#FAFAFA] border-r border-gray-200 h-screen fixed left-0 top-0 p-4">
+    <div className="w-64 bg-[#FAFAFA] border-r border-gray-200 h-screen fixed left-0 top-0 p-4 flex flex-col">
       {/* Logo + Gạch dưới */}
       <div className="text-lg font-bold text-center pb-3 border-b border-gray-300">
         VJU SPORT
       </div>
 
-      <ul className="mt-4">
+      <ul className="mt-4 flex-grow">
         {menuItems.map((item) => {
           // Kiểm tra active
           const isActive =
@@ -106,26 +112,35 @@ export default function Sidebar() {
 
           return (
             <li key={item.path} className="mb-2">
-              {/* Mục cha */}
-              <div
-                onClick={() => {
-                  if (item.subMenu.length > 0) {
-                    toggleMenu(item.path);
-                  } else {
-                    router.push(item.path);
-                  }
-                }}
-                className={`flex justify-between items-center px-4 py-3 rounded-md transition-all font-medium cursor-pointer ${
-                  isActive && !isOpen ? "bg-[#4EB09D] text-white" : "text-[#858594] hover:bg-gray-100"
-                }`}
-              >
-                {item.name}
-                {item.subMenu.length > 0 && (
-                  <span className="ml-2 transition-transform duration-300">
-                    {isOpen ? <FaChevronDown /> : <FaChevronRight />}
-                  </span>
-                )}
-              </div>
+              {/* Mục cha hoặc Button Đăng Xuất */}
+              {item.path === "logout" ? (
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all"
+                >
+                  {item.name}
+                </button>
+              ) : (
+                <div
+                  onClick={() => {
+                    if (item.subMenu.length > 0) {
+                      toggleMenu(item.path);
+                    } else {
+                      router.push(item.path);
+                    }
+                  }}
+                  className={`flex justify-between items-center px-4 py-3 rounded-md transition-all font-medium cursor-pointer ${
+                    isActive && !isOpen ? "bg-[#4EB09D] text-white" : "text-[#858594] hover:bg-gray-100"
+                  }`}
+                >
+                  {item.name}
+                  {item.subMenu.length > 0 && (
+                    <span className="ml-2 transition-transform duration-300">
+                      {isOpen ? <FaChevronDown /> : <FaChevronRight />}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Menu con */}
               {isOpen && item.subMenu.length > 0 && (
