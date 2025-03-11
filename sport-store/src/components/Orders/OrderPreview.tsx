@@ -1,32 +1,38 @@
 "use client";
 
 import { useCustomer } from "@/app/context/CustomerContext";
-import { useCart } from "@/app/context/CartContext";
+import { useCart } from "@/app/context/CartContext"; // Import useCart
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 export default function OrderPreview() {
   const { customer } = useCustomer();
-  const { cartItems } = useCart();
+  const { cartItems } = useCart(); // Sử dụng cartItems từ context
 
   const getFullAddress = () => {
-    // Kiểm tra các giá trị cần thiết có tồn tại không
-    if (!customer.province || !customer.district || !customer.ward || !customer.address) {
+    const { province, district, ward, address } = customer;
+    if (!province || !district || !ward || !address) {
       return "Chưa nhập đủ địa chỉ";
     }
-
-    return `${customer.address}, ${customer.ward.name}, ${customer.district.name}, ${customer.province.name}`;
+    return `${address}, ${ward.name}, ${district.name}, ${province.name}`;
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartItems.reduce((total: number, item: Product) => total + item.price * item.quantity, 0);
   };
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">XEM TRƯỚC</h2>
+      <h2 className="text-lg font-semibold mb-4">XEM TRƯỚC ĐƠN HÀNG</h2>
 
       {/* Thông tin khách hàng */}
       <div className="mb-4">
-        <h3 className="font-semibold">Thông tin khách hàng</h3>
+        <h3 className="font-semibold">Thông tin người nhận</h3>
         <p>{customer.name || "Chưa nhập tên"}</p>
         <p>{customer.phone || "Chưa nhập số điện thoại"}</p>
         <p>{getFullAddress()}</p>
@@ -34,20 +40,20 @@ export default function OrderPreview() {
 
       {/* Danh sách sản phẩm */}
       <div className="mb-4">
-        <h3 className="font-semibold">Sản phẩm đơn hàng</h3>
+        <h3 className="font-semibold">Sản phẩm</h3>
         <table className="w-full border-collapse border border-gray-200 text-sm">
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-gray-200 p-2 text-left">ID</th>
               <th className="border border-gray-200 p-2 text-left">Tên sản phẩm</th>
               <th className="border border-gray-200 p-2 text-right">Đơn giá</th>
-              <th className="border border-gray-200 p-2 text-center">Số lượng</th>
+              <th className="border border-gray-200 p-2 text-center">SL</th>
               <th className="border border-gray-200 p-2 text-right">Thành tiền</th>
             </tr>
           </thead>
           <tbody>
             {cartItems.length > 0 ? (
-              cartItems.map((item) => (
+              cartItems.map((item: Product) => (
                 <tr key={item.id} className="border border-gray-200">
                   <td className="border border-gray-200 p-2">#{item.id}</td>
                   <td className="border border-gray-200 p-2 text-blue-600 underline cursor-pointer">
@@ -74,8 +80,11 @@ export default function OrderPreview() {
       </div>
 
       {/* Tổng tiền */}
-      <div className="text-right font-semibold text-lg">
-        Tổng tiền: {getTotalPrice().toLocaleString()} VND
+      <div className="text-right font-semibold text-lg space-y-2">
+        <div>Thành tiền: {getTotalPrice().toLocaleString()} VND</div>
+        <div className="text-xl text-red-600">
+          Tổng thanh toán: {getTotalPrice().toLocaleString()} VND
+        </div>
       </div>
     </div>
   );

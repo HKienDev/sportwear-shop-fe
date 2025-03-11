@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { useCart } from "@/app/context/CartContext"; // Import useCart
 
 interface Product {
   id: string;
@@ -13,7 +14,7 @@ interface Product {
 }
 
 export default function OrderProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // State cục bộ để hiển thị danh sách
   const [newProductId, setNewProductId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
@@ -23,33 +24,34 @@ export default function OrderProducts() {
   const [payment, setPayment] = useState("MOMO");
   const [error, setError] = useState<string | null>(null);
 
-// Thay thế hàm mock bằng API thực tế
-const fetchProduct = async (id: string): Promise<Product | null> => {
-  try {
-    const response = await fetch(`http://localhost:4000/api/products/${id}`);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        setError("Sản phẩm không tồn tại!");
-      } else {
-        setError("Lỗi kết nối đến server");
+  const { addToCart, removeFromCart } = useCart(); // Sử dụng removeFromCart từ CartContext
+
+  // Thay thế hàm mock bằng API thực tế
+  const fetchProduct = async (id: string): Promise<Product | null> => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/products/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Sản phẩm không tồn tại!");
+        } else {
+          setError("Lỗi kết nối đến server");
+        }
+        return null;
       }
+
+      const productData = await response.json();
+      return {
+        id: productData._id, // Thay bằng field ID từ backend
+        name: productData.name,
+        price: productData.price,
+        quantity: 1,
+      };
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+      setError("Đã có lỗi xảy ra khi kết nối API");
       return null;
     }
-
-    const productData = await response.json();
-    return {
-      id: productData._id, // Thay bằng field ID từ backend
-      name: productData.name,
-      price: productData.price,
-      quantity: 1
-    };
-  } catch (error) {
-    console.error("Lỗi khi lấy sản phẩm:", error);
-    setError("Đã có lỗi xảy ra khi kết nối API");
-    return null;
-  }
-};
+  };
 
   const addProduct = async () => {
     if (!newProductId) {
@@ -64,13 +66,24 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
         return;
       }
 
-      const existingProduct = products.find(p => p.id === newProductId);
+      // Thêm sản phẩm vào giỏ hàng (CartContext)
+      addToCart({
+        ...product,
+        quantity: quantity,
+        size: selectedSize || undefined,
+        color: selectedColor || undefined,
+      });
+
+      // Cập nhật state cục bộ để hiển thị danh sách
+      const existingProduct = products.find((p) => p.id === newProductId);
       if (existingProduct) {
-        setProducts(products.map(p =>
-          p.id === newProductId 
-            ? { ...p, quantity: p.quantity + quantity } 
-            : p
-        ));
+        setProducts(
+          products.map((p) =>
+            p.id === newProductId
+              ? { ...p, quantity: p.quantity + quantity }
+              : p
+          )
+        );
       } else {
         setProducts([
           ...products,
@@ -78,24 +91,29 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
             ...product,
             quantity: quantity,
             size: selectedSize || undefined,
-            color: selectedColor || undefined
-          }
+            color: selectedColor || undefined,
+          },
         ]);
       }
 
+      // Reset form
       setNewProductId("");
       setQuantity(1);
       setSelectedSize("");
       setSelectedColor("");
       setError(null);
     } catch (err) {
-      console.error("Lỗi khi thêm sản phẩm:", err); // Sử dụng biến err
+      console.error("Lỗi khi thêm sản phẩm:", err);
       setError("Đã có lỗi xảy ra khi thêm sản phẩm");
     }
   };
 
   const removeProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
+    // Xóa sản phẩm khỏi CartContext
+    removeFromCart(id);
+
+    // Xóa sản phẩm khỏi state cục bộ
+    setProducts(products.filter((p) => p.id !== id));
   };
 
   const totalPrice = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
@@ -130,8 +148,10 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
           className="border border-gray-300 px-3 py-2 rounded col-span-1 md:col-span-1"
         >
           <option value="">Chọn size</option>
-          {["S", "M", "L", "XL"].map(size => (
-            <option key={size} value={size}>{size}</option>
+          {["S", "M", "L", "XL"].map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
           ))}
         </select>
         <select
@@ -140,8 +160,10 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
           className="border border-gray-300 px-3 py-2 rounded col-span-1 md:col-span-1"
         >
           <option value="">Chọn màu</option>
-          {["Đỏ", "Xanh", "Trắng", "Đen"].map(color => (
-            <option key={color} value={color}>{color}</option>
+          {["Đỏ", "Xanh", "Trắng", "Đen"].map((color) => (
+            <option key={color} value={color}>
+              {color}
+            </option>
           ))}
         </select>
         <button
@@ -155,8 +177,11 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
       {/* Danh sách sản phẩm */}
       {products.length > 0 && (
         <div className="mb-6">
-          {products.map(product => (
-            <div key={product.id} className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2"
+            >
               <div>
                 <div className="font-medium">{product.name}</div>
                 <div className="text-sm text-gray-500">
@@ -168,16 +193,19 @@ const fetchProduct = async (id: string): Promise<Product | null> => {
                 <span className="mr-4">
                   {product.quantity} x {product.price.toLocaleString()}đ
                 </span>
-                <X 
-                  size={18} 
-                  className="cursor-pointer hover:text-red-500" 
-                  onClick={() => removeProduct(product.id)} 
+                <X
+                  size={18}
+                  className="cursor-pointer hover:text-red-500"
+                  onClick={() => removeProduct(product.id)} // Gọi hàm removeProduct
                 />
               </div>
             </div>
           ))}
           <div className="flex justify-end mt-4 text-lg font-semibold">
-            Tổng tiền: <span className="text-red-500 ml-2">{totalPrice.toLocaleString()}đ</span>
+            Tổng tiền:{" "}
+            <span className="text-red-500 ml-2">
+              {totalPrice.toLocaleString()}đ
+            </span>
           </div>
         </div>
       )}
