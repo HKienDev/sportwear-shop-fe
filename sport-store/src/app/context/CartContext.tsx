@@ -1,4 +1,4 @@
-"use client"; // Thêm dòng này ở đầu
+"use client";
 
 import { createContext, useContext, useState } from "react";
 
@@ -7,6 +7,8 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  size?: string;
+  color?: string;
 }
 
 interface CartContextType {
@@ -28,7 +30,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingItem = prev.find((cartItem) => cartItem.id === item.id);
       if (existingItem) {
         return prev.map((cartItem) =>
-          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + item.quantity } : cartItem
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
+            : cartItem
         );
       }
       return [...prev, item];
@@ -53,7 +57,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart }}>
+    <CartContext.Provider
+      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart }}
+    >
       {children}
     </CartContext.Provider>
   );
