@@ -2,13 +2,11 @@
 
 import { createContext, useContext, useState, useCallback } from "react";
 
-// Định nghĩa kiểu Location rõ ràng
 export interface Location {
   code: string;
   name: string;
 }
 
-// Đảm bảo kiểu dữ liệu chính xác cho thông tin khách hàng
 export interface CustomerInfo {
   name: string;
   phone: string;
@@ -41,6 +39,7 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     setCustomer((prev) => {
       let updatedCustomer = { ...prev, [field]: value };
   
+      // Reset các trường phụ thuộc
       if (field === "province") {
         updatedCustomer = { ...updatedCustomer, district: null, ward: null };
       }
@@ -49,7 +48,6 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         updatedCustomer = { ...updatedCustomer, ward: null };
       }
   
-      console.log("🔄 updateCustomer:", updatedCustomer); // Debug log
       return updatedCustomer;
     });
   }, []);
