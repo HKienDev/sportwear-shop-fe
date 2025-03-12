@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: "http://localhost:4000/api/auth",
+  withCredentials: true, // Đảm bảo gửi cookies
 });
 
 export const useLogin = () => {
@@ -15,8 +16,10 @@ export const useLogin = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('user');
-    if (loggedInUser) router.push('/');
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      router.push('/'); // Chuyển hướng nếu đã đăng nhập
+    }
   }, [router]);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -35,9 +38,12 @@ export const useLogin = () => {
     setLoading(true);
     try {
       const response = await api.post('/login', { username, password });
-      const { token, user } = response.data;
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', token);
+      const { accessToken, user } = response.data;
+
+      // Lưu accessToken vào localStorage
+      localStorage.setItem('accessToken', accessToken);
+
+      console.log("✅ Login successful. User:", user);
       router.push('/');
     } catch (err) {
       setError(axios.isAxiosError(err) ? err.response?.data?.message || 'Lỗi server' : 'Lỗi không xác định.');

@@ -33,19 +33,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push("/");
   }, [router]);
 
-  // ✅ Dùng lại accessToken khi reload
+  // Hàm làm mới token
+  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
+    try {
+      const response = await fetch("http://localhost:4000/api/auth/refresh", {
+        method: "POST",
+        credentials: "include", // Đọc refreshToken từ cookies
+      });
+
+      if (!response.ok) {
+        console.error("Refresh Token không hợp lệ:", response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken); // Lưu accessToken mới
+        return data.accessToken;
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối API refresh token:", error);
+    }
+    return null;
+  }, []);
+
+  // ✅ Kiểm tra trạng thái đăng nhập khi tải lại trang
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
       const storedUser = localStorage.getItem("user");
       const token = localStorage.getItem("accessToken");
 
-      const currentPath = window.location.pathname;
+      const currentPath = window.location.pathname; // Lưu trữ URL hiện tại
 
-      // 🛠️ Không tự logout nếu đang ở trang OTP hoặc Quên mật khẩu
+      // 🛠️ Không tự logout nếu đang ở trang đăng nhập hoặc OTP
       const exemptPaths = [
+        "/user/auth/login",
         "/user/auth/otp-verify-register",
-        "/user/auth/forgot-password-email-1"
+        "/user/auth/forgot-password-email-1",
       ];
       if (exemptPaths.includes(currentPath)) {
         setIsLoading(false);
@@ -55,15 +80,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (storedUser && token) {
         setUser(JSON.parse(storedUser) as User);
         try {
-          const res = await fetch("http://localhost:4000/api/auth/me", {
+          const res = await fetch("http://localhost:4000/api/auth/check", {
             headers: { Authorization: `Bearer ${token}` },
           });
 
           if (res.ok) {
             const data = await res.json();
-            setUser(data.user);
+            console.log("[DEBUG] User from /auth/check:", data.user);
+
+            // Kiểm tra dữ liệu trả về từ backend
+            if (!data.user || !data.user.role) {
+              console.error("Thông tin người dùng không hợp lệ:", data);
+              logout();
+              return;
+            }
+
+            const updatedUser = data.user;
+
+            // Lưu trữ lại thông tin user vào localStorage
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            setUser(updatedUser);
+
+            // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
+            if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
+              if (currentPath !== window.location.pathname) {
+                router.push(currentPath); // Chỉ chuyển hướng nếu cần
+              }
+            } else if (updatedUser.role === "admin") {
+              router.push("/admin/dashboard");
+            } else {
+              router.push("/");
+            }
+          } else if (res.status === 401) {
+            console.warn("Access token expired, trying to refresh...");
+            const newAccessToken = await refreshAccessToken();
+            if (!newAccessToken) {
+              console.warn("Failed to refresh token, logging out...");
+              logout();
+            } else {
+              console.log("Token refreshed successfully:", newAccessToken);
+              localStorage.setItem("accessToken", newAccessToken);
+              const resAfterRefresh = await fetch("http://localhost:4000/api/auth/check", {
+                headers: { Authorization: `Bearer ${newAccessToken}` },
+              });
+              if (resAfterRefresh.ok) {
+                const data = await resAfterRefresh.json();
+                console.log("[DEBUG] User after refresh:", data.user);
+
+                // Kiểm tra dữ liệu trả về từ backend
+                if (!data.user || !data.user.role) {
+                  console.error("Thông tin người dùng không hợp lệ:", data);
+                  logout();
+                  return;
+                }
+
+                const updatedUser = data.user;
+
+                // Lưu trữ lại thông tin user vào localStorage
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                setUser(updatedUser);
+
+                // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
+                if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
+                  if (currentPath !== window.location.pathname) {
+                    router.push(currentPath); // Chỉ chuyển hướng nếu cần
+                  }
+                } else if (updatedUser.role === "admin") {
+                  router.push("/admin/dashboard");
+                } else {
+                  router.push("/");
+                }
+              } else {
+                logout();
+              }
+            }
           } else {
-            console.warn("Access token expired or invalid. Logging out...");
+            console.warn("Unexpected error, logging out...");
             logout();
           }
         } catch (error) {
@@ -78,7 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
-  }, [logout]);
+  }, [logout, refreshAccessToken, router]);
 
   const login = useCallback((userData: User, accessToken: string) => {
     localStorage.setItem("user", JSON.stringify(userData));
