@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
-import { logout } from "@/lib/api"; // Import hàm logout
+import { logout } from "@/lib/api";
 
 const menuItems = [
   { name: "Trang Chủ", path: "/admin", subMenu: [] },
@@ -75,7 +75,7 @@ const menuItems = [
   },
   {
     name: "Đăng Xuất",
-    path: "logout", // Dùng path đặc biệt để xử lý riêng
+    path: "logout", 
     subMenu: [],
   },
 ];

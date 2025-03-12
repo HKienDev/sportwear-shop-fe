@@ -4,6 +4,7 @@ import { useCart } from "@/app/context/CartContext";
 import { useCustomer } from "@/app/context/CustomerContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Swal from "sweetalert2"; // Import SweetAlert2
 import { usePaymentMethod } from "@/app/context/PaymentMethodContext"; // Import usePaymentMethod
 
 interface CartItem {
@@ -95,16 +96,25 @@ export default function OrderActions() {
 
       clearCart();
 
-      // Hiển thị popup thông báo
-      window.alert("Đơn hàng đã được tạo thành công!"); // Popup thông báo
-      window.location.reload(); // Làm mới trang
+      // Hiển thị popup thông báo với SweetAlert2
+      Swal.fire({
+        title: "Thành công!",
+        text: "Đơn hàng đã được tạo thành công!",
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        window.location.reload(); // Làm mới trang sau khi nhấn OK
+      });
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
-      if (error instanceof Error) {
-        alert(error.message || "Đã có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.");
-      } else {
-        alert("Đã có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.");
-      }
+
+      // Hiển thị popup lỗi với SweetAlert2
+      Swal.fire({
+        title: "Lỗi!",
+        text: error instanceof Error ? error.message : "Đã có lỗi xảy ra khi tạo đơn hàng.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setIsLoading(false);
     }
