@@ -2,6 +2,18 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     let accessToken = localStorage.getItem("accessToken");
     console.log("[fetchWithAuth] Access Token ban đầu:", accessToken);
 
+    // Nếu không có accessToken, thử làm mới token
+    if (!accessToken) {
+        console.warn("Access Token không tồn tại, đang refresh...");
+        const newAccessToken = await refreshAccessToken();
+        if (!newAccessToken) {
+            console.error("Refresh Token không hợp lệ, đăng xuất...");
+            logout();
+            return null;
+        }
+        accessToken = newAccessToken;
+    }
+
     const headers: HeadersInit = {
         Authorization: `Bearer ${accessToken}`,
         ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -10,6 +22,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
     options.headers = headers;
     let response = await fetch(url, options);
+
+    console.log("[fetchWithAuth] Response status:", response.status);
 
     if (response.status === 401) {
         console.warn("Access Token hết hạn, đang refresh...");
@@ -40,9 +54,9 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 async function refreshAccessToken(): Promise<string | null> {
     try {
         console.log("[refreshAccessToken] Gọi API refresh...");
-        const response = await fetch("/api/auth/refresh", {
+        const response = await fetch("http://localhost:4000/api/auth/refresh", {
             method: "POST",
-            credentials: "include",
+            credentials: "include", // Đọc refreshToken từ cookies
         });
 
         console.log("[refreshAccessToken] Kết quả:", response.status);
@@ -56,7 +70,7 @@ async function refreshAccessToken(): Promise<string | null> {
         console.log("[refreshAccessToken] Access Token mới:", data.accessToken);
 
         if (data.accessToken) {
-            localStorage.setItem("accessToken", data.accessToken);
+            localStorage.setItem("accessToken", data.accessToken); // Lưu accessToken mới
             return data.accessToken;
         }
     } catch (error) {
@@ -70,7 +84,7 @@ export async function logout() {
     localStorage.removeItem("accessToken");
 
     try {
-        await fetch("/api/auth/logout", {
+        await fetch("http://localhost:4000/auth/logout", { // Đảm bảo URL đúng với BE
             method: "POST",
             credentials: "include", // Quan trọng để BE xóa refreshToken
         });

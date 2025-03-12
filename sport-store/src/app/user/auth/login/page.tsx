@@ -30,6 +30,7 @@ const LoginPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include", // Đọc refreshToken từ cookies
       });
 
       if (!res.ok) {
@@ -40,17 +41,18 @@ const LoginPage = () => {
       const responseData = await res.json();
       console.log("🚀 API Login Response:", responseData); // Debug API response
 
-      const { user, accessToken, refreshToken } = responseData;
+      const { user, accessToken } = responseData;
 
       if (!accessToken) {
         throw new Error("Không nhận được accessToken từ API");
       }
 
-      // Lưu token vào localStorage và đảm bảo đã lưu thành công
+      // Lưu accessToken vào localStorage
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      // Lưu user vào localStorage
+      localStorage.setItem("user", JSON.stringify(user));
 
-      console.log("✅ Đã lưu accessToken:", localStorage.getItem("accessToken")); // Debug token
+      console.log("✅ Đã lưu accessToken:", localStorage.getItem("accessToken"));
 
       // Cập nhật user vào AuthContext
       setUser(user);

@@ -4,6 +4,7 @@ import { useCart } from "@/app/context/CartContext";
 import { useCustomer } from "@/app/context/CustomerContext";
 import { useState } from "react";
 import Swal from "sweetalert2"; // Import SweetAlert2
+import { useRouter } from "next/navigation"; // Import useRouter
 import { usePaymentMethod } from "@/app/context/PaymentMethodContext"; // Import usePaymentMethod
 
 interface CartItem {
@@ -17,13 +18,15 @@ interface CartItem {
 
 export default function OrderActions() {
   const { clearCart, cartItems } = useCart(); // Lấy cartItems từ CartContext
-  const { customer } = useCustomer(); // Lấy customer từ CustomerContext
+  const { customer, resetCustomer } = useCustomer(); // Lấy customer và resetCustomer từ CustomerContext
   const [isLoading, setIsLoading] = useState(false);
   const { paymentMethod } = usePaymentMethod(); // Sử dụng usePaymentMethod
+  const router = useRouter(); // Sử dụng useRouter
 
   // Xử lý khi nhấn "Hủy Bỏ"
   const handleCancel = () => {
-    window.location.reload(); // Làm mới trang
+    resetCustomer(); // Reset thông tin khách hàng
+    clearCart(); // Reset giỏ hàng
   };
 
   // Xử lý khi nhấn "Tạo Đơn Hàng"
@@ -137,7 +140,7 @@ export default function OrderActions() {
         icon: "success",
         confirmButtonText: "OK",
       }).then(() => {
-        window.location.reload(); // Làm mới trang sau khi nhấn OK
+        router.push("/admin/orders/list"); // Chuyển hướng về trang danh sách đơn hàng
       });
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
