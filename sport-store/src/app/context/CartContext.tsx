@@ -14,8 +14,8 @@ interface CartItem {
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, size: string | undefined, color: string | undefined, quantity: number) => void;
+  removeFromCart: (id: string, size: string | undefined, color: string | undefined) => void;
   clearCart: () => void;
 }
 
@@ -26,29 +26,60 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Thêm sản phẩm vào giỏ
   const addToCart = (item: CartItem) => {
+    console.log("Adding product to cart:", item); // Thêm log ở đây
+
+    // Kiểm tra giá trị của item.id
+    if (!item.id) {
+      console.error("Invalid cart item (missing id):", item);
+      throw new Error("Giá trị id của sản phẩm không hợp lệ");
+    }
+
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem.id === item.id);
+      const existingItem = prev.find(
+        (cartItem) =>
+          cartItem.id === item.id &&
+          cartItem.size === item.size &&
+          cartItem.color === item.color
+      );
+
       if (existingItem) {
         return prev.map((cartItem) =>
-          cartItem.id === item.id
+          cartItem.id === item.id &&
+          cartItem.size === item.size &&
+          cartItem.color === item.color
             ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
             : cartItem
         );
       }
+
       return [...prev, item];
     });
   };
 
   // Cập nhật số lượng sản phẩm
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (
+    id: string,
+    size: string | undefined,
+    color: string | undefined,
+    quantity: number
+  ) => {
     setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === id && item.size === size && item.color === color
+          ? { ...item, quantity }
+          : item
+      )
     );
   };
 
   // Xóa sản phẩm khỏi giỏ
-  const removeFromCart = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (id: string, size: string | undefined, color: string | undefined) => {
+    setCartItems((prev) =>
+      prev.filter(
+        (item) =>
+          !(item.id === id && item.size === size && item.color === color)
+      )
+    );
   };
 
   // Xóa toàn bộ giỏ hàng

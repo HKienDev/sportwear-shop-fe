@@ -1,18 +1,20 @@
 "use client";
 
 import { useCustomer } from "@/app/context/CustomerContext";
-import { useCart } from "@/app/context/CartContext"; // Import useCart
+import { useCart } from "@/app/context/CartContext";
 
 interface Product {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  size?: string;
+  color?: string;
 }
 
 export default function OrderPreview() {
   const { customer } = useCustomer();
-  const { cartItems } = useCart(); // Sử dụng cartItems từ context
+  const { cartItems } = useCart();
 
   const getFullAddress = () => {
     const { province, district, ward, address } = customer;
@@ -46,6 +48,7 @@ export default function OrderPreview() {
             <tr className="bg-gray-100">
               <th className="border border-gray-200 p-2 text-left">ID</th>
               <th className="border border-gray-200 p-2 text-left">Tên sản phẩm</th>
+              <th className="border border-gray-200 p-2 text-left">Phân loại</th>
               <th className="border border-gray-200 p-2 text-right">Đơn giá</th>
               <th className="border border-gray-200 p-2 text-center">SL</th>
               <th className="border border-gray-200 p-2 text-right">Thành tiền</th>
@@ -54,10 +57,17 @@ export default function OrderPreview() {
           <tbody>
             {cartItems.length > 0 ? (
               cartItems.map((item: Product) => (
-                <tr key={item.id} className="border border-gray-200">
+                <tr
+                  key={`${item.id}-${item.size || "none"}-${item.color || "none"}`}
+                  className="border border-gray-200"
+                >
                   <td className="border border-gray-200 p-2">#{item.id}</td>
                   <td className="border border-gray-200 p-2 text-blue-600 underline cursor-pointer">
                     {item.name}
+                  </td>
+                  <td className="border border-gray-200 p-2">
+                    {item.size && <div>Size: {item.size}</div>}
+                    {item.color && <div>Màu: {item.color}</div>}
                   </td>
                   <td className="border border-gray-200 p-2 text-right font-semibold">
                     {item.price.toLocaleString()} VND
@@ -70,7 +80,7 @@ export default function OrderPreview() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={6} className="p-4 text-center text-gray-500">
                   Chưa có sản phẩm nào trong giỏ hàng
                 </td>
               </tr>

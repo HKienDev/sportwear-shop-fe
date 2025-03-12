@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useCart } from "@/app/context/CartContext"; // Import useCart
+import { useCart } from "@/app/context/CartContext";
+import { usePaymentMethod } from "@/app/context/PaymentMethodContext"; // Import usePaymentMethod
 
 interface Product {
   id: string;
@@ -14,19 +15,16 @@ interface Product {
 }
 
 export default function OrderProducts() {
-  const [products, setProducts] = useState<Product[]>([]); // State cục bộ để hiển thị danh sách
+  const [products, setProducts] = useState<Product[]>([]);
   const [newProductId, setNewProductId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [voucher, setVoucher] = useState("");
-  const [shipping, setShipping] = useState("GIAO HÀNG TIẾT KIỆM");
-  const [payment, setPayment] = useState("MOMO");
   const [error, setError] = useState<string | null>(null);
+  const { paymentMethod, setPaymentMethod } = usePaymentMethod(); // Sử dụng usePaymentMethod
 
-  const { addToCart, removeFromCart } = useCart(); // Sử dụng removeFromCart từ CartContext
+  const { addToCart, removeFromCart } = useCart();
 
-  // Thay thế hàm mock bằng API thực tế
   const fetchProduct = async (id: string): Promise<Product | null> => {
     try {
       const response = await fetch(`http://localhost:4000/api/products/${id}`);
@@ -40,8 +38,9 @@ export default function OrderProducts() {
       }
 
       const productData = await response.json();
+      console.log("Fetched product data:", productData);
       return {
-        id: productData._id, // Thay bằng field ID từ backend
+        id: productData._id,
         name: productData.name,
         price: productData.price,
         quantity: 1,
@@ -66,7 +65,6 @@ export default function OrderProducts() {
         return;
       }
 
-      // Thêm sản phẩm vào giỏ hàng (CartContext)
       addToCart({
         ...product,
         quantity: quantity,
@@ -74,12 +72,18 @@ export default function OrderProducts() {
         color: selectedColor || undefined,
       });
 
-      // Cập nhật state cục bộ để hiển thị danh sách
-      const existingProduct = products.find((p) => p.id === newProductId);
+      const existingProduct = products.find(
+        (p) =>
+          p.id === newProductId &&
+          p.size === selectedSize &&
+          p.color === selectedColor
+      );
       if (existingProduct) {
         setProducts(
           products.map((p) =>
-            p.id === newProductId
+            p.id === newProductId &&
+            p.size === selectedSize &&
+            p.color === selectedColor
               ? { ...p, quantity: p.quantity + quantity }
               : p
           )
@@ -96,7 +100,6 @@ export default function OrderProducts() {
         ]);
       }
 
-      // Reset form
       setNewProductId("");
       setQuantity(1);
       setSelectedSize("");
@@ -108,12 +111,13 @@ export default function OrderProducts() {
     }
   };
 
-  const removeProduct = (id: string) => {
-    // Xóa sản phẩm khỏi CartContext
-    removeFromCart(id);
-
-    // Xóa sản phẩm khỏi state cục bộ
-    setProducts(products.filter((p) => p.id !== id));
+  const removeProduct = (id: string, size?: string, color?: string) => {
+    removeFromCart(id, size, color);
+    setProducts(
+      products.filter(
+        (p) => !(p.id === id && p.size === size && p.color === color)
+      )
+    );
   };
 
   const totalPrice = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
@@ -174,12 +178,27 @@ export default function OrderProducts() {
         </button>
       </div>
 
+      {/* Dropdown chọn phương thức thanh toán */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Phương thức thanh toán:
+        </label>
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)} // Cập nhật paymentMethod
+          className="border border-gray-300 px-3 py-2 rounded w-full"
+        >
+          <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+          <option value="Stripe">Thanh toán qua Stripe</option>
+        </select>
+      </div>
+
       {/* Danh sách sản phẩm */}
       {products.length > 0 && (
         <div className="mb-6">
           {products.map((product) => (
             <div
-              key={product.id}
+              key={`${product.id}-${product.size || "none"}-${product.color || "none"}`}
               className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2"
             >
               <div>
@@ -196,7 +215,7 @@ export default function OrderProducts() {
                 <X
                   size={18}
                   className="cursor-pointer hover:text-red-500"
-                  onClick={() => removeProduct(product.id)} // Gọi hàm removeProduct
+                  onClick={() => removeProduct(product.id, product.size, product.color)}
                 />
               </div>
             </div>
@@ -209,46 +228,6 @@ export default function OrderProducts() {
           </div>
         </div>
       )}
-
-      {/* Voucher */}
-      <div className="mb-4 flex items-center gap-2">
-        <input
-          type="text"
-          value={voucher}
-          onChange={(e) => setVoucher(e.target.value)}
-          placeholder="Nhập mã giảm giá"
-          className="border border-gray-300 px-3 py-2 w-full rounded"
-        />
-        <button className="bg-black text-white px-4 py-2 rounded-lg font-medium">
-          + Áp dụng
-        </button>
-      </div>
-
-      {/* Vận chuyển */}
-      <div className="mb-4">
-        <select
-          value={shipping}
-          onChange={(e) => setShipping(e.target.value)}
-          className="border border-gray-300 px-3 py-2 w-full rounded"
-        >
-          <option>GIAO HÀNG TIẾT KIỆM</option>
-          <option>GHN</option>
-          <option>Viettel Post</option>
-        </select>
-      </div>
-
-      {/* Thanh toán */}
-      <div className="mb-4">
-        <select
-          value={payment}
-          onChange={(e) => setPayment(e.target.value)}
-          className="border border-gray-300 px-3 py-2 w-full rounded"
-        >
-          <option>MOMO</option>
-          <option>COD</option>
-          <option>Chuyển khoản</option>
-        </select>
-      </div>
     </div>
   );
 }
