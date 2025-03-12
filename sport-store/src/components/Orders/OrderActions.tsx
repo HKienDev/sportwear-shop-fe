@@ -2,7 +2,6 @@
 
 import { useCart } from "@/app/context/CartContext";
 import { useCustomer } from "@/app/context/CustomerContext";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Swal from "sweetalert2"; // Import SweetAlert2
 import { usePaymentMethod } from "@/app/context/PaymentMethodContext"; // Import usePaymentMethod
@@ -19,20 +18,57 @@ interface CartItem {
 export default function OrderActions() {
   const { clearCart, cartItems } = useCart(); // Lấy cartItems từ CartContext
   const { customer } = useCustomer(); // Lấy customer từ CustomerContext
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { paymentMethod } = usePaymentMethod(); // Sử dụng usePaymentMethod
 
   // Xử lý khi nhấn "Hủy Bỏ"
   const handleCancel = () => {
-    clearCart(); // Xóa toàn bộ giỏ hàng
-    router.push("/"); // Điều hướng về trang chủ (hoặc trang khác tùy ý)
+    window.location.reload(); // Làm mới trang
   };
 
   // Xử lý khi nhấn "Tạo Đơn Hàng"
   const handleCreateOrder = async () => {
-    setIsLoading(true);
     try {
+      // Kiểm tra thông tin khách hàng
+      if (!customer.name || !customer.phone || !customer.address || !customer.province?.name) {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Vui lòng nhập đầy đủ thông tin khách hàng.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return; // Ngừng xử lý nếu thông tin không đầy đủ
+      }
+
+      // Kiểm tra giỏ hàng
+      if (cartItems.length === 0) {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return; // Ngừng xử lý nếu giỏ hàng trống
+      }
+
+      setIsLoading(true);
+
+      // Chuẩn hóa số điện thoại
+      const normalizedPhone = customer.phone.replace(/\s+/g, "").trim();
+
+      // Kiểm tra SĐT với server
+      const checkPhoneResponse = await fetch(`http://localhost:4000/api/users/phone/${normalizedPhone}`);
+      const phoneData = await checkPhoneResponse.json();
+
+      let userId = null;
+      if (!checkPhoneResponse.ok) {
+        throw new Error(phoneData.message || "Lỗi kiểm tra SĐT");
+      }
+
+      if (phoneData.exists) {
+        userId = phoneData.userId; // Lấy ID của user nếu tồn tại
+      }
+
       // Log dữ liệu cartItems để kiểm tra
       console.log("Cart Items trước khi tạo đơn hàng:", cartItems);
 
@@ -40,10 +76,6 @@ export default function OrderActions() {
       if (!token) {
         throw new Error("Bạn cần đăng nhập để tạo đơn hàng");
       }
-
-      // Kiểm tra kiểu dữ liệu của cartItems
-      console.log("Type of cartItems:", typeof cartItems);
-      console.log("First item in cartItems:", cartItems[0]);
 
       // Tính tổng giá tiền
       const totalPrice = cartItems.reduce(
@@ -63,13 +95,15 @@ export default function OrderActions() {
         })),
         paymentMethod: paymentMethod, // Sử dụng giá trị từ usePaymentMethod
         shippingAddress: {
-          fullName: customer.name || "Khách hàng", // Lấy từ customer hoặc giá trị mặc định
-          phone: customer.phone || "Chưa cung cấp", // Lấy từ customer hoặc giá trị mặc định
-          address: customer.address || "Chưa cung cấp", // Lấy từ customer hoặc giá trị mặc định
-          city: customer.province?.name || "Chưa cung cấp", // Lấy từ customer hoặc giá trị mặc định
+          fullName: customer.name,
+          phone: normalizedPhone, // Gửi số điện thoại đã chuẩn hóa
+          address: customer.address,
+          city: customer.province?.name,
           postalCode: "700000", // Giá trị mặc định
         },
         totalPrice: totalPrice, // Thêm trường totalPrice
+        user: userId, // Thêm userId nếu có
+        phone: normalizedPhone, // Thêm số điện thoại vào req.body
       };
 
       // Log orderData để kiểm tra
@@ -96,7 +130,7 @@ export default function OrderActions() {
 
       clearCart();
 
-      // Hiển thị popup thông báo với SweetAlert2
+      // Hiển thị popup thông báo thành công
       Swal.fire({
         title: "Thành công!",
         text: "Đơn hàng đã được tạo thành công!",
@@ -108,7 +142,7 @@ export default function OrderActions() {
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
 
-      // Hiển thị popup lỗi với SweetAlert2
+      // Hiển thị popup lỗi
       Swal.fire({
         title: "Lỗi!",
         text: error instanceof Error ? error.message : "Đã có lỗi xảy ra khi tạo đơn hàng.",
