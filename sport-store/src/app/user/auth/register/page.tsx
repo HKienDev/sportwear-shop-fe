@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -44,25 +44,26 @@ const RegisterTemplate = () => {
     try {
       const newUser = { username, email, password };
   
-      await axios.post('http://localhost:4000/api/auth/register', newUser, {
+      const response = await axios.post('http://localhost:4000/api/auth/register', newUser, {
         headers: { 'Content-Type': 'application/json' },
       });
   
-      // Lưu email vào localStorage
-      localStorage.setItem('registerEmail', email);
-  
-      alert('Xác thực đăng ký...');
-      window.location.href = '/user/auth/otp-verify-register';
+      if (response.status === 201) {
+        // Lưu email vào localStorage
+        localStorage.setItem('registerEmail', email);
+        alert(response.data.message); // Hiển thị thông báo từ BE
+        window.location.href = '/user/auth/otp-verify-register';
+      }
     } catch (err: unknown) {
       console.error('Lỗi khi gọi API:', err);
   
-      if (err instanceof Error && 'response' in err && err.response && typeof err.response === 'object') {
-        const response = err.response as { status?: number };
+      if (axios.isAxiosError(err) && err.response) {
+        const { status, data } = err.response;
   
-        if (response.status === 401) {
-          setError('Bạn không có quyền truy cập. Vui lòng kiểm tra lại.');
+        if (status === 400 && data.message === 'Email đã tồn tại') {
+          setError('Email này đã được sử dụng. Vui lòng chọn email khác.');
         } else {
-          setError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+          setError(data.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
         }
       } else {
         setError('Lỗi không xác định. Vui lòng thử lại sau.');
