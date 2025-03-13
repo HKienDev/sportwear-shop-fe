@@ -112,7 +112,7 @@ export default function OrdersPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Danh sách đơn hàng</h1>
+      <h1 className="text-2xl font-bold mb-4">DANH SÁCH ĐƠN HÀNG</h1>
 
       {/* Thanh tìm kiếm & Bộ lọc */}
       <div className="flex justify-between items-center mb-4">
