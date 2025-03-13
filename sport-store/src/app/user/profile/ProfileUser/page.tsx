@@ -25,82 +25,80 @@ const UserProfile = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
 
-  const fetchUserData = async (forceUpdate = false) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const accessToken = localStorage.getItem("accessToken") ?? "";
-      if (!accessToken) {
-        setError("Vui lòng đăng nhập để xem thông tin.");
-        setLoading(false);
-        return;
-      }
-
-      if (!forceUpdate) {
-        const cachedUserData = localStorage.getItem("userData");
-        if (cachedUserData) {
-          const parsedData = JSON.parse(cachedUserData);
-          console.log("[DEBUG] Dữ liệu user từ localStorage:", parsedData);
-          setUser(parsedData);
-          setTempUser({ ...parsedData });
-          setLoading(false);
-          return; // Không gọi API nếu đã có dữ liệu
-        }
-      }
-
-      const res = await fetch(`http://localhost:4000/user/profile`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        setError("Không thể kết nối với server hoặc phiên đăng nhập hết hạn.");
-        setLoading(false);
-        return;
-      }
-
-      const data = await res.json();
-      console.log("[DEBUG] Dữ liệu từ API profile:", data);
-
-      if (!data || (!data.user && !data)) {
-        setError("Dữ liệu không hợp lệ từ server.");
-        setLoading(false);
-        return;
-      }
-
-      const userObject = data.user || data;
-      const userData = {
-        fullName: userObject.fullName ?? userObject.username ?? "",
-        username: userObject.username ?? "",
-        email: userObject.email ?? "",
-        phone: userObject.phone ?? "",
-        city: userObject.city ?? "",
-        district: userObject.district ?? "",
-        ward: userObject.ward ?? "",
-        address: userObject.address ?? "",
-      };
-
-      // Cập nhật state ngay lập tức
-      setUser(userData);
-      setTempUser({ ...userData });
-
-      // Lưu vào localStorage
-      localStorage.setItem("userData", JSON.stringify(userData));
-    } catch (error) {
-      console.error("[ERROR] Lỗi khi tải hồ sơ người dùng:", error);
-      setError("Có lỗi xảy ra khi tải thông tin. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-      fetchUserData();
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        
+        const accessToken = localStorage.getItem("accessToken") ?? "";
+        console.log("[DEBUG] Access Token từ localStorage:", accessToken);
+  
+        if (!accessToken) {
+          console.warn("[WARNING] Không tìm thấy accessToken.");
+          setError("Vui lòng đăng nhập để xem thông tin.");
+          setLoading(false);
+          return;
+        }
+  
+        const res = await fetch("http://localhost:4000/user/profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Thêm dòng này để gửi cookie nếu cần
+        });
+  
+        console.log("[DEBUG] Response status:", res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("[ERROR] Server Response:", errorText);
+          setError("Không thể kết nối với server hoặc phiên đăng nhập hết hạn.");
+          setLoading(false);
+          return;
+        }
+  
+        const data = await res.json();
+        console.log("[DEBUG] Dữ liệu user:", data);
+  
+        // Kiểm tra cấu trúc dữ liệu
+        if (!data || (!data.user && !data)) {
+          console.error("[ERROR] API không trả về dữ liệu hợp lệ");
+          setError("Dữ liệu không hợp lệ từ server.");
+          setLoading(false);
+          return;
+        }
+  
+        // Kiểm tra nếu data trực tiếp là user object
+        const userObject = data.user || data;
+        
+        const userData = {
+          fullName: userObject.fullName ?? userObject.username ?? "",
+          username: userObject.username ?? "",
+          email: userObject.email ?? "",
+          phone: userObject.phone ?? "",
+          city: userObject.city ?? "",
+          district: userObject.district ?? "",
+          ward: userObject.ward ?? "",
+          address: userObject.address ?? "",
+        };
+  
+        console.log("[DEBUG] userData đã xử lý:", userData);
+        
+        setUser(userData);
+        setTempUser({...userData});
+  
+      } catch (error) {
+        console.error("[ERROR] Lỗi khi tải hồ sơ người dùng:", error);
+        setError("Có lỗi xảy ra khi tải thông tin. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchUserData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,75 +109,65 @@ const UserProfile = () => {
   };
 
   const handleRequestUpdate = async () => {
-    if (!tempUser) {
-      alert("Không có dữ liệu để cập nhật!");
-      return;
+  if (!tempUser) {
+    alert("Không có dữ liệu để cập nhật!");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) throw new Error("Token không tồn tại!");
+
+    const userId = getUserIdFromToken(token);
+    if (!userId) throw new Error("Không tìm thấy userId từ token!");
+
+    const updateData = {
+      userId: userId,
+      ...tempUser,
+      email: tempUser.email
+    };
+
+    console.log("[DEBUG] Dữ liệu gửi lên:", updateData);
+
+    const res = await fetch("http://localhost:4000/api/auth/request-update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+      credentials: "include",
+    });
+
+    console.log("[DEBUG] Response status:", res.status);
+    console.log("[DEBUG] Response headers:", res.headers);
+
+    const contentType = res.headers.get("content-type");
+
+    if (!res.ok) {
+      const errorText = await res.text(); // Lấy nội dung lỗi server trả về
+      console.error("[ERROR] Server Response:", errorText);
+      throw new Error(`Lỗi ${res.status}: ${errorText}`);
     }
-  
-    try {
-      setLoading(true);
-      setError("");
 
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Token không tồn tại!");
-  
-      const userId = getUserIdFromToken(token);
-      if (!userId) throw new Error("Không tìm thấy userId từ token!");
-  
-      if (!tempUser.email?.trim()) {
-        throw new Error("Email không được để trống!");
-      }
-  
-      const updateData = {
-        userId,
-        ...tempUser,
-        email: tempUser.email.trim(),
-      };
-  
-      console.log("[DEBUG] Dữ liệu gửi lên:", updateData);
-  
-      const res = await fetch("http://localhost:4000/api/auth/request-update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-        credentials: "include",
-      });
-
-      console.log("[DEBUG] Response status:", res.status);
-      console.log("[DEBUG] Response headers:", res.headers);
-  
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("[ERROR] Server Response:", errorText);
-        throw new Error(`Lỗi ${res.status}: ${errorText}`);
-      }
-
-      let data;
-      const contentType = res.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const responseText = await res.text();
-        console.error("[ERROR] Phản hồi không phải JSON:", responseText);
-        throw new Error("Server trả về phản hồi không hợp lệ (không phải JSON)");
-      }
-  
-      console.log("[DEBUG] Phản hồi từ request-update:", data);
-  
-      setShowOtpModal(true);
-      setOtpError("");
-    } catch (error) {
-      console.error("[ERROR] Lỗi khi gửi yêu cầu cập nhật:", error);
-      alert(`Lỗi: ${error instanceof Error ? error.message : "Không thể gửi yêu cầu cập nhật"}`);
-    } finally {
-      setLoading(false);
+    // Kiểm tra nếu response có JSON
+    if (!contentType || !contentType.includes("application/json")) {
+      const responseText = await res.text();
+      console.error("[ERROR] Phản hồi không phải JSON:", responseText);
+      throw new Error("Server trả về phản hồi không hợp lệ (không phải JSON)");
     }
-  };
-  
+
+    const data = await res.json();
+    console.log("[DEBUG] Phản hồi từ request-update:", data);
+
+    setShowOtpModal(true);
+    setOtpError("");
+  } catch (error) {
+    console.error("[ERROR] Lỗi khi gửi yêu cầu cập nhật:", error);
+    alert(`Lỗi: ${error instanceof Error ? error.message : "Không thể gửi yêu cầu cập nhật"}`);
+  }
+};
+
   const handleOtpSubmit = async () => {
     try {
       if (!otp || otp.length !== 6) {
@@ -195,6 +183,7 @@ const UserProfile = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("Token không tồn tại!");
 
+      // Gửi OTP lên server để xác thực và cập nhật
       const res = await fetch("http://localhost:4000/api/auth/update-user", {
         method: "PUT",
         headers: {
@@ -203,58 +192,68 @@ const UserProfile = () => {
         },
         body: JSON.stringify({
           email: tempUser.email,
-          otp: otp,
+          otp: otp
         }),
-        credentials: "include",
+        credentials: "include", // Thêm dòng này để gửi cookie nếu cần
       });
 
-      if (!res.ok) {
-        throw new Error("Lỗi khi xác thực OTP");
+      const responseText = await res.text();
+      console.log("[DEBUG] Update user raw response:", responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("[ERROR] Không thể parse JSON response:", e);
+        throw new Error("Phản hồi từ server không hợp lệ");
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Lỗi khi xác thực OTP");
+      }
+
       console.log("[DEBUG] Cập nhật thành công:", data);
-
-      // Gọi API lấy dữ liệu mới từ backend
-      await fetchUserData(true);
-
-      setSuccessMessage("Cập nhật thông tin thành công!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-
+      
+      // Cập nhật thông tin người dùng trong state
+      if (tempUser) {
+        setUser({...tempUser});
+      }
+      
+      // Đóng modal OTP và reset form
       setShowOtpModal(false);
       setOtp("");
       setIsEditing(false);
+      
+      // Hiển thị thông báo thành công
+      setSuccessMessage("Cập nhật thông tin thành công!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      
     } catch (error) {
       console.error("[ERROR] Lỗi khi xác thực OTP:", error);
       setOtpError(error instanceof Error ? error.message : "Lỗi xác thực OTP");
     }
   };
-  
-  // Hàm lấy userId từ token JWT (Đã tối ưu)
-  const getUserIdFromToken = (token: string): string => {
+
+  // Hàm để lấy userId từ token JWT
+  const getUserIdFromToken = (token: string) => {
     try {
-      const parts = token.split(".");
+      // Giả định token có dạng: header.payload.signature
+      const parts = token.split('.');
       if (parts.length !== 3) {
         console.error("[ERROR] Token không đúng định dạng JWT");
         return "";
       }
-  
+      
       const payload = parts[1];
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-  
-      let jsonPayload;
-      try {
-        jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split("")
-            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-        );
-      } catch (decodeError) {
-        console.error("[ERROR] Lỗi khi decode Base64:", decodeError);
-        return "";
-      }
-  
+      // Base64url decode
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
       const decodedPayload = JSON.parse(jsonPayload);
       return decodedPayload.userId || decodedPayload.id || decodedPayload.sub || "";
     } catch (error) {
@@ -265,7 +264,7 @@ const UserProfile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setTempUser(user ? {...user} : null); 
+    setTempUser(user ? {...user} : null); // Reset về giá trị ban đầu với clone
   };
 
   if (loading) return <p>Loading...</p>;
