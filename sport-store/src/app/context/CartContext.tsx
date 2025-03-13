@@ -26,9 +26,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Thêm sản phẩm vào giỏ
   const addToCart = (item: CartItem) => {
-    console.log("Adding product to cart:", item); // Thêm log ở đây
-
-    // Kiểm tra giá trị của item.id
     if (!item.id) {
       console.error("Invalid cart item (missing id):", item);
       throw new Error("Giá trị id của sản phẩm không hợp lệ");
@@ -42,21 +39,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           cartItem.color === item.color
       );
 
-      if (existingItem) {
-        return prev.map((cartItem) =>
-          cartItem.id === item.id &&
-          cartItem.size === item.size &&
-          cartItem.color === item.color
-            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
-            : cartItem
-        );
-      }
-
-      return [...prev, item];
+      return existingItem
+        ? prev.map((cartItem) =>
+            cartItem.id === item.id &&
+            cartItem.size === item.size &&
+            cartItem.color === item.color
+              ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
+              : cartItem
+          )
+        : [...prev, item];
     });
   };
 
-  // Cập nhật số lượng sản phẩm
+  // Cập nhật số lượng
   const updateQuantity = (
     id: string,
     size: string | undefined,
@@ -72,7 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  // Xóa sản phẩm khỏi giỏ
+  // Xóa sản phẩm
   const removeFromCart = (id: string, size: string | undefined, color: string | undefined) => {
     setCartItems((prev) =>
       prev.filter(
@@ -84,7 +79,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Xóa toàn bộ giỏ hàng
   const clearCart = () => {
-    setCartItems([]);
+    setCartItems([]); // ✅ Reset về mảng rỗng
   };
 
   return (
