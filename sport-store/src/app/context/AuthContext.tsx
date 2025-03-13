@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 router.push(currentPath); // Chỉ chuyển hướng nếu cần
               }
             } else if (updatedUser.role === "admin") {
-              router.push("/admin/dashboard");
+              router.push("/admin");
             } else {
               router.push("/");
             }
@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     router.push(currentPath); // Chỉ chuyển hướng nếu cần
                   }
                 } else if (updatedUser.role === "admin") {
-                  router.push("/admin/dashboard");
+                  router.push("/admin");
                 } else {
                   router.push("/");
                 }
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
 
     if (userData.role === "admin") {
-      router.push("/admin/dashboard");
+      router.push("/admin");
     } else {
       router.push("/");
     }
