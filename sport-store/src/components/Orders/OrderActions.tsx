@@ -16,7 +16,11 @@ interface CartItem {
   color?: string;
 }
 
-export default function OrderActions() {
+interface OrderActionsProps {
+  onResetForm?: () => void; // Thêm prop reset form
+}
+
+export default function OrderActions({ onResetForm }: OrderActionsProps){
   const { clearCart, cartItems } = useCart(); // Lấy cartItems từ CartContext
   const { customer, resetCustomer } = useCustomer(); // Lấy customer và resetCustomer từ CustomerContext
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +31,7 @@ export default function OrderActions() {
   const handleCancel = () => {
     resetCustomer(); // Reset thông tin khách hàng
     clearCart(); // Reset giỏ hàng
+    onResetForm?.();
   };
 
   // Xử lý khi nhấn "Tạo Đơn Hàng"
@@ -132,7 +137,8 @@ export default function OrderActions() {
       console.log("Đơn hàng đã được tạo:", data);
 
       clearCart();
-
+      resetCustomer();
+      onResetForm?.();
       // Hiển thị popup thông báo thành công
       Swal.fire({
         title: "Thành công!",

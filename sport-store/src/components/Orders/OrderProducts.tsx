@@ -3,31 +3,22 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
-import { usePaymentMethod } from "@/app/context/PaymentMethodContext"; // Import usePaymentMethod
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  size?: string;
-  color?: string;
-}
+import { usePaymentMethod } from "@/app/context/PaymentMethodContext";
 
 export default function OrderProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [newProductId, setNewProductId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { paymentMethod, setPaymentMethod } = usePaymentMethod(); // Sử dụng usePaymentMethod
 
-  const { addToCart, removeFromCart } = useCart();
+  const { cartItems, addToCart, removeFromCart, clearCart } = useCart();
+  const { paymentMethod, setPaymentMethod } = usePaymentMethod();
 
-  const fetchProduct = async (id: string): Promise<Product | null> => {
+  const fetchProduct = async (id: string) => {
     try {
       const response = await fetch(`http://localhost:4000/api/products/${id}`);
+      
       if (!response.ok) {
         if (response.status === 404) {
           setError("Sản phẩm không tồn tại!");
@@ -36,98 +27,88 @@ export default function OrderProducts() {
         }
         return null;
       }
-
+  
       const productData = await response.json();
-      console.log("Fetched product data:", productData);
+  
+      if (!productData._id || !productData.name || !productData.price) {
+        setError("Dữ liệu sản phẩm không hợp lệ!");
+        return null;
+      }
+  
       return {
         id: productData._id,
         name: productData.name,
         price: productData.price,
         quantity: 1,
       };
-    } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
+    } catch {
       setError("Đã có lỗi xảy ra khi kết nối API");
       return null;
     }
   };
 
   const addProduct = async () => {
+    // Kiểm tra các trường bắt buộc
     if (!newProductId) {
       setError("Vui lòng nhập ID sản phẩm");
       return;
     }
 
-    try {
-      const product = await fetchProduct(newProductId);
-      if (!product) {
-        setError("Sản phẩm không tồn tại!");
-        return;
-      }
-
-      addToCart({
-        ...product,
-        quantity: quantity,
-        size: selectedSize || undefined,
-        color: selectedColor || undefined,
-      });
-
-      const existingProduct = products.find(
-        (p) =>
-          p.id === newProductId &&
-          p.size === selectedSize &&
-          p.color === selectedColor
-      );
-      if (existingProduct) {
-        setProducts(
-          products.map((p) =>
-            p.id === newProductId &&
-            p.size === selectedSize &&
-            p.color === selectedColor
-              ? { ...p, quantity: p.quantity + quantity }
-              : p
-          )
-        );
-      } else {
-        setProducts([
-          ...products,
-          {
-            ...product,
-            quantity: quantity,
-            size: selectedSize || undefined,
-            color: selectedColor || undefined,
-          },
-        ]);
-      }
-
-      setNewProductId("");
-      setQuantity(1);
-      setSelectedSize("");
-      setSelectedColor("");
-      setError(null);
-    } catch (err) {
-      console.error("Lỗi khi thêm sản phẩm:", err);
-      setError("Đã có lỗi xảy ra khi thêm sản phẩm");
+    if (!selectedSize) {
+      setError("Vui lòng chọn size");
+      return;
     }
+
+    if (!selectedColor) {
+      setError("Vui lòng chọn màu");
+      return;
+    }
+
+    if (quantity < 1) {
+      setError("Số lượng phải lớn hơn 0");
+      return;
+    }
+
+    setError(null);
+
+    const product = await fetchProduct(newProductId);
+    if (!product) return;
+
+    addToCart({
+      ...product,
+      quantity: quantity,
+      size: selectedSize,
+      color: selectedColor,
+    });
+
+    setNewProductId("");
+    setQuantity(1);
+    setSelectedSize("");
+    setSelectedColor("");
   };
 
-  const removeProduct = (id: string, size?: string, color?: string) => {
-    removeFromCart(id, size, color);
-    setProducts(
-      products.filter(
-        (p) => !(p.id === id && p.size === size && p.color === color)
-      )
-    );
+  const handleCancel = () => {
+    clearCart();
+    setNewProductId("");
+    setQuantity(1);
+    setSelectedSize("");
+    setSelectedColor("");
+    setError(null);
   };
 
-  const totalPrice = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
+  const totalPrice = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <div className="w-full md:w-1/2 p-4 bg-white rounded-lg shadow-md">
       <h2 className="text-lg font-semibold mb-4">SẢN PHẨM ĐƠN HÀNG</h2>
 
       {/* Thông báo lỗi */}
-      {error && <div className="bg-red-100 text-red-600 p-2 mb-4 rounded">{error}</div>}
+      {error && (
+        <div className="bg-red-100 text-red-600 p-2 mb-4 rounded">{error}</div>
+      )}
 
       {/* Form thêm sản phẩm */}
       <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -141,7 +122,10 @@ export default function OrderProducts() {
         <input
           type="number"
           value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            setQuantity(value < 1 ? 1 : value); // Ngăn số lượng < 1
+          }}
           placeholder="Số lượng"
           className="border border-gray-300 px-3 py-2 rounded col-span-1"
           min={1}
@@ -172,7 +156,13 @@ export default function OrderProducts() {
         </select>
         <button
           onClick={addProduct}
-          className="bg-black text-white px-4 py-2 rounded-lg font-medium col-span-1 md:col-span-1"
+          disabled={
+            !newProductId || // ID trống
+            !selectedSize || // Size chưa chọn
+            !selectedColor || // Màu chưa chọn
+            quantity < 1 // Số lượng không hợp lệ
+          }
+          className="bg-black text-white px-4 py-2 rounded-lg font-medium col-span-1 md:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           + Thêm Sản Phẩm
         </button>
@@ -185,7 +175,7 @@ export default function OrderProducts() {
         </label>
         <select
           value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)} // Cập nhật paymentMethod
+          onChange={(e) => setPaymentMethod(e.target.value)}
           className="border border-gray-300 px-3 py-2 rounded w-full"
         >
           <option value="COD">Thanh toán khi nhận hàng (COD)</option>
@@ -194,28 +184,28 @@ export default function OrderProducts() {
       </div>
 
       {/* Danh sách sản phẩm */}
-      {products.length > 0 && (
+      {cartItems.length > 0 ? (
         <div className="mb-6">
-          {products.map((product) => (
+          {cartItems.map((item) => (
             <div
-              key={`${product.id}-${product.size || "none"}-${product.color || "none"}`}
+              key={`${item.id}-${item.size || "none"}-${item.color || "none"}`}
               className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2"
             >
               <div>
-                <div className="font-medium">{product.name}</div>
+                <div className="font-medium">{item.name}</div>
                 <div className="text-sm text-gray-500">
-                  {product.size && `Size: ${product.size} `}
-                  {product.color && `Màu: ${product.color}`}
+                  {item.size && `Size: ${item.size} `}
+                  {item.color && `Màu: ${item.color}`}
                 </div>
               </div>
               <div className="flex items-center">
                 <span className="mr-4">
-                  {product.quantity} x {product.price.toLocaleString()}đ
+                  {item.quantity} x {item.price.toLocaleString()}đ
                 </span>
                 <X
                   size={18}
                   className="cursor-pointer hover:text-red-500"
-                  onClick={() => removeProduct(product.id, product.size, product.color)}
+                  onClick={() => removeFromCart(item.id, item.size, item.color)}
                 />
               </div>
             </div>
@@ -227,7 +217,19 @@ export default function OrderProducts() {
             </span>
           </div>
         </div>
+      ) : (
+        <p>Không có sản phẩm nào trong đơn hàng</p>
       )}
+
+      {/* Button Hủy Bỏ */}
+      <div className="flex justify-end mt-6">
+        <button
+          onClick={handleCancel}
+          className="px-6 py-2 bg-gray-300 text-black rounded-lg font-medium hover:bg-gray-400 transition"
+        >
+          Hủy Bỏ
+        </button>
+      </div>
     </div>
   );
 }

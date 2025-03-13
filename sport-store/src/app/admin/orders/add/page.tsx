@@ -1,34 +1,40 @@
+// src/app/admin/orders/add/page.tsx
 "use client";
 
+import { useState } from "react";
 import CustomerInfo from "@/components/Orders/CustomerInfo";
 import OrderPreview from "@/components/Orders/OrderPreview";
 import OrderProducts from "@/components/Orders/OrderProducts";
-import OrderActions from "@/components/Orders/OrderActions"; // Import OrderActions
-import { PaymentMethodProvider } from "@/app/context/PaymentMethodContext"; // Import PaymentMethodProvider
+import OrderActions from "@/components/Orders/OrderActions";
+import { PaymentMethodProvider } from "@/app/context/PaymentMethodContext";
 
 export default function AddOrderPage() {
-  return (
-    <PaymentMethodProvider> {/* Bọc trong PaymentMethodProvider */}
-      <div className="p-6">
-        {/* Header: Tiêu đề + Buttons */}
-        <div className="flex justify-between items-center mb-6">
-          {/* Tiêu đề */}
-          <h1 className="text-2xl font-bold">THÊM ĐƠN HÀNG</h1>
+  const [formKey, setFormKey] = useState(0);
 
-          {/* Buttons */}
-          <OrderActions />
+  const handleResetForm = () => {
+    setFormKey(prev => prev + 1);
+  };
+
+  return (
+    <PaymentMethodProvider>
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">THÊM ĐƠN HÀNG</h1>
+          <OrderActions onResetForm={handleResetForm} />
         </div>
 
-        {/* Nội dung chính */}
+        {/* Nội dung */}
         <div className="flex gap-6 mt-6 items-start">
-          {/* Phần bên trái: Thông tin khách hàng và xem trước đơn hàng */}
+          {/* Cột trái */}
           <div className="w-1/2 flex flex-col gap-6">
-            <CustomerInfo />
-            <OrderPreview />
+            {/* Thêm tiền tố unique cho key */}
+            <CustomerInfo key={`customer-${formKey}`} /> 
+            <OrderPreview key={`preview-${formKey}`} />
           </div>
 
-          {/* Phần bên phải: Chọn sản phẩm */}
-          <OrderProducts />
+          {/* Cột phải */}
+          <OrderProducts key={`products-${formKey}`} />
         </div>
       </div>
     </PaymentMethodProvider>
