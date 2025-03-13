@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search } from "lucide-react";
+import { Search, Mail, Phone, Trash } from "lucide-react"; // Thêm các icon từ Lucide
 import { useRouter } from "next/navigation";
 
 interface Customer {
@@ -13,6 +13,7 @@ interface Customer {
   totalOrders: number;
   totalSpent: number;
   status: string;
+  role: string;
 }
 
 export default function CustomerList() {
@@ -59,23 +60,23 @@ export default function CustomerList() {
         throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data: Customer[] = await response.json(); // Sử dụng kiểu Customer
       console.log("Dữ liệu từ API:", data);
 
-      // Backend trả về mảng users, không phải object với trường customers
       if (!Array.isArray(data)) {
         console.error("Dữ liệu từ API không hợp lệ:", data);
         setCustomers([]);
         return;
       }
 
-      // Tính toán tổng số trang (giả sử mỗi trang hiển thị 10 khách hàng)
-      const totalPagesCount = Math.ceil(data.length / 10);
+      // Lọc danh sách khách hàng chỉ giữ lại những người có role là "user"
+      const filteredData = data.filter((customer: Customer) => customer.role === "user");
+
+      const totalPagesCount = Math.ceil(filteredData.length / 10);
       setTotalPages(totalPagesCount);
 
-      // Hiển thị trang đầu tiên
       setCurrentPage(1);
-      setCustomers(data.slice(0, 10));
+      setCustomers(filteredData.slice(0, 10)); // Chỉ lấy 10 khách hàng đầu tiên
     } catch (error) {
       console.error("Lỗi khi lấy danh sách khách hàng:", error);
     }
@@ -148,10 +149,18 @@ export default function CustomerList() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </form>
+        {/* Nút Xóa */}
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          onClick={handleDeleteSelected}
+          disabled={selectedCustomers.length === 0}
+        >
+          <Trash size={16} className="inline mr-2" /> Xóa
+        </button>
       </div>
 
       {/* Bảng danh sách khách hàng */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
+      <div className="bg-white rounded-lg shadow overflow-x-auto relative">
         <table className="min-w-full">
           <thead>
             <tr className="border-b">
@@ -182,8 +191,17 @@ export default function CustomerList() {
                         <div className="font-medium">{customer.name || "Không có tên"}</div>
                         <div className="text-gray-500 text-sm">{customer.lastActivity || "Chưa có hoạt động"}</div>
                     </div>
-                    </td>
-                  <td className="p-4">{customer.email} / {customer.phone}</td>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center mb-1">
+                      <Mail size={16} className="mr-2 text-gray-500" />
+                      <span>{customer.email}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Phone size={16} className="mr-2 text-gray-500" />
+                      <span>{customer.phone}</span>
+                    </div>
+                  </td>
                   <td className="p-4">{customer.totalOrders}</td>
                   <td className="p-4">{customer.totalSpent}</td>
                   <td className="p-4">
@@ -210,13 +228,6 @@ export default function CustomerList() {
 
       {/* Phân trang */}
       <div className="mt-4 flex items-center justify-between">
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded-lg"
-          onClick={handleDeleteSelected}
-          disabled={selectedCustomers.length === 0}
-        >
-          Xóa đã chọn
-        </button>
         <div className="flex space-x-1">
           {/* Nút quay về trang trước */}
           <button
