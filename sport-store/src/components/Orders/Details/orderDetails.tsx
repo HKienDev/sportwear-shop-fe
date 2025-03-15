@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
-import OrderHeader from "./orderHeader00";
+import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
 import ShippingAddress from "./shippingAddress";
 import ShippingMethod from "./shippingMethod";
-import OrderTable from "./orderTable00";
+import OrderTable from "./orderTable";
 
 // Định nghĩa trạng thái đơn hàng
 export enum OrderStatus {

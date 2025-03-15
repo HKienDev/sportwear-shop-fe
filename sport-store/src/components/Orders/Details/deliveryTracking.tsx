@@ -1,6 +1,6 @@
 "use client";
 import { Loader2 } from "lucide-react";
-import { OrderStatus, orderStatusInfo } from "./orderDetails00";
+import { OrderStatus, orderStatusInfo } from "./orderDetails";
 
 interface DeliveryTrackingProps {
   status: OrderStatus;
