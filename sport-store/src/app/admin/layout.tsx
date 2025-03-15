@@ -38,12 +38,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         // Giữ nguyên trang hiện tại nếu người dùng là admin
-        if (!currentPath.startsWith("/Admin")) {
-          router.push("/Admin");
+        if (!currentPath.startsWith("/admin")) {
+          router.push("/admin");
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
-        router.push("/User/Auth/Login"); // Chuyển hướng về trang đăng nhập
+        router.push("/user/auth/login"); // Chuyển hướng về trang đăng nhập
       }
     };
 

@@ -213,7 +213,7 @@ export default function ForgotPasswordCombined() {
       localStorage.removeItem('forgotPasswordEmail');
       
       // Chuyển hướng đến trang xác nhận
-      router.push('/User/Auth/ForgotPasswordSucces');
+      router.push('/user/auth/forgotPasswordSucces');
     } catch (error) {
       console.error("Chi tiết lỗi:", error);
       
@@ -348,7 +348,7 @@ export default function ForgotPasswordCombined() {
         </form>
 
         <div className="text-center">
-          <Link href="/User/Auth/Login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
+          <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>

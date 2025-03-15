@@ -59,7 +59,7 @@ const LoginPage = () => {
 
       // Điều hướng dựa trên role
       if (user.role === 'admin') {
-        router.push('/Admin');
+        router.push('/admin');
       } else {
         router.push("/");
       }

@@ -280,7 +280,7 @@ export default function CartPage() {
                     
                     <button
                         className="w-full bg-black text-white rounded-md py-3 text-sm mt-4 uppercase"
-                        onClick={() => router.push("/User/Checkout")}
+                        onClick={() => router.push("/user/checkout")}
                         >
                         Tiếp tục
                     </button>

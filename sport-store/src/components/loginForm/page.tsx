@@ -25,7 +25,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
 
       <div className="text-center text-sm">
         <span className="text-gray-600">Chưa có tài khoản? </span>
-        <a href="/User/Auth/Register" className="font-bold text-red-600 hover:text-blue-500">
+        <a href="/user/auth/register" className="font-bold text-red-600 hover:text-blue-500">
           Đăng ký ngay
         </a>
       </div>
@@ -71,7 +71,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
         </div>
 
         <div className="flex items-center justify-end">
-          <a href="/User/Auth/ForgotPasswordEmail" className="text-base text-black hover:text-blue-500">
+          <a href="/user/auth/forgotPasswordEmail" className="text-base text-black hover:text-blue-500">
             Quên mật khẩu?
           </a>
         </div>

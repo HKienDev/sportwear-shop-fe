@@ -146,7 +146,7 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
         icon: "success",
         confirmButtonText: "OK",
       }).then(() => {
-        router.push("/Admin/Orders/List"); // Chuyển hướng về trang danh sách đơn hàng
+        router.push("/admin/orders/list"); // Chuyển hướng về trang danh sách đơn hàng
       });
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);

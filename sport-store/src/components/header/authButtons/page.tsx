@@ -22,7 +22,7 @@ const AuthButtons = () => {
   };
 
   const handleProfile = () => {
-    router.push("/User/Profile");
+    router.push("/user/profile");
   };
 
   return (
@@ -32,7 +32,7 @@ const AuthButtons = () => {
           <button onClick={handleLogin} className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold">
             Đăng Nhập
           </button>
-          <Link href="/User/Auth/Register">
+          <Link href="/user/auth/register">
             <button className="text-lg px-5 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-semibold shadow-md">
               Đăng Ký
             </button>
@@ -48,7 +48,7 @@ const AuthButtons = () => {
             className="rounded-full"
           />
           <span className="font-semibold">{user.name} (Admin)</span>
-          <Link href="/Admin">
+          <Link href="/admin">
             <button className="text-lg px-5 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold shadow-md">
               Quản lý
             </button>
