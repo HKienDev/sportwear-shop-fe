@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Toaster } from "@/Components/UI/toaster";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { CustomerProvider } from "@/app/context/CustomerContext";
 import { CartProvider } from "@/app/context/CartContext"; // Import CartProvider
