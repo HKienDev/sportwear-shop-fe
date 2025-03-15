@@ -1,7 +1,7 @@
 "use client";
 
-import { useCustomer } from "@/app/context/customerContext";
-import { useCart } from "@/app/context/cartContext";
+import { useCustomer } from "@/app/Context00/customerContext";
+import { useCart } from "@/app/Context00/cartContext";
 
 interface Product {
   id: string;

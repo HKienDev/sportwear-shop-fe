@@ -1,11 +1,11 @@
 "use client";
 
-import { useCart } from "@/app/context/cartContext";
-import { useCustomer } from "@/app/context/customerContext";
+import { useCart } from "@/app/Context00/cartContext";
+import { useCustomer } from "@/app/Context00/customerContext";
 import { useState } from "react";
 import Swal from "sweetalert2"; 
 import { useRouter } from "next/navigation";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext";
+import { usePaymentMethod } from "@/app/Context00/paymentMethodContext";
 
 interface CartItem {
   id: string;
