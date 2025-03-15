@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/app/Context00/authContext";
-import { CustomerProvider } from "@/app/Context/customerContext";
-import { CartProvider } from "@/app/Context/cartContext"; // Import CartProvider
+import { Toaster } from "@/Components/UI/toaster";
+import { AuthProvider } from "@/app/context0/AuthContext";
+import { CustomerProvider } from "@/app/context0/CustomerContext";
+import { CartProvider } from "@/app/context0/CartContext"; // Import CartProvider
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./globals.css";
 
