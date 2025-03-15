@@ -6,7 +6,7 @@ import Topbar from "@/Components/AdminLayout/topbar";
 import Footer from "@/Components/AdminLayout/footer";
 import { fetchWithAuth } from "@/Lib/api";
 
-export default function AdminLayout({ chilren }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {

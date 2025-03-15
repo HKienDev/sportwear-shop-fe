@@ -1,4 +1,3 @@
-// src/components/Orders/Details/OrderHeader.tsx
 interface OrderHeaderProps {
   orderId: string;
   customerId: string;

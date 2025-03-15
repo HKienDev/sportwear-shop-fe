@@ -1,4 +1,3 @@
-// src/components/Orders/Details/OrderTable.tsx
 import Image from "next/image";
 import { Package } from "lucide-react";
 
