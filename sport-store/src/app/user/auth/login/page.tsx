@@ -39,7 +39,7 @@ const LoginPage = () => {
       }
 
       const responseData = await res.json();
-      console.log("🚀 API Login Response:", responseData); // Debug API response
+      console.log("API Login Response:", responseData); // Debug API response
 
       const { user, accessToken } = responseData;
 
@@ -52,14 +52,14 @@ const LoginPage = () => {
       // Lưu user vào localStorage
       localStorage.setItem("user", JSON.stringify(user));
 
-      console.log("✅ Đã lưu accessToken:", localStorage.getItem("accessToken"));
+      console.log("Đã lưu accessToken:", localStorage.getItem("accessToken"));
 
       // Cập nhật user vào AuthContext
       setUser(user);
 
       // Điều hướng dựa trên role
       if (user.role === 'admin') {
-        router.push('/admin');
+        router.push('/Admin');
       } else {
         router.push("/");
       }
