@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 
 const ShoppingCartButton = () => (
-  <Link href="/User/Carts">
+  <Link href="/user/carts">
     <div className="relative flex items-center gap-3 text-lg font-semibold text-black cursor-pointer">
       <ShoppingCart className="w-6 h-6" />
       <div>Giỏ hàng</div>

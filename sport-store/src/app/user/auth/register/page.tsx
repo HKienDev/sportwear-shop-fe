@@ -52,7 +52,7 @@ const RegisterTemplate = () => {
         // Lưu email vào localStorage
         localStorage.setItem('registerEmail', email);
         alert(response.data.message); // Hiển thị thông báo từ BE
-        window.location.href = '/User/Auth/OtpVerifyRegister';
+        window.location.href = '/user/auth/otpVerifyRegister';
       }
     } catch (err: unknown) {
       console.error('Lỗi khi gọi API:', err);
@@ -172,7 +172,7 @@ const RegisterTemplate = () => {
 
               <div className="text-center text-sm">
                 <span className="text-gray-600">Đã có tài khoản? </span>
-                <Link href="/User/Auth/Login" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
                   Đăng nhập ngay
                 </Link>
               </div>

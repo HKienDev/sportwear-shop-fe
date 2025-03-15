@@ -92,5 +92,5 @@ export async function logout() {
         console.error("Lỗi khi gọi API logout:", error);
     }
 
-    window.location.href = "/User/Auth/Login"; // Chuyển về trang đăng nhập
+    window.location.href = "/user/auth/login"; // Chuyển về trang đăng nhập
 }
