@@ -1,6 +1,6 @@
 "use client";
 
-import OrderDetails from "@/components/Orders/Details/orderDetails";
+import OrderDetails from "@/components/Orders/Details/orderDetails00";
 
 const OrderDetailsPage = () => {
   return (
