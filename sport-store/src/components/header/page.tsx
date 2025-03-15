@@ -5,10 +5,10 @@ import { Search, Phone, Menu } from "lucide-react";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import debounce from "lodash/debounce";
 import Image from "next/image";
-import ContactInfo from "./contactInfo0/page";
-import ShoppingCartButton from "./shoppingCartButton0/page";
-import AuthButtons from "./authButtons0/page";
-import { useAuth } from "@/app/context0/AuthContext";
+import ContactInfo from "./contactInfo/page";
+import ShoppingCartButton from "./shoppingCartButton/page";
+import AuthButtons from "./authButtons/page";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface Product {
   id: number;

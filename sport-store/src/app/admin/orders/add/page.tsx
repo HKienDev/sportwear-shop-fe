@@ -5,7 +5,7 @@ import CustomerInfo from "@/Components/Orders/Add/customerInfo";
 import OrderPreview from "@/Components/Orders/Add/orderPreview";
 import OrderProducts from "@/Components/Orders/Add/orderProducts";
 import OrderActions from "@/Components/Orders/Add/orderActions";
-import { PaymentMethodProvider } from "@/app/context0/PaymentMethodContext";
+import { PaymentMethodProvider } from "@/app/context/PaymentMethodContext";
 
 export default function AddOrderPage() {
   const [formKey, setFormKey] = useState(0);
