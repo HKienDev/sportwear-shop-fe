@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCustomer, Location } from "@/app/context0/CustomerContext";
+import { useCustomer, Location } from "@/app/context/CustomerContext";
 import Input from "./input";
 import Select from "./select";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/app/context0/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
