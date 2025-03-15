@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/AdminLayout/sidebar";
 import Topbar from "@/components/AdminLayout/topbar";
 import Footer from "@/components/AdminLayout/footer";
-import { fetchWithAuth } from "@/Lib00/api";
+import { fetchWithAuth } from "@/Lib/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
