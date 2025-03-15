@@ -4,8 +4,8 @@
 import { useState } from 'react';
 import { Inter } from 'next/font/google';
 import Image from 'next/image';
-import Header from "@/components/Header/page";
-import Footer from "@/components/Footer/page";
+import Header from "@/components/header/page";
+import Footer from "@/components/footer/page";
 import { useRouter } from "next/navigation";
 
 const inter = Inter({ subsets: ['latin'] });

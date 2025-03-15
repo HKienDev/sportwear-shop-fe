@@ -1,9 +1,9 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/AdminLayout/Sidebar";
-import Topbar from "@/components/AdminLayout/Topbar";
-import Footer from "@/components/AdminLayout/Footer";
+import Sidebar from "@/components/adminlayout/Sidebar";
+import Topbar from "@/components/adminlayout/Topbar";
+import Footer from "@/components/adminlayout/Footer";
 import { fetchWithAuth } from "@/lib/api"; // Import fetchWithAuth để kiểm tra trạng thái đăng nhập
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import GoogleLoginButton from "@/components/GoogleLoginButton/page";
-import LoginForm from "@/components/LoginForm/page";
+import GoogleLoginButton from "@/components/googleloginbutton/page";
+import LoginForm from "@/components/loginform/page";
 import { useAuth } from "@/app/context/AuthContext";
 
 const LoginPage = () => {
