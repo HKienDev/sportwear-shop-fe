@@ -48,7 +48,7 @@ const AuthButtons = () => {
             className="rounded-full"
           />
           <span className="font-semibold">{user.name} (Admin)</span>
-          <Link href="/admin">
+          <Link href="/Admin">
             <button className="text-lg px-5 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold shadow-md">
               Quản lý
             </button>

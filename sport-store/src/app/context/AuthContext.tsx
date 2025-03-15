@@ -102,12 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(updatedUser);
 
             // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-            if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
+            if (updatedUser.role === "admin" && currentPath.startsWith("/Admin")) {
               if (currentPath !== window.location.pathname) {
                 router.push(currentPath); // Chỉ chuyển hướng nếu cần
               }
             } else if (updatedUser.role === "admin") {
-              router.push("/admin");
+              router.push("/Admin");
             } else {
               router.push("/");
             }
@@ -141,12 +141,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(updatedUser);
 
                 // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-                if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
+                if (updatedUser.role === "admin" && currentPath.startsWith("/Admin")) {
                   if (currentPath !== window.location.pathname) {
                     router.push(currentPath); // Chỉ chuyển hướng nếu cần
                   }
                 } else if (updatedUser.role === "admin") {
-                  router.push("/admin");
+                  router.push("/Admin");
                 } else {
                   router.push("/");
                 }
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
 
     if (userData.role === "admin") {
-      router.push("/admin");
+      router.push("/Admin");
     } else {
       router.push("/");
     }

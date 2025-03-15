@@ -38,8 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         // Giữ nguyên trang hiện tại nếu người dùng là admin
-        if (!currentPath.startsWith("/admin")) {
-          router.push("/admin");
+        if (!currentPath.startsWith("/Admin")) {
+          router.push("/Admin");
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);

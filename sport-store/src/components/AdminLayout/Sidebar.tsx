@@ -6,71 +6,71 @@ import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { logout } from "@/lib/api";
 
 const menuItems = [
-  { name: "Trang Chủ", path: "/admin", subMenu: [] },
+  { name: "Trang Chủ", path: "/Admin", subMenu: [] },
   {
     name: "Đơn Hàng",
-    path: "/admin/orders",
+    path: "/Admin/Orders",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/orders/list" },
-      { name: "Thêm Đơn Hàng", path: "/admin/orders/add" },
-      { name: "Chi Tiết", path: "/admin/orders/details" },
+      { name: "Danh Sách", path: "/Admin/Orders/List" },
+      { name: "Thêm Đơn Hàng", path: "/Admin/Orders/Add" },
+      { name: "Chi Tiết", path: "/Admin/Orders/Details" },
     ],
   },
   {
     name: "Sản Phẩm",
-    path: "/admin/products",
+    path: "/Admin/Products",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/products/list" },
-      { name: "Thêm Sản Phẩm", path: "/admin/products/add" },
-      { name: "Chi Tiết", path: "/admin/products/details" },
+      { name: "Danh Sách", path: "/Admin/Products/List" },
+      { name: "Thêm Sản Phẩm", path: "/Admin/Products/Add" },
+      { name: "Chi Tiết", path: "/Admin/Products/Details" },
     ],
   },
   {
     name: "Thể Loại",
-    path: "/admin/categories",
+    path: "/Admin/Categories",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/categories/list" },
-      { name: "Thêm Thể Loại", path: "/admin/categories/add" },
+      { name: "Danh Sách", path: "/Admin/Categories/List" },
+      { name: "Thêm Thể Loại", path: "/Admin/Categories/Add" },
     ],
   },
   {
     name: "Khuyến Mãi",
-    path: "/admin/promotions",
+    path: "/Admin/Promotions",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/promotions/list" },
-      { name: "Thêm Khuyến Mãi", path: "/admin/promotions/add" },
+      { name: "Danh Sách", path: "/Admin/Promotions/List" },
+      { name: "Thêm Khuyến Mãi", path: "/Admin/Promotions/Add" },
     ],
   },
   {
     name: "Khách Hàng",
-    path: "/admin/customers",
+    path: "/Admin/Customers",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/customers/list" },
-      { name: "Chi Tiết", path: "/admin/customers/details" },
+      { name: "Danh Sách", path: "/Admin/Customers/List" },
+      { name: "Chi Tiết", path: "/Admin/Customers/Details" },
     ],
   },
   {
     name: "Tài Khoản",
-    path: "/admin/accounts",
+    path: "/Admin/Accounts",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/accounts/list" },
-      { name: "Thêm Tài Khoản", path: "/admin/accounts/add" },
+      { name: "Danh Sách", path: "/Admin/Accounts/List" },
+      { name: "Thêm Tài Khoản", path: "/Admin/Accounts/Add" },
     ],
   },
   {
     name: "Tin Nhắn",
-    path: "/admin/messages",
+    path: "/Admin/Messages",
     subMenu: [
-      { name: "Danh Sách", path: "/admin/messages/list" },
-      { name: "Hội Thoại", path: "/admin/messages/conversation" },
+      { name: "Danh Sách", path: "/Admin/Messages/List" },
+      { name: "Hội Thoại", path: "/Admin/Messages/Conversation" },
     ],
   },
   {
     name: "Cấu Hình Hệ Thống",
-    path: "/admin/settings",
+    path: "/Admin/Settings",
     subMenu: [
-      { name: "Cài Đặt Chung", path: "/admin/settings/general" },
-      { name: "Bảo Mật", path: "/admin/settings/security" },
+      { name: "Cài Đặt Chung", path: "/Admin/Settings/General" },
+      { name: "Bảo Mật", path: "/Admin/Settings/Security" },
     ],
   },
   {
@@ -104,8 +104,8 @@ export default function Sidebar() {
         {menuItems.map((item) => {
           // Kiểm tra active
           const isActive =
-            (item.path === "/admin" && pathname === "/admin") ||
-            (item.path !== "/admin" && pathname.startsWith(item.path)) ||
+            (item.path === "/Admin" && pathname === "/Admin") ||
+            (item.path !== "/Admin" && pathname.startsWith(item.path)) ||
             item.subMenu.some((sub) => pathname === sub.path);
 
           const isOpen = openMenus[item.path] || item.subMenu.some((sub) => pathname === sub.path);
