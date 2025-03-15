@@ -1,9 +1,9 @@
 'use client';
 
-import Header from "@/components/Header/page";
-import Footer from "@/components/Footer/page";
-import ProfileUser from "@/components/ProfileUser/UserProfileForm";
-import MembershipTier from "@/components/MembershipTier/MembershipTier";
+import Header from "@/components/header/page";
+import Footer from "@/components/footer/page";
+import ProfileUser from "@/components/profileuser/UserProfileForm";
+import MembershipTier from "@/components/membershiptier/MembershipTier";
 
 export default function ProfilePage() {
   return (

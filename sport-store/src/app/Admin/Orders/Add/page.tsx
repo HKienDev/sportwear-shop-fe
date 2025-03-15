@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import CustomerInfo from "@/components/Orders/Add/customerInfo";
-import OrderPreview from "@/components/Orders/Add/orderPreview";
-import OrderProducts from "@/components/Orders/Add/orderProducts";
-import OrderActions from "@/components/Orders/Add/orderActions";
+import CustomerInfo from "@/Components/Orders/Add/customerInfo";
+import OrderPreview from "@/Components/Orders/Add/orderPreview";
+import OrderProducts from "@/Components/Orders/Add/orderProducts";
+import OrderActions from "@/Components/Orders/Add/orderActions";
 import { PaymentMethodProvider } from "@/app/Context/paymentMethodContext";
 
 export default function AddOrderPage() {

@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Header from "@/components/Header/page";
-import Footer from "@/components/Footer/page"; 
-import ProductList from "@/components/ProductList/page";
+import Header from "@/components/header/page";
+import Footer from "@/components/footer/page"; 
+import ProductList from "@/components/productlist/page";
 
 const HomePage = () => {
   return (

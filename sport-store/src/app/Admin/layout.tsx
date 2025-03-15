@@ -1,12 +1,12 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/AdminLayout/sidebar";
-import Topbar from "@/components/AdminLayout/topbar";
-import Footer from "@/components/AdminLayout/footer";
+import Sidebar from "@/Components/AdminLayout/sidebar";
+import Topbar from "@/Components/AdminLayout/topbar";
+import Footer from "@/Components/AdminLayout/footer";
 import { fetchWithAuth } from "@/Lib/api";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ chilren }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
