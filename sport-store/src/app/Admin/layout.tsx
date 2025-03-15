@@ -1,9 +1,9 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/AdminLayout/Sidebar";
-import Topbar from "@/components/AdminLayout/Topbar";
-import Footer from "@/components/AdminLayout/Footer";
+import Sidebar from "@/components/AdminLayout/sidebar";
+import Topbar from "@/components/AdminLayout/topbar";
+import Footer from "@/components/AdminLayout/footer";
 import { fetchWithAuth } from "@/lib/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
