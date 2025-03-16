@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Header from "@/components/header/page";
 import Footer from "@/components/footer/page"; 
-import ProductList from "@/components/productlist/page";
+import ProductList from "@/components/productList/page";
 
 const HomePage = () => {
   return (
