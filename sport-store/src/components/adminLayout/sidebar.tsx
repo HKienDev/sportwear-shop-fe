@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { logout } from "@/lib/api";
+import { ShoppingCart, List, Plus } from "lucide-react";
 
 const menuItems = [
   { name: "Trang Chủ", path: "/admin", subMenu: [] },
@@ -13,7 +14,6 @@ const menuItems = [
     subMenu: [
       { name: "Danh Sách", path: "/admin/orders/list" },
       { name: "Thêm Đơn Hàng", path: "/admin/orders/add" },
-      { name: "Chi Tiết", path: "/admin/orders/details" },
     ],
   },
   {

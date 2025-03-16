@@ -6,9 +6,11 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  discountPrice?: number;
   quantity: number;
   size?: string;
   color?: string;
+  image?: string;
 }
 
 interface CartContextType {

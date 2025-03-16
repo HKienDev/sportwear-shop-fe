@@ -15,10 +15,25 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  discountPrice?: number;
   quantity: number;
   size: string;
   color: string;
   image?: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  discountPrice?: number;
+  stock: number;
+  color: string[];
+  size: string[];
+  images: {
+    main: string;
+    sub: string[];
+  };
 }
 
 export default function OrderProducts() {
@@ -30,6 +45,11 @@ export default function OrderProducts() {
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
   const [error, setError] = useState("");
+  const [product, setProduct] = useState<Product | null>(null);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
 
   const fetchProduct = async (productId: string) => {
     try {
@@ -45,24 +65,65 @@ export default function OrderProducts() {
     }
   };
 
+  const handleProductIdChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const newProductId = e.target.value;
+    setProductId(newProductId);
+    setSize("");
+    setColor("");
+    setAvailableSizes([]);
+    setAvailableColors([]);
+    setProduct(null);
+
+    if (newProductId) {
+      try {
+        const productData = await fetchProduct(newProductId);
+        setProduct(productData);
+        setAvailableSizes(productData.size);
+        setAvailableColors(productData.color);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy thông tin sản phẩm");
+      }
+    }
+  };
+
   const handleAddProduct = async () => {
     if (!productId || !size || !color) {
       setError("Vui lòng điền đầy đủ thông tin sản phẩm");
       return;
     }
 
+    if (!product) {
+      setError("Không tìm thấy thông tin sản phẩm");
+      return;
+    }
+
+    // Kiểm tra size và color có hợp lệ không
+    if (!product.size.includes(size)) {
+      setError("Size không hợp lệ cho sản phẩm này");
+      return;
+    }
+
+    if (!product.color.includes(color)) {
+      setError("Màu sắc không hợp lệ cho sản phẩm này");
+      return;
+    }
+
+    // Kiểm tra số lượng tồn kho
+    if (quantity > product.stock) {
+      setError(`Số lượng trong kho chỉ còn ${product.stock}`);
+      return;
+    }
+
     try {
-      // Lấy thông tin sản phẩm từ API
-      const productData = await fetchProduct(productId);
-      
       const newItem: CartItem = {
         id: productId,
-        name: productData.name,
-        price: productData.price,
+        name: product.name,
+        price: product.price,
+        discountPrice: product.discountPrice,
         quantity,
         size,
         color,
-        image: productData.image
+        image: product.images.main
       };
 
       addToCart(newItem);
@@ -73,18 +134,40 @@ export default function OrderProducts() {
       setSize("");
       setColor("");
       setError("");
+      setProduct(null);
+      setAvailableSizes([]);
+      setAvailableColors([]);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi thêm sản phẩm");
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
-    setter(e.target.value);
-  };
-
   const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
     setQuantity(value < 1 ? 1 : value);
+  };
+
+  // Tính tổng tiền với giá khuyến mãi và mã giảm giá
+  const calculateTotal = () => {
+    const subtotal = cartItems.reduce((total, item) => {
+      const itemPrice = item.discountPrice || item.price;
+      return total + (itemPrice * item.quantity);
+    }, 0);
+    return subtotal - promoDiscount;
+  };
+
+  const handleApplyPromoCode = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/promos/check/${promoCode}`);
+      if (!response.ok) {
+        throw new Error("Mã khuyến mãi không hợp lệ");
+      }
+      const data = await response.json();
+      setPromoDiscount(data.discountAmount);
+      setError("");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi kiểm tra mã khuyến mãi");
+    }
   };
 
   return (
@@ -101,7 +184,7 @@ export default function OrderProducts() {
               <Input
                 id="productId"
                 value={productId}
-                onChange={(e) => handleInputChange(e, setProductId)}
+                onChange={handleProductIdChange}
                 placeholder="Nhập mã sản phẩm"
               />
             </div>
@@ -121,29 +204,68 @@ export default function OrderProducts() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="size">Kích thước</Label>
-              <Input
-                id="size"
-                value={size}
-                onChange={(e) => handleInputChange(e, setSize)}
-                placeholder="Nhập kích thước"
-              />
+              <Select value={size} onValueChange={setSize}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn kích thước" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSizes.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="color">Màu sắc</Label>
-              <Input
-                id="color"
-                value={color}
-                onChange={(e) => handleInputChange(e, setColor)}
-                placeholder="Nhập màu sắc"
-              />
+              <Select value={color} onValueChange={setColor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn màu sắc" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableColors.map((color) => (
+                    <SelectItem key={color} value={color}>
+                      {color}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          {product && (
+            <div className="text-sm text-gray-600">
+              <p>Sản phẩm: {product.name}</p>
+              <p>Giá: {product.discountPrice ? product.discountPrice.toLocaleString() : product.price.toLocaleString()} VNĐ</p>
+              <p>Tồn kho: {product.stock}</p>
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <Button onClick={handleAddProduct} className="w-full">
             Thêm sản phẩm
           </Button>
+        </div>
+
+        {/* Mã khuyến mãi */}
+        <div className="space-y-2">
+          <Label htmlFor="promoCode">Mã khuyến mãi</Label>
+          <div className="flex gap-2">
+            <Input
+              id="promoCode"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Nhập mã khuyến mãi"
+            />
+            <Button onClick={handleApplyPromoCode}>Áp dụng</Button>
+          </div>
+          {promoDiscount > 0 && (
+            <p className="text-sm text-green-600">
+              Giảm giá: {promoDiscount.toLocaleString()} VNĐ
+            </p>
+          )}
         </div>
 
         {/* Phương thức thanh toán */}
@@ -177,33 +299,55 @@ export default function OrderProducts() {
 
         {/* Danh sách sản phẩm */}
         <div className="space-y-4">
-          <h3 className="font-medium">Sản phẩm đã thêm</h3>
+          <h3 className="font-medium">Danh sách sản phẩm</h3>
           {cartItems.length === 0 ? (
-            <p className="text-sm text-gray-500">Chưa có sản phẩm nào</p>
+            <p className="text-gray-500">Chưa có sản phẩm nào</p>
           ) : (
             <div className="space-y-2">
-              {cartItems.map((item) => (
-                <div
-                  key={`${item.id}-${item.size}-${item.color}`}
-                  className="flex items-center justify-between p-2 border rounded-lg"
-                >
+              {cartItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {item.size} - {item.color} x {item.quantity}
+                    <p className="text-sm text-gray-600">
+                      Size: {item.size} | Màu: {item.color} | SL: {item.quantity}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFromCart(item.id, item.size, item.color)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {(item.discountPrice || item.price).toLocaleString()} VNĐ
+                    </span>
+                    <button
+                      onClick={() => removeFromCart(item.id, item.size, item.color)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+
+          {/* Tổng tiền */}
+          <div className="border-t pt-4">
+            <div className="flex justify-between text-sm">
+              <span>Tạm tính:</span>
+              <span>{cartItems.reduce((total, item) => {
+                const itemPrice = item.discountPrice || item.price;
+                return total + (itemPrice * item.quantity);
+              }, 0).toLocaleString()} VNĐ</span>
+            </div>
+            {promoDiscount > 0 && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Giảm giá:</span>
+                <span>-{promoDiscount.toLocaleString()} VNĐ</span>
+              </div>
+            )}
+            <div className="flex justify-between font-medium mt-2">
+              <span>Tổng cộng:</span>
+              <span>{calculateTotal().toLocaleString()} VNĐ</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

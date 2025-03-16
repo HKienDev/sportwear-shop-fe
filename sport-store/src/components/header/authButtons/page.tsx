@@ -41,7 +41,7 @@ const AuthButtons = () => {
       ) : user.role === "admin" ? (
         <div className="flex items-center gap-4">
           <Image
-            src={user.avatar || "/Cuoc.png"}
+            src={user.avatar || "/shoes.png"}
             alt="User Avatar"
             width={32}
             height={32}
@@ -63,7 +63,7 @@ const AuthButtons = () => {
       ) : (
         <div className="flex items-center gap-4">
           <Image
-            src={user.avatar || "/Cuoc.png"}
+            src={user.avatar || "/shoes.png"}
             alt="User Avatar"
             width={32}
             height={32}

@@ -1,35 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
 import ShippingAddress from "./shippingAddress";
 import ShippingMethod from "./shippingMethod";
 import OrderTable from "./orderTable";
+import { Order } from "@/types/order";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { toast } from "react-hot-toast";
 
 // Định nghĩa trạng thái đơn hàng
 export enum OrderStatus {
-  PENDING = "Chờ Xác Nhận",
-  CONFIRMED = "Đã Xác Nhận",
-  SHIPPED = "Đang Vận Chuyển",
-  DELIVERED = "Giao Thành Công",
+  PENDING = "pending",
+  PROCESSING = "processing",
+  SHIPPED = "shipped",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled"
 }
 
-// Mô tả chi tiết từng trạng thái (export object)
+// Mô tả chi tiết từng trạng thái
 export const orderStatusInfo = {
   [OrderStatus.PENDING]: {
     color: "text-amber-500",
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     icon: Clock,
-    nextStatus: OrderStatus.CONFIRMED,
+    nextStatus: OrderStatus.PROCESSING,
     buttonText: "Xác Nhận Đơn Hàng",
     buttonColor: "bg-blue-500 hover:bg-blue-600",
     description: "Đơn hàng đang chờ xác nhận từ nhân viên bán hàng",
     date: "13/03/2025",
     time: "22:07"
   },
-  [OrderStatus.CONFIRMED]: {
+  [OrderStatus.PROCESSING]: {
     color: "text-blue-500",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
@@ -65,47 +69,68 @@ export const orderStatusInfo = {
     date: "15/03/2025",
     time: "15:20"
   },
+  [OrderStatus.CANCELLED]: {
+    color: "text-red-500",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+    icon: Clock,
+    nextStatus: null,
+    buttonText: "",
+    buttonColor: "",
+    description: "Đơn hàng đã bị hủy",
+    date: "15/03/2025",
+    time: "15:20"
+  }
 };
 
-export default function OrderDetails() {
-  const [status, setStatus] = useState<OrderStatus>(OrderStatus.PENDING);
+interface OrderDetailsProps {
+  order: Order;
+}
+
+export default function OrderDetails({ order }: OrderDetailsProps) {
+  const [status, setStatus] = useState<string>(order.status);
   const [isLoading, setIsLoading] = useState(false);
-  const statusInfo = orderStatusInfo[status];
 
-  const handleChangeStatus = () => {
-    const nextStatus = statusInfo.nextStatus;
-    if (nextStatus) {
+  const handleChangeStatus = useCallback(async (newStatus: string) => {
+    if (!order || isLoading) return;
+
+    try {
       setIsLoading(true);
-      setTimeout(() => {
-        setStatus(nextStatus);
-        setIsLoading(false);
-      }, 800);
-    }
-  };
+      const response = await fetchWithAuth(
+        `/orders/admin/${order._id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
-  // Dữ liệu mẫu (sẽ thay thế bằng API sau này)
-  const orderItems = [
-    {
-      id: "1",
-      name: "Nike Air Zoom Mercurial Superfly X Elite FG",
-      category: "Giày Đá Banh",
-      color: "Đen",
-      quantity: 1,
-      price: 5200000,
-      imageUrl: "/shoes.png",
-    },
-    // ... các item khác
-  ];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+      }
+
+      toast.success("Cập nhật trạng thái thành công");
+      setStatus(newStatus);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [order, isLoading]);
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       {/* Header */}
       <OrderHeader
-        orderId="VJUSPORTRQFZNAE"
-        customerId="67cbbe4877860add29894c20"
-        lastUpdated="Thứ 7, Ngày 15 Tháng 03 Năm 2025"
+        orderId={order.shortId}
+        customerId={order.user}
+        lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={status}
-        paymentStatus={status === OrderStatus.DELIVERED ? "Đã thanh toán" : "Chưa thanh toán"}
+        paymentStatus={order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
       />
 
       {/* Delivery Tracking */}
@@ -118,23 +143,28 @@ export default function OrderDetails() {
       {/* Delivery Information */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <ShippingAddress
-          name="Hoàng Kiên"
-          address="Số 94, Đường Phú Mỹ, Thôn Phú Mỹ, Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội"
-          phone="0362195258"
+          name={order.shippingAddress.fullName}
+          address={order.shippingAddress.address}
+          phone={order.shippingAddress.phone}
+          city={order.shippingAddress.city}
+          district={order.shippingAddress.district}
+          ward={order.shippingAddress.ward}
+          postalCode={order.shippingAddress.postalCode}
         />
         <ShippingMethod
-          method="Giao hàng nhanh"
+          method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
-          trackingId="VJUSPORTRQFZNAE"
+          trackingId={order.shortId}
+          shippingMethod={order.shippingMethod?.method || "Vận chuyển thường"}
         />
       </div>
 
       {/* Order Table */}
       <OrderTable
-        items={orderItems}
-        shippingFee={30000}
-        discount={500000}
+        items={order.items}
+        shippingFee={order.shippingFee || 0}
+        discount={order.discount || 0}
       />
     </div>
   );
