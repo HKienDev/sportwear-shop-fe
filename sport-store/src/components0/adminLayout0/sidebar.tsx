@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
-import { logout } from "@/Lib/api";
+import { logout } from "@/lib0/api";
 
 const menuItems = [
   { name: "Trang Chủ", path: "/Admin", subMenu: [] },

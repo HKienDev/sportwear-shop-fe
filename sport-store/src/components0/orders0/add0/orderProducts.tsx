@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useCart } from "@/app/Context/CartContext";
-import { usePaymentMethod } from "@/app/Context/PaymentMethodContext";
+import { useCart } from "@/app/context/cartContext";
+import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 
 export default function OrderProducts() {
   const [newProductId, setNewProductId] = useState("");
