@@ -2,13 +2,17 @@ import Image from "next/image";
 import { Package } from "lucide-react";
 
 interface OrderItem {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+  };
   quantity: number;
   price: number;
-  imageUrl: string;
 }
 
 interface OrderTableProps {
@@ -35,8 +39,6 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sản phẩm</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Thể Loại</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Màu</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Số lượng</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Đơn giá</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thành tiền</th>
@@ -44,19 +46,23 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((item) => (
-              <tr key={item.id}>
+              <tr key={item.product._id}>
                 <td className="px-6 py-4 flex items-center space-x-4">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    width={50}
-                    height={50}
-                    className="rounded-md"
-                  />
-                  <span>{item.name}</span>
+                  <div className="relative w-[50px] h-[50px]">
+                    <Image
+                      src={item.product.images?.main || "/shoes.png"}
+                      alt={item.product.name}
+                      fill
+                      className="rounded-md object-cover"
+                      sizes="50px"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/shoes.png";
+                      }}
+                    />
+                  </div>
+                  <span>{item.product.name}</span>
                 </td>
-                <td className="px-6 py-4 text-center">{item.category}</td>
-                <td className="px-6 py-4 text-center">{item.color}</td>
                 <td className="px-6 py-4 text-center">{item.quantity}</td>
                 <td className="px-6 py-4 text-right">{item.price.toLocaleString()}₫</td>
                 <td className="px-6 py-4 text-right font-medium">
@@ -67,7 +73,7 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
           </tbody>
           <tfoot className="bg-gray-50">
             <tr>
-              <td colSpan={5} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
                 Tạm tính:
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
@@ -75,7 +81,7 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
               </td>
             </tr>
             <tr>
-              <td colSpan={5} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
                 Phí vận chuyển:
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
@@ -83,7 +89,7 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
               </td>
             </tr>
             <tr>
-              <td colSpan={5} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
                 Giảm giá:
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium text-red-500">
@@ -91,7 +97,7 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
               </td>
             </tr>
             <tr>
-              <td colSpan={5} className="px-6 py-4 text-right text-base font-bold text-gray-900">
+              <td colSpan={3} className="px-6 py-4 text-right text-base font-bold text-gray-900">
                 Tổng tiền:
               </td>
               <td className="px-6 py-4 text-right text-lg font-bold text-blue-600">

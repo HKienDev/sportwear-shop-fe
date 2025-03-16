@@ -1,4 +1,5 @@
 import { Order } from "@/types/order";
+import Link from "next/link";
 
 interface OrderListTableProps {
   orders: Order[];
@@ -48,7 +49,14 @@ export default function OrderListTable({
                   className="w-4 h-4"
                 />
               </td>
-              <td className="px-4 py-3 text-blue-500">{order.shortId}</td>
+              <td className="px-4 py-3">
+                <Link 
+                  href={`/admin/orders/details/${order._id}`}
+                  className="text-blue-500 hover:text-blue-700 hover:underline"
+                >
+                  {order.shortId}
+                </Link>
+              </td>
               <td className="px-4 py-3">{order.shippingAddress?.fullName || "Không có dữ liệu"}</td>
               <td className="px-4 py-3">{order.shippingAddress?.city || "Không có dữ liệu"}</td>
               <td className="px-4 py-3">{order.totalPrice.toLocaleString()} Vnđ</td>
@@ -58,7 +66,13 @@ export default function OrderListTable({
                   {order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
                 </span>
               </td>
-              <td className={`px-4 py-3 ${getStatusColor(order.status)}`}>{order.status}</td>
+              <td className={`px-4 py-3 ${getStatusColor(order.status)} font-medium`}>
+                {order.status === "pending" && "Chờ xác nhận"}
+                {order.status === "processing" && "Đang xử lý"}
+                {order.status === "shipped" && "Đang giao hàng"}
+                {order.status === "delivered" && "Giao hàng thành công"}
+                {order.status === "cancelled" && "Đã hủy"}
+              </td>
               <td className="px-4 py-3">{new Date(order.createdAt).toLocaleString("vi-VN")}</td>
             </tr>
           ))}

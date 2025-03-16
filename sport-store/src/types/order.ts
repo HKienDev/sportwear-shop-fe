@@ -3,7 +3,15 @@ export type Order = {
   shortId: string;
   user: string;
   items: {
-    product: { _id: string; name: string; price: number };
+    product: { 
+      _id: string; 
+      name: string; 
+      price: number;
+      images: {
+        main: string;
+        sub: string[];
+      };
+    };
     quantity: number;
     price: number;
   }[];
@@ -16,7 +24,14 @@ export type Order = {
     phone: string;
     address: string;
     city: string;
+    district: string;
+    ward: string;
     postalCode: string;
   };
+  shippingMethod?: {
+    method: string;
+  };
+  shippingFee?: number;
+  discount?: number;
   createdAt: string;
 }; 

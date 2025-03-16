@@ -88,31 +88,60 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
         throw new Error("Bạn cần đăng nhập để tạo đơn hàng");
       }
 
-      // Tạo orderData từ cartItems
-      const orderData = {
-        items: cartItems.map((item: CartItem) => ({
-          product: item.id,
+      // Lấy thông tin sản phẩm từ API
+      const productIds = cartItems.map(item => item.id);
+      const response = await fetch(`http://localhost:4000/api/products?ids=${productIds.join(",")}`);
+      if (!response.ok) {
+        throw new Error("Không thể lấy thông tin sản phẩm");
+      }
+      const products = await response.json();
+
+      // Tạo map sản phẩm để truy cập nhanh
+      const productMap = new Map(products.map(product => [product._id, product]));
+
+      // Tính tổng giá trị đơn hàng và tạo danh sách items
+      let totalPrice = 0;
+      const orderItems = cartItems.map(item => {
+        const product = productMap.get(item.id);
+        if (!product) {
+          throw new Error(`Không tìm thấy sản phẩm với ID ${item.id}`);
+        }
+        const itemPrice = (product.discountPrice || product.price) * item.quantity;
+        totalPrice += itemPrice;
+
+        return {
+          product: product._id,
           quantity: item.quantity,
-          price: item.discountPrice || item.price // Sử dụng giá khuyến mãi nếu có, không thì dùng giá gốc
-        })),
-        totalPrice: cartItems.reduce((total, item) => {
-          // Tính tổng tiền dựa trên giá khuyến mãi hoặc giá gốc
-          const itemPrice = item.discountPrice || item.price;
-          return total + (itemPrice * item.quantity);
-        }, 0),
+          price: product.discountPrice || product.price,
+        };
+      });
+
+      // Tạo orderData
+      const orderData = {
+        items: orderItems,
+        totalPrice: totalPrice,
         paymentMethod,
         paymentStatus: "pending",
         status: "pending",
         shippingMethod: {
-          method: shippingMethod,
-          expectedDate: "15/03/2024 - 17/03/2024",
-          courier: "Giao hàng nhanh",
-          trackingId: "GHN" + Date.now()
+          method: shippingMethod === "Express" ? "Vận chuyển nhanh" : 
+                 shippingMethod === "SameDay" ? "Vận chuyển trong ngày" : 
+                 "Vận chuyển thường",
+          expectedDate: shippingMethod === "Express" ? "1-2 ngày" :
+                       shippingMethod === "SameDay" ? "Trong ngày" :
+                       "3-5 ngày",
+          courier: shippingMethod === "Express" ? "Giao hàng nhanh" :
+                  shippingMethod === "SameDay" ? "Giao hàng trong ngày" :
+                  "Giao hàng tiêu chuẩn",
+          trackingId: `TRK${Date.now()}${Math.floor(Math.random() * 1000)}`
         },
         shippingAddress: {
           fullName: customer.name,
+          phone: customer.phone,
           address: customer.address,
           city: customer.province?.name || "",
+          district: customer.district?.name || "",
+          ward: customer.ward?.name || "",
           postalCode: "700000"
         },
         phone: normalizedPhone
