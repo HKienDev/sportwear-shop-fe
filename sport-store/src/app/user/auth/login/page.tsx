@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import GoogleLoginButton from "@/Components/GoogleLoginButton/page";
-import LoginForm from "@/Components/LoginForm/page";
-import { useAuth } from "@/app/context/authContext";
+import GoogleLoginButton from "@/components/googleLoginButton/page";
+import LoginForm from "@/components/loginForm/page";
+import { useAuth } from "@/app/context/AuthContext";
 
 const LoginPage = () => {
   const [error, setError] = useState("");
@@ -59,7 +59,7 @@ const LoginPage = () => {
 
       // Điều hướng dựa trên role
       if (user.role === 'admin') {
-        router.push('/Admin');
+        router.push('/admin');
       } else {
         router.push("/");
       }

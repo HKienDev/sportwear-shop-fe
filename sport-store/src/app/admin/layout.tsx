@@ -1,9 +1,9 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/Components/AdminLayout/sidebar";
-import Topbar from "@/Components/AdminLayout/topbar";
-import Footer from "@/Components/AdminLayout/footer";
+import Sidebar from "@/components/adminLayout/sidebar";
+import Topbar from "@/components/adminLayout/topbar";
+import Footer from "@/components/adminLayout/footer";
 import { fetchWithAuth } from "@/lib/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -38,8 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         // Giữ nguyên trang hiện tại nếu người dùng là admin
-        if (!currentPath.startsWith("/Admin")) {
-          router.push("/Admin");
+        if (!currentPath.startsWith("/admin")) {
+          router.push("/admin");
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);

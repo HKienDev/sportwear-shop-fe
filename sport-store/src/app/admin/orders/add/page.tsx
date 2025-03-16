@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import CustomerInfo from "@/Components/Orders/Add/customerInfo";
-import OrderPreview from "@/Components/Orders/Add/orderPreview";
-import OrderProducts from "@/Components/Orders/Add/orderProducts";
-import OrderActions from "@/Components/Orders/Add/orderActions";
-import { PaymentMethodProvider } from "@/app/context/paymentMethodContext";
+import CustomerInfo from "@/components/orders/add/customerInfo";
+import OrderPreview from "@/components/orders/add/orderPreview";
+import OrderProducts from "@/components/orders/add/orderProducts";
+import OrderActions from "@/components/orders/add/orderActions";
+import { PaymentMethodProvider } from "@/app/context/PaymentMethodContext";
 
 export default function AddOrderPage() {
   const [formKey, setFormKey] = useState(0);

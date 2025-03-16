@@ -24,7 +24,7 @@ export default function ForgotPassword() {
       if (data?.message === "OTP đã được gửi đến email của bạn!") {
         localStorage.setItem('forgotPasswordEmail', email);
         setTimeout(() => {
-          router.push('/user/auth/forgot-password-otp-2');
+          router.push('/user/auth/forgotPasswordOtp');
         }, 100);
       } else {
         setError(data?.message || 'Email không tồn tại trong hệ thống.');

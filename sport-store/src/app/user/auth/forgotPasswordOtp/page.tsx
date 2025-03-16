@@ -213,7 +213,7 @@ export default function ForgotPasswordCombined() {
       localStorage.removeItem('forgotPasswordEmail');
       
       // Chuyển hướng đến trang xác nhận
-      router.push('/user/auth/forgot-password-succes-3');
+      router.push('/user/auth/forgotPasswordSucces');
     } catch (error) {
       console.error("Chi tiết lỗi:", error);
       

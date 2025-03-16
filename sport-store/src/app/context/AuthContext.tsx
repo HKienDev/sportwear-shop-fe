@@ -69,8 +69,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // 🛠️ Không tự logout nếu đang ở trang đăng nhập hoặc OTP
       const exemptPaths = [
         "/user/auth/login",
-        "/user/auth/otp-verify-register",
-        "/user/auth/forgot-password-email-1",
+        "/user/auth/otpVerifyRegister",
+        "/user/auth/forgotPasswordEmail",
       ];
       if (exemptPaths.includes(currentPath)) {
         setIsLoading(false);
@@ -102,12 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(updatedUser);
 
             // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-            if (updatedUser.role === "admin" && currentPath.startsWith("/Admin")) {
+            if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
               if (currentPath !== window.location.pathname) {
                 router.push(currentPath); // Chỉ chuyển hướng nếu cần
               }
             } else if (updatedUser.role === "admin") {
-              router.push("/Admin");
+              router.push("/admin");
             } else {
               router.push("/");
             }
@@ -141,12 +141,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(updatedUser);
 
                 // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-                if (updatedUser.role === "admin" && currentPath.startsWith("/Admin")) {
+                if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
                   if (currentPath !== window.location.pathname) {
                     router.push(currentPath); // Chỉ chuyển hướng nếu cần
                   }
                 } else if (updatedUser.role === "admin") {
-                  router.push("/Admin");
+                  router.push("/admin");
                 } else {
                   router.push("/");
                 }
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
 
     if (userData.role === "admin") {
-      router.push("/Admin");
+      router.push("/admin");
     } else {
       router.push("/");
     }

@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
-import GoogleLoginButton from '@/components/googleloginbutton/page';
+import axios from 'axios'
+import GoogleLoginButton from '@/components/googleLoginButton/page';
 
 const RegisterTemplate = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +52,7 @@ const RegisterTemplate = () => {
         // Lưu email vào localStorage
         localStorage.setItem('registerEmail', email);
         alert(response.data.message); // Hiển thị thông báo từ BE
-        window.location.href = '/user/auth/otp-verify-register';
+        window.location.href = '/user/auth/otpVerifyRegister';
       }
     } catch (err: unknown) {
       console.error('Lỗi khi gọi API:', err);
