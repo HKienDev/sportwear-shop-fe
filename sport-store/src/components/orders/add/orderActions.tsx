@@ -6,6 +6,8 @@ import { useState } from "react";
 import Swal from "sweetalert2"; 
 import { useRouter } from "next/navigation";
 import { usePaymentMethod } from "@/app/context/paymentMethodContext";
+import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import { Button } from "@/components/ui/button";
 
 interface CartItem {
   id: string;
@@ -14,6 +16,7 @@ interface CartItem {
   quantity: number;
   size?: string;
   color?: string;
+  discountPrice?: number;
 }
 
 interface OrderActionsProps {
@@ -25,6 +28,7 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
   const { customer, resetCustomer } = useCustomer(); // Lấy customer và resetCustomer từ CustomerContext
   const [isLoading, setIsLoading] = useState(false);
   const { paymentMethod } = usePaymentMethod(); // Sử dụng usePaymentMethod
+  const { shippingMethod } = useShippingMethod();
   const router = useRouter(); // Sử dụng useRouter
 
   // Xử lý khi nhấn "Hủy Bỏ"
@@ -63,17 +67,16 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
 
       // Chuẩn hóa số điện thoại
       const normalizedPhone = customer.phone.replace(/\s+/g, "").trim();
+      console.log("Số điện thoại gốc:", customer.phone);
+      console.log("Số điện thoại đã chuẩn hóa:", normalizedPhone);
 
       // Kiểm tra SĐT với server
       const checkPhoneResponse = await fetch(`http://localhost:4000/api/users/phone/${normalizedPhone}`);
       const phoneData = await checkPhoneResponse.json();
+      console.log("Response kiểm tra SĐT:", phoneData);
 
       let userId = null;
-      if (!checkPhoneResponse.ok) {
-        throw new Error(phoneData.message || "Lỗi kiểm tra SĐT");
-      }
-
-      if (phoneData.exists) {
+      if (checkPhoneResponse.ok && phoneData.exists) {
         userId = phoneData.userId; // Lấy ID của user nếu tồn tại
       }
 
@@ -85,69 +88,174 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
         throw new Error("Bạn cần đăng nhập để tạo đơn hàng");
       }
 
-      // Tính tổng giá tiền
-      const totalPrice = cartItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-
       // Tạo orderData từ cartItems
       const orderData = {
         items: cartItems.map((item: CartItem) => ({
           product: item.id,
-          name: item.name,
-          price: item.price,
           quantity: item.quantity,
-          size: item.size || null,
-          color: item.color || null,
+          price: item.discountPrice || item.price // Sử dụng giá khuyến mãi nếu có, không thì dùng giá gốc
         })),
-        paymentMethod: paymentMethod, // Sử dụng giá trị từ usePaymentMethod
+        totalPrice: cartItems.reduce((total, item) => {
+          // Tính tổng tiền dựa trên giá khuyến mãi hoặc giá gốc
+          const itemPrice = item.discountPrice || item.price;
+          return total + (itemPrice * item.quantity);
+        }, 0),
+        paymentMethod,
+        paymentStatus: "pending",
+        status: "pending",
+        shippingMethod: {
+          method: shippingMethod,
+          expectedDate: "15/03/2024 - 17/03/2024",
+          courier: "Giao hàng nhanh",
+          trackingId: "GHN" + Date.now()
+        },
         shippingAddress: {
           fullName: customer.name,
-          phone: normalizedPhone, // Gửi số điện thoại đã chuẩn hóa
           address: customer.address,
-          city: customer.province?.name,
-          postalCode: "700000", // Giá trị mặc định
+          city: customer.province?.name || "",
+          postalCode: "700000"
         },
-        totalPrice: totalPrice, // Thêm trường totalPrice
-        user: userId, // Thêm userId nếu có
-        phone: normalizedPhone, // Thêm số điện thoại vào req.body
+        phone: normalizedPhone
       };
 
-      // Log orderData để kiểm tra
-      console.log("Order Data gửi lên server:", orderData);
-
-      // Gửi request tạo đơn hàng lên server
-      const response = await fetch("http://localhost:4000/api/orders/admin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Thêm token vào header
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      // Kiểm tra phản hồi từ server
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Lỗi khi tạo đơn hàng");
+      // Nếu có userId (SĐT trùng với user đã đăng ký), thêm vào orderData
+      if (userId) {
+        orderData.user = userId;
       }
 
-      const data = await response.json();
-      console.log("Đơn hàng đã được tạo:", data);
+      // Log orderData để kiểm tra
+      console.log("Order Data gửi lên server:", JSON.stringify(orderData, null, 2));
 
-      clearCart();
-      resetCustomer();
-      onResetForm?.();
-      // Hiển thị popup thông báo thành công
-      Swal.fire({
-        title: "Thành công!",
-        text: "Đơn hàng đã được tạo thành công!",
-        icon: "success",
-        confirmButtonText: "OK",
-      }).then(() => {
-        router.push("/admin/orders/list"); // Chuyển hướng về trang danh sách đơn hàng
-      });
+      // Log để kiểm tra
+      console.log("Cart Items:", cartItems);
+      console.log("Tổng tiền:", orderData.totalPrice);
+
+      // Hàm gửi request tạo đơn hàng
+      const createOrder = async (token: string) => {
+        // Log request data
+        console.log("Request data:", {
+          url: "http://localhost:4000/api/orders/admin",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: orderData
+        });
+
+        // Kiểm tra dữ liệu trước khi gửi
+        if (!orderData.phone) {
+          throw new Error("Số điện thoại không được cung cấp");
+        }
+
+        // Kiểm tra format số điện thoại
+        if (!orderData.phone.match(/^0[0-9]{9}$/)) {
+          throw new Error("Số điện thoại không đúng định dạng");
+        }
+
+        // Kiểm tra các trường bắt buộc
+        if (!orderData.shippingAddress.fullName) {
+          throw new Error("Tên người nhận không được cung cấp");
+        }
+        if (!orderData.shippingAddress.address) {
+          throw new Error("Địa chỉ không được cung cấp");
+        }
+        if (!orderData.shippingAddress.city) {
+          throw new Error("Thành phố không được cung cấp");
+        }
+
+        // Log dữ liệu trước khi gửi
+        console.log("Dữ liệu gửi lên server:", JSON.stringify(orderData, null, 2));
+
+        const response = await fetch("http://localhost:4000/api/orders/admin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+          const responseText = await response.text();
+          console.error("Server response:", responseText);
+          throw new Error(`Server response: ${responseText}`);
+        }
+
+        return response.json();
+      };
+
+      try {
+        // Thử tạo đơn hàng với token hiện tại
+        const data = await createOrder(token);
+        console.log("Đơn hàng đã được tạo:", data);
+
+        clearCart();
+        resetCustomer();
+        onResetForm?.();
+        // Hiển thị popup thông báo thành công
+        Swal.fire({
+          title: "Thành công!",
+          text: "Đơn hàng đã được tạo thành công!",
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then(() => {
+          router.push("/admin/orders/list"); // Chuyển hướng về trang danh sách đơn hàng
+        });
+      } catch (error: any) {
+        // Nếu lỗi là do token hết hạn
+        if (error.message.includes("AccessToken hết hạn")) {
+          try {
+            // Lấy refresh token
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (!refreshToken) {
+              throw new Error("Không tìm thấy refresh token");
+            }
+
+            // Gọi API refresh token
+            const refreshResponse = await fetch("http://localhost:4000/api/auth/refresh-token", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ refreshToken }),
+            });
+
+            if (!refreshResponse.ok) {
+              throw new Error("Không thể refresh token");
+            }
+
+            const { accessToken } = await refreshResponse.json();
+            
+            // Lưu token mới
+            localStorage.setItem("accessToken", accessToken);
+
+            // Thử tạo đơn hàng lại với token mới
+            const data = await createOrder(accessToken);
+            console.log("Đơn hàng đã được tạo:", data);
+
+            clearCart();
+            resetCustomer();
+            onResetForm?.();
+            Swal.fire({
+              title: "Thành công!",
+              text: "Đơn hàng đã được tạo thành công!",
+              icon: "success",
+              confirmButtonText: "OK",
+            }).then(() => {
+              router.push("/admin/orders/list");
+            });
+          } catch (refreshError) {
+            // Nếu refresh token cũng lỗi, chuyển hướng về trang đăng nhập
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            router.push("/login");
+            throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          }
+        } else {
+          throw error;
+        }
+      }
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
 
@@ -174,7 +282,7 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
       </button>
 
       {/* Button Tạo Đơn Hàng */}
-      <button
+      <Button
         onClick={handleCreateOrder}
         disabled={isLoading}
         className={`px-6 py-2 bg-black text-white rounded-lg font-medium ${
@@ -182,7 +290,7 @@ export default function OrderActions({ onResetForm }: OrderActionsProps){
         }`}
       >
         {isLoading ? "Đang tạo..." : "Tạo Đơn Hàng"}
-      </button>
+      </Button>
     </div>
   );
 }

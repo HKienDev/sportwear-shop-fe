@@ -1,235 +1,216 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, ChangeEvent } from "react";
 import { useCart } from "@/app/context/cartContext";
 import { usePaymentMethod } from "@/app/context/paymentMethodContext";
+import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X } from "lucide-react";
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size: string;
+  color: string;
+  image?: string;
+}
 
 export default function OrderProducts() {
-  const [newProductId, setNewProductId] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const { cartItems, addToCart, removeFromCart, clearCart } = useCart();
+  const { cartItems, addToCart, removeFromCart } = useCart();
   const { paymentMethod, setPaymentMethod } = usePaymentMethod();
+  const { shippingMethod, setShippingMethod } = useShippingMethod();
+  const [productId, setProductId] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [size, setSize] = useState("");
+  const [color, setColor] = useState("");
+  const [error, setError] = useState("");
 
-  const fetchProduct = async (id: string) => {
+  const fetchProduct = async (productId: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/products/${id}`);
-      
+      const response = await fetch(`http://localhost:4000/api/products/${productId}`);
       if (!response.ok) {
-        if (response.status === 404) {
-          setError("Sản phẩm không tồn tại!");
-        } else {
-          setError("Lỗi kết nối đến server");
-        }
-        return null;
+        throw new Error("Không tìm thấy sản phẩm");
       }
-  
-      const productData = await response.json();
-  
-      if (!productData._id || !productData.name || !productData.price) {
-        setError("Dữ liệu sản phẩm không hợp lệ!");
-        return null;
-      }
-  
-      return {
-        id: productData._id,
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin sản phẩm:", error);
+      throw error;
+    }
+  };
+
+  const handleAddProduct = async () => {
+    if (!productId || !size || !color) {
+      setError("Vui lòng điền đầy đủ thông tin sản phẩm");
+      return;
+    }
+
+    try {
+      // Lấy thông tin sản phẩm từ API
+      const productData = await fetchProduct(productId);
+      
+      const newItem: CartItem = {
+        id: productId,
         name: productData.name,
         price: productData.price,
-        quantity: 1,
+        quantity,
+        size,
+        color,
+        image: productData.image
       };
-    } catch {
-      setError("Đã có lỗi xảy ra khi kết nối API");
-      return null;
+
+      addToCart(newItem);
+
+      // Reset form
+      setProductId("");
+      setQuantity(1);
+      setSize("");
+      setColor("");
+      setError("");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi thêm sản phẩm");
     }
   };
 
-  const addProduct = async () => {
-    // Kiểm tra các trường bắt buộc
-    if (!newProductId) {
-      setError("Vui lòng nhập ID sản phẩm");
-      return;
-    }
-
-    if (!selectedSize) {
-      setError("Vui lòng chọn size");
-      return;
-    }
-
-    if (!selectedColor) {
-      setError("Vui lòng chọn màu");
-      return;
-    }
-
-    if (quantity < 1) {
-      setError("Số lượng phải lớn hơn 0");
-      return;
-    }
-
-    setError(null);
-
-    const product = await fetchProduct(newProductId);
-    if (!product) return;
-
-    addToCart({
-      ...product,
-      quantity: quantity,
-      size: selectedSize,
-      color: selectedColor,
-    });
-
-    setNewProductId("");
-    setQuantity(1);
-    setSelectedSize("");
-    setSelectedColor("");
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
+    setter(e.target.value);
   };
 
-  const handleCancel = () => {
-    clearCart();
-    setNewProductId("");
-    setQuantity(1);
-    setSelectedSize("");
-    setSelectedColor("");
-    setError(null);
+  const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setQuantity(value < 1 ? 1 : value);
   };
-
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
 
   return (
-    <div className="w-full md:w-1/2 p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">SẢN PHẨM ĐƠN HÀNG</h2>
-
-      {/* Thông báo lỗi */}
-      {error && (
-        <div className="bg-red-100 text-red-600 p-2 mb-4 rounded">{error}</div>
-      )}
-
-      {/* Form thêm sản phẩm */}
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input
-          type="text"
-          value={newProductId}
-          onChange={(e) => setNewProductId(e.target.value.toUpperCase())}
-          placeholder="ID sản phẩm (VD: SP001)"
-          className="border border-gray-300 px-3 py-2 rounded col-span-1"
-        />
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            setQuantity(value < 1 ? 1 : value); // Ngăn số lượng < 1
-          }}
-          placeholder="Số lượng"
-          className="border border-gray-300 px-3 py-2 rounded col-span-1"
-          min={1}
-        />
-        <select
-          value={selectedSize}
-          onChange={(e) => setSelectedSize(e.target.value)}
-          className="border border-gray-300 px-3 py-2 rounded col-span-1 md:col-span-1"
-        >
-          <option value="">Chọn size</option>
-          {["S", "M", "L", "XL"].map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedColor}
-          onChange={(e) => setSelectedColor(e.target.value)}
-          className="border border-gray-300 px-3 py-2 rounded col-span-1 md:col-span-1"
-        >
-          <option value="">Chọn màu</option>
-          {["Đỏ", "Xanh", "Trắng", "Đen"].map((color) => (
-            <option key={color} value={color}>
-              {color}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={addProduct}
-          disabled={
-            !newProductId || // ID trống
-            !selectedSize || // Size chưa chọn
-            !selectedColor || // Màu chưa chọn
-            quantity < 1 // Số lượng không hợp lệ
-          }
-          className="bg-black text-white px-4 py-2 rounded-lg font-medium col-span-1 md:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          + Thêm Sản Phẩm
-        </button>
-      </div>
-
-      {/* Dropdown chọn phương thức thanh toán */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Phương thức thanh toán:
-        </label>
-        <select
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          className="border border-gray-300 px-3 py-2 rounded w-full"
-        >
-          <option value="COD">Thanh toán khi nhận hàng (COD)</option>
-          <option value="Stripe">Thanh toán qua Stripe</option>
-        </select>
-      </div>
-
-      {/* Danh sách sản phẩm */}
-      {cartItems.length > 0 ? (
-        <div className="mb-6">
-          {cartItems.map((item) => (
-            <div
-              key={`${item.id}-${item.size || "none"}-${item.color || "none"}`}
-              className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2"
-            >
-              <div>
-                <div className="font-medium">{item.name}</div>
-                <div className="text-sm text-gray-500">
-                  {item.size && `Size: ${item.size} `}
-                  {item.color && `Màu: ${item.color}`}
-                </div>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-4">
-                  {item.quantity} x {item.price.toLocaleString()}đ
-                </span>
-                <X
-                  size={18}
-                  className="cursor-pointer hover:text-red-500"
-                  onClick={() => removeFromCart(item.id, item.size, item.color)}
-                />
-              </div>
+    <Card className="w-1/2">
+      <CardHeader>
+        <CardTitle>Thông tin đơn hàng</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Form thêm sản phẩm */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="productId">Mã sản phẩm</Label>
+              <Input
+                id="productId"
+                value={productId}
+                onChange={(e) => handleInputChange(e, setProductId)}
+                placeholder="Nhập mã sản phẩm"
+              />
             </div>
-          ))}
-          <div className="flex justify-end mt-4 text-lg font-semibold">
-            Tổng tiền:{" "}
-            <span className="text-red-500 ml-2">
-              {totalPrice.toLocaleString()}đ
-            </span>
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Số lượng</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={handleQuantityChange}
+                placeholder="Nhập số lượng"
+              />
+            </div>
           </div>
-        </div>
-      ) : (
-        <p>Không có sản phẩm nào trong đơn hàng</p>
-      )}
 
-      {/* Button Hủy Bỏ */}
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={handleCancel}
-          className="px-6 py-2 bg-gray-300 text-black rounded-lg font-medium hover:bg-gray-400 transition"
-        >
-          Hủy Bỏ
-        </button>
-      </div>
-    </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="size">Kích thước</Label>
+              <Input
+                id="size"
+                value={size}
+                onChange={(e) => handleInputChange(e, setSize)}
+                placeholder="Nhập kích thước"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="color">Màu sắc</Label>
+              <Input
+                id="color"
+                value={color}
+                onChange={(e) => handleInputChange(e, setColor)}
+                placeholder="Nhập màu sắc"
+              />
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <Button onClick={handleAddProduct} className="w-full">
+            Thêm sản phẩm
+          </Button>
+        </div>
+
+        {/* Phương thức thanh toán */}
+        <div className="space-y-2">
+          <Label>Phương thức thanh toán</Label>
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn phương thức thanh toán" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="COD">Thanh toán khi nhận hàng (COD)</SelectItem>
+              <SelectItem value="Stripe">Thanh toán qua Stripe</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Phương thức vận chuyển */}
+        <div className="space-y-2">
+          <Label>Phương thức vận chuyển</Label>
+          <Select value={shippingMethod} onValueChange={setShippingMethod}>
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn phương thức vận chuyển" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Standard">Vận chuyển thường</SelectItem>
+              <SelectItem value="Express">Vận chuyển nhanh</SelectItem>
+              <SelectItem value="SameDay">Vận chuyển trong ngày</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Danh sách sản phẩm */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Sản phẩm đã thêm</h3>
+          {cartItems.length === 0 ? (
+            <p className="text-sm text-gray-500">Chưa có sản phẩm nào</p>
+          ) : (
+            <div className="space-y-2">
+              {cartItems.map((item) => (
+                <div
+                  key={`${item.id}-${item.size}-${item.color}`}
+                  className="flex items-center justify-between p-2 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {item.size} - {item.color} x {item.quantity}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFromCart(item.id, item.size, item.color)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Nút hủy */}
+        <Button variant="outline" className="w-full">
+          Hủy
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
