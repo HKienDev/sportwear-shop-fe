@@ -8,7 +8,7 @@ import Image from "next/image";
 import ContactInfo from "./contactInfo/page";
 import ShoppingCartButton from "./shoppingCartButton/page";
 import AuthButtons from "./authButtons/page";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/authContext";
 
 interface Product {
   id: number;
