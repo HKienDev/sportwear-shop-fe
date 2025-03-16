@@ -205,11 +205,6 @@ export default function OrderProducts() {
             </div>
           )}
         </div>
-
-        {/* Nút hủy */}
-        <Button variant="outline" className="w-full">
-          Hủy
-        </Button>
       </CardContent>
     </Card>
   );
