@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
+import axios from 'axios'
 import GoogleLoginButton from '@/components/googleLoginButton/page';
 
 const RegisterTemplate = () => {

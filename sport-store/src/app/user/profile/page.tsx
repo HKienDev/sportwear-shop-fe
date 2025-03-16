@@ -2,8 +2,8 @@
 
 import Header from "@/components/header/page";
 import Footer from "@/components/footer/page";
-import ProfileUser from "@/components/profileUser/UserProfileForm";
-import MembershipTier from "@/components/membershipTier/MembershipTier";
+import ProfileUser from "@/components/profileuser/UserProfileForm";
+import MembershipTier from "@/components/membershiptier/MembershipTier";
 
 export default function ProfilePage() {
   return (
