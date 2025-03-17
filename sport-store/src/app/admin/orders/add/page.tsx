@@ -5,10 +5,10 @@ import CustomerInfo from "@/components/orders/add/customerInfo";
 import OrderPreview from "@/components/orders/add/orderPreview";
 import OrderProducts from "@/components/orders/add/orderProducts";
 import OrderActions from "@/components/orders/add/orderActions";
-import { PaymentMethodProvider } from "@/app/context/paymentMethodContext0";
+import { PaymentMethodProvider } from "@/app/context/paymentMethodContext";
 import { ShippingMethodProvider } from "@/app/context/shippingMethodContext";
-import { CartProvider } from "@/app/context/cartContext0";
-import { CustomerProvider } from "@/app/context/customerContext0";
+import { CartProvider } from "@/app/context/cartContext";
+import { CustomerProvider } from "@/app/context/customerContext";
 import { useRouter } from "next/navigation";
 
 export default function AddOrderPage() {

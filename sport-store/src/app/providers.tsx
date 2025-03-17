@@ -1,9 +1,9 @@
 "use client";
 
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/authContext0";
-import { CustomerProvider } from "./context/customerContext0";
-import { CartProvider } from "./context/cartContext0";
+import { AuthProvider } from "./context/authContext";
+import { CustomerProvider } from "./context/customerContext";
+import { CartProvider } from "./context/cartContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

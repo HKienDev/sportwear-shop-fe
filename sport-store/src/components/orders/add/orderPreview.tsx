@@ -1,8 +1,8 @@
 "use client";
 
-import { useCustomer } from "@/app/context/customerContext0";
-import { useCart } from "@/app/context/cartContext0";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext0";
+import { useCustomer } from "@/app/context/customerContext";
+import { useCart } from "@/app/context/cartContext";
+import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 import { useShippingMethod } from "@/app/context/shippingMethodContext";
 
 interface Product {
