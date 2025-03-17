@@ -28,9 +28,9 @@ export default function AddOrderPage() {
       <CustomerProvider>
         <PaymentMethodProvider>
           <ShippingMethodProvider>
-            <div className="p-4">
+            <div className="p-4 pt-20">
               {/* Header */}
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-6 sticky top-20 bg-white z-10 py-4 border-b">
                 <h1 className="text-2xl font-bold">THÊM ĐƠN HÀNG</h1>
                 <OrderActions
                   onClose={handleClose}
@@ -39,16 +39,17 @@ export default function AddOrderPage() {
               </div>
 
               {/* Nội dung */}
-              <div className="flex gap-6 mt-6 items-start">
+              <div className="flex flex-col xl:flex-row gap-6 mt-6">
                 {/* Cột trái */}
-                <div className="w-1/2 flex flex-col gap-6">
-                  {/* Thêm tiền tố unique cho key */}
-                  <CustomerInfo key={`customer-${formKey}`} /> 
+                <div className="w-full xl:w-[55%] 2xl:w-3/5 flex flex-col gap-6">
+                  <CustomerInfo key={`customer-${formKey}`} />
                   <OrderPreview key={`preview-${formKey}`} />
                 </div>
 
                 {/* Cột phải */}
-                <OrderProducts key={`products-${formKey}`} />
+                <div className="w-full xl:w-[45%] 2xl:w-2/5">
+                  <OrderProducts key={`products-${formKey}`} />
+                </div>
               </div>
             </div>
           </ShippingMethodProvider>

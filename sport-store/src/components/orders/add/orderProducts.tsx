@@ -171,14 +171,14 @@ export default function OrderProducts() {
   };
 
   return (
-    <Card className="w-1/2">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Thông tin đơn hàng</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Form thêm sản phẩm */}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="productId">Mã sản phẩm</Label>
               <Input
@@ -201,11 +201,11 @@ export default function OrderProducts() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="size">Kích thước</Label>
               <Select value={size} onValueChange={setSize}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn kích thước" />
                 </SelectTrigger>
                 <SelectContent>
@@ -220,7 +220,7 @@ export default function OrderProducts() {
             <div className="space-y-2">
               <Label htmlFor="color">Màu sắc</Label>
               <Select value={color} onValueChange={setColor}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn màu sắc" />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,118 +235,104 @@ export default function OrderProducts() {
           </div>
 
           {product && (
-            <div className="text-sm text-gray-600">
-              <p>Sản phẩm: {product.name}</p>
+            <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+              <p className="font-medium">Sản phẩm: {product.name}</p>
               <p>Giá: {product.discountPrice ? product.discountPrice.toLocaleString() : product.price.toLocaleString()} VNĐ</p>
               <p>Tồn kho: {product.stock}</p>
             </div>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-500 bg-red-50 p-3 rounded">{error}</p>}
 
           <Button onClick={handleAddProduct} className="w-full">
             Thêm sản phẩm
           </Button>
         </div>
 
-        {/* Mã khuyến mãi */}
-        <div className="space-y-2">
-          <Label htmlFor="promoCode">Mã khuyến mãi</Label>
+        {/* Danh sách sản phẩm đã thêm */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-4">Sản phẩm đã thêm</h3>
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            {cartItems.map((item) => (
+              <div
+                key={`${item.id}-${item.size}-${item.color}`}
+                className="flex items-start justify-between bg-gray-50 p-4 rounded-lg"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{item.name}</p>
+                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                    <p>Size: {item.size}</p>
+                    <p>Màu: {item.color}</p>
+                    <p>Số lượng: {item.quantity}</p>
+                    <p>Đơn giá: {(item.discountPrice || item.price).toLocaleString()} VNĐ</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeFromCart(item.id, item.size, item.color)}
+                  className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Phương thức thanh toán vận chuyển */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+          <div className="space-y-2">
+            <Label>Phương thức thanh toán</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn phương thức thanh toán" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="COD">Thanh toán khi nhận hàng (COD)</SelectItem>
+                <SelectItem value="Stripe">Thanh toán qua Stripe</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Phương thức vận chuyển</Label>
+            <Select value={shippingMethod} onValueChange={setShippingMethod}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn phương thức vận chuyển" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Standard">Vận chuyển thường</SelectItem>
+                <SelectItem value="Express">Vận chuyển nhanh</SelectItem>
+                <SelectItem value="SameDay">Vận chuyển trong ngày</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Mã giảm giá */}
+        <div className="pt-4 border-t">
           <div className="flex gap-2">
-            <Input
-              id="promoCode"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Nhập mã khuyến mãi"
-            />
-            <Button onClick={handleApplyPromoCode}>Áp dụng</Button>
+            <div className="flex-1">
+              <Input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Nhập mã giảm giá"
+              />
+            </div>
+            <Button onClick={handleApplyPromoCode}>
+              Áp dụng
+            </Button>
           </div>
           {promoDiscount > 0 && (
-            <p className="text-sm text-green-600">
-              Giảm giá: {promoDiscount.toLocaleString()} VNĐ
+            <p className="text-sm text-green-600 mt-2">
+              Đã áp dụng giảm giá: {promoDiscount.toLocaleString()} VNĐ
             </p>
           )}
         </div>
 
-        {/* Phương thức thanh toán */}
-        <div className="space-y-2">
-          <Label>Phương thức thanh toán</Label>
-          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-            <SelectTrigger>
-              <SelectValue placeholder="Chọn phương thức thanh toán" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="COD">Thanh toán khi nhận hàng (COD)</SelectItem>
-              <SelectItem value="Stripe">Thanh toán qua Stripe</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Phương thức vận chuyển */}
-        <div className="space-y-2">
-          <Label>Phương thức vận chuyển</Label>
-          <Select value={shippingMethod} onValueChange={setShippingMethod}>
-            <SelectTrigger>
-              <SelectValue placeholder="Chọn phương thức vận chuyển" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Standard">Vận chuyển thường</SelectItem>
-              <SelectItem value="Express">Vận chuyển nhanh</SelectItem>
-              <SelectItem value="SameDay">Vận chuyển trong ngày</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Danh sách sản phẩm */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Danh sách sản phẩm</h3>
-          {cartItems.length === 0 ? (
-            <p className="text-gray-500">Chưa có sản phẩm nào</p>
-          ) : (
-            <div className="space-y-2">
-              {cartItems.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Size: {item.size} | Màu: {item.color} | SL: {item.quantity}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {(item.discountPrice || item.price).toLocaleString()} VNĐ
-                    </span>
-                    <button
-                      onClick={() => removeFromCart(item.id, item.size, item.color)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Tổng tiền */}
-          <div className="border-t pt-4">
-            <div className="flex justify-between text-sm">
-              <span>Tạm tính:</span>
-              <span>{cartItems.reduce((total, item) => {
-                const itemPrice = item.discountPrice || item.price;
-                return total + (itemPrice * item.quantity);
-              }, 0).toLocaleString()} VNĐ</span>
-            </div>
-            {promoDiscount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Giảm giá:</span>
-                <span>-{promoDiscount.toLocaleString()} VNĐ</span>
-              </div>
-            )}
-            <div className="flex justify-between font-medium mt-2">
-              <span>Tổng cộng:</span>
-              <span>{calculateTotal().toLocaleString()} VNĐ</span>
-            </div>
+        {/* Tổng tiền */}
+        <div className="pt-4 border-t">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Tổng tiền:</span>
+            <span className="text-xl font-bold">{calculateTotal().toLocaleString()} VNĐ</span>
           </div>
         </div>
       </CardContent>
