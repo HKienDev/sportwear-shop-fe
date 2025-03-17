@@ -1,10 +1,10 @@
 'use client';
 import Header from "@/components/header/page";
 import Footer from "@/components/footer/page";
-import ProfileUser from "@/components/profileUser/userProfileForm";
+import ProfileUser from "@/components/profileUser/userProfileForm0";
 import MembershipTier from "@/components/membershipTier/membershipTier";
-import WishlistPage from "@/components/wishlistPage/wishlistPage";
-import OrderUserPage from "@/components/orderUser/orderUserPage";
+import WishlistPage from "@/components/wishlistPage/wishlistPage0";
+import OrderUserPage from "@/components/orderUser/orderUserPage0";
 
 export default function ProfilePage() {
   return (
