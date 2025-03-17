@@ -74,10 +74,7 @@ const menuItems = [
     name: "Tin Nhắn",
     path: "/admin/messages",
     icon: ClipboardList,
-    subMenu: [
-      { name: "Danh Sách", path: "/admin/messages/list" },
-      { name: "Hội Thoại", path: "/admin/messages/conversation" },
-    ],
+    subMenu: [],
   },
   {
     name: "Cấu Hình Hệ Thống",
