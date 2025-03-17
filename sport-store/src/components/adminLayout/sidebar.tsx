@@ -4,13 +4,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { logout } from "@/lib/api";
-import { ShoppingCart, List, Plus } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  Users, 
+  Package, 
+  ClipboardList, 
+  Settings,
+  LogOut 
+} from "lucide-react";
 
 const menuItems = [
-  { name: "Trang Chủ", path: "/admin", subMenu: [] },
+  { name: "Trang Chủ", path: "/admin", icon: LayoutDashboard, subMenu: [] },
   {
     name: "Đơn Hàng",
     path: "/admin/orders",
+    icon: ClipboardList,
     subMenu: [
       { name: "Danh Sách", path: "/admin/orders/list" },
       { name: "Thêm Đơn Hàng", path: "/admin/orders/add" },
@@ -19,6 +27,7 @@ const menuItems = [
   {
     name: "Sản Phẩm",
     path: "/admin/products",
+    icon: Package,
     subMenu: [
       { name: "Danh Sách", path: "/admin/products/list" },
       { name: "Thêm Sản Phẩm", path: "/admin/products/add" },
@@ -28,6 +37,7 @@ const menuItems = [
   {
     name: "Thể Loại",
     path: "/admin/categories",
+    icon: Package,
     subMenu: [
       { name: "Danh Sách", path: "/admin/categories/list" },
       { name: "Thêm Thể Loại", path: "/admin/categories/add" },
@@ -36,6 +46,7 @@ const menuItems = [
   {
     name: "Khuyến Mãi",
     path: "/admin/promotions",
+    icon: Package,
     subMenu: [
       { name: "Danh Sách", path: "/admin/promotions/List" },
       { name: "Thêm Khuyến Mãi", path: "/admin/promotions/add" },
@@ -44,6 +55,7 @@ const menuItems = [
   {
     name: "Khách Hàng",
     path: "/admin/customers",
+    icon: Users,
     subMenu: [
       { name: "Danh Sách", path: "/admin/customers/list" },
       { name: "Chi Tiết", path: "/admin/customers/details" },
@@ -52,6 +64,7 @@ const menuItems = [
   {
     name: "Tài Khoản",
     path: "/admin/accounts",
+    icon: Users,
     subMenu: [
       { name: "Danh Sách", path: "/admin/accounts/list" },
       { name: "Thêm Tài Khoản", path: "/admin/accounts/add" },
@@ -60,6 +73,7 @@ const menuItems = [
   {
     name: "Tin Nhắn",
     path: "/admin/messages",
+    icon: ClipboardList,
     subMenu: [
       { name: "Danh Sách", path: "/admin/messages/list" },
       { name: "Hội Thoại", path: "/admin/messages/conversation" },
@@ -68,6 +82,7 @@ const menuItems = [
   {
     name: "Cấu Hình Hệ Thống",
     path: "/admin/settings",
+    icon: Settings,
     subMenu: [
       { name: "Cài Đặt Chung", path: "/admin/settings/general" },
       { name: "Bảo Mật", path: "/admin/settings/security" },
@@ -75,7 +90,8 @@ const menuItems = [
   },
   {
     name: "Đăng Xuất",
-    path: "logout", 
+    path: "logout",
+    icon: LogOut,
     subMenu: [],
   },
 ];
@@ -102,22 +118,22 @@ export default function Sidebar() {
 
       <ul className="mt-4 flex-grow">
         {menuItems.map((item) => {
-          // Kiểm tra active
           const isActive =
             (item.path === "/admin" && pathname === "/admin") ||
             (item.path !== "/admin" && pathname.startsWith(item.path)) ||
             item.subMenu.some((sub) => pathname === sub.path);
 
           const isOpen = openMenus[item.path] || item.subMenu.some((sub) => pathname === sub.path);
+          const Icon = item.icon;
 
           return (
             <li key={item.path} className="mb-2">
-              {/* Mục cha hoặc Button Đăng Xuất */}
               {item.path === "logout" ? (
                 <button
                   onClick={logout}
-                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all"
+                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all flex items-center gap-2"
                 >
+                  <Icon size={20} />
                   {item.name}
                 </button>
               ) : (
@@ -133,7 +149,10 @@ export default function Sidebar() {
                     isActive && !isOpen ? "bg-[#4EB09D] text-white" : "text-[#858594] hover:bg-gray-100"
                   }`}
                 >
-                  {item.name}
+                  <div className="flex items-center gap-2">
+                    <Icon size={20} />
+                    {item.name}
+                  </div>
                   {item.subMenu.length > 0 && (
                     <span className="ml-2 transition-transform duration-300">
                       {isOpen ? <FaChevronDown /> : <FaChevronRight />}
