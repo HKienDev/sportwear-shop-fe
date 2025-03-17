@@ -27,8 +27,7 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
       try {
         setIsLoading(true);
         // Kiểm tra quyền admin
-        const userResponse = await fetchWithAuth("/auth/check");
-        const userData = await userResponse.json();
+        const { data: userData } = await fetchWithAuth("/auth/check");
         console.log("User data:", userData);
 
         if (!userData.user || userData.user.role !== "admin") {
@@ -37,19 +36,9 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
         }
 
         // Lấy thông tin đơn hàng
-        const response = await fetchWithAuth(`/orders/admin/${orderId}`);
-        if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error("❌ [fetchWithAuth] Không có quyền truy cập");
-          }
-          if (response.status === 404) {
-            throw new Error("❌ [fetchWithAuth] Không tìm thấy đơn hàng");
-          }
-          throw new Error("❌ [fetchWithAuth] Lỗi khi lấy thông tin đơn hàng");
-        }
-        const data = await response.json();
-        console.log("Order data:", data);
-        setOrder(data);
+        const { data: orderData } = await fetchWithAuth(`/orders/admin/${orderId}`);
+        console.log("Order data:", orderData);
+        setOrder(orderData);
       } catch (error) {
         console.error("Error fetching order details:", error);
         if (error instanceof Error) {
@@ -116,7 +105,19 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
         </div>
       </div>
       <div className="max-w-7xl mx-auto">
-        <OrderDetails order={order} />
+        <OrderDetails
+          orderId={order._id}
+          status={order.status}
+          items={order.items}
+          shippingAddress={order.shippingAddress}
+          shippingMethod={order.shippingMethod}
+          shippingFee={order.shippingFee}
+          discount={order.discount}
+          paymentMethod={order.paymentMethod}
+          paymentStatus={order.paymentStatus}
+          createdAt={order.createdAt}
+          user={order.user}
+        />
       </div>
     </div>
   );

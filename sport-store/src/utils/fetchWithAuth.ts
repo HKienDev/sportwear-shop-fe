@@ -31,32 +31,39 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
     console.log("🔹 [fetchWithAuth] Response status:", response.status);
     console.log("🔹 [fetchWithAuth] Response headers:", Object.fromEntries(response.headers.entries()));
 
+    // Đọc response body
+    const responseData = await response.json().catch(() => null);
+
     // Xử lý các trường hợp lỗi
     if (response.status === 401) {
       console.error("❌ [fetchWithAuth] Token hết hạn hoặc không hợp lệ");
       localStorage.removeItem("accessToken");
-      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+      throw new Error(responseData?.message || "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
 
     if (response.status === 403) {
       console.error("❌ [fetchWithAuth] Không có quyền truy cập");
-      // Xóa token cũ và chuyển hướng về trang login
       localStorage.removeItem("accessToken");
       window.location.href = "/login";
-      throw new Error("Bạn không có quyền truy cập tài nguyên này");
+      throw new Error(responseData?.message || "Bạn không có quyền truy cập tài nguyên này");
     }
 
     if (response.status === 404) {
       console.error("❌ [fetchWithAuth] Không tìm thấy tài nguyên");
-      throw new Error("Không tìm thấy tài nguyên");
+      throw new Error(responseData?.message || "Không tìm thấy tài nguyên");
+    }
+
+    if (response.status === 400) {
+      console.error("❌ [fetchWithAuth] Dữ liệu không hợp lệ:", responseData);
+      throw new Error(responseData?.message || "Dữ liệu gửi đi không hợp lệ");
     }
 
     if (!response.ok) {
-      console.error("❌ [fetchWithAuth] Lỗi server:", response.status);
-      throw new Error("Đã xảy ra lỗi");
+      console.error("❌ [fetchWithAuth] Lỗi server:", response.status, responseData);
+      throw new Error(responseData?.message || "Đã xảy ra lỗi");
     }
 
-    return response;
+    return { ok: response.ok, status: response.status, data: responseData };
   } catch (error) {
     console.error("❌ [fetchWithAuth] Lỗi:", error);
     throw error;

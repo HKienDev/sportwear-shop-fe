@@ -1,32 +1,24 @@
 import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/app/context/authContext";
-import { CustomerProvider } from "@/app/context/customerContext";
-import { CartProvider } from "@/app/context/cartContext";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sport Store - Mua sắm đồ thể thao",
-  description: "Cửa hàng bán đồ thể thao chính hãng, chất lượng.",
+  title: "Sport Store",
+  description: "Sport Store - Cửa hàng thể thao uy tín",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html suppressHydrationWarning lang="vi">
-      <body className="font-sans antialiased">
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-          <AuthProvider>
-            <CustomerProvider>
-              <CartProvider>
-                <Toaster />
-                {children}
-              </CartProvider>
-            </CustomerProvider>
-          </AuthProvider>
-        </GoogleOAuthProvider>
+    <html lang="vi">
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

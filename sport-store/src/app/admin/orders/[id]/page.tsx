@@ -1,11 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Order } from "@/types/order";
-import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
@@ -13,62 +8,117 @@ import Link from "next/link";
 import CancelOrder from "@/components/orders/details/cancelOrder";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Suspense } from "react";
+import { notFound, useParams } from "next/navigation";
+import OrderDetails from "@/components/orders/details/orderDetails";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import Image from "next/image";
+import { formatCurrency } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
-export default function OrderDetailPage() {
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  discountPrice?: number;
+  images: {
+    main: string;
+    sub: string[];
+  };
+  category: {
+    name: string;
+  };
+}
+
+interface OrderItem {
+  _id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  discountPrice?: number;
+}
+
+interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
+  district: string;
+  ward: string;
+  postalCode: string;
+  note?: string;
+}
+
+interface ShippingMethod {
+  method: "Express" | "SameDay" | "Standard";
+  expectedDate: string;
+  courier: string;
+  trackingId: string;
+}
+
+interface Order {
+  _id: string;
+  shortId: string;
+  user: string;
+  items: OrderItem[];
+  totalPrice: number;
+  shippingFee: number;
+  totalAmount: number;
+  discount?: number;
+  paymentMethod: "COD" | "Stripe";
+  paymentStatus: "pending" | "paid";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  shippingMethod: ShippingMethod;
+  shippingAddress: ShippingAddress;
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function getOrder(id: string): Promise<Order> {
+  try {
+    const { data } = await fetchWithAuth(`/orders/admin/${id}`);
+    if (!data) {
+      notFound();
+    }
+    return data;
+  } catch {
+    notFound();
+  }
+}
+
+export default function OrderPage() {
   const params = useParams();
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:4000/api/orders/admin/${params.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Không thể tải thông tin đơn hàng");
-        }
-
-        const data = await response.json();
+        const data = await getOrder(params.id as string);
         setOrder(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+      } catch {
+        notFound();
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchOrder();
   }, [params.id]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    );
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  if (error || !order) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="text-red-500 text-xl mb-4">Lỗi: {error || "Không tìm thấy đơn hàng"}</div>
-        <Link href="/admin/orders/list">
-          <Button>Quay lại danh sách đơn hàng</Button>
-        </Link>
-      </div>
-    );
+  if (!order) {
+    return notFound();
   }
 
-  // Hàm lấy màu sắc và text cho trạng thái đơn hàng
-  const getStatusStyle = (status: string) => {
+  const formatDate = (date: string) => {
+    return format(new Date(date), "HH:mm - dd/MM/yyyy");
+  };
+
+  const getStatusColor = (status: Order["status"]) => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
@@ -85,27 +135,58 @@ export default function OrderDetailPage() {
     }
   };
 
-  // Hàm chuyển đổi text trạng thái sang tiếng Việt
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: Order["status"]) => {
     switch (status) {
       case "pending":
         return "Chờ xác nhận";
       case "processing":
-        return "Đã xác nhận";
+        return "Đang xử lý";
       case "shipped":
-        return "Đang vận chuyển";
+        return "Đang giao hàng";
       case "delivered":
         return "Đã giao hàng";
       case "cancelled":
-        return "Đã Hủy";
+        return "Đã hủy";
       default:
         return status;
     }
   };
 
-  // Hàm kiểm tra xem đơn hàng có thể hủy không
-  const canCancelOrder = (status: string) => {
-    return ["pending", "processing", "shipped"].includes(status);
+  const getPaymentStatusColor = (status: Order["paymentStatus"]) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "paid":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getPaymentStatusText = (status: Order["paymentStatus"]) => {
+    switch (status) {
+      case "pending":
+        return "Chưa thanh toán";
+      case "paid":
+        return "Đã thanh toán";
+      default:
+        return status;
+    }
+  };
+
+  const getPaymentMethodText = (method: Order["paymentMethod"]) => {
+    return method === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online";
+  };
+
+  const getShippingMethodText = (method: ShippingMethod["method"]) => {
+    switch (method) {
+      case "Express":
+        return "Vận chuyển nhanh";
+      case "SameDay":
+        return "Vận chuyển trong ngày";
+      default:
+        return "Vận chuyển thường";
+    }
   };
 
   return (
@@ -120,8 +201,11 @@ export default function OrderDetailPage() {
           <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Badge className={`px-3 py-1 text-sm font-medium ${getStatusStyle(order.status)}`}>
+          <Badge className={`px-3 py-1 text-sm font-medium ${getStatusColor(order.status)}`}>
             {getStatusText(order.status)}
+          </Badge>
+          <Badge className={`px-3 py-1 text-sm font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
+            {getPaymentStatusText(order.paymentStatus)}
           </Badge>
           <Button variant="outline" size="icon">
             <Printer className="h-4 w-4" />
@@ -173,17 +257,15 @@ export default function OrderDetailPage() {
               </p>
               <p>
                 <span className="font-medium">Ngày đặt:</span>{" "}
-                {format(new Date(order.createdAt), "dd/MM/yyyy HH:mm", {
-                  locale: vi,
-                })}
+                {formatDate(order.createdAt)}
               </p>
               <p>
                 <span className="font-medium">Phương thức thanh toán:</span>{" "}
-                {order.paymentMethod === "cod" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
+                {getPaymentMethodText(order.paymentMethod)}
               </p>
               <p>
                 <span className="font-medium">Phương thức vận chuyển:</span>{" "}
-                {order.shippingMethod === "standard" ? "Tiêu chuẩn" : "Nhanh"}
+                {getShippingMethodText(order.shippingMethod.method)}
               </p>
             </div>
           </div>
@@ -216,10 +298,12 @@ export default function OrderDetailPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <img
+                          <Image
                             className="h-10 w-10 rounded-full object-cover"
-                            src={item.product.images[0]}
+                            src={item.product.images.main}
                             alt={item.product.name}
+                            width={40}
+                            height={40}
                           />
                         </div>
                         <div className="ml-4">
@@ -227,7 +311,7 @@ export default function OrderDetailPage() {
                             {item.product.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {item.product.category}
+                            {item.product.category.name}
                           </div>
                         </div>
                       </div>
@@ -287,16 +371,36 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        {/* Nút hủy đơn */}
-        {canCancelOrder(order.status) && (
-          <div className="mt-8 flex justify-end">
-            <CancelOrder
+        {/* Actions */}
+        <div className="mt-6">
+          <Suspense fallback={<div>Loading...</div>}>
+            <OrderDetails
               orderId={order._id}
               status={order.status}
               items={order.items}
+              shippingAddress={order.shippingAddress}
+              shippingMethod={order.shippingMethod}
+              shippingFee={order.shippingFee}
+              discount={order.discount}
+              paymentMethod={order.paymentMethod}
+              paymentStatus={order.paymentStatus}
+              createdAt={order.createdAt}
+              user={order.user}
             />
-          </div>
-        )}
+          </Suspense>
+          {order.status === "pending" && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <CancelOrder
+                orderId={order._id}
+                items={order.items.map(item => ({
+                  product: item.product._id,
+                  quantity: item.quantity
+                }))}
+                status={order.status}
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
     </div>
   );
