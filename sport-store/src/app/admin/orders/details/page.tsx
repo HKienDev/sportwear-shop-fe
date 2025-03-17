@@ -10,9 +10,9 @@ async function getOrder(id: string): Promise<Order> {
   try {
     const response = await fetchWithAuth(`/orders/admin/${id}`);
     if (!response.ok) {
-      notFound();
+      throw new Error("Không thể tải thông tin đơn hàng");
     }
-    return response.json();
+    return response.data;
   } catch {
     notFound();
   }
@@ -49,7 +49,21 @@ export default function OrderDetailsPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">CHI TIẾT ĐƠN HÀNG</h1>
-      <OrderDetails order={order} />
+      <div className="max-w-7xl mx-auto">
+        <OrderDetails
+          orderId={order._id}
+          status={order.status}
+          items={order.items}
+          shippingAddress={order.shippingAddress}
+          shippingMethod={order.shippingMethod}
+          shippingFee={order.shippingFee}
+          discount={order.discount}
+          paymentMethod={order.paymentMethod}
+          paymentStatus={order.paymentStatus}
+          createdAt={order.createdAt}
+          user={order.user}
+        />
+      </div>
     </div>
   );
 }
