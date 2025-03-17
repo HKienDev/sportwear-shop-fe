@@ -2,7 +2,7 @@
 import Header from "@/components/header/page";
 import Footer from "@/components/footer/page";
 import ProfileUser from "@/components/profileUser/userProfileForm";
-import MembershipTier from "@/components/membershipTier/MembershipTier";
+import MembershipTier from "@/components/membershipTier/membershipTier0";
 import WishlistPage from "@/components/wishlistPage/wishlistPage";
 import OrderUserPage from "@/components/orderUser/orderUserPage";
 
