@@ -118,7 +118,7 @@ export default function OrderDetails({
     try {
       setIsLoading(true);
       await fetchWithAuth(`/orders/admin/${orderId}/status`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
