@@ -5,29 +5,41 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { useCart } from "@/app/context/cartContext";
+import { usePaymentMethod } from "@/app/context/paymentMethodContext";
+import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import { useCustomer } from "@/app/context/customerContext";
 
-interface Product {
-  _id: string;
+interface CartItem {
+  id: string;
   name: string;
   price: number;
   discountPrice?: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image?: string;
+}
+
+interface ValidCartItem extends Omit<CartItem, 'size' | 'color'> {
+  size: string;
+  color: string;
 }
 
 interface OrderActionsProps {
-  selectedProducts: Product[];
   onClose: () => void;
+  onResetForm: () => void;
 }
 
 interface OrderData {
-  items: {
-    product: string;
+  items: Array<{
+    product: string;  // ID của sản phẩm
     quantity: number;
     price: number;
-  }[];
+  }>;
   totalPrice: number;
-  paymentMethod: string;
-  paymentStatus: string;
-  status: string;
+  paymentMethod: "COD" | "Stripe";
+  phone: string;
   shippingMethod: {
     method: string;
     expectedDate: string;
@@ -43,53 +55,86 @@ interface OrderData {
     ward: string;
     postalCode: string;
   };
-  phone: string;
 }
 
-export default function OrderActions({ selectedProducts, onClose }: OrderActionsProps) {
+export default function OrderActions({ onClose, onResetForm }: OrderActionsProps) {
   const router = useRouter();
+  const { cartItems, clearCart } = useCart();
+  const { paymentMethod } = usePaymentMethod();
+  const { shippingMethod } = useShippingMethod();
+  const { customer } = useCustomer();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateOrder = async () => {
+    if (cartItems.length === 0) {
+      toast.error("Vui lòng thêm ít nhất một sản phẩm vào đơn hàng");
+      return;
+    }
+
+    if (!paymentMethod) {
+      toast.error("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
+
+    if (!shippingMethod) {
+      toast.error("Vui lòng chọn phương thức vận chuyển");
+      return;
+    }
+
+    // Kiểm tra thông tin khách hàng
+    if (!customer.name || !customer.phone || !customer.address || !customer.province || !customer.district || !customer.ward) {
+      toast.error("Vui lòng điền đầy đủ thông tin khách hàng");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      // Tính toán tổng giá trị đơn hàng và tạo danh sách items
-      const orderItems = selectedProducts.map(product => ({
-        product: product._id,
-        quantity: 1,
-        price: product.discountPrice || product.price
-      }));
+      // Lọc ra những item có đầy đủ thông tin và ép kiểu
+      const validItems = cartItems.filter((item): item is ValidCartItem => 
+        item.size !== undefined && item.color !== undefined
+      );
+      
+      if (validItems.length !== cartItems.length) {
+        toast.error("Một số sản phẩm chưa có đầy đủ thông tin size hoặc màu sắc");
+        return;
+      }
 
-      const totalPrice = orderItems.reduce((sum, item) => sum + item.price, 0);
+      const totalPrice = validItems.reduce((total, item) => {
+        const itemPrice = item.discountPrice || item.price;
+        return total + (itemPrice * item.quantity);
+      }, 0);
 
-      // Tạo dữ liệu đơn hàng
       const orderData: OrderData = {
-        items: orderItems,
+        items: validItems.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          price: item.discountPrice || item.price,
+        })),
         totalPrice,
-        paymentMethod: "COD",
-        paymentStatus: "pending",
-        status: "pending",
+        paymentMethod: paymentMethod as "COD" | "Stripe",
+        phone: customer.phone,
         shippingMethod: {
-          method: "Giao hàng tiêu chuẩn",
-          expectedDate: "15/03/2025 - 17/03/2025",
-          courier: "Viettel Post",
-          trackingId: "VTP" + Math.random().toString(36).substr(2, 9).toUpperCase()
+          method: shippingMethod,
+          expectedDate: "3-5 ngày",
+          courier: "Giao hàng nhanh",
+          trackingId: `TK${Date.now()}`,
         },
         shippingAddress: {
-          fullName: "Nguyễn Văn A",
-          phone: "0123456789",
-          address: "123 Đường ABC",
-          city: "Hồ Chí Minh",
-          district: "Quận 1",
-          ward: "Phường Bến Nghé",
-          postalCode: "700000"
-        },
-        phone: "0123456789"
+          fullName: customer.name,
+          phone: customer.phone,
+          address: customer.address,
+          city: customer.province.name,
+          district: customer.district.name,
+          ward: customer.ward.name,
+          postalCode: "700000" // Mã bưu điện mặc định
+        }
       };
 
-      // Gọi API tạo đơn hàng
-      const response = await fetchWithAuth("/orders/admin", {
+      // Log dữ liệu gửi đi để debug
+      console.log("🔹 [handleCreateOrder] Request data:", JSON.stringify(orderData, null, 2));
+
+      const { data: responseData } = await fetchWithAuth("/orders/admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,40 +142,29 @@ export default function OrderActions({ selectedProducts, onClose }: OrderActions
         body: JSON.stringify(orderData),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Có lỗi xảy ra khi tạo đơn hàng");
-      }
-
-      const result = await response.json();
-      
+      console.log("✅ [handleCreateOrder] Success response:", responseData);
       toast.success("Tạo đơn hàng thành công!");
-      router.refresh();
-      onClose();
-      router.push(`/admin/orders/${result.order._id}`);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(`Lỗi: ${error.message}`);
-      } else {
-        toast.error("Có lỗi xảy ra khi tạo đơn hàng");
-      }
+      clearCart();
+      router.push("/admin/orders/list");
+    } catch (error) {
+      console.error("❌ [handleCreateOrder] Error:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo đơn hàng");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-end gap-4 mt-4">
-      <Button
-        variant="outline"
-        onClick={onClose}
-        disabled={isLoading}
-      >
+    <div className="flex gap-4">
+      <Button variant="outline" onClick={onClose}>
         Hủy
       </Button>
-      <Button
-        onClick={handleCreateOrder}
-        disabled={isLoading || selectedProducts.length === 0}
+      <Button variant="outline" onClick={onResetForm}>
+        Làm mới
+      </Button>
+      <Button 
+        onClick={handleCreateOrder} 
+        disabled={isLoading || cartItems.length === 0 || !paymentMethod || !shippingMethod}
       >
         {isLoading ? "Đang xử lý..." : "Tạo đơn hàng"}
       </Button>

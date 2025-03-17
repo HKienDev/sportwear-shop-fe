@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
@@ -9,6 +9,7 @@ import OrderTable from "./orderTable";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 
 // Định nghĩa trạng thái đơn hàng
 export enum OrderStatus {
@@ -84,88 +85,131 @@ export const orderStatusInfo = {
 };
 
 interface OrderDetailsProps {
-  order: Order;
+  orderId: string;
+  status: Order["status"];
+  items: Order["items"];
+  shippingAddress: Order["shippingAddress"];
+  shippingMethod: Order["shippingMethod"];
+  shippingFee?: number;
+  discount?: number;
+  paymentMethod: Order["paymentMethod"];
+  paymentStatus: Order["paymentStatus"];
+  createdAt: string;
+  user: string;
 }
 
-export default function OrderDetails({ order }: OrderDetailsProps) {
-  const [status, setStatus] = useState<string>(order.status);
+export default function OrderDetails({
+  orderId,
+  status,
+  items,
+  shippingAddress,
+  shippingMethod,
+  shippingFee = 0,
+  discount = 0,
+  paymentMethod,
+  paymentStatus,
+  createdAt,
+  user
+}: OrderDetailsProps) {
+  const [currentStatus, setCurrentStatus] = useState(status);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChangeStatus = useCallback(async (newStatus: string) => {
-    if (!order || isLoading) return;
-
+  const handleUpdateStatus = async (newStatus: string) => {
     try {
       setIsLoading(true);
-      const response = await fetchWithAuth(
-        `/orders/admin/${order._id}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái");
-      }
-
-      toast.success("Cập nhật trạng thái thành công");
-      setStatus(newStatus);
+      setCurrentStatus(newStatus as Order["status"]);
+      toast.success("Cập nhật trạng thái đơn hàng thành công");
     } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái");
+      console.error("Error updating order status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
     } finally {
       setIsLoading(false);
     }
-  }, [order, isLoading]);
+  };
+
+  const renderActionButton = () => {
+    switch (currentStatus) {
+      case "pending":
+        return (
+          <Button
+            onClick={() => handleUpdateStatus("processing")}
+            disabled={isLoading}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            {isLoading ? "Đang xử lý..." : "Xác nhận đơn hàng"}
+          </Button>
+        );
+      case "processing":
+        return (
+          <Button
+            onClick={() => handleUpdateStatus("shipped")}
+            disabled={isLoading}
+            className="bg-green-500 hover:bg-green-600"
+          >
+            {isLoading ? "Đang xử lý..." : "Xác nhận đã giao cho đơn vị vận chuyển"}
+          </Button>
+        );
+      case "shipped":
+        return (
+          <Button
+            onClick={() => handleUpdateStatus("delivered")}
+            disabled={isLoading}
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            {isLoading ? "Đang xử lý..." : "Xác nhận đã giao hàng"}
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      {/* Header */}
+    <div className="space-y-6">
       <OrderHeader
-        orderId={order.shortId}
-        customerId={order.user}
-        lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
-        status={status}
-        paymentStatus={order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+        orderId={orderId}
+        customerId={user}
+        lastUpdated={new Date(createdAt).toLocaleString("vi-VN")}
+        status={currentStatus}
+        paymentStatus={paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
       />
-
-      {/* Delivery Tracking */}
       <DeliveryTracking
-        status={status}
-        onChangeStatus={handleChangeStatus}
+        status={currentStatus}
+        onChangeStatus={handleUpdateStatus}
         isLoading={isLoading}
       />
-
-      {/* Delivery Information */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
-          name={order.shippingAddress.fullName}
-          address={order.shippingAddress.address}
-          phone={order.shippingAddress.phone}
-          city={order.shippingAddress.city}
-          district={order.shippingAddress.district}
-          ward={order.shippingAddress.ward}
-          postalCode={order.shippingAddress.postalCode}
+          name={shippingAddress.fullName}
+          address={shippingAddress.address}
+          phone={shippingAddress.phone}
+          city={shippingAddress.city}
+          district={shippingAddress.district}
+          ward={shippingAddress.ward}
+          postalCode={shippingAddress.postalCode}
         />
         <ShippingMethod
-          method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
+          method={paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
-          trackingId={order.shortId}
-          shippingMethod={order.shippingMethod?.method || "Vận chuyển thường"}
+          trackingId={orderId}
+          shippingMethod={shippingMethod?.method || "Vận chuyển thường"}
         />
       </div>
-
-      {/* Order Table */}
       <OrderTable
-        items={order.items}
-        shippingFee={order.shippingFee || 0}
-        discount={order.discount || 0}
+        items={items}
+        shippingFee={shippingFee}
+        discount={discount}
       />
+      <div className="mt-8 flex gap-2">{renderActionButton()}</div>
     </div>
   );
 }
