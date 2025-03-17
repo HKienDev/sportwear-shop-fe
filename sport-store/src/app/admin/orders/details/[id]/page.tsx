@@ -100,7 +100,10 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
           <CancelOrder 
             orderId={order._id} 
             status={order.status} 
-            items={order.items} 
+            items={order.items.map(item => ({
+              product: item.product._id,
+              quantity: item.quantity
+            }))} 
           />
         </div>
       </div>
