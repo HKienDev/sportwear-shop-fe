@@ -1,2 +1,5 @@
 node_modules
-.vscode/.history/
+.vscode/
+.history/
+.env
+.env.local

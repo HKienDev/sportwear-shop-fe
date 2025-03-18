@@ -9,8 +9,10 @@ import { useCart } from "@/app/context/cartContext";
 import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 import { useShippingMethod } from "@/app/context/shippingMethodContext";
 import { useCustomer } from "@/app/context/customerContext";
+import { checkUserByPhone } from "@/utils/checkUserByPhone";
 
 interface CartItem {
+  cartItemId: string;
   id: string;
   name: string;
   price: number;
@@ -55,6 +57,7 @@ interface OrderData {
     ward: string;
     postalCode: string;
   };
+  userId?: string;
 }
 
 export default function OrderActions({ onClose, onResetForm }: OrderActionsProps) {
@@ -89,6 +92,10 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
 
     try {
       setIsLoading(true);
+
+      // Kiểm tra xem số điện thoại có trùng với user nào không
+      const existingUser = await checkUserByPhone(customer.phone);
+      console.log("🔹 [handleCreateOrder] Existing user check result:", existingUser);
 
       // Lọc ra những item có đầy đủ thông tin và ép kiểu
       const validItems = cartItems.filter((item): item is ValidCartItem => 
@@ -127,9 +134,15 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
           city: customer.province.name,
           district: customer.district.name,
           ward: customer.ward.name,
-          postalCode: "700000" // Mã bưu điện mặc định
+          postalCode: "700000"
         }
       };
+
+      // Thêm userId nếu tìm thấy user
+      if (existingUser) {
+        orderData.userId = existingUser._id;
+        console.log("🔹 [handleCreateOrder] Adding userId to order:", existingUser._id);
+      }
 
       // Log dữ liệu gửi đi để debug
       console.log("🔹 [handleCreateOrder] Request data:", JSON.stringify(orderData, null, 2));
@@ -143,7 +156,14 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
       });
 
       console.log("✅ [handleCreateOrder] Success response:", responseData);
-      toast.success("Tạo đơn hàng thành công!");
+      
+      // Hiển thị thông báo thành công với tên người dùng nếu có
+      toast.success(
+        existingUser 
+          ? `Tạo đơn hàng thành công cho khách hàng ${existingUser.username}!`
+          : "Tạo đơn hàng thành công cho khách vãng lai!"
+      );
+
       clearCart();
       router.push("/admin/orders/list");
     } catch (error) {
