@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface CartItem {
+  cartItemId: string;
   id: string;
   name: string;
   price: number;
@@ -26,6 +28,30 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+  // Load cart items from localStorage when component mounts
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        // Ensure each item has a unique cartItemId
+        const validatedCart = parsedCart.map((item: CartItem) => ({
+          ...item,
+          cartItemId: item.cartItemId || generateUniqueId()
+        }));
+        setCartItems(validatedCart);
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+        localStorage.removeItem('cart'); // Clear invalid cart data
+      }
+    }
+  }, []);
+
+  // Save cart items to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
   // Thêm sản phẩm vào giỏ
   const addToCart = (item: CartItem) => {
     if (!item.id) {
@@ -41,15 +67,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           cartItem.color === item.color
       );
 
-      return existingItem
-        ? prev.map((cartItem) =>
-            cartItem.id === item.id &&
-            cartItem.size === item.size &&
-            cartItem.color === item.color
-              ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
-              : cartItem
-          )
-        : [...prev, item];
+      if (existingItem) {
+        return prev.map((cartItem) =>
+          cartItem.id === item.id &&
+          cartItem.size === item.size &&
+          cartItem.color === item.color
+            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
+            : cartItem
+        );
+      }
+
+      const newItem = {
+        ...item,
+        cartItemId: generateUniqueId()
+      };
+      return [...prev, newItem];
     });
   };
 
@@ -81,7 +113,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Xóa toàn bộ giỏ hàng
   const clearCart = () => {
-    setCartItems([]); // ✅ Reset về mảng rỗng
+    setCartItems([]);
+    localStorage.removeItem('cart'); // Clear cart from localStorage
   };
 
   return (

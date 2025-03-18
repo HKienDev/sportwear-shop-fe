@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
@@ -10,6 +10,7 @@ import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import CancelOrder from "./cancelOrder";
 
 // Định nghĩa trạng thái đơn hàng
 export enum OrderStatus {
@@ -115,68 +116,134 @@ export default function OrderDetails({
 }: OrderDetailsProps) {
   const [currentStatus, setCurrentStatus] = useState<Order["status"]>(status);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Cập nhật currentStatus khi prop status thay đổi
+  useEffect(() => {
+    setCurrentStatus(status);
+  }, [status]);
+
+  // Hàm để lấy lại thông tin đơn hàng mới nhất
+  const refreshOrderDetails = async () => {
+    try {
+      setIsRefreshing(true);
+      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}`);
+      
+      if (response.success && response.order) {
+        setCurrentStatus(response.order.status);
+        if (onStatusUpdate) {
+          onStatusUpdate(orderId, response.order.status);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing order details:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
       setIsLoading(true);
-      // Lấy thông tin user từ localStorage
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
       
-      await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+      // Lấy thông tin user từ localStorage
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        toast.error("Vui lòng đăng nhập lại");
+        return;
+      }
+
+      let userData;
+      try {
+        userData = JSON.parse(userStr);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        toast.error("Lỗi khi đọc thông tin người dùng");
+        return;
+      }
+
+      if (!userData || !userData._id) {
+        toast.error("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại");
+        // Xóa thông tin user không hợp lệ
+        localStorage.removeItem("user");
+        return;
+      }
+
+      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
           status: newStatus,
-          updatedBy: user._id // Thêm ID của admin đang thực hiện cập nhật
+          updatedBy: userData._id,
+          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
         }),
       });
 
+      if (!response.success) {
+        throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+      }
+
+      // Cập nhật state local
       setCurrentStatus(newStatus as Order["status"]);
+      
       // Gọi callback để cập nhật danh sách đơn hàng
       if (onStatusUpdate) {
         onStatusUpdate(orderId, newStatus as Order["status"]);
       }
+
       toast.success("Cập nhật trạng thái đơn hàng thành công");
+      
+      // Refresh lại thông tin đơn hàng
+      await refreshOrderDetails();
     } catch (error) {
       console.error("Error updating order status:", error);
-      toast.error("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng";
+      toast.error(errorMessage);
+      
+      // Nếu lỗi liên quan đến authentication
+      if (errorMessage.includes("authentication") || errorMessage.includes("unauthorized")) {
+        localStorage.removeItem("user");
+        toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const renderActionButton = () => {
+    const isDisabled = isLoading || isRefreshing;
+    
     switch (currentStatus) {
       case "pending":
         return (
           <Button
             onClick={() => handleUpdateStatus("processing")}
-            disabled={isLoading}
+            disabled={isDisabled}
             className="bg-blue-500 hover:bg-blue-600"
           >
-            {isLoading ? "Đang xử lý..." : "Xác nhận đơn hàng"}
+            {isDisabled ? "Đang xử lý..." : "Xác nhận đơn hàng"}
           </Button>
         );
       case "processing":
         return (
           <Button
             onClick={() => handleUpdateStatus("shipped")}
-            disabled={isLoading}
+            disabled={isDisabled}
             className="bg-green-500 hover:bg-green-600"
           >
-            {isLoading ? "Đang xử lý..." : "Xác nhận đã giao cho đơn vị vận chuyển"}
+            {isDisabled ? "Đang xử lý..." : "Xác nhận đã giao cho đơn vị vận chuyển"}
           </Button>
         );
       case "shipped":
         return (
           <Button
             onClick={() => handleUpdateStatus("delivered")}
-            disabled={isLoading}
+            disabled={isDisabled}
             className="bg-purple-500 hover:bg-purple-600"
           >
-            {isLoading ? "Đang xử lý..." : "Xác nhận đã giao hàng"}
+            {isDisabled ? "Đang xử lý..." : "Xác nhận đã giao hàng"}
           </Button>
         );
       default:
@@ -196,7 +263,7 @@ export default function OrderDetails({
       <DeliveryTracking
         status={currentStatus}
         onChangeStatus={handleUpdateStatus}
-        isLoading={isLoading}
+        isLoading={isLoading || isRefreshing}
       />
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
@@ -221,7 +288,23 @@ export default function OrderDetails({
         shippingFee={shippingFee}
         discount={discount}
       />
-      <div className="mt-8 flex gap-2">{renderActionButton()}</div>
+      <div className="mt-8 flex gap-2">
+        {renderActionButton()}
+        {currentStatus !== "cancelled" && currentStatus !== "delivered" && (
+          <CancelOrder 
+            orderId={orderId}
+            items={items}
+            status={currentStatus}
+            isDisabled={isRefreshing}
+            onStatusUpdate={(id, newStatus) => {
+              setCurrentStatus(newStatus as Order["status"]);
+              if (onStatusUpdate) {
+                onStatusUpdate(id, newStatus as Order["status"]);
+              }
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

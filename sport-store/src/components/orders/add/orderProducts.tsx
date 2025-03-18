@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
+import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface CartItem {
+  cartItemId: string;
   id: string;
   name: string;
   price: number;
@@ -116,6 +118,7 @@ export default function OrderProducts() {
 
     try {
       const newItem: CartItem = {
+        cartItemId: generateUniqueId(),
         id: productId,
         name: product.name,
         price: product.price,
@@ -255,7 +258,7 @@ export default function OrderProducts() {
           <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
             {cartItems.map((item) => (
               <div
-                key={`${item.id}-${item.size}-${item.color}`}
+                key={item.cartItemId}
                 className="flex items-start justify-between bg-gray-50 p-4 rounded-lg"
               >
                 <div className="flex-1 min-w-0">
