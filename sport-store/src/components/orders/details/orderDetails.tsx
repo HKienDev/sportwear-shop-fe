@@ -96,6 +96,7 @@ interface OrderDetailsProps {
   paymentStatus: Order["paymentStatus"];
   createdAt: string;
   user: string;
+  onStatusUpdate?: (orderId: string, newStatus: Order["status"]) => void;
 }
 
 export default function OrderDetails({
@@ -109,23 +110,34 @@ export default function OrderDetails({
   paymentMethod,
   paymentStatus,
   createdAt,
-  user
+  user,
+  onStatusUpdate
 }: OrderDetailsProps) {
-  const [currentStatus, setCurrentStatus] = useState(status);
+  const [currentStatus, setCurrentStatus] = useState<Order["status"]>(status);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
       setIsLoading(true);
+      // Lấy thông tin user từ localStorage
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      
       await fetchWithAuth(`/orders/admin/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          updatedBy: user._id // Thêm ID của admin đang thực hiện cập nhật
+        }),
       });
 
       setCurrentStatus(newStatus as Order["status"]);
+      // Gọi callback để cập nhật danh sách đơn hàng
+      if (onStatusUpdate) {
+        onStatusUpdate(orderId, newStatus as Order["status"]);
+      }
       toast.success("Cập nhật trạng thái đơn hàng thành công");
     } catch (error) {
       console.error("Error updating order status:", error);
