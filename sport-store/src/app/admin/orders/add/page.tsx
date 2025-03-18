@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import CustomerInfo from "@/components/orders/add/customerInfo";
-import OrderPreview from "@/components/orders/add/orderPreview";
-import OrderProducts from "@/components/orders/add/orderProducts";
-import OrderActions from "@/components/orders/add/orderActions";
+import CustomerInfo from "@/components/admin/orders/add/customerInfo";
+import OrderPreview from "@/components/admin/orders/add/orderPreview";
+import OrderProducts from "@/components/admin/orders/add/orderProducts";
+import OrderActions from "@/components/admin/orders/add/orderActions";
 import { PaymentMethodProvider } from "@/app/context/paymentMethodContext";
 import { ShippingMethodProvider } from "@/app/context/shippingMethodContext";
 import { CartProvider } from "@/app/context/cartContext";

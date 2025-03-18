@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/lib/api";
-import OrderListTable from "@/components/orders/list/orderListTable";
-import OrderListFilters from "@/components/orders/list/orderListFilters";
-import { getStatusColor } from "@/components/orders/list/orderStatusBadge";
+import OrderListTable from "@/components/admin/orders/list/orderListTable";
+import OrderListFilters from "@/components/admin/orders/list/orderListFilters";
+import { getStatusColor } from "@/components/admin/orders/list/orderStatusBadge";
 
 export default function OrdersPage() {
   const router = useRouter();

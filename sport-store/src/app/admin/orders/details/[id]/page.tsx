@@ -3,9 +3,9 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Order } from "@/types/order";
-import OrderDetails from "@/components/orders/details/orderDetails";
+import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import CancelOrder from "@/components/orders/details/cancelOrder";
+import CancelOrder from "@/components/admin/orders/details/cancelOrder";
 
 interface OrderDetailsPageProps {
   params: Promise<{
