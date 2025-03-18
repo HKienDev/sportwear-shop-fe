@@ -59,8 +59,8 @@ const ProductList = () => {
         <p className="text-center text-gray-500">Đang tải...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products?.map((product) => (
-            <ProductCard key={product.id} {...product} />
+          {products?.map((product, index) => (
+            <ProductCard key={product.id || `product-${index}`} {...product} />
           ))}
         </div>
       )}
