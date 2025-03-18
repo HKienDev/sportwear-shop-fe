@@ -1,7 +1,7 @@
 "use client";
 
 import { notFound, useParams } from "next/navigation";
-import OrderDetails from "@/components/orders/details/orderDetails";
+import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 import { useEffect, useState } from "react";
