@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Mail, Phone, Trash } from "lucide-react"; // Thêm các icon từ Lucide
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import CustomerSearch from "@/components/admin/customers/CustomerSearch";
+import CustomerTable from "@/components/admin/customers/CustomerTable";
+import Pagination from "@/components/admin/customers/Pagination";
+import DeleteButton from "@/components/admin/customers/DeleteButton";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 interface Customer {
-  _id: number;
-  name: string;
+  _id: string;
+  fullname: string;
   email: string;
   phone: string;
   lastActivity: string;
@@ -14,253 +19,156 @@ interface Customer {
   totalSpent: number;
   status: string;
   role: string;
+  avatar: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export default function CustomerList() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Tính toán số trang và danh sách khách hàng hiện tại
+  const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+  const currentCustomers = filteredCustomers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Lấy danh sách khách hàng từ API
   const fetchCustomers = useCallback(async () => {
-    if (typeof window === "undefined") {
-      console.warn("Mã đang chạy trên server-side. Không thể truy cập localStorage.");
+    try {
+      setIsLoading(true);
+      const { data, ok, status } = await fetchWithAuth("/users");
+
+      if (!ok) {
+        if (status === 401 || status === 403) {
+          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
+          router.push("/login");
+          return;
+        }
+        throw new Error("Lỗi khi lấy danh sách khách hàng");
+      }
+      
+      // Lọc chỉ lấy user (không lấy admin)
+      const userCustomers = data.filter((customer: Customer) => customer.role === "user");
+      setCustomers(userCustomers);
+      setFilteredCustomers(userCustomers);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách khách hàng:", error);
+      toast.error("Không thể tải danh sách khách hàng");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  // Lọc khách hàng theo từ khóa tìm kiếm
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    const lowercaseQuery = query.toLowerCase();
+    const filtered = customers.filter((customer) => {
+      // Tìm kiếm theo tên đầy đủ
+      const fullnameMatch = customer.fullname?.toLowerCase().includes(lowercaseQuery);
+      // Tìm kiếm theo số điện thoại
+      const phoneMatch = customer.phone?.includes(query);
+      // Tìm kiếm theo email
+      const emailMatch = customer.email?.toLowerCase().includes(lowercaseQuery);
+      
+      return fullnameMatch || phoneMatch || emailMatch;
+    });
+    setFilteredCustomers(filtered);
+    setCurrentPage(1);
+  }, [customers]);
+
+  // Xử lý chọn/bỏ chọn khách hàng
+  const handleSelectCustomer = useCallback((id: string) => {
+    setSelectedCustomers((prev) =>
+      prev.includes(id) ? prev.filter((customerId) => customerId !== id) : [...prev, id]
+    );
+  }, []);
+
+  // Xử lý xóa khách hàng đã chọn
+  const handleDeleteSelected = useCallback(async () => {
+    if (!selectedCustomers.length) return;
+    
+    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedCustomers.length} khách hàng đã chọn?
+Lưu ý: Hành động này không thể hoàn tác!`)) {
       return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        alert("Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.");
-        router.push("/login");
-        return;
+      // Xóa tuần tự để có thể xử lý lỗi cho từng user
+      for (const id of selectedCustomers) {
+        const response = await fetchWithAuth(`/users/admin/${id}`, { 
+          method: "DELETE"
+        });
+
+        if (!response.ok) {
+          // Nếu có lỗi với user nào đó, dừng quá trình xóa
+          if (response.status === 403) {
+            toast.error("Bạn không có quyền xóa người dùng");
+            return;
+          }
+          if (response.status === 404) {
+            toast.error(`Không tìm thấy người dùng với ID: ${id}`);
+            continue;
+          }
+          throw new Error("Có lỗi xảy ra khi xóa người dùng");
+        }
       }
-
-      const url = new URL("http://localhost:4000/api/users");
-
-      // Gọi API để lấy toàn bộ danh sách khách hàng
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        alert("Phiên đăng nhập hết hạn hoặc không có quyền truy cập.");
-        router.push("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-      }
-
-      const data: Customer[] = await response.json(); // Sử dụng kiểu Customer
-      console.log("Dữ liệu từ API:", data);
-
-      if (!Array.isArray(data)) {
-        console.error("Dữ liệu từ API không hợp lệ:", data);
-        setCustomers([]);
-        return;
-      }
-
-      // Lọc danh sách khách hàng chỉ giữ lại những người có role là "user"
-      const filteredData = data.filter((customer: Customer) => customer.role === "user");
-
-      const totalPagesCount = Math.ceil(filteredData.length / 10);
-      setTotalPages(totalPagesCount);
-
-      setCurrentPage(1);
-      setCustomers(filteredData.slice(0, 10)); // Chỉ lấy 10 khách hàng đầu tiên
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách khách hàng:", error);
-    }
-  }, [router]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    fetchCustomers().catch((error) => {
-      if (isMounted) {
-        console.error("Lỗi trong useEffect:", error);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchCustomers]);
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setCurrentPage(1);
-  };
-
-  const handleSelectCustomer = (id: number) => {
-    setSelectedCustomers((prev) =>
-      prev.includes(id) ? prev.filter((customerId) => customerId !== id) : [...prev, id]
-    );
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!confirm("Bạn có chắc chắn muốn xóa các khách hàng đã chọn?")) return;
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        alert("Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.");
-        router.push("/login");
-        return;
-      }
-
-      await fetch("/api/customers/delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ids: selectedCustomers }),
-      });
-      fetchCustomers();
+      
+      toast.success(`Đã xóa thành công ${selectedCustomers.length} khách hàng`);
       setSelectedCustomers([]);
+      fetchCustomers();
     } catch (error) {
-      console.error("Error deleting customers:", error);
+      console.error("Lỗi khi xóa khách hàng:", error);
+      toast.error("Không thể xóa một số khách hàng. Vui lòng thử lại sau");
     }
-  };
+  }, [selectedCustomers, fetchCustomers]);
+
+  // Tải danh sách khách hàng khi component được mount
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   return (
     <div className="container mx-auto p-4">
-      {/* Tiêu đề */}
-      <h1 className="text-2xl font-bold mb-4">DANH SÁCH KHÁCH HÀNG</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        DANH SÁCH KHÁCH HÀNG
+        {isLoading && <span className="ml-2 text-gray-500 text-sm">(Đang tải...)</span>}
+      </h1>
 
-      {/* Form tìm kiếm */}
       <div className="flex justify-between mb-4">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Bạn cần tìm gì?"
-            className="pl-10 pr-4 py-2 border rounded-lg w-72"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </form>
-        {/* Nút Xóa */}
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded-lg"
-          onClick={handleDeleteSelected}
-          disabled={selectedCustomers.length === 0}
-        >
-          <Trash size={16} className="inline mr-2" /> Xóa
-        </button>
+        <CustomerSearch
+          searchQuery={searchQuery}
+          onSearchChange={handleSearch}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch(searchQuery);
+          }}
+        />
+        <DeleteButton
+          selectedCount={selectedCustomers.length}
+          onDelete={handleDeleteSelected}
+        />
       </div>
 
-      {/* Bảng danh sách khách hàng */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto relative">
-        <table className="min-w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="p-4"><input type="checkbox" /></th>
-              <th className="p-4 text-left">Tên Khách Hàng</th>
-              <th className="p-4 text-left">Liên Hệ</th>
-              <th className="p-4 text-left">Tổng Đơn Hàng</th>
-              <th className="p-4 text-left">Tổng Chi Tiêu</th>
-              <th className="p-4 text-left">Trạng Thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.length > 0 ? (
-              customers.map((customer) => (
-                <tr key={customer._id} className="border-b hover:bg-gray-50">
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      onChange={() => handleSelectCustomer(customer._id)}
-                    />
-                  </td>
-                  <td className="p-4 flex items-center">
-                    {/* Avatar được thay thế bằng ký tự đầu tiên của tên */}
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-medium">
-                        {customer.name ? customer.name.charAt(0).toUpperCase() : "?"}
-                    </div>
-                    <div className="ml-3">
-                        <div className="font-medium">{customer.name || "Không có tên"}</div>
-                        <div className="text-gray-500 text-sm">{customer.lastActivity || "Chưa có hoạt động"}</div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center mb-1">
-                      <Mail size={16} className="mr-2 text-gray-500" />
-                      <span>{customer.email}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Phone size={16} className="mr-2 text-gray-500" />
-                      <span>{customer.phone}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">{customer.totalOrders}</td>
-                  <td className="p-4">{customer.totalSpent}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm ${
-                        customer.status === "Trực Tuyến"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {customer.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="text-center py-4">Không có khách hàng nào.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <CustomerTable
+        customers={currentCustomers}
+        selectedCustomers={selectedCustomers}
+        onSelectCustomer={handleSelectCustomer}
+      />
 
-      {/* Phân trang */}
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex space-x-1">
-          {/* Nút quay về trang trước */}
-          <button
-            className="px-3 py-1 border rounded-md"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            {'<'}
-          </button>
-
-          {/* Hiển thị số trang */}
-          {[...Array(totalPages).keys()].map((page) => (
-            <button
-              key={page + 1}
-              className={`px-3 py-1 border rounded-md ${
-                currentPage === page + 1 ? "bg-blue-500 text-white" : ""
-              }`}
-              onClick={() => setCurrentPage(page + 1)}
-            >
-              {page + 1}
-            </button>
-          ))}
-
-          {/* Nút chuyển sang trang tiếp theo */}
-          <button
-            className="px-3 py-1 border rounded-md"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            {'>'}
-          </button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

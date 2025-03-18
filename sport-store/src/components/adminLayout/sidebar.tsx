@@ -54,12 +54,9 @@ const menuItems = [
   },
   {
     name: "Khách Hàng",
-    path: "/admin/customers",
+    path: "/admin/customers/list",
     icon: Users,
-    subMenu: [
-      { name: "Danh Sách", path: "/admin/customers/list" },
-      { name: "Chi Tiết", path: "/admin/customers/details" },
-    ],
+    subMenu: [],
   },
   {
     name: "Tài Khoản",
