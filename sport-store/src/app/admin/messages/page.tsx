@@ -9,15 +9,6 @@ const ChatUI = () => {
   
   const contacts = [
     { id: 1, name: "Hoàng Tiến Trung Kiên", lastMessage: "Oke anh", online: true, unread: 2 },
-    { id: 2, name: "Nguyễn Văn A", lastMessage: "Hẹn gặp lại sau", online: false, unread: 0 },
-    { id: 3, name: "Trần Thị B", lastMessage: "Cảm ơn bạn nhiều!", online: true, unread: 5 },
-    { id: 4, name: "Lê Văn C", lastMessage: "Tôi sẽ gửi báo cáo vào ngày mai", online: false, unread: 0 },
-    { id: 5, name: "Phạm Thị D", lastMessage: "Đã nhận được hàng", online: true, unread: 0 },
-    { id: 6, name: "Vũ Văn E", lastMessage: "Hẹn bạn 2h chiều nhé", online: false, unread: 1 },
-    { id: 7, name: "Mai Thị F", lastMessage: "File đính kèm đã được gửi", online: true, unread: 0 },
-    { id: 8, name: "Đỗ Văn G", lastMessage: "Xin chào", online: true, unread: 0 },
-    { id: 9, name: "Ngô Thị H", lastMessage: "Cảm ơn", online: false, unread: 0 },
-    { id: 10, name: "Đinh Văn I", lastMessage: "OK", online: true, unread: 0 },
   ];
 
   const messages = [
