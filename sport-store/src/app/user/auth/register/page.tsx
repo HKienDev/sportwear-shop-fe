@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios'
-import GoogleLoginButton from '@/components/googleLoginButton/page';
+import GoogleLoginButton from '@/components/auth/googleLoginButton/page';
 
 const RegisterTemplate = () => {
   const [showPassword, setShowPassword] = useState(false);

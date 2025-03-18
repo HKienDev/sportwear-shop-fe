@@ -4,8 +4,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
-import Header from "@/components/header/page";
-import Footer from "@/components/footer/page";
+import Header from "@/components/user/userLayout/header/page";
+import Footer from "@/components/user/userLayout/footer/page";
 
 const inter = Inter({ subsets: ['latin'] });
 
