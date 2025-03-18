@@ -15,8 +15,7 @@ export default function OrderHistoryPage() {
         if (!response.ok) {
           throw new Error("Failed to fetch orders");
         }
-        const data = await response.json();
-        setOrders(data);
+        setOrders(response.data);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
