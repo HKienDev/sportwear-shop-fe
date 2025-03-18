@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import CustomerSearch from "@/components/admin/customers/CustomerSearch";
-import CustomerTable from "@/components/admin/customers/CustomerTable";
-import Pagination from "@/components/admin/customers/Pagination";
-import DeleteButton from "@/components/admin/customers/DeleteButton";
+import CustomerSearch from "@/components/admin/customers/customerSearch0";
+import CustomerTable from "@/components/admin/customers/customerTable0";
+import Pagination from "@/components/admin/customers/pagination0";
+import DeleteButton from "@/components/admin/customers/deleteButton0";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 interface Customer {
