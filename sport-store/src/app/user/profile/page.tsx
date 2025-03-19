@@ -2,7 +2,7 @@
 import Header from "@/components/user/userLayout/header/page";
 import Footer from "@/components/user/userLayout/footer/page";
 import ProfileUser from "@/components/user/profileUser/userProfileForm";
-import MembershipTier from "@/components/membershipTier/membershipTier";
+import MembershipTier from "@/components/admin/customers/details/membershipTier";
 import WishlistPage from "@/components/user/wishlistPage/wishlistPage";
 import OrderUserPage from "@/components/user/orderUser/orderUserPage";
 
@@ -18,7 +18,7 @@ export default function ProfilePage() {
           {/* Phần thông tin cá nhân */}
           <ProfileUser />
           {/* Phần hạng thành viên */}
-          <MembershipTier />
+          <MembershipTier currentSpent={500000} nextTierThreshold={1000000} />
         </div>
         {/* Phần Yêu Thích */}
         <WishlistPage />
