@@ -5,6 +5,7 @@ import Header from "@/components/user/userLayout/header/page";
 import Footer from "@/components/user/userLayout/footer/page"; 
 import ProductList from "@/components/user/productList/page";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
+import Chat from "@/components/common/chat/userChat";
 
 const HomePage = () => {
   return (
@@ -93,6 +94,8 @@ const HomePage = () => {
 
       <ProductList />
 
+      <Chat />
+
       {/* About Section - Cải thiện */}
       <div className="w-full bg-gray-50">
         <div className="w-full flex flex-col md:flex-row">
@@ -137,7 +140,6 @@ const HomePage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center justify-items-center">
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center h-40 w-full">
               <Image
                 src="/Logo_vju.png"
                 alt="Logo VJU"
@@ -146,9 +148,7 @@ const HomePage = () => {
                 style={{ width: "auto", height: "auto", maxHeight: "80px" }} 
                 className="transition-all duration-300 hover:scale-105"
               />
-            </div>
             
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center h-40 w-full">
               <Image
                 src="/Logo_deha.png"
                 alt="Logo DEHA"
@@ -157,9 +157,7 @@ const HomePage = () => {
                 style={{ width: "auto", height: "auto", maxHeight: "80px" }} 
                 className="transition-all duration-300 hover:scale-105"
               />
-            </div>
             
-            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center h-40 w-full">
               <Image
                 src="/Logo_vnu.png"
                 alt="Logo VNU"
@@ -168,11 +166,9 @@ const HomePage = () => {
                 style={{ width: "auto", height: "auto", maxHeight: "80px" }} 
                 className="transition-all duration-300 hover:scale-105"
               />
-            </div>
           </div>
         </div>
       </div>
-
       <Footer />
     </div>
   );
