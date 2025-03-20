@@ -1,127 +1,172 @@
-interface Order {
-  id: string;
-  totalAmount: number;
-  paymentStatus: string;
-  shippingStatus: string;
-  trackingNumber: string;
-  orderDate: string;
-}
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Order } from "@/types/order";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 
 interface OrderListProps {
-  orders: Order[];
-  onViewAll: () => void;
-  onSort: (value: string) => void;
+  phone: string;
 }
 
-export default function OrderList({ orders, onViewAll, onSort }: OrderListProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+const statusColors = {
+  pending: "bg-yellow-100 text-yellow-800",
+  processing: "bg-blue-100 text-blue-800",
+  completed: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800",
+  failed: "bg-orange-100 text-orange-800"
+};
+
+const ITEMS_PER_PAGE = 5;
+
+export default function OrderList({ phone }: OrderListProps) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchWithAuth(`/orders/admin/by-phone?phone=${phone}`);
+        if (!response.ok) {
+          throw new Error("Không thể tải danh sách đơn hàng");
+        }
+        setOrders(response.data.orders);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (phone) {
+      fetchOrders();
+    }
+  }, [phone]);
+
+  // Tính toán các đơn hàng cho trang hiện tại
+  const indexOfLastOrder = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstOrder = indexOfLastOrder - ITEMS_PER_PAGE;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(orders.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const getPaymentStatusClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'pending':
-        return 'bg-amber-100 text-amber-800';
-      case 'failed':
-        return 'bg-rose-100 text-rose-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800';
-    }
-  };
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-[200px]" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
-  const getShippingStatusClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'delivered':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'shipping':
-        return 'bg-amber-100 text-amber-800';
-      case 'cancelled':
-        return 'bg-rose-100 text-rose-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800';
-    }
-  };
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-red-500">
+          <p>{error}</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-gray-500">
+          <p>Không tìm thấy đơn hàng nào</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-6 mt-6 border border-neutral-100">
-      <div className="flex justify-between items-center mb-5">
-        <h3 className="text-xl font-bold text-neutral-800">ĐƠN HÀNG</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-neutral-500">Sắp xếp theo:</span>
-          <select 
-            className="border border-neutral-300 rounded px-2 py-1 text-sm"
-            onChange={(e) => onSort(e.target.value)}
-          >
-            <option value="newest">Mới nhất</option>
-            <option value="highest">Giá trị cao nhất</option>
-          </select>
+    <Card className="p-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Lịch sử đơn hàng</h3>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mã đơn hàng</TableHead>
+                <TableHead>Ngày đặt</TableHead>
+                <TableHead>Tổng tiền</TableHead>
+                <TableHead>Phương thức thanh toán</TableHead>
+                <TableHead>Trạng thái</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentOrders.map((order) => (
+                <TableRow key={order._id}>
+                  <TableCell className="font-medium">
+                    #{order.shortId}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(order.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+                  </TableCell>
+                  <TableCell>
+                    {order.totalPrice.toLocaleString('vi-VN')}đ
+                  </TableCell>
+                  <TableCell>
+                    {order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Chuyển khoản"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="outline" 
+                      className={`${statusColors[order.status as keyof typeof statusColors]} border-0`}
+                    >
+                      {order.status === "pending" && <Clock className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "processing" && <Package className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "completed" && <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "cancelled" && <XCircle className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "failed" && <AlertCircle className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "pending" && "Chờ xử lý"}
+                      {order.status === "processing" && "Đang xử lý"}
+                      {order.status === "completed" && "Hoàn thành"}
+                      {order.status === "cancelled" && "Đã hủy"}
+                      {order.status === "failed" && "Thất bại"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-neutral-100 text-neutral-700">
-              <th className="px-4 py-3 text-left rounded-l-lg">ID</th>
-              <th className="px-4 py-3 text-left">Thành Tiền</th>
-              <th className="px-4 py-3 text-left">Thanh Toán</th>
-              <th className="px-4 py-3 text-left">Vận Chuyển</th>
-              <th className="px-4 py-3 text-left">Mã Vận Chuyển</th>
-              <th className="px-4 py-3 text-left rounded-r-lg">Thời Gian Đặt Đơn</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, index) => (
-              <tr 
-                key={order.id} 
-                className={`border-b border-neutral-200 hover:bg-neutral-50 transition-colors duration-150 ${index === 0 ? "bg-blue-50" : ""}`}
-              >
-                <td className="px-4 py-3 text-indigo-600 font-medium cursor-pointer">
-                  #{order.id}
-                </td>
-                <td className="px-4 py-3 font-medium">
-                  {formatCurrency(order.totalAmount)}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusClass(order.paymentStatus)}`}>
-                    {order.paymentStatus.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getShippingStatusClass(order.shippingStatus)}`}>
-                    {order.shippingStatus.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-neutral-600">
-                  #{order.trackingNumber}
-                </td>
-                <td className="px-4 py-3 text-neutral-600">
-                  {order.orderDate}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex justify-between items-center mt-6">
-        <div className="text-neutral-500 text-sm">
-          Hiển thị 1-{Math.min(orders.length, 10)} của {orders.length} đơn hàng
-        </div>
-        <button 
-          onClick={onViewAll}
-          className="text-indigo-600 font-medium hover:text-indigo-800 transition-colors flex items-center gap-1"
-        >
-          Xem tất cả <span className="text-xs">→</span>
-        </button>
-      </div>
-    </div>
+    </Card>
   );
 } 
