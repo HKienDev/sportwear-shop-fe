@@ -2,31 +2,46 @@ import Image from "next/image";
 import { Package } from "lucide-react";
 
 interface OrderItem {
-  product: {
-    _id: string;
-    name: string;
+  product: { 
+    _id: string; 
+    name: string; 
     price: number;
     images: {
       main: string;
       sub: string[];
     };
+    shortId: string;
   };
   quantity: number;
   price: number;
+  size?: string;
+  color?: string;
 }
 
 interface OrderTableProps {
   items: OrderItem[];
-  shippingFee: number;
-  discount: number;
+  shippingMethod?: {
+    name: string;
+    fee: number;
+  };
+  discount?: number;
 }
 
-export default function OrderTable({ items, shippingFee, discount }: OrderTableProps) {
-  const subTotal = items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-  const total = subTotal + shippingFee - discount;
+export default function OrderTable({ items, shippingMethod }: OrderTableProps) {
+  // Tính tổng tiền
+  const subtotal = items.reduce((total, item) => {
+    return total + (item.price * item.quantity);
+  }, 0);
+
+  // Phí vận chuyển
+  const shippingFee = shippingMethod?.name === "Express" 
+    ? 50000 
+    : shippingMethod?.name === "SameDay" 
+    ? 100000 
+    : 30000;
+
+  // Tổng cộng
+  const total = subtotal + shippingFee;
 
   return (
     <div className="mt-8 pt-6 border-t border-gray-200">
@@ -77,7 +92,7 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
                 Tạm tính:
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
-                {subTotal.toLocaleString()}₫
+                {subtotal.toLocaleString()}₫
               </td>
             </tr>
             <tr>
@@ -86,14 +101,6 @@ export default function OrderTable({ items, shippingFee, discount }: OrderTableP
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
                 {shippingFee.toLocaleString()}₫
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
-                Giảm giá:
-              </td>
-              <td className="px-6 py-4 text-right text-sm font-medium text-red-500">
-                -{discount.toLocaleString()}₫
               </td>
             </tr>
             <tr>

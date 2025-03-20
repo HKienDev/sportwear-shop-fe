@@ -97,6 +97,7 @@ interface OrderDetailsProps {
   paymentStatus: Order["paymentStatus"];
   createdAt: string;
   user: string;
+  totalPrice: number;
   onStatusUpdate?: (orderId: string, newStatus: Order["status"]) => void;
 }
 
@@ -112,6 +113,7 @@ export default function OrderDetails({
   paymentStatus,
   createdAt,
   user,
+  totalPrice,
   onStatusUpdate
 }: OrderDetailsProps) {
   const [currentStatus, setCurrentStatus] = useState<Order["status"]>(status);
@@ -169,6 +171,9 @@ export default function OrderDetails({
         return;
       }
 
+      // Tính tổng tiền đơn hàng
+      const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shippingFee - (discount || 0);
+
       const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
         method: "PUT",
         headers: {
@@ -177,7 +182,12 @@ export default function OrderDetails({
         body: JSON.stringify({ 
           status: newStatus,
           updatedBy: userData._id,
-          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
+          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`,
+          // Thêm thông tin để cập nhật totalSpent khi đơn hàng được xác nhận
+          updateUserTotalSpent: newStatus === "processing" ? {
+            userId: user,
+            amount: totalAmount
+          } : undefined
         }),
       });
 
@@ -286,7 +296,8 @@ export default function OrderDetails({
       <OrderTable
         items={items}
         shippingFee={shippingFee}
-        discount={discount}
+        discount={discount || 0}
+        totalPrice={totalPrice}
       />
       <div className="mt-8 flex gap-2">
         {renderActionButton()}

@@ -56,12 +56,13 @@ export default function OrderDetailsPage() {
           items={order.items}
           shippingAddress={order.shippingAddress}
           shippingMethod={order.shippingMethod}
-          shippingFee={order.shippingFee}
+          shippingFee={order.shippingMethod?.fee || 0}
           discount={order.discount}
           paymentMethod={order.paymentMethod}
           paymentStatus={order.paymentStatus}
           createdAt={order.createdAt}
           user={order.user}
+          totalPrice={order.totalPrice || order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + (order.shippingMethod?.fee || 0) - (order.discount || 0)}
         />
       </div>
     </div>

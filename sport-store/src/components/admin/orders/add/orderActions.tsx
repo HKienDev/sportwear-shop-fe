@@ -112,13 +112,21 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
         return total + (itemPrice * item.quantity);
       }, 0);
 
+      // Thêm phí vận chuyển vào tổng tiền
+      const shippingFee = shippingMethod === "Express" 
+        ? 50000 
+        : shippingMethod === "SameDay" 
+        ? 100000 
+        : 30000;
+      const finalTotalPrice = totalPrice + shippingFee;
+
       const orderData: OrderData = {
         items: validItems.map(item => ({
           product: item.id,
           quantity: item.quantity,
           price: item.discountPrice || item.price,
         })),
-        totalPrice,
+        totalPrice: finalTotalPrice,
         paymentMethod: paymentMethod as "COD" | "Stripe",
         phone: customer.phone,
         shippingMethod: {

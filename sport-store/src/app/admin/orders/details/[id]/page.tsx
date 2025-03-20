@@ -101,8 +101,9 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
             orderId={order._id} 
             status={order.status} 
             items={order.items.map(item => ({
-              product: item.product._id,
-              quantity: item.quantity
+              product: item.product,
+              quantity: item.quantity,
+              price: item.price
             }))} 
           />
         </div>
@@ -114,12 +115,13 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
           items={order.items}
           shippingAddress={order.shippingAddress}
           shippingMethod={order.shippingMethod}
-          shippingFee={order.shippingFee}
+          shippingFee={order.shippingMethod?.fee || 0}
           discount={order.discount}
           paymentMethod={order.paymentMethod}
           paymentStatus={order.paymentStatus}
           createdAt={order.createdAt}
           user={order.user}
+          totalPrice={order.totalPrice || order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + (order.shippingMethod?.fee || 0) - (order.discount || 0)}
         />
       </div>
     </div>
