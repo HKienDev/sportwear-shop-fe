@@ -57,8 +57,8 @@ export default function OrderListTable({
                   {order.shortId}
                 </Link>
               </td>
-              <td className="px-4 py-3">{order.customer.fullname || "Không có dữ liệu"}</td>
-              <td className="px-4 py-3">{order.customer.address.province || "Không có dữ liệu"}</td>
+              <td className="px-4 py-3">{order.customer?.fullname || "Không có dữ liệu"}</td>
+              <td className="px-4 py-3">{order.customer?.address?.province || "Không có dữ liệu"}</td>
               <td className="px-4 py-3">{order.totalPrice.toLocaleString()} Vnđ</td>
               <td className="px-4 py-3">
                 {order.paymentMethod} -{" "}
