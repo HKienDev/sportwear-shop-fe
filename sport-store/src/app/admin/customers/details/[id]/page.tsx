@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Header from "@/components/admin/customers/details/header";
-import InfoCard from "@/components/admin/customers/details/infoCard";
 import CustomerInfo from "@/components/admin/customers/details/customerInfo";
 import MembershipTier from "@/components/admin/customers/details/membershipTier";
 import OrderList from "@/components/admin/customers/details/orderList";
@@ -49,15 +48,6 @@ interface Customer {
   isActive: boolean;
 }
 
-interface Order {
-  id: string;
-  totalAmount: number;
-  paymentStatus: string;
-  shippingStatus: string;
-  trackingNumber: string;
-  orderDate: string;
-}
-
 type CustomerUpdateField = 
   | "fullname" 
   | "phone" 
@@ -78,7 +68,6 @@ export default function CustomerDetail() {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
-  const [orders] = useState<Order[]>([]);
 
   // Fetch provinces data
   const fetchProvinces = useCallback(async () => {
@@ -261,82 +250,68 @@ export default function CustomerDetail() {
     }
   }, [customer, router]);
 
-  const handleChangePassword = useCallback(() => {
-    // TODO: Implement change password functionality
-    toast.error("Chức năng đang được phát triển");
-  }, []);
-
-  const handleUpdate = useCallback(async () => {
+  const handleChangePassword = useCallback(async () => {
     if (!customer) return;
-    await fetchCustomerData();
-    toast.success("Đã cập nhật thông tin mới nhất");
-  }, [customer, fetchCustomerData]);
 
-  // Xử lý đơn hàng
-  const handleViewAllOrders = useCallback(() => {
+    try {
+      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
+        method: "POST"
+      });
+
+      if (!ok) {
+        throw new Error("Lỗi khi đặt lại mật khẩu");
+      }
+
+      toast.success("Đặt lại mật khẩu thành công");
+    } catch (error) {
+      console.error("Lỗi khi đặt lại mật khẩu:", error);
+      toast.error("Không thể đặt lại mật khẩu");
+    }
+  }, [customer]);
+
+  const handleUpdateStatus = useCallback(async () => {
     if (!customer) return;
-    router.push(`/admin/orders?customerId=${customer._id}`);
-  }, [customer, router]);
 
-  const handleSortOrders = useCallback((sortBy: string) => {
-    // TODO: Implement order sorting
-    console.log("Sort by:", sortBy);
-  }, []);
+    try {
+      const { ok, data } = await fetchWithAuth(`/users/admin/${customer._id}`, {
+        method: "PUT",
+        body: JSON.stringify({ isActive: !customer.isActive }),
+      });
+
+      if (!ok) {
+        throw new Error("Lỗi khi cập nhật trạng thái");
+      }
+
+      setCustomer(data as Customer);
+      toast.success("Cập nhật trạng thái thành công");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      toast.error("Không thể cập nhật trạng thái");
+    }
+  }, [customer]);
 
   if (isLoading) {
-    return (
-      <div className="p-8 bg-neutral-50 min-h-screen flex items-center justify-center">
-        <div className="text-xl text-neutral-500">Đang tải thông tin khách hàng...</div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   if (!customer) {
-    return (
-      <div className="p-8 bg-neutral-50 min-h-screen flex items-center justify-center">
-        <div className="text-xl text-neutral-500">Không tìm thấy thông tin khách hàng</div>
-      </div>
-    );
+    return <div>Không tìm thấy thông tin khách hàng</div>;
   }
 
   return (
-    <div className="p-8 bg-neutral-50 min-h-screen">
-      <Header
+    <div className="space-y-6">
+      <Header 
         onDelete={handleDelete}
         onChangePassword={handleChangePassword}
-        onUpdate={handleUpdate}
+        onUpdate={handleUpdateStatus}
       />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <InfoCard 
-          title="📦 Tổng Đơn Hàng" 
-          value={customer.totalOrders?.toString() || "0"} 
-        />
-        <InfoCard 
-          title="💰 Tổng Chi Tiêu" 
-          value={new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          }).format(customer.totalSpent || 0)} 
-        />
-        <InfoCard 
-          title="📅 Ngày Tham Gia" 
-          value={new Date(customer.createdAt).toLocaleDateString('vi-VN')} 
-        />
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        <CustomerInfo
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CustomerInfo 
           customer={{
             id: customer._id,
             name: customer.fullname,
             avatar: customer.avatar,
             phone: customer.phone,
-            province: customer.address.province ? { code: customer.address.province, name: customer.address.province } : undefined,
-            district: customer.address.district ? { code: customer.address.district, name: customer.address.district } : undefined,
-            ward: customer.address.ward ? { code: customer.address.ward, name: customer.address.ward } : undefined,
             address: {
               province: customer.address.province,
               district: customer.address.district,
@@ -352,17 +327,9 @@ export default function CustomerDetail() {
           onDistrictChange={handleDistrictChange}
           onWardChange={handleWardChange}
         />
-
-        <div className="lg:w-1/3 w-full">
-          <MembershipTier totalSpent={customer.totalSpent} />
-        </div>
+        <MembershipTier totalSpent={customer.totalSpent || 0} />
       </div>
-
-      <OrderList
-        orders={orders}
-        onViewAll={handleViewAllOrders}
-        onSort={handleSortOrders}
-      />
+      <OrderList phone={customer.phone} />
     </div>
   );
 }

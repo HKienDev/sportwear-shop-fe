@@ -1,38 +1,32 @@
-export type Order = {
+export interface Order {
   _id: string;
   shortId: string;
-  user: string;
+  totalPrice: number;
+  status: "pending" | "processing" | "completed" | "cancelled" | "failed";
+  paymentMethod: "COD" | "BANK";
+  createdAt: string;
   items: {
-    product: { 
-      _id: string; 
-      name: string; 
+    product: {
+      _id: string;
+      name: string;
       price: number;
-      images: {
-        main: string;
-        sub: string[];
-      };
+      discountPrice?: number;
+      images: string[];
     };
     quantity: number;
-    price: number;
   }[];
-  totalPrice: number;
-  paymentMethod: "COD" | "Stripe";
-  paymentStatus: "pending" | "paid";
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  shippingAddress: {
-    fullName: string;
+  customer: {
+    _id: string;
+    fullname: string;
     phone: string;
-    address: string;
-    city: string;
-    district: string;
-    ward: string;
-    postalCode: string;
+    address: {
+      province: string;
+      district: string;
+      ward: string;
+      street: string;
+    };
   };
-  shippingMethod?: {
-    method: string;
-    fee: number;
-  };
-  shippingFee?: number;
-  discount?: number;
-  createdAt: string;
-}; 
+  shippingMethod: "standard" | "express";
+  shippingFee: number;
+  note?: string;
+} 
