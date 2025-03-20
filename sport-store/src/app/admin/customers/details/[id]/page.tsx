@@ -354,10 +354,7 @@ export default function CustomerDetail() {
         />
 
         <div className="lg:w-1/3 w-full">
-          <MembershipTier
-            currentSpent={customer.totalSpent || 0}
-            nextTierThreshold={200000000}
-          />
+          <MembershipTier totalSpent={customer.totalSpent} />
         </div>
       </div>
 
