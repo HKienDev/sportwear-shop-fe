@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Order } from "@/types/order";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import CancelOrder from "@/components/admin/orders/details/cancelOrder";
 
 interface OrderDetailsPageProps {
   params: Promise<{
@@ -93,48 +92,12 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order.shortId}</h1>
-        <div className="flex gap-4">
-          <CancelOrder 
-            orderId={order._id} 
-            status={order.status} 
-            items={order.items.map(item => ({
-              product: {
-                _id: item.product._id,
-                name: item.product.name,
-                price: item.product.price,
-                images: {
-                  main: item.product.images?.[0] || '',
-                  sub: item.product.images?.slice(1) || []
-                }
-              },
-              quantity: item.quantity,
-              price: item.product.price
-            }))} 
-          />
-        </div>
-      </div>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">CHI TIẾT ĐƠN HÀNG</h1>
       <div className="max-w-7xl mx-auto">
         <OrderDetails
+          order={order}
           orderId={order._id}
-          status={order.status}
-          items={order.items}
-          shippingAddress={order.customer?.address || {
-            province: '',
-            district: '',
-            ward: '',
-            street: ''
-          }}
-          shippingMethod={order.shippingMethod}
-          shippingFee={order.shippingFee}
-          discount={0}
-          paymentMethod={order.paymentMethod}
-          paymentStatus={order.status}
-          createdAt={order.createdAt}
-          user={order.customer?._id || ''}
-          totalPrice={order.totalPrice}
         />
       </div>
     </div>

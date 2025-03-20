@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
@@ -86,44 +86,15 @@ export const orderStatusInfo = {
 };
 
 interface OrderDetailsProps {
+  order: Order;
   orderId: string;
-  status: Order["status"];
-  items: Order["items"];
-  shippingAddress: Order["shippingAddress"];
-  shippingMethod: Order["shippingMethod"];
-  shippingFee?: number;
-  discount?: number;
-  paymentMethod: Order["paymentMethod"];
-  paymentStatus: Order["paymentStatus"];
-  createdAt: string;
-  user: string;
-  totalPrice: number;
-  onStatusUpdate?: (orderId: string, newStatus: Order["status"]) => void;
+  onStatusUpdate?: (orderId: string, status: Order["status"]) => void;
 }
 
-export default function OrderDetails({
-  orderId,
-  status,
-  items,
-  shippingAddress,
-  shippingMethod,
-  shippingFee = 0,
-  discount = 0,
-  paymentMethod,
-  paymentStatus,
-  createdAt,
-  user,
-  totalPrice,
-  onStatusUpdate
-}: OrderDetailsProps) {
-  const [currentStatus, setCurrentStatus] = useState<Order["status"]>(status);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Cập nhật currentStatus khi prop status thay đổi
-  useEffect(() => {
-    setCurrentStatus(status);
-  }, [status]);
+export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDetailsProps) {
+  const [currentStatus, setCurrentStatus] = useState<Order["status"]>(order.status);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Hàm để lấy lại thông tin đơn hàng mới nhất
   const refreshOrderDetails = async () => {
@@ -144,84 +115,75 @@ export default function OrderDetails({
     }
   };
 
-  const handleUpdateStatus = async (newStatus: string) => {
-    try {
-      setIsLoading(true);
-      
-      // Lấy thông tin user từ localStorage
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
-        toast.error("Vui lòng đăng nhập lại");
-        return;
-      }
-
-      let userData;
+  // Hàm xử lý cập nhật trạng thái đơn hàng
+  const handleUpdateStatus = (newStatus: Order["status"]) => {
+    const updateStatus = async () => {
       try {
-        userData = JSON.parse(userStr);
+        setIsLoading(true);
+        
+        // Lấy thông tin user từ localStorage
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          toast.error("Vui lòng đăng nhập lại");
+          return;
+        }
+
+        let userData;
+        try {
+          userData = JSON.parse(userStr);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          toast.error("Lỗi khi đọc thông tin người dùng");
+          return;
+        }
+
+        if (!userData || !userData._id) {
+          toast.error("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại");
+          localStorage.removeItem("user");
+          return;
+        }
+
+        const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            status: newStatus,
+            updatedBy: userData._id,
+            note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
+          }),
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+        }
+
+        setCurrentStatus(newStatus);
+        if (onStatusUpdate) {
+          onStatusUpdate(orderId, newStatus);
+        }
+
+        toast.success("Cập nhật trạng thái đơn hàng thành công");
+        await refreshOrderDetails();
       } catch (error) {
-        console.error("Error parsing user data:", error);
-        toast.error("Lỗi khi đọc thông tin người dùng");
-        return;
+        console.error("Error updating order status:", error);
+        const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng";
+        toast.error(errorMessage);
+        
+        if (errorMessage.includes("authentication") || errorMessage.includes("unauthorized")) {
+          localStorage.removeItem("user");
+          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+        }
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (!userData || !userData._id) {
-        toast.error("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại");
-        // Xóa thông tin user không hợp lệ
-        localStorage.removeItem("user");
-        return;
-      }
-
-      // Tính tổng tiền đơn hàng
-      const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shippingFee - (discount || 0);
-
-      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          status: newStatus,
-          updatedBy: userData._id,
-          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`,
-          // Thêm thông tin để cập nhật totalSpent khi đơn hàng được xác nhận
-          updateUserTotalSpent: newStatus === "processing" ? {
-            userId: user,
-            amount: totalAmount
-          } : undefined
-        }),
-      });
-
-      if (!response.success) {
-        throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
-      }
-
-      // Cập nhật state local
-      setCurrentStatus(newStatus as Order["status"]);
-      
-      // Gọi callback để cập nhật danh sách đơn hàng
-      if (onStatusUpdate) {
-        onStatusUpdate(orderId, newStatus as Order["status"]);
-      }
-
-      toast.success("Cập nhật trạng thái đơn hàng thành công");
-      
-      // Refresh lại thông tin đơn hàng
-      await refreshOrderDetails();
-    } catch (error) {
-      console.error("Error updating order status:", error);
-      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng";
-      toast.error(errorMessage);
-      
-      // Nếu lỗi liên quan đến authentication
-      if (errorMessage.includes("authentication") || errorMessage.includes("unauthorized")) {
-        localStorage.removeItem("user");
-        toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    updateStatus();
   };
 
+  // Render nút hành động dựa trên trạng thái hiện tại
   const renderActionButton = () => {
     const isDisabled = isLoading || isRefreshing;
     
@@ -239,19 +201,9 @@ export default function OrderDetails({
       case "processing":
         return (
           <Button
-            onClick={() => handleUpdateStatus("shipped")}
+            onClick={() => handleUpdateStatus("completed")}
             disabled={isDisabled}
             className="bg-green-500 hover:bg-green-600"
-          >
-            {isDisabled ? "Đang xử lý..." : "Xác nhận đã giao cho đơn vị vận chuyển"}
-          </Button>
-        );
-      case "shipped":
-        return (
-          <Button
-            onClick={() => handleUpdateStatus("delivered")}
-            disabled={isDisabled}
-            className="bg-purple-500 hover:bg-purple-600"
           >
             {isDisabled ? "Đang xử lý..." : "Xác nhận đã giao hàng"}
           </Button>
@@ -261,60 +213,99 @@ export default function OrderDetails({
     }
   };
 
+  // Hàm xử lý cập nhật trạng thái từ component CancelOrder
+  const handleCancelOrderStatusUpdate = (id: string, newStatus: string) => {
+    const validStatuses = ["pending", "processing", "completed", "cancelled", "failed"] as const;
+    if (validStatuses.includes(newStatus as Order["status"])) {
+      const status = newStatus as Order["status"];
+      setCurrentStatus(status);
+      if (onStatusUpdate) {
+        onStatusUpdate(id, status);
+      }
+    } else {
+      console.error("Invalid status:", newStatus);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <OrderHeader
         orderId={orderId}
-        customerId={user}
-        lastUpdated={new Date(createdAt).toLocaleString("vi-VN")}
+        customerId={order.customer.fullname}
+        lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
-        paymentStatus={paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+        paymentStatus={order.status === "completed" ? "Đã thanh toán" : "Chưa thanh toán"}
       />
       <DeliveryTracking
         status={currentStatus}
-        onChangeStatus={handleUpdateStatus}
+        onChangeStatus={(status: string) => {
+          if (status === "pending" || status === "processing" || status === "completed" || status === "cancelled" || status === "failed") {
+            handleUpdateStatus(status as Order["status"]);
+          }
+        }}
         isLoading={isLoading || isRefreshing}
       />
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
-          name={shippingAddress.fullName}
-          address={shippingAddress.address}
-          phone={shippingAddress.phone}
-          city={shippingAddress.city}
-          district={shippingAddress.district}
-          ward={shippingAddress.ward}
-          postalCode={shippingAddress.postalCode}
+          name={order.customer.fullname}
+          address={order.customer.address.street}
+          phone={order.customer.phone}
+          city={order.customer.address.province}
+          district={order.customer.address.district}
+          ward={order.customer.address.ward}
         />
         <ShippingMethod
-          method={paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
+          method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
           trackingId={orderId}
-          shippingMethod={shippingMethod?.method || "Vận chuyển thường"}
+          shippingMethod={order.shippingMethod === "standard" ? "Vận chuyển thường" : "Vận chuyển nhanh"}
         />
       </div>
       <OrderTable
-        items={items}
-        shippingFee={shippingFee}
-        discount={discount || 0}
-        totalPrice={totalPrice}
+        items={order.items.map(item => ({
+          product: {
+            _id: item.product._id,
+            name: item.product.name,
+            price: item.product.price,
+            images: {
+              main: item.product.images[0] || '',
+              sub: item.product.images.slice(1)
+            },
+            shortId: item.product._id.slice(-6)
+          },
+          quantity: item.quantity,
+          price: item.product.price
+        }))}
+        shippingMethod={{
+          name: order.shippingMethod === "standard" ? "Standard" : "Express",
+          fee: order.shippingFee
+        }}
+        discount={0}
       />
-      <div className="mt-8 flex gap-2">
-        {renderActionButton()}
-        {currentStatus !== "cancelled" && currentStatus !== "delivered" && (
-          <CancelOrder 
-            orderId={orderId}
-            items={items}
-            status={currentStatus}
-            isDisabled={isRefreshing}
-            onStatusUpdate={(id, newStatus) => {
-              setCurrentStatus(newStatus as Order["status"]);
-              if (onStatusUpdate) {
-                onStatusUpdate(id, newStatus as Order["status"]);
+      <div className="flex justify-between items-center">
+        <div className="flex gap-4">
+          {renderActionButton()}
+        </div>
+        <CancelOrder
+          orderId={orderId}
+          status={currentStatus}
+          items={order.items.map(item => ({
+            product: {
+              _id: item.product._id,
+              name: item.product.name,
+              price: item.product.price,
+              images: {
+                main: item.product.images[0] || '',
+                sub: item.product.images.slice(1)
               }
-            }}
-          />
-        )}
+            },
+            quantity: item.quantity,
+            price: item.product.price
+          }))}
+          onStatusUpdate={handleCancelOrderStatusUpdate}
+          isDisabled={isLoading || isRefreshing}
+        />
       </div>
     </div>
   );

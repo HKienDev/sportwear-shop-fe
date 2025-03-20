@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { Order } from "@/types/order";
 
 interface OrderItem {
   product: {
@@ -33,9 +34,9 @@ interface OrderItem {
 interface CancelOrderProps {
   orderId: string;
   items: OrderItem[];
-  status: string;
+  status: Order["status"];
   isDisabled?: boolean;
-  onStatusUpdate?: (orderId: string, newStatus: string) => void;
+  onStatusUpdate?: (orderId: string, newStatus: Order["status"]) => void;
 }
 
 export default function CancelOrder({ orderId, items, status, isDisabled, onStatusUpdate }: CancelOrderProps) {
@@ -140,7 +141,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   };
 
   // Kiểm tra xem đơn hàng có thể hủy không
-  if (status === "cancelled" || status === "delivered") {
+  if (status === "cancelled" || status === "completed") {
     return null;
   }
 
@@ -149,7 +150,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
       <AlertDialogTrigger asChild>
         <Button 
           variant="destructive" 
-          disabled={isLoading || isRefreshing}
+          disabled={isLoading || isRefreshing || isDisabled}
           className="bg-red-500 hover:bg-red-600"
         >
           {isLoading ? "Đang xử lý..." : "Hủy đơn hàng"}
@@ -168,7 +169,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
           <AlertDialogAction 
             onClick={handleCancelOrder}
             className="bg-red-500 hover:bg-red-600"
-            disabled={isLoading || isRefreshing}
+            disabled={isLoading || isRefreshing || isDisabled}
           >
             {isLoading ? "Đang xử lý..." : "Có, hủy đơn hàng"}
           </AlertDialogAction>
