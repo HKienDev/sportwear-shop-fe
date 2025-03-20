@@ -101,9 +101,17 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
             orderId={order._id} 
             status={order.status} 
             items={order.items.map(item => ({
-              product: item.product,
+              product: {
+                _id: item.product._id,
+                name: item.product.name,
+                price: item.product.price,
+                images: {
+                  main: item.product.images?.[0] || '',
+                  sub: item.product.images?.slice(1) || []
+                }
+              },
               quantity: item.quantity,
-              price: item.price
+              price: item.product.price
             }))} 
           />
         </div>
@@ -113,15 +121,20 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
           orderId={order._id}
           status={order.status}
           items={order.items}
-          shippingAddress={order.shippingAddress}
+          shippingAddress={order.customer?.address || {
+            province: '',
+            district: '',
+            ward: '',
+            street: ''
+          }}
           shippingMethod={order.shippingMethod}
-          shippingFee={order.shippingMethod?.fee || 0}
-          discount={order.discount}
+          shippingFee={order.shippingFee}
+          discount={0}
           paymentMethod={order.paymentMethod}
-          paymentStatus={order.paymentStatus}
+          paymentStatus={order.status}
           createdAt={order.createdAt}
-          user={order.user}
-          totalPrice={order.totalPrice || order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + (order.shippingMethod?.fee || 0) - (order.discount || 0)}
+          user={order.customer?._id || ''}
+          totalPrice={order.totalPrice}
         />
       </div>
     </div>
