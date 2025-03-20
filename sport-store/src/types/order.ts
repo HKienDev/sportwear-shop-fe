@@ -30,6 +30,7 @@ export type Order = {
   };
   shippingMethod?: {
     method: string;
+    fee: number;
   };
   shippingFee?: number;
   discount?: number;
