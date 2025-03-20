@@ -51,18 +51,8 @@ export default function OrderDetailsPage() {
       <h1 className="text-2xl font-bold">CHI TIẾT ĐƠN HÀNG</h1>
       <div className="max-w-7xl mx-auto">
         <OrderDetails
+          order={order}
           orderId={order._id}
-          status={order.status}
-          items={order.items}
-          shippingAddress={order.customer.address}
-          shippingMethod={order.shippingMethod}
-          shippingFee={order.shippingFee}
-          discount={0}
-          paymentMethod={order.paymentMethod}
-          paymentStatus={order.status}
-          createdAt={order.createdAt}
-          user={order.customer._id}
-          totalPrice={order.totalPrice}
         />
       </div>
     </div>
