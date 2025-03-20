@@ -52,7 +52,7 @@ export default function OrdersPage() {
     const filtered = orders.filter(
       (order) =>
         order.shortId.includes(searchTerm) || 
-        order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+        order.customer?.fullname.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredOrders(filtered);
   }, [searchTerm, orders]);

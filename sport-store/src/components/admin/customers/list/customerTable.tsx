@@ -30,7 +30,11 @@ export default function CustomerTable({ customers, selectedCustomers, onSelectCu
                 type="checkbox" 
                 onChange={(e) => {
                   const isChecked = e.target.checked;
-                  customers.forEach(customer => onSelectCustomer(customer._id));
+                  if (isChecked) {
+                    customers.forEach(customer => onSelectCustomer(customer._id));
+                  } else {
+                    selectedCustomers.forEach(id => onSelectCustomer(id));
+                  }
                 }}
                 checked={selectedCustomers.length === customers.length && customers.length > 0}
               />
