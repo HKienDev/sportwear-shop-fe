@@ -231,7 +231,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         orderId={orderId}
-        customerId={order.customer.fullname}
+        customerId={order.customer?.fullname || "Không có dữ liệu"}
         lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
         paymentStatus={order.status === "completed" ? "Đã thanh toán" : "Chưa thanh toán"}
@@ -247,12 +247,12 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       />
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
-          name={order.customer.fullname}
-          address={order.customer.address.street}
-          phone={order.customer.phone}
-          city={order.customer.address.province}
-          district={order.customer.address.district}
-          ward={order.customer.address.ward}
+          name={order.customer?.fullname || "Không có dữ liệu"}
+          address={order.customer?.address?.street || "Không có dữ liệu"}
+          phone={order.customer?.phone || "Không có dữ liệu"}
+          city={order.customer?.address?.province || "Không có dữ liệu"}
+          district={order.customer?.address?.district || "Không có dữ liệu"}
+          ward={order.customer?.address?.ward || "Không có dữ liệu"}
         />
         <ShippingMethod
           method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
@@ -269,8 +269,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             name: item.product.name,
             price: item.product.price,
             images: {
-              main: item.product.images[0] || '',
-              sub: item.product.images.slice(1)
+              main: item.product.images?.[0] || '',
+              sub: item.product.images?.slice(1) || []
             },
             shortId: item.product._id.slice(-6)
           },
@@ -296,8 +296,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               name: item.product.name,
               price: item.product.price,
               images: {
-                main: item.product.images[0] || '',
-                sub: item.product.images.slice(1)
+                main: item.product.images?.[0] || '',
+                sub: item.product.images?.slice(1) || []
               }
             },
             quantity: item.quantity,
