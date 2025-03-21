@@ -65,6 +65,7 @@ export default function CustomerDetail() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [tempCustomer, setTempCustomer] = useState<Customer | null>(null);
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
@@ -147,14 +148,68 @@ export default function CustomerDetail() {
     fetchProvinces();
   }, [fetchCustomerData, fetchProvinces]);
 
+  // Tải danh sách quận/huyện và phường/xã khi có dữ liệu khách hàng
+  useEffect(() => {
+    const loadLocationData = async () => {
+      if (!customer) return;
+
+      try {
+        // Tìm mã tỉnh/thành từ tên
+        const province = provinces.find(p => p.name === customer.address.province);
+        if (!province) return;
+
+        // Tải danh sách quận/huyện
+        const districtsResponse = await fetch(`https://provinces.open-api.vn/api/p/${province.code}?depth=2`);
+        if (!districtsResponse.ok) throw new Error('Không thể tải danh sách quận huyện');
+        const districtsData: ProvinceApiData = await districtsResponse.json();
+        const newDistricts = districtsData.districts?.map((d: DistrictApiData) => ({ 
+          code: d.code.toString(), 
+          name: d.name 
+        })) || [];
+        setDistricts(newDistricts);
+        
+        // Tìm mã quận/huyện từ tên
+        const district = newDistricts.find(d => d.name === customer.address.district);
+        if (!district) return;
+
+        // Tải danh sách phường/xã
+        await fetchWards(district.code);
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu địa chỉ:", error);
+      }
+    };
+
+    loadLocationData();
+  }, [customer, provinces, fetchWards]);
+
+  // Xử lý thay đổi tạm thời
+  const handleDataChange = useCallback((field: CustomerUpdateField, value: CustomerUpdateValue) => {
+    if (!tempCustomer) return;
+    
+    setTempCustomer(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+  }, [tempCustomer]);
+
+  // Cập nhật tempCustomer khi customer thay đổi
+  useEffect(() => {
+    if (customer) {
+      setTempCustomer(customer);
+    }
+  }, [customer]);
+
   // Xử lý cập nhật thông tin khách hàng
-  const handleUpdateCustomer = useCallback(async (field: CustomerUpdateField, value: CustomerUpdateValue) => {
-    if (!customer) return;
+  const handleUpdateCustomer = useCallback(async () => {
+    if (!tempCustomer || !customer) return;
 
     try {
       const { ok, data } = await fetchWithAuth(`/users/admin/${customer._id}`, {
         method: "PUT",
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify(tempCustomer),
       });
 
       if (!ok) {
@@ -162,70 +217,99 @@ export default function CustomerDetail() {
       }
 
       setCustomer(data as Customer);
+      setTempCustomer(data as Customer);
       toast.success("Cập nhật thông tin thành công");
     } catch (error) {
       console.error("Lỗi khi cập nhật:", error);
       toast.error("Không thể cập nhật thông tin");
     }
-  }, [customer]);
+  }, [customer, tempCustomer]);
 
   // Xử lý thay đổi địa chỉ
   const handleProvinceChange = useCallback(async (value: string) => {
-    if (!customer) return;
+    if (!customer || !tempCustomer) return;
     
     try {
       // Tìm tên tỉnh/thành từ danh sách provinces
       const selectedProvince = provinces.find(p => p.code === value);
       if (!selectedProvince) return;
 
-      await handleUpdateCustomer("address", {
-        ...customer.address,
-        province: selectedProvince.name,
-        district: "",
-        ward: ""
-      });
+      // Tải danh sách quận/huyện trước
       await fetchDistricts(value);
       setWards([]);
+
+      // Cập nhật tempCustomer
+      setTempCustomer(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          address: {
+            province: selectedProvince.name,
+            district: "",
+            ward: "",
+            street: prev.address.street
+          }
+        };
+      });
     } catch (error) {
       console.error("Lỗi khi cập nhật tỉnh/thành:", error);
     }
-  }, [customer, handleUpdateCustomer, fetchDistricts, provinces]);
+  }, [customer, tempCustomer, fetchDistricts, provinces]);
 
   const handleDistrictChange = useCallback(async (value: string) => {
-    if (!customer) return;
+    if (!customer || !tempCustomer) return;
 
     try {
       // Tìm tên quận/huyện từ danh sách districts
       const selectedDistrict = districts.find(d => d.code === value);
       if (!selectedDistrict) return;
 
-      await handleUpdateCustomer("address", {
-        ...customer.address,
-        district: selectedDistrict.name,
-        ward: ""
+      // Cập nhật tempCustomer
+      setTempCustomer(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          address: {
+            province: prev.address.province,
+            district: selectedDistrict.name,
+            ward: "",
+            street: prev.address.street
+          }
+        };
       });
+
+      // Tải danh sách phường/xã sau khi cập nhật tempCustomer
       await fetchWards(value);
     } catch (error) {
       console.error("Lỗi khi cập nhật quận/huyện:", error);
     }
-  }, [customer, handleUpdateCustomer, fetchWards, districts]);
+  }, [customer, tempCustomer, fetchWards, districts]);
 
   const handleWardChange = useCallback(async (value: string) => {
-    if (!customer) return;
+    if (!customer || !tempCustomer) return;
 
     try {
       // Tìm tên phường/xã từ danh sách wards
       const selectedWard = wards.find(w => w.code === value);
       if (!selectedWard) return;
 
-      await handleUpdateCustomer("address", {
-        ...customer.address,
-        ward: selectedWard.name
+      // Cập nhật tempCustomer
+      setTempCustomer(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          address: {
+            province: prev.address.province,
+            district: prev.address.district,
+            ward: selectedWard.name,
+            street: prev.address.street
+          }
+        };
       });
     } catch (error) {
       console.error("Lỗi khi cập nhật phường/xã:", error);
     }
-  }, [customer, handleUpdateCustomer, wards]);
+  }, [customer, tempCustomer, wards]);
 
   // Xử lý các hành động chính
   const handleDelete = useCallback(async () => {
@@ -269,26 +353,26 @@ export default function CustomerDetail() {
     }
   }, [customer]);
 
-  const handleUpdateStatus = useCallback(async () => {
-    if (!customer) return;
+  // Chuyển đổi Customer sang CustomerData
+  const convertToCustomerData = (customer: Customer) => {
+    // Tìm mã tỉnh/thành từ tên
+    const province = provinces.find(p => p.name === customer.address.province);
+    // Tìm mã quận/huyện từ tên
+    const district = districts.find(d => d.name === customer.address.district);
+    // Tìm mã phường/xã từ tên
+    const ward = wards.find(w => w.name === customer.address.ward);
 
-    try {
-      const { ok, data } = await fetchWithAuth(`/users/admin/${customer._id}`, {
-        method: "PUT",
-        body: JSON.stringify({ isActive: !customer.isActive }),
-      });
-
-      if (!ok) {
-        throw new Error("Lỗi khi cập nhật trạng thái");
-      }
-
-      setCustomer(data as Customer);
-      toast.success("Cập nhật trạng thái thành công");
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-      toast.error("Không thể cập nhật trạng thái");
-    }
-  }, [customer]);
+    return {
+      id: customer._id,
+      name: customer.fullname,
+      avatar: customer.avatar,
+      phone: customer.phone,
+      address: customer.address,
+      province,
+      district,
+      ward
+    };
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -299,37 +383,31 @@ export default function CustomerDetail() {
   }
 
   return (
-    <div className="space-y-6">
-      <Header 
+    <div className="container mx-auto p-4">
+      <Header
         onDelete={handleDelete}
         onChangePassword={handleChangePassword}
-        onUpdate={handleUpdateStatus}
+        onUpdate={handleUpdateCustomer}
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CustomerInfo 
-          customer={{
-            id: customer._id,
-            name: customer.fullname,
-            avatar: customer.avatar,
-            phone: customer.phone,
-            address: {
-              province: customer.address.province,
-              district: customer.address.district,
-              ward: customer.address.ward,
-              street: customer.address.street
-            }
-          }}
+      
+      <div className="flex flex-col lg:flex-row gap-4 mt-4">
+        <CustomerInfo
+          customer={convertToCustomerData(tempCustomer || customer)}
           provinces={provinces}
           districts={districts}
           wards={wards}
-          onUpdateCustomer={handleUpdateCustomer}
           onProvinceChange={handleProvinceChange}
           onDistrictChange={handleDistrictChange}
           onWardChange={handleWardChange}
+          onDataChange={handleDataChange}
         />
-        <MembershipTier totalSpent={customer.totalSpent || 0} />
+        
+        <MembershipTier
+          totalSpent={tempCustomer?.totalSpent || customer.totalSpent || 0}
+        />
       </div>
-      <OrderList phone={customer.phone} />
+
+      <OrderList phone={tempCustomer?.phone || customer.phone} />
     </div>
   );
 }

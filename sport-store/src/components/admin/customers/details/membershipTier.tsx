@@ -117,7 +117,7 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
   ) || tiers[tiers.length - 1];
 
   return (
-    <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100">
+    <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 lg:w-1/3 w-full">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />

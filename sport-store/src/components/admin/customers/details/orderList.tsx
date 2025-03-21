@@ -72,7 +72,11 @@ export default function OrderList({ phone }: OrderListProps) {
 
   if (loading) {
     return (
-      <Card className="p-6">
+      <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
+        </div>
         <div className="space-y-4">
           <Skeleton className="h-8 w-[200px]" />
           <div className="space-y-2">
@@ -87,7 +91,11 @@ export default function OrderList({ phone }: OrderListProps) {
 
   if (error) {
     return (
-      <Card className="p-6">
+      <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
+        </div>
         <div className="text-center text-red-500">
           <p>{error}</p>
         </div>
@@ -97,7 +105,11 @@ export default function OrderList({ phone }: OrderListProps) {
 
   if (orders.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
+        </div>
         <div className="text-center text-gray-500">
           <p>Không tìm thấy đơn hàng nào</p>
         </div>
@@ -106,7 +118,11 @@ export default function OrderList({ phone }: OrderListProps) {
   }
 
   return (
-    <Card className="p-6">
+    <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
+      </div>
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Lịch sử đơn hàng</h3>
         <div className="rounded-md border">
