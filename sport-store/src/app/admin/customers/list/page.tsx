@@ -14,12 +14,23 @@ interface Customer {
   fullname: string;
   email: string;
   phone: string;
-  lastActivity: string;
-  totalOrders: number;
-  totalSpent: number;
-  status: string;
-  role: string;
+  username: string;
   avatar: string;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  address: {
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+  };
+  dob: string;
+  gender: string;
+  membershipLevel: string;
+  totalSpent: number;
+  orderCount: number;
+  lastActivity: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -44,9 +55,9 @@ export default function CustomerList() {
   const fetchCustomers = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, ok, status } = await fetchWithAuth("/users");
+      const { data: usersData, ok: usersOk, status } = await fetchWithAuth("/users");
 
-      if (!ok) {
+      if (!usersOk) {
         if (status === 401 || status === 403) {
           toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
           router.push("/login");
@@ -56,7 +67,7 @@ export default function CustomerList() {
       }
       
       // Lọc chỉ lấy user (không lấy admin)
-      const userCustomers = data.filter((customer: Customer) => customer.role === "user");
+      const userCustomers = usersData.filter((customer: Customer) => customer.role === "user");
       setCustomers(userCustomers);
       setFilteredCustomers(userCustomers);
     } catch (error) {
