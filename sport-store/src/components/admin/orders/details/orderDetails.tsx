@@ -13,53 +13,47 @@ import { Button } from "@/components/ui/button";
 import CancelOrder from "./cancelOrder";
 
 // Định nghĩa trạng thái đơn hàng
-export enum OrderStatus {
-  PENDING = "pending",
-  PROCESSING = "processing",
-  SHIPPED = "shipped",
-  DELIVERED = "delivered",
-  CANCELLED = "cancelled"
-}
+export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 
 // Mô tả chi tiết từng trạng thái
 export const orderStatusInfo = {
-  [OrderStatus.PENDING]: {
+  pending: {
     color: "text-amber-500",
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     icon: Clock,
-    nextStatus: OrderStatus.PROCESSING,
+    nextStatus: "processing" as OrderStatus,
     buttonText: "Xác Nhận Đơn Hàng",
     buttonColor: "bg-blue-500 hover:bg-blue-600",
     description: "Đơn hàng đang chờ xác nhận từ nhân viên bán hàng",
     date: "13/03/2025",
     time: "22:07"
   },
-  [OrderStatus.PROCESSING]: {
+  processing: {
     color: "text-blue-500",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     icon: Package,
-    nextStatus: OrderStatus.SHIPPED,
+    nextStatus: "shipped" as OrderStatus,
     buttonText: "Bắt Đầu Vận Chuyển",
     buttonColor: "bg-purple-500 hover:bg-purple-600",
     description: "Đơn hàng đã được xác nhận và đang chuẩn bị hàng",
     date: "13/03/2025",
     time: "22:08"
   },
-  [OrderStatus.SHIPPED]: {
+  shipped: {
     color: "text-purple-500",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
     icon: Truck,
-    nextStatus: OrderStatus.DELIVERED,
+    nextStatus: "delivered" as OrderStatus,
     buttonText: "Xác Nhận Giao Hàng Thành Công",
     buttonColor: "bg-green-500 hover:bg-green-600",
     description: "Đơn hàng đang được vận chuyển đến địa chỉ khách hàng",
     date: "13/03/2025",
     time: "22:20"
   },
-  [OrderStatus.DELIVERED]: {
+  delivered: {
     color: "text-green-500",
     bgColor: "bg-green-50",
     borderColor: "border-green-200",
@@ -71,7 +65,7 @@ export const orderStatusInfo = {
     date: "15/03/2025",
     time: "15:20"
   },
-  [OrderStatus.CANCELLED]: {
+  cancelled: {
     color: "text-red-500",
     bgColor: "bg-red-50",
     borderColor: "border-red-200",
@@ -83,7 +77,7 @@ export const orderStatusInfo = {
     date: "15/03/2025",
     time: "15:20"
   }
-};
+} as const;
 
 interface OrderDetailsProps {
   order: Order;
@@ -201,7 +195,17 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       case "processing":
         return (
           <Button
-            onClick={() => handleUpdateStatus("completed")}
+            onClick={() => handleUpdateStatus("shipped")}
+            disabled={isDisabled}
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            {isDisabled ? "Đang xử lý..." : "Bắt đầu vận chuyển"}
+          </Button>
+        );
+      case "shipped":
+        return (
+          <Button
+            onClick={() => handleUpdateStatus("delivered")}
             disabled={isDisabled}
             className="bg-green-500 hover:bg-green-600"
           >
@@ -215,7 +219,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
 
   // Hàm xử lý cập nhật trạng thái từ component CancelOrder
   const handleCancelOrderStatusUpdate = (id: string, newStatus: string) => {
-    const validStatuses = ["pending", "processing", "completed", "cancelled", "failed"] as const;
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
+    
     if (validStatuses.includes(newStatus as Order["status"])) {
       const status = newStatus as Order["status"];
       setCurrentStatus(status);
@@ -234,12 +239,12 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         customerId={order.user || "Không có dữ liệu"}
         lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
-        paymentStatus={order.status === "completed" ? "Đã thanh toán" : "Chưa thanh toán"}
+        paymentStatus={order.status === "delivered" ? "Đã thanh toán" : "Chưa thanh toán"}
       />
       <DeliveryTracking
         status={currentStatus}
         onChangeStatus={(status: string) => {
-          if (status === "pending" || status === "processing" || status === "completed" || status === "cancelled" || status === "failed") {
+          if (status === "pending" || status === "processing" || status === "shipped" || status === "delivered" || status === "cancelled") {
             handleUpdateStatus(status as Order["status"]);
           }
         }}

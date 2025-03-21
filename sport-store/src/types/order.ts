@@ -3,7 +3,7 @@ export interface Order {
   shortId: string;
   user: string;
   totalPrice: number;
-  status: "pending" | "processing" | "completed" | "cancelled" | "failed";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentMethod: "COD" | "BANK";
   createdAt: string;
   items: {

@@ -57,21 +57,25 @@ export default function OrderListTable({
                   {order.shortId}
                 </Link>
               </td>
-              <td className="px-4 py-3">{order.customer?.fullname || "Không có dữ liệu"}</td>
-              <td className="px-4 py-3">{order.customer?.address?.province || "Không có dữ liệu"}</td>
+              <td className="px-4 py-3">{order.shippingAddress?.fullName || "Không có dữ liệu"}</td>
+              <td className="px-4 py-3">
+                {order.shippingAddress ? 
+                  `${order.shippingAddress.address}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.city}` 
+                  : "Không có dữ liệu"}
+              </td>
               <td className="px-4 py-3">{order.totalPrice.toLocaleString()} Vnđ</td>
               <td className="px-4 py-3">
                 {order.paymentMethod} -{" "}
-                <span className={order.status === "completed" ? "text-green-500" : "text-red-500"}>
-                  {order.status === "completed" ? "Đã thanh toán" : "Chưa thanh toán"}
+                <span className={order.status === "delivered" ? "text-green-500" : "text-red-500"}>
+                  {order.status === "delivered" ? "Đã thanh toán" : "Chưa thanh toán"}
                 </span>
               </td>
               <td className={`px-4 py-3 ${getStatusColor(order.status)} font-medium`}>
                 {order.status === "pending" && "Chờ xác nhận"}
-                {order.status === "processing" && "Đang xử lý"}
-                {order.status === "completed" && "Giao hàng thành công"}
+                {order.status === "processing" && "Đã xác nhận"}
+                {order.status === "shipped" && "Đang vận chuyển"}
+                {order.status === "delivered" && "Đã giao hàng"}
                 {order.status === "cancelled" && "Đã hủy"}
-                {order.status === "failed" && "Thất bại"}
               </td>
               <td className="px-4 py-3">{new Date(order.createdAt).toLocaleString("vi-VN")}</td>
             </tr>
