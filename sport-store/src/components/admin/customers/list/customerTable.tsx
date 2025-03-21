@@ -1,5 +1,6 @@
 import { Mail, Phone } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Customer {
   _id: string;
@@ -7,10 +8,10 @@ interface Customer {
   email: string;
   phone: string;
   lastActivity: string;
-  totalOrders: number;
+  orderCount: number;
   totalSpent: number;
-  status: string;
   avatar: string;
+  isActive: boolean;
 }
 
 interface CustomerTableProps {
@@ -69,7 +70,12 @@ export default function CustomerTable({ customers, selectedCustomers, onSelectCu
                   </div>
                   <div className="ml-3">
                     <div className="font-medium">
-                      {customer.fullname || "Khách hàng chưa thêm"}
+                      <Link 
+                        href={`/admin/customers/details/${customer._id}`}
+                        className="hover:text-blue-600 hover:underline"
+                      >
+                        {customer.fullname || "Khách hàng chưa thêm"}
+                      </Link>
                     </div>
                     <div className="text-gray-500 text-sm">
                       {customer.lastActivity || "Chưa có hoạt động"}
@@ -86,17 +92,24 @@ export default function CustomerTable({ customers, selectedCustomers, onSelectCu
                     <span>{customer.phone || "Chưa cập nhật"}</span>
                   </div>
                 </td>
-                <td className="p-4">{customer.totalOrders || 0}</td>
+                <td className="p-4">
+                  <Link 
+                    href={`/admin/customers/details/${customer._id}`}
+                    className="hover:text-blue-600 hover:underline"
+                  >
+                    {customer.orderCount || 0} đơn
+                  </Link>
+                </td>
                 <td className="p-4">{customer.totalSpent?.toLocaleString() || 0}₫</td>
                 <td className="p-4">
                   <span
                     className={`px-2 py-1 rounded-full text-sm ${
-                      customer.status === "active"
+                      customer.isActive
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {customer.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                    {customer.isActive ? "Hoạt động" : "Không hoạt động"}
                   </span>
                 </td>
               </tr>
