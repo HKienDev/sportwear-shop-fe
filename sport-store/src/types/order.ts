@@ -1,6 +1,7 @@
 export interface Order {
   _id: string;
   shortId: string;
+  user: string;
   totalPrice: number;
   status: "pending" | "processing" | "completed" | "cancelled" | "failed";
   paymentMethod: "COD" | "BANK";
@@ -25,6 +26,15 @@ export interface Order {
       ward: string;
       street: string;
     };
+  };
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    address: string;
+    city: string;
+    district: string;
+    ward: string;
+    postalCode: string;
   };
   shippingMethod: "standard" | "express";
   shippingFee: number;

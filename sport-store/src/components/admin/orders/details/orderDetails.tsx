@@ -231,7 +231,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         orderId={orderId}
-        customerId={order.customer?.fullname || "Không có dữ liệu"}
+        customerId={order.user || "Không có dữ liệu"}
         lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
         paymentStatus={order.status === "completed" ? "Đã thanh toán" : "Chưa thanh toán"}
@@ -247,12 +247,13 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       />
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
-          name={order.customer?.fullname || "Không có dữ liệu"}
-          address={order.customer?.address?.street || "Không có dữ liệu"}
-          phone={order.customer?.phone || "Không có dữ liệu"}
-          city={order.customer?.address?.province || "Không có dữ liệu"}
-          district={order.customer?.address?.district || "Không có dữ liệu"}
-          ward={order.customer?.address?.ward || "Không có dữ liệu"}
+          name={order.shippingAddress?.fullName || "Không có dữ liệu"}
+          address={order.shippingAddress?.address || "Không có dữ liệu"}
+          phone={order.shippingAddress?.phone || "Không có dữ liệu"}
+          city={order.shippingAddress?.city || "Không có dữ liệu"}
+          district={order.shippingAddress?.district || "Không có dữ liệu"}
+          ward={order.shippingAddress?.ward || "Không có dữ liệu"}
+          postalCode={order.shippingAddress?.postalCode || "Không có dữ liệu"}
         />
         <ShippingMethod
           method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
