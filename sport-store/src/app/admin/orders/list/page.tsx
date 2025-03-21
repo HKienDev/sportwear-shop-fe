@@ -51,8 +51,8 @@ export default function OrdersPage() {
   useEffect(() => {
     const filtered = orders.filter(
       (order) =>
-        order.shortId.includes(searchTerm) || 
-        order.customer?.fullname.toLowerCase().includes(searchTerm.toLowerCase())
+        order.shortId.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredOrders(filtered);
   }, [searchTerm, orders]);

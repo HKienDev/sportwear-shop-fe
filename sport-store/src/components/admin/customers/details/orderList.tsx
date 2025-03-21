@@ -16,7 +16,7 @@ import { vi } from "date-fns/locale";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 
 interface OrderListProps {
@@ -26,9 +26,9 @@ interface OrderListProps {
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
   processing: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
-  failed: "bg-orange-100 text-orange-800"
+  shipped: "bg-purple-100 text-purple-800",
+  delivered: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800"
 };
 
 const ITEMS_PER_PAGE = 5;
@@ -142,14 +142,14 @@ export default function OrderList({ phone }: OrderListProps) {
                     >
                       {order.status === "pending" && <Clock className="w-3.5 h-3.5 mr-1" />}
                       {order.status === "processing" && <Package className="w-3.5 h-3.5 mr-1" />}
-                      {order.status === "completed" && <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "shipped" && <Package className="w-3.5 h-3.5 mr-1" />}
+                      {order.status === "delivered" && <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
                       {order.status === "cancelled" && <XCircle className="w-3.5 h-3.5 mr-1" />}
-                      {order.status === "failed" && <AlertCircle className="w-3.5 h-3.5 mr-1" />}
-                      {order.status === "pending" && "Chờ xử lý"}
-                      {order.status === "processing" && "Đang xử lý"}
-                      {order.status === "completed" && "Hoàn thành"}
+                      {order.status === "pending" && "Chờ xác nhận"}
+                      {order.status === "processing" && "Đã xác nhận"}
+                      {order.status === "shipped" && "Đang vận chuyển"}
+                      {order.status === "delivered" && "Đã giao hàng"}
                       {order.status === "cancelled" && "Đã hủy"}
-                      {order.status === "failed" && "Thất bại"}
                     </Badge>
                   </TableCell>
                 </TableRow>
