@@ -9,6 +9,11 @@ import Pagination from "@/components/admin/products/list/pagination";
 import DeleteButton from "@/components/admin/products/list/deleteButton";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface Product {
   _id: string;
   name: string;
@@ -29,6 +34,7 @@ export default function ProductList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]); // Thêm state cho categories
   const router = useRouter();
 
   // Tính toán số trang và danh sách sản phẩm hiện tại
@@ -60,6 +66,27 @@ export default function ProductList() {
       toast.error("Không thể tải danh sách sản phẩm");
     } finally {
       setIsLoading(false);
+    }
+  }, [router]);
+
+  // Lấy danh sách categories từ API
+  const fetchCategories = useCallback(async () => {
+    try {
+      const { data, ok, status } = await fetchWithAuth("/categories");
+
+      if (!ok) {
+        if (status === 401 || status === 403) {
+          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
+          router.push("/login");
+          return;
+        }
+        throw new Error("Lỗi khi lấy danh sách thể loại");
+      }
+
+      setCategories(data);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thể loại:", error);
+      toast.error("Không thể tải danh sách thể loại");
     }
   }, [router]);
 
@@ -127,10 +154,11 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
     }
   }, [selectedProducts, fetchProducts]);
 
-  // Tải danh sách sản phẩm khi component được mount
+  // Tải danh sách sản phẩm và categories khi component được mount
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchCategories(); // Gọi hàm lấy danh sách categories
+  }, [fetchProducts, fetchCategories]);
 
   return (
     <div className="container mx-auto p-4">
@@ -154,8 +182,10 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
         />
       </div>
 
+      {/* Truyền categories vào ProductTable */}
       <ProductTable
         products={currentProducts}
+        categories={categories} // Thêm dòng này
         selectedProducts={selectedProducts}
         onSelectProduct={handleSelectProduct}
       />

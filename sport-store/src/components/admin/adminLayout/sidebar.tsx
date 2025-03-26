@@ -31,7 +31,6 @@ const menuItems = [
     subMenu: [
       { name: "Danh Sách", path: "/admin/products/list" },
       { name: "Thêm Sản Phẩm", path: "/admin/products/add" },
-      { name: "Chi Tiết", path: "/admin/products/details" },
     ],
   },
   {
