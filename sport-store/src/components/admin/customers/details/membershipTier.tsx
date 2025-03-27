@@ -10,6 +10,7 @@ import {
 
 interface MembershipTierProps {
   totalSpent?: number;
+  membershipLevel?: string;
 }
 
 interface TierInfo {
@@ -111,10 +112,24 @@ const tiers: TierInfo[] = [
   }
 ];
 
-export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) {
-  const currentTier = tiers.find(tier => 
-    totalSpent >= tier.minSpent && totalSpent < tier.maxSpent
-  ) || tiers[tiers.length - 1];
+export default function MembershipTier({ totalSpent = 0, membershipLevel }: MembershipTierProps) {
+  // Đảm bảo totalSpent là số dương
+  const positiveTotalSpent = Math.abs(totalSpent);
+  
+  // Tìm tier hiện tại dựa trên membershipLevel từ backend
+  const currentTier = tiers.find(tier => tier.name === membershipLevel) || tiers[0];
+
+  // Tính toán tiến độ
+  const calculateProgress = () => {
+    if (currentTier.name === "Hạng Kim Cương") return "100%";
+    
+    const currentAmount = positiveTotalSpent - currentTier.minSpent;
+    const nextAmount = currentTier.nextTierAmount! - currentTier.minSpent;
+    const progress = (currentAmount / nextAmount) * 100;
+    
+    // Đảm bảo progress không âm và không vượt quá 100%
+    return `${Math.max(0, Math.min(100, progress))}%`;
+  };
 
   return (
     <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 lg:w-1/3 w-full">
@@ -136,7 +151,7 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
                 {currentTier.name}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Tổng chi tiêu: <span className="font-medium" style={{ color: currentTier.color }}>{totalSpent.toLocaleString('vi-VN')}đ</span>
+                Tổng chi tiêu: <span className="font-medium" style={{ color: currentTier.color }}>{positiveTotalSpent.toLocaleString('vi-VN')}đ</span>
               </p>
             </div>
           </div>
@@ -154,7 +169,7 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
           <div 
             className="absolute h-2 bg-gradient-to-r rounded-full transition-all duration-700 ease-out"
             style={{ 
-              width: currentTier.name === "Hạng Kim Cương" ? "100%" : `${((totalSpent - currentTier.minSpent) / (currentTier.nextTierAmount! - currentTier.minSpent)) * 100}%`,
+              width: calculateProgress(),
               background: `linear-gradient(to right, ${currentTier.color}, ${currentTier.color}80)`
             }}
           />
@@ -181,14 +196,14 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
       </div>
 
       {/* Next Tier Section */}
-      {currentTier.nextTierAmount && (
+      {currentTier.nextTierAmount && positiveTotalSpent < currentTier.nextTierAmount && (
         <div className="relative p-3 bg-gradient-to-r from-gray-50 via-white to-gray-50 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="p-1 rounded-sm" style={{ backgroundColor: `${currentTier.color}20` }}>
               <TrendingUp className="w-3.5 h-3.5" style={{ color: currentTier.color }} />
             </div>
             <p className="text-xs">
-              Cần chi thêm <span className="font-bold" style={{ color: currentTier.color }}>{(currentTier.nextTierAmount - totalSpent).toLocaleString('vi-VN')}đ</span> 
+              Cần chi thêm <span className="font-bold" style={{ color: currentTier.color }}>{(currentTier.nextTierAmount - positiveTotalSpent).toLocaleString('vi-VN')}đ</span> 
               để đạt <span className="font-bold" style={{ color: currentTier.color }}>{currentTier.nextTier}</span>
             </p>
           </div>

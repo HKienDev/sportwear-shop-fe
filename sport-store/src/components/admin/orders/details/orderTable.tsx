@@ -19,7 +19,7 @@ interface OrderItem {
 }
 
 interface OrderTableProps {
-  items: OrderItem[];
+  items?: OrderItem[];
   shippingMethod?: {
     name: string;
     fee: number;
@@ -27,21 +27,14 @@ interface OrderTableProps {
   discount?: number;
 }
 
-export default function OrderTable({ items, shippingMethod }: OrderTableProps) {
+export default function OrderTable({ items = [], shippingMethod = { name: "Standard", fee: 30000 }, discount = 0 }: OrderTableProps) {
   // Tính tổng tiền
   const subtotal = items.reduce((total, item) => {
     return total + (item.price * item.quantity);
   }, 0);
 
-  // Phí vận chuyển
-  const shippingFee = shippingMethod?.name === "Express" 
-    ? 50000 
-    : shippingMethod?.name === "SameDay" 
-    ? 100000 
-    : 30000;
-
-  // Tổng cộng
-  const total = subtotal + shippingFee;
+  // Tính tổng tiền cuối cùng
+  const total = subtotal + (shippingMethod?.fee || 0) - discount;
 
   return (
     <div className="mt-8 pt-6 border-t border-gray-200">
@@ -79,7 +72,9 @@ export default function OrderTable({ items, shippingMethod }: OrderTableProps) {
                   <span>{item.product.name}</span>
                 </td>
                 <td className="px-6 py-4 text-center">{item.quantity}</td>
-                <td className="px-6 py-4 text-right">{item.price.toLocaleString()}₫</td>
+                <td className="px-6 py-4 text-right">
+                  <span className="text-red-500">{item.price.toLocaleString()}₫</span>
+                </td>
                 <td className="px-6 py-4 text-right font-medium">
                   {(item.price * item.quantity).toLocaleString()}₫
                 </td>
@@ -100,7 +95,7 @@ export default function OrderTable({ items, shippingMethod }: OrderTableProps) {
                 Phí vận chuyển:
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
-                {shippingFee.toLocaleString()}₫
+                {(shippingMethod?.fee || 0).toLocaleString()}₫
               </td>
             </tr>
             <tr>

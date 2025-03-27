@@ -1,11 +1,7 @@
 export interface Order {
   _id: string;
   shortId: string;
-  user: string;
-  totalPrice: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  paymentMethod: "COD" | "BANK";
-  createdAt: string;
+  user: string | null;
   items: {
     product: {
       _id: string;
@@ -15,17 +11,19 @@ export interface Order {
       images: string[];
     };
     quantity: number;
+    price: number;
   }[];
-  customer: {
-    _id: string;
-    fullname: string;
-    phone: string;
-    address: {
-      province: string;
-      district: string;
-      ward: string;
-      street: string;
-    };
+  totalPrice: number;
+  paymentMethod: "COD" | "Stripe";
+  paymentStatus: "pending" | "paid";
+  paymentIntentId?: string;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  shippingMethod: {
+    method: string;
+    expectedDate: string;
+    courier: string;
+    trackingId: string;
+    fee: number;
   };
   shippingAddress: {
     fullName: string;
@@ -36,7 +34,16 @@ export interface Order {
     ward: string;
     postalCode: string;
   };
-  shippingMethod: "standard" | "express";
-  shippingFee: number;
-  note?: string;
+  cancelledAt?: Date;
+  cancelledBy?: string;
+  cancellationReason?: string;
+  statusHistory: {
+    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+    updatedAt: Date;
+    updatedBy: string;
+    note?: string;
+  }[];
+  isTotalSpentUpdated: boolean;
+  createdAt: string;
+  updatedAt: string;
 } 

@@ -153,6 +153,68 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
         }
 
+        // Nếu đơn hàng được giao thành công, cập nhật totalSpent của khách hàng
+        if (newStatus === "delivered" && order.user) {
+          try {
+            // Lấy userId từ order.user
+            const userId = order.user;
+            
+            console.log("🔄 Đang cập nhật totalSpent cho user:", userId);
+            console.log("💰 Tổng tiền đơn hàng:", order.totalPrice);
+            console.log("📦 Chi tiết đơn hàng:", order);
+
+            // Kiểm tra userId có hợp lệ không
+            if (!userId) {
+              console.error("❌ ID người dùng không tồn tại");
+              return;
+            }
+
+            // Kiểm tra userId có phải là MongoDB ObjectId hợp lệ không
+            const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(userId);
+            if (!isValidObjectId) {
+              console.error("❌ ID người dùng không hợp lệ (không phải MongoDB ObjectId):", userId);
+              return;
+            }
+
+            // Gửi request cập nhật totalSpent
+            const requestBody = {
+              userId: userId,
+              orderTotal: Number(order.totalPrice), // Đảm bảo là số
+              orderId: orderId
+            };
+            console.log("📤 Request body:", requestBody);
+            console.log("🔍 Kiểm tra dữ liệu:", {
+              userId: typeof userId,
+              orderTotal: typeof requestBody.orderTotal,
+              orderId: typeof orderId
+            });
+            
+            try {
+              const response = await fetchWithAuth(`/users/admin/update-total-spent`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestBody),
+              });
+
+              // Kiểm tra response có tồn tại và có success không
+              if (!response || !response.data?.success) {
+                console.error("❌ Lỗi khi cập nhật totalSpent:", response?.data?.message || "Không có phản hồi từ server");
+                // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
+              } else {
+                console.log("✅ Cập nhật totalSpent thành công:", response.data);
+              }
+            } catch (error) {
+              console.error("❌ Lỗi khi cập nhật totalSpent:", error);
+              // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
+            }
+          } catch (error) {
+            console.error("❌ Lỗi khi cập nhật totalSpent:", error);
+            // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
+          }
+        }
+
         setCurrentStatus(newStatus);
         if (onStatusUpdate) {
           onStatusUpdate(orderId, newStatus);
@@ -265,7 +327,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
           trackingId={orderId}
-          shippingMethod={order.shippingMethod === "standard" ? "Vận chuyển thường" : "Vận chuyển nhanh"}
+          shippingMethod={order.shippingMethod.method === "standard" ? "Vận chuyển thường" : "Vận chuyển nhanh"}
         />
       </div>
       <OrderTable
@@ -273,7 +335,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           product: {
             _id: item.product._id,
             name: item.product.name,
-            price: item.product.price,
+            price: item.price,
             images: {
               main: item.product.images?.[0] || '',
               sub: item.product.images?.slice(1) || []
@@ -281,11 +343,15 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             shortId: item.product._id.slice(-6)
           },
           quantity: item.quantity,
-          price: item.product.price
+          price: item.price
         }))}
         shippingMethod={{
-          name: order.shippingMethod === "standard" ? "Standard" : "Express",
-          fee: order.shippingFee
+          name: order.shippingMethod.method,
+          fee: order.shippingMethod.method === "Standard" 
+            ? 30000 
+            : order.shippingMethod.method === "Express" 
+              ? 50000 
+              : 100000 // SameDay
         }}
         discount={0}
       />
@@ -300,14 +366,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             product: {
               _id: item.product._id,
               name: item.product.name,
-              price: item.product.price,
+              price: item.price,
               images: {
                 main: item.product.images?.[0] || '',
                 sub: item.product.images?.slice(1) || []
               }
             },
             quantity: item.quantity,
-            price: item.product.price
+            price: item.price
           }))}
           onStatusUpdate={handleCancelOrderStatusUpdate}
           isDisabled={isLoading || isRefreshing}
