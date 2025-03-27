@@ -115,6 +115,11 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       try {
         setIsLoading(true);
         
+        // Kiểm tra orderId có hợp lệ không
+        if (!orderId) {
+          throw new Error("ID đơn hàng không được để trống!");
+        }
+
         // Lấy thông tin user từ localStorage
         const userStr = localStorage.getItem("user");
         if (!userStr) {
@@ -137,100 +142,46 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           return;
         }
 
-        const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ 
-            status: newStatus,
-            updatedBy: userData._id,
-            note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
-          }),
+        console.log("🔄 Đang cập nhật trạng thái đơn hàng:", {
+          orderId,
+          currentStatus,
+          newStatus,
+          userData: userData._id
         });
 
-        if (!response.success) {
-          throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+        const requestBody = { 
+          status: newStatus,
+          updatedBy: userData._id,
+          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
+        };
+        console.log("📤 Request body:", requestBody);
+
+        const response = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+          method: "PUT",
+          body: JSON.stringify(requestBody),
+        });
+
+        console.log("📥 Response từ server:", response);
+
+        if (!response.ok) {
+          console.error("❌ Lỗi khi cập nhật trạng thái:", response);
+          throw new Error(response.data.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
         }
 
-        // Nếu đơn hàng được giao thành công, cập nhật totalSpent của khách hàng
-        if (newStatus === "delivered" && order.user) {
-          try {
-            // Lấy userId từ order.user
-            const userId = order.user;
-            
-            console.log("🔄 Đang cập nhật totalSpent cho user:", userId);
-            console.log("💰 Tổng tiền đơn hàng:", order.totalPrice);
-            console.log("📦 Chi tiết đơn hàng:", order);
-
-            // Kiểm tra userId có hợp lệ không
-            if (!userId) {
-              console.error("❌ ID người dùng không tồn tại");
-              return;
-            }
-
-            // Kiểm tra userId có phải là MongoDB ObjectId hợp lệ không
-            const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(userId);
-            if (!isValidObjectId) {
-              console.error("❌ ID người dùng không hợp lệ (không phải MongoDB ObjectId):", userId);
-              return;
-            }
-
-            // Gửi request cập nhật totalSpent
-            const requestBody = {
-              userId: userId,
-              orderTotal: Number(order.totalPrice), // Đảm bảo là số
-              orderId: orderId
-            };
-            console.log("📤 Request body:", requestBody);
-            console.log("🔍 Kiểm tra dữ liệu:", {
-              userId: typeof userId,
-              orderTotal: typeof requestBody.orderTotal,
-              orderId: typeof orderId
-            });
-            
-            try {
-              const response = await fetchWithAuth(`/users/admin/update-total-spent`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(requestBody),
-              });
-
-              // Kiểm tra response có tồn tại và có success không
-              if (!response || !response.data?.success) {
-                console.error("❌ Lỗi khi cập nhật totalSpent:", response?.data?.message || "Không có phản hồi từ server");
-                // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
-              } else {
-                console.log("✅ Cập nhật totalSpent thành công:", response.data);
-              }
-            } catch (error) {
-              console.error("❌ Lỗi khi cập nhật totalSpent:", error);
-              // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
-            }
-          } catch (error) {
-            console.error("❌ Lỗi khi cập nhật totalSpent:", error);
-            // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái đơn hàng
-          }
-        }
-
+        // Cập nhật trạng thái local
         setCurrentStatus(newStatus);
         if (onStatusUpdate) {
           onStatusUpdate(orderId, newStatus);
         }
 
-        toast.success("Cập nhật trạng thái đơn hàng thành công");
+        // Hiển thị thông báo thành công
+        toast.success("Cập nhật trạng thái đơn hàng thành công!");
+
+        // Làm mới thông tin đơn hàng
         await refreshOrderDetails();
       } catch (error) {
         console.error("Error updating order status:", error);
-        const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng";
-        toast.error(errorMessage);
-        
-        if (errorMessage.includes("authentication") || errorMessage.includes("unauthorized")) {
-          localStorage.removeItem("user");
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
-        }
+        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
       } finally {
         setIsLoading(false);
       }
@@ -336,10 +287,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             _id: item.product._id,
             name: item.product.name,
             price: item.price,
-            images: {
-              main: item.product.images?.[0] || '',
-              sub: item.product.images?.slice(1) || []
-            },
+            images: item.product.images,
             shortId: item.product._id.slice(-6)
           },
           quantity: item.quantity,
@@ -367,10 +315,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               _id: item.product._id,
               name: item.product.name,
               price: item.price,
-              images: {
-                main: item.product.images?.[0] || '',
-                sub: item.product.images?.slice(1) || []
-              }
+              images: item.product.images
             },
             quantity: item.quantity,
             price: item.price
