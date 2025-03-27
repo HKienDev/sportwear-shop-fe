@@ -47,8 +47,8 @@ const menuItems = [
     path: "/admin/promotions",
     icon: Package,
     subMenu: [
-      { name: "Danh Sách", path: "/admin/promotions/List" },
-      { name: "Thêm Khuyến Mãi", path: "/admin/promotions/add" },
+      { name: "Danh Sách", path: "/admin/coupons/list" },
+      { name: "Thêm Khuyến Mãi", path: "/admin/coupons/add" },
     ],
   },
   {
