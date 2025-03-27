@@ -7,6 +7,7 @@ import Header from "@/components/admin/customers/details/header";
 import CustomerInfo from "@/components/admin/customers/details/customerInfo";
 import MembershipTier from "@/components/admin/customers/details/membershipTier";
 import OrderList from "@/components/admin/customers/details/orderList";
+import ResetPasswordModal from "@/components/admin/customers/details/resetPasswordModal";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 interface Location {
@@ -69,6 +70,7 @@ export default function CustomerDetail() {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
 
   // Fetch provinces data
   const fetchProvinces = useCallback(async () => {
@@ -225,6 +227,53 @@ export default function CustomerDetail() {
     }
   }, [customer, tempCustomer]);
 
+  // Xử lý xóa khách hàng
+  const handleDeleteCustomer = useCallback(async () => {
+    if (!customer) return;
+
+    if (!confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) {
+      return;
+    }
+
+    try {
+      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}`, {
+        method: "DELETE",
+      });
+
+      if (!ok) {
+        throw new Error("Lỗi khi xóa khách hàng");
+      }
+
+      toast.success("Xóa khách hàng thành công");
+      router.push("/admin/customers/list");
+    } catch (error) {
+      console.error("Lỗi khi xóa khách hàng:", error);
+      toast.error("Không thể xóa khách hàng");
+    }
+  }, [customer, router]);
+
+  // Xử lý thay đổi mật khẩu
+  const handleChangePassword = useCallback(async (newPassword: string) => {
+    if (!customer) return;
+
+    try {
+      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      if (!ok) {
+        throw new Error("Lỗi khi thay đổi mật khẩu");
+      }
+
+      toast.success("Thay đổi mật khẩu thành công");
+      setIsResetPasswordModalOpen(false);
+    } catch (error) {
+      console.error("Lỗi khi thay đổi mật khẩu:", error);
+      toast.error("Không thể thay đổi mật khẩu");
+    }
+  }, [customer]);
+
   // Xử lý thay đổi địa chỉ
   const handleProvinceChange = useCallback(async (value: string) => {
     if (!customer || !tempCustomer) return;
@@ -311,48 +360,6 @@ export default function CustomerDetail() {
     }
   }, [customer, tempCustomer, wards]);
 
-  // Xử lý các hành động chính
-  const handleDelete = useCallback(async () => {
-    if (!customer || !confirm("Bạn có chắc chắn muốn xóa khách hàng này? Hành động này không thể hoàn tác!")) {
-      return;
-    }
-
-    try {
-      const response = await fetchWithAuth(`/users/admin/${customer._id}`, {
-        method: "DELETE"
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi khi xóa khách hàng");
-      }
-
-      toast.success("Xóa khách hàng thành công");
-      router.push("/admin/customers/list");
-    } catch (error) {
-      console.error("Lỗi khi xóa khách hàng:", error);
-      toast.error("Không thể xóa khách hàng");
-    }
-  }, [customer, router]);
-
-  const handleChangePassword = useCallback(async () => {
-    if (!customer) return;
-
-    try {
-      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
-        method: "POST"
-      });
-
-      if (!ok) {
-        throw new Error("Lỗi khi đặt lại mật khẩu");
-      }
-
-      toast.success("Đặt lại mật khẩu thành công");
-    } catch (error) {
-      console.error("Lỗi khi đặt lại mật khẩu:", error);
-      toast.error("Không thể đặt lại mật khẩu");
-    }
-  }, [customer]);
-
   // Chuyển đổi Customer sang CustomerData
   const convertToCustomerData = (customer: Customer) => {
     // Tìm mã tỉnh/thành từ tên
@@ -385,8 +392,8 @@ export default function CustomerDetail() {
   return (
     <div className="container mx-auto p-4">
       <Header
-        onDelete={handleDelete}
-        onChangePassword={handleChangePassword}
+        onDelete={handleDeleteCustomer}
+        onChangePassword={() => setIsResetPasswordModalOpen(true)}
         onUpdate={handleUpdateCustomer}
       />
       
@@ -408,6 +415,13 @@ export default function CustomerDetail() {
       </div>
 
       <OrderList phone={tempCustomer?.phone || customer.phone} />
+
+      <ResetPasswordModal
+        isOpen={isResetPasswordModalOpen}
+        onClose={() => setIsResetPasswordModalOpen(false)}
+        onSubmit={handleChangePassword}
+        customerName={customer?.fullname || "Khách hàng"}
+      />
     </div>
   );
 }
