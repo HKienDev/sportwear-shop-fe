@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -11,12 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 
 interface OrderListProps {
@@ -29,15 +28,20 @@ const statusColors = {
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800"
-};
+} as const;
 
 const ITEMS_PER_PAGE = 5;
 
 export default function OrderList({ phone }: OrderListProps) {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const handleOrderClick = (orderId: string) => {
+    router.push(`/admin/orders/details/${orderId}`);
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -60,20 +64,21 @@ export default function OrderList({ phone }: OrderListProps) {
     }
   }, [phone]);
 
-  // Tính toán các đơn hàng cho trang hiện tại
-  const indexOfLastOrder = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstOrder = indexOfLastOrder - ITEMS_PER_PAGE;
-  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
-  const totalPages = Math.ceil(orders.length / ITEMS_PER_PAGE);
+  // Tính toán currentOrders và totalPages
+  const currentOrders = orders?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  ) || [];
+  const totalPages = Math.max(1, Math.ceil((orders?.length || 0) / ITEMS_PER_PAGE));
 
-  const handlePageChange = (page: number) => {
+  // Xử lý khi chuyển trang
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   if (loading) {
     return (
       <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
         </div>
@@ -92,7 +97,6 @@ export default function OrderList({ phone }: OrderListProps) {
   if (error) {
     return (
       <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
         </div>
@@ -106,7 +110,6 @@ export default function OrderList({ phone }: OrderListProps) {
   if (orders.length === 0) {
     return (
       <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
         </div>
@@ -119,7 +122,6 @@ export default function OrderList({ phone }: OrderListProps) {
 
   return (
     <Card className="relative overflow-hidden p-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 mt-6">
-      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
       </div>
@@ -140,14 +142,15 @@ export default function OrderList({ phone }: OrderListProps) {
               {currentOrders.map((order) => (
                 <TableRow key={order._id}>
                   <TableCell className="font-medium">
-                    #{order.shortId}
+                    <button 
+                      onClick={() => handleOrderClick(order._id)}
+                      className="hover:text-blue-600 transition-colors duration-200"
+                    >
+                      #{order.shortId}
+                    </button>
                   </TableCell>
-                  <TableCell>
-                    {format(new Date(order.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
-                  </TableCell>
-                  <TableCell>
-                    {order.totalPrice.toLocaleString('vi-VN')}đ
-                  </TableCell>
+                  <TableCell>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell>{order.totalPrice.toLocaleString('vi-VN')}đ</TableCell>
                   <TableCell>
                     {order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Chuyển khoản"}
                   </TableCell>
@@ -174,7 +177,7 @@ export default function OrderList({ phone }: OrderListProps) {
           </Table>
         </div>
         {totalPages > 1 && (
-          <div className="mt-4">
+          <div className="flex justify-center mt-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
