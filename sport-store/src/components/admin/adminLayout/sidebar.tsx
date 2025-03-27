@@ -31,7 +31,6 @@ const menuItems = [
     subMenu: [
       { name: "Danh Sách", path: "/admin/products/list" },
       { name: "Thêm Sản Phẩm", path: "/admin/products/add" },
-      { name: "Chi Tiết", path: "/admin/products/details" },
     ],
   },
   {
@@ -48,8 +47,8 @@ const menuItems = [
     path: "/admin/promotions",
     icon: Package,
     subMenu: [
-      { name: "Danh Sách", path: "/admin/promotions/List" },
-      { name: "Thêm Khuyến Mãi", path: "/admin/promotions/add" },
+      { name: "Danh Sách", path: "/admin/coupons/list" },
+      { name: "Thêm Khuyến Mãi", path: "/admin/coupons/add" },
     ],
   },
   {

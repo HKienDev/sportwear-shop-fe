@@ -27,7 +27,7 @@ const fetchProducts = async (): Promise<Product[]> => {
     }
 
     const data: Product[] = await res.json();
-    console.log("Fetched Products:", data);
+    console.log("Fetched Products:", data); // Debug dữ liệu trả về
     return data;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -59,9 +59,12 @@ const ProductList = () => {
         <p className="text-center text-gray-500">Đang tải...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products?.map((product, index) => (
-            <ProductCard key={product.id || `product-${index}`} {...product} />
-          ))}
+          {products?.map((product, index) => {
+            console.log("Rendering ProductCard with ID:", product.id); // Debug ID
+            return (
+              <ProductCard key={product.id || `product-${index}`} {...product} />
+            );
+          })}
         </div>
       )}
     </div>
