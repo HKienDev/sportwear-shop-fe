@@ -2,13 +2,13 @@ import { Trash, Plus } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
-interface ProductDeleteButtonProps {
+interface CouponDeleteButtonProps {
   selectedCount: number;
   onDelete: () => Promise<void>;
   disabled?: boolean;
 }
 
-export default function ProductActions({ selectedCount, onDelete, disabled }: ProductDeleteButtonProps) {
+export default function CouponActions({ selectedCount, onDelete, disabled }: CouponDeleteButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -22,15 +22,15 @@ export default function ProductActions({ selectedCount, onDelete, disabled }: Pr
 
   return (
     <div className="flex gap-4">
-      <Link href="/admin/products/add" passHref>
+      <Link href="/admin/coupons/add" passHref>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
         >
           <Plus size={16} />
-          Thêm sản phẩm
+          Thêm mã khuyến mại
         </button>
       </Link>
-      
+
       <button
         className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         onClick={handleDelete}

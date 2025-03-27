@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
-import { Search, Send, Trash2, Phone, Video, MoreVertical, Paperclip, Smile } from "lucide-react";
+import { Search, Send, Trash2, MoreVertical, Paperclip, Smile } from "lucide-react";
 
 const socket = io("http://localhost:4000");
 
@@ -150,7 +150,7 @@ export default function AdminChat() {
         <div className="overflow-y-auto h-[calc(100vh-116px)]">
           {filteredConversations.map((conv, index) => (
             <div
-              key={conv.id || index} // Sử dụng `conv.id` nếu có, nếu không dùng `index`
+              key={conv.id || index} 
               onClick={() => {
                 setSelectedUser(conv);
                 // Đặt số tin nhắn chưa đọc về 0 khi chọn người dùng
@@ -208,12 +208,6 @@ export default function AdminChat() {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <button className="p-2 rounded-full hover:bg-gray-100 transition">
-                  <Phone size={20} className="text-gray-600" />
-                </button>
-                <button className="p-2 rounded-full hover:bg-gray-100 transition">
-                  <Video size={20} className="text-gray-600" />
-                </button>
                 <button className="p-2 rounded-full hover:bg-gray-100 transition">
                   <Trash2 size={20} className="text-red-500" />
                 </button>

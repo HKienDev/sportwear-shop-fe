@@ -133,24 +133,26 @@ export default function UserChat() {
               messages.map((msg, index) => (
                 <div 
                   key={index} 
-                  className={`mb-3 max-w-3/4 ${msg.sender === "User" ? "ml-auto" : "mr-auto"}`}
+                  className={`mb-3 flex ${msg.sender === "User" ? "justify-end" : "justify-start"}`}
                 >
-                  <div 
-                    className={`px-4 py-2 rounded-2xl text-sm ${
-                      msg.sender === "User" 
-                        ? "bg-blue-600 text-white rounded-br-none" 
-                        : "bg-gray-200 text-gray-800 rounded-bl-none"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  <div 
-                    className={`flex items-center text-xs text-gray-500 mt-1 ${
-                      msg.sender === "User" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <Clock size={12} className="mr-1" />
-                    {msg.time || "Vừa xong"}
+                  <div className="max-w-3/4">
+                    <div 
+                      className={`px-4 py-2 rounded-2xl text-sm inline-block ${
+                        msg.sender === "User" 
+                          ? "bg-blue-600 text-white rounded-br-none" 
+                          : "bg-gray-200 text-gray-800 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                    <div 
+                      className={`flex items-center text-xs text-gray-500 mt-1 ${
+                        msg.sender === "User" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <Clock size={12} className="mr-1" />
+                      {msg.time || "Vừa xong"}
+                    </div>
                   </div>
                 </div>
               ))
@@ -160,7 +162,7 @@ export default function UserChat() {
                 <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
                   <User size={12} className="text-gray-500" />
                 </div>
-                <div className="bg-gray-200 px-3 py-2 rounded-xl rounded-bl-none">
+                <div className="bg-gray-200 px-3 py-2 rounded-xl rounded-bl-none inline-block">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
