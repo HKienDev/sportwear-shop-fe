@@ -58,14 +58,14 @@ export default function OrderTable({ items = [], shippingMethod = { name: "Stand
                 <td className="px-6 py-4 flex items-center space-x-4">
                   <div className="relative w-[50px] h-[50px]">
                     <Image
-                      src={item.product.images?.main || "/shoes.png"}
+                      src={item.product.images?.main || "/default-image.png"}
                       alt={item.product.name}
                       fill
                       className="rounded-md object-cover"
                       sizes="50px"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "/shoes.png";
+                        target.src = "/default-image.png";
                       }}
                     />
                   </div>

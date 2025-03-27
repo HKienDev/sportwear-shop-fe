@@ -36,6 +36,24 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
 
     // Xử lý các trường hợp lỗi
     if (response.status === 401) {
+      // Kiểm tra xem có access token mới không
+      const newAccessToken = response.headers.get("New-Access-Token");
+      if (newAccessToken) {
+        // Lưu access token mới
+        localStorage.setItem("accessToken", newAccessToken);
+        
+        // Thử gọi lại API với token mới
+        const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
+          ...options,
+          headers: {
+            ...headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          },
+        });
+        
+        return { ok: retryResponse.ok, status: retryResponse.status, data: await retryResponse.json() };
+      }
+      
       console.error("❌ [fetchWithAuth] Token hết hạn hoặc không hợp lệ");
       localStorage.removeItem("accessToken");
       throw new Error(responseData?.message || "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");

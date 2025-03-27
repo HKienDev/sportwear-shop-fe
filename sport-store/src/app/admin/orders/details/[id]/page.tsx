@@ -37,7 +37,10 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
         // Lấy thông tin đơn hàng
         const { data: orderData } = await fetchWithAuth(`/orders/admin/${orderId}`);
         console.log("Order data:", orderData);
-        setOrder(orderData);
+        if (!orderData.success) {
+          throw new Error(orderData.message || "Không thể lấy thông tin đơn hàng");
+        }
+        setOrder(orderData.order);
       } catch (error) {
         console.error("Error fetching order details:", error);
         if (error instanceof Error) {

@@ -60,7 +60,7 @@ export default function ProductTable({ products, selectedProducts, onSelectProdu
                 <td className="p-4 flex items-center">
                   <div className="relative w-10 h-10 rounded-full overflow-hidden">
                     <Image
-                      src={product.imageUrl || "/shoes.png"}
+                      src={product.imageUrl || "/default-image.png"}
                       alt={product.name || "Product Image"}
                       fill
                       className="object-cover"

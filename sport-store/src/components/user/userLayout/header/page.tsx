@@ -156,7 +156,7 @@ const Header = () => {
               <span className="text-gray-700 text-sm">{user.name}</span>
               {typeof window !== "undefined" && user.avatar ? (
                 <Image
-                  src={user.avatar || "/shoes.png"}
+                  src={user.avatar || "/default-image.png"}
                   alt="Avatar"
                   width={32}
                   height={32}
@@ -187,7 +187,7 @@ const Header = () => {
                 <span className="text-gray-700">{user.name}</span>
                 {user.avatar ? (
                   <Image
-                    src={user.avatar || "/shoes.png"}
+                    src={user.avatar || "/default-image.png"}
                     alt="Avatar"
                     width={32}
                     height={32}

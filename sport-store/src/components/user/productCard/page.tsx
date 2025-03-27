@@ -22,7 +22,7 @@ const ProductCard = ({ name, category, price, discountPrice, subtitle, image }: 
     )}
     <div className="relative w-full h-64 overflow-hidden">
       <Image 
-        src={image || "/shoes.png"} 
+        src={image || "/default-image.png"} 
         alt={name} 
         fill
         sizes="(max-width: 768px) 100vw, 400px"
