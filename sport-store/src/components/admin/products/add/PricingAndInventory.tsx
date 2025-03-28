@@ -1,9 +1,9 @@
-import { DollarSign } from "lucide-react";
+import { DollarSign, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface PricingAndInventoryProps {
   originalPrice: number;
-  salePrice: number;
+  salePrice?: number;
   stock: number;
   onOriginalPriceChange: (value: number) => void;
   onSalePriceChange: (value: number) => void;
@@ -12,7 +12,7 @@ interface PricingAndInventoryProps {
 
 export default function PricingAndInventory({
   originalPrice,
-  salePrice,
+  salePrice = 0,
   stock,
   onOriginalPriceChange,
   onSalePriceChange,
@@ -59,27 +59,27 @@ export default function PricingAndInventory({
   return (
     <div className="card">
       <h2 className="text-lg font-semibold mb-6 flex items-center">
-        <DollarSign className="mr-2 text-blue-500" size={24} />
-        Giá và Tồn Kho
+        <DollarSign className="mr-2 text-green-500" size={24} />
+        Giá & Kho Hàng
       </h2>
       
       <div className="space-y-5">
         <div>
-          <label className="input-label">Giá Gốc</label>
-          <div className="relative mt-2">
-            <input 
-              type="text" 
-              className="input-field pr-16" 
+          <label className="input-label">Giá Gốc (VNĐ)</label>
+          <div className="mt-2 relative">
+            <input
+              type="text"
+              className="input-field pr-12"
+              placeholder="0"
               value={originalPriceDisplay}
               onChange={(e) => handlePriceChange(
                 e.target.value,
                 setOriginalPriceDisplay,
                 onOriginalPriceChange
               )}
-              placeholder="0"
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-              VNĐ
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <span className="text-gray-500">VNĐ</span>
             </div>
           </div>
           {originalPrice > 0 && (
@@ -90,21 +90,21 @@ export default function PricingAndInventory({
         </div>
 
         <div>
-          <label className="input-label">Giá Khuyến Mãi</label>
-          <div className="relative mt-2">
-            <input 
-              type="text" 
-              className="input-field pr-16" 
+          <label className="input-label">Giá Khuyến Mãi (VNĐ)</label>
+          <div className="mt-2 relative">
+            <input
+              type="text"
+              className="input-field pr-12"
+              placeholder="0"
               value={salePriceDisplay}
               onChange={(e) => handlePriceChange(
                 e.target.value,
                 setSalePriceDisplay,
                 onSalePriceChange
               )}
-              placeholder="0"
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-              VNĐ
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <span className="text-gray-500">VNĐ</span>
             </div>
           </div>
           {salePrice > 0 && (
@@ -112,17 +112,23 @@ export default function PricingAndInventory({
               {formatCurrency(salePrice)}
             </div>
           )}
+          <p className="mt-1 text-sm text-gray-500">
+            Để trống nếu không có giá khuyến mãi
+          </p>
         </div>
 
         <div>
-          <label className="input-label">Tồn Kho</label>
-          <input 
-            type="number" 
-            className="input-field mt-2" 
+          <label className="input-label flex items-center">
+            <Package className="mr-2 text-blue-500" size={20} />
+            Số Lượng Trong Kho
+          </label>
+          <input
+            type="number"
+            className="input-field mt-2"
+            placeholder="0"
             value={stock}
             onChange={(e) => onStockChange(Number(e.target.value))}
             min="0"
-            placeholder="0"
           />
         </div>
       </div>

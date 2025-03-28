@@ -25,6 +25,7 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include", // Thêm credentials để gửi cookies
     });
 
     // Log response status và headers
@@ -36,33 +37,46 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
 
     // Xử lý các trường hợp lỗi
     if (response.status === 401) {
-      // Kiểm tra xem có access token mới không
-      const newAccessToken = response.headers.get("New-Access-Token");
-      if (newAccessToken) {
-        // Lưu access token mới
-        localStorage.setItem("accessToken", newAccessToken);
-        
-        // Thử gọi lại API với token mới
-        const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
-          ...options,
-          headers: {
-            ...headers,
-            Authorization: `Bearer ${newAccessToken}`,
-          },
+      // Thử refresh token
+      try {
+        const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
         });
-        
-        return { ok: retryResponse.ok, status: retryResponse.status, data: await retryResponse.json() };
+
+        if (!refreshResponse.ok) {
+          throw new Error("Không thể refresh token");
+        }
+
+        const refreshData = await refreshResponse.json();
+        if (refreshData.accessToken) {
+          // Lưu access token mới
+          localStorage.setItem("accessToken", refreshData.accessToken);
+          
+          // Thử gọi lại API với token mới
+          const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
+            ...options,
+            headers: {
+              ...headers,
+              Authorization: `Bearer ${refreshData.accessToken}`,
+            },
+            credentials: "include",
+          });
+          
+          return { ok: retryResponse.ok, status: retryResponse.status, data: await retryResponse.json() };
+        }
+      } catch (refreshError) {
+        console.error("❌ [fetchWithAuth] Lỗi refresh token:", refreshError);
       }
       
       console.error("❌ [fetchWithAuth] Token hết hạn hoặc không hợp lệ");
       localStorage.removeItem("accessToken");
+      window.location.href = "/user/auth/login";
       throw new Error(responseData?.message || "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
 
     if (response.status === 403) {
       console.error("❌ [fetchWithAuth] Không có quyền truy cập");
-      localStorage.removeItem("accessToken");
-      window.location.href = "/login";
       throw new Error(responseData?.message || "Bạn không có quyền truy cập tài nguyên này");
     }
 

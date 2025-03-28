@@ -16,6 +16,7 @@ interface AuthContextType {
   setUser: (user: User | null) => void;
   login: (userData: User, accessToken: string) => void;
   logout: () => void;
+  refreshAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -30,13 +31,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
     setUser(null);
-    router.push("/");
+    router.push("/user/auth/login");
   }, [router]);
 
   // Hàm làm mới token
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     try {
-      const response = await fetch("http://localhost:4000/api/auth/refresh", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`, {
         method: "POST",
         credentials: "include", // Đọc refreshToken từ cookies
       });
@@ -57,16 +58,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   }, []);
 
-  // ✅ Kiểm tra trạng thái đăng nhập khi tải lại trang
+  // Kiểm tra trạng thái đăng nhập khi tải lại trang
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
       const storedUser = localStorage.getItem("user");
       const token = localStorage.getItem("accessToken");
 
-      const currentPath = window.location.pathname; // Lưu trữ URL hiện tại
+      const currentPath = window.location.pathname;
 
-      // 🛠️ Không tự logout nếu đang ở trang đăng nhập hoặc OTP
+      // Không tự logout nếu đang ở trang đăng nhập hoặc OTP
       const exemptPaths = [
         "/user/auth/login",
         "/user/auth/otpVerifyRegister",
@@ -80,36 +81,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (storedUser && token) {
         setUser(JSON.parse(storedUser) as User);
         try {
-          const res = await fetch("http://localhost:4000/api/auth/check", {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/check`, {
             headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
           });
 
           if (res.ok) {
             const data = await res.json();
-            console.log("[DEBUG] User from /auth/check:", data.user);
-
-            // Kiểm tra dữ liệu trả về từ backend
-            if (!data.user || !data.user.role) {
-              console.error("Thông tin người dùng không hợp lệ:", data);
-              logout();
-              return;
-            }
-
-            const updatedUser = data.user;
-
-            // Lưu trữ lại thông tin user vào localStorage
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-            setUser(updatedUser);
-
-            // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-            if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
-              if (currentPath !== window.location.pathname) {
-                router.push(currentPath); // Chỉ chuyển hướng nếu cần
-              }
-            } else if (updatedUser.role === "admin") {
-              router.push("/admin");
-            } else {
-              router.push("/");
+            if (data.user) {
+              setUser(data.user);
+              localStorage.setItem("user", JSON.stringify(data.user));
             }
           } else if (res.status === 401) {
             console.warn("Access token expired, trying to refresh...");
@@ -118,37 +99,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.warn("Failed to refresh token, logging out...");
               logout();
             } else {
-              console.log("Token refreshed successfully:", newAccessToken);
-              localStorage.setItem("accessToken", newAccessToken);
-              const resAfterRefresh = await fetch("http://localhost:4000/api/auth/check", {
+              console.log("Token refreshed successfully");
+              // Thử lại request với token mới
+              const resAfterRefresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/check`, {
                 headers: { Authorization: `Bearer ${newAccessToken}` },
+                credentials: "include",
               });
+              
               if (resAfterRefresh.ok) {
                 const data = await resAfterRefresh.json();
-                console.log("[DEBUG] User after refresh:", data.user);
-
-                // Kiểm tra dữ liệu trả về từ backend
-                if (!data.user || !data.user.role) {
-                  console.error("Thông tin người dùng không hợp lệ:", data);
-                  logout();
-                  return;
-                }
-
-                const updatedUser = data.user;
-
-                // Lưu trữ lại thông tin user vào localStorage
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-                setUser(updatedUser);
-
-                // Giữ nguyên trang hiện tại hoặc chuyển hướng dựa trên vai trò
-                if (updatedUser.role === "admin" && currentPath.startsWith("/admin")) {
-                  if (currentPath !== window.location.pathname) {
-                    router.push(currentPath); // Chỉ chuyển hướng nếu cần
-                  }
-                } else if (updatedUser.role === "admin") {
-                  router.push("/admin");
-                } else {
-                  router.push("/");
+                if (data.user) {
+                  setUser(data.user);
+                  localStorage.setItem("user", JSON.stringify(data.user));
                 }
               } else {
                 logout();
@@ -185,8 +147,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router]);
 
   const authValue = useMemo(
-    () => ({ user, setUser, login, logout }),
-    [user, login, logout]
+    () => ({ user, setUser, login, logout, refreshAccessToken }),
+    [user, login, logout, refreshAccessToken]
   );
 
   if (isLoading) return <></>;
