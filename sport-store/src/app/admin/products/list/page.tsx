@@ -9,9 +9,24 @@ import Pagination from "@/components/admin/products/list/pagination";
 import DeleteButton from "@/components/admin/products/list/deleteButton";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
-interface Category {
+interface ProductResponse {
   _id: string;
   name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: {
+    _id: string;
+    name: string;
+  };
+  images: {
+    main: string;
+    sub: string[];
+  };
+  createdAt: string;
+  isActive: boolean;
+  brand: string;
+  sku: string;
 }
 
 interface Product {
@@ -23,6 +38,9 @@ interface Product {
   category: string;
   imageUrl: string;
   createdAt: string;
+  isActive: boolean;
+  brand: string;
+  sku: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -34,7 +52,6 @@ export default function ProductList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]); // Thêm state cho categories
   const router = useRouter();
 
   // Tính toán số trang và danh sách sản phẩm hiện tại
@@ -48,153 +65,145 @@ export default function ProductList() {
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, ok, status } = await fetchWithAuth("/products");
+      const response = await fetchWithAuth<{ products: ProductResponse[] }>("/products");
 
-      if (!ok) {
-        if (status === 401 || status === 403) {
-          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
-          router.push("/login");
-          return;
-        }
-        throw new Error("Lỗi khi lấy danh sách sản phẩm");
+      if (!response.success || !response.products) {
+        throw new Error(response.message || "Lỗi khi lấy danh sách sản phẩm");
       }
 
-      setProducts(data);
-      setFilteredProducts(data);
+      // Chuyển đổi dữ liệu để phù hợp với interface Product
+      const formattedProducts = ((response as unknown) as { success: boolean; products: ProductResponse[] }).products.map((product: ProductResponse) => ({
+        _id: product._id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        stock: product.stock,
+        category: product.category.name,
+        imageUrl: product.images.main,
+        createdAt: product.createdAt,
+        isActive: product.isActive,
+        brand: product.brand,
+        sku: product.sku
+      }));
+
+      setProducts(formattedProducts);
+      setFilteredProducts(formattedProducts);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách sản phẩm:", error);
       toast.error("Không thể tải danh sách sản phẩm");
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
-  // Lấy danh sách categories từ API
-  const fetchCategories = useCallback(async () => {
-    try {
-      const { data, ok, status } = await fetchWithAuth("/categories");
+  // Xử lý khi thay đổi từ khóa tìm kiếm
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
 
-      if (!ok) {
-        if (status === 401 || status === 403) {
-          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
-          router.push("/login");
-          return;
-        }
-        throw new Error("Lỗi khi lấy danh sách thể loại");
-      }
-
-      setCategories(data);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách thể loại:", error);
-      toast.error("Không thể tải danh sách thể loại");
-    }
-  }, [router]);
-
-  // Lọc sản phẩm theo từ khóa tìm kiếm
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    const lowercaseQuery = query.toLowerCase();
+  // Xử lý khi submit form tìm kiếm
+  const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const lowercaseQuery = searchQuery.toLowerCase();
     const filtered = products.filter((product) => {
-      // Tìm kiếm theo tên sản phẩm
-      const nameMatch = product.name?.toLowerCase().includes(lowercaseQuery);
-      // Tìm kiếm theo mô tả sản phẩm
-      const descriptionMatch = product.description?.toLowerCase().includes(lowercaseQuery);
-      // Tìm kiếm theo giá sản phẩm
-      const priceMatch = product.price?.toString().includes(query);
+      const nameMatch = product.name.toLowerCase().includes(lowercaseQuery);
+      const descriptionMatch = product.description.toLowerCase().includes(lowercaseQuery);
+      const skuMatch = product.sku.toLowerCase().includes(lowercaseQuery);
+      const brandMatch = product.brand.toLowerCase().includes(lowercaseQuery);
+      const categoryMatch = product.category.toLowerCase().includes(lowercaseQuery);
 
-      return nameMatch || descriptionMatch || priceMatch;
+      return nameMatch || descriptionMatch || skuMatch || brandMatch || categoryMatch;
     });
     setFilteredProducts(filtered);
     setCurrentPage(1);
-  }, [products]);
+  }, [products, searchQuery]);
 
-  // Xử lý chọn/bỏ chọn sản phẩm
-  const handleSelectProduct = useCallback((id: string) => {
+  // Xử lý khi chọn/bỏ chọn sản phẩm
+  const handleSelectProduct = useCallback((productId: string) => {
     setSelectedProducts((prev) =>
-      prev.includes(id) ? prev.filter((productId) => productId !== id) : [...prev, id]
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
     );
   }, []);
 
-  // Xử lý xóa sản phẩm đã chọn
+  // Xử lý khi xóa nhiều sản phẩm
   const handleDeleteSelected = useCallback(async () => {
-    if (!selectedProducts.length) return;
-
-    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedProducts.length} sản phẩm đã chọn?
-Lưu ý: Hành động này không thể hoàn tác!`)) {
-      return;
-    }
-
     try {
-      // Xóa tuần tự để có thể xử lý lỗi cho từng sản phẩm
-      for (const id of selectedProducts) {
-        const response = await fetchWithAuth(`/products/admin/${id}`, {
-          method: "DELETE",
-        });
+      await Promise.all(
+        selectedProducts.map((productId) =>
+          fetchWithAuth(`/products/${productId}`, {
+            method: "DELETE",
+          })
+        )
+      );
 
-        if (!response.ok) {
-          // Nếu có lỗi với sản phẩm nào đó, dừng quá trình xóa
-          if (response.status === 403) {
-            toast.error("Bạn không có quyền xóa sản phẩm");
-            return;
-          }
-          if (response.status === 404) {
-            toast.error(`Không tìm thấy sản phẩm với ID: ${id}`);
-            continue;
-          }
-          throw new Error("Có lỗi xảy ra khi xóa sản phẩm");
-        }
-      }
-
-      toast.success(`Đã xóa thành công ${selectedProducts.length} sản phẩm`);
+      // Cập nhật danh sách sản phẩm
+      setProducts((prev) =>
+        prev.filter((product) => !selectedProducts.includes(product._id))
+      );
+      setFilteredProducts((prev) =>
+        prev.filter((product) => !selectedProducts.includes(product._id))
+      );
       setSelectedProducts([]);
-      fetchProducts();
+
+      toast.success("Xóa sản phẩm thành công");
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
-      toast.error("Không thể xóa một số sản phẩm. Vui lòng thử lại sau");
+      toast.error("Không thể xóa sản phẩm");
     }
-  }, [selectedProducts, fetchProducts]);
+  }, [selectedProducts]);
 
-  // Tải danh sách sản phẩm và categories khi component được mount
+  // Load dữ liệu khi component mount
   useEffect(() => {
     fetchProducts();
-    fetchCategories(); // Gọi hàm lấy danh sách categories
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchProducts]);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        DANH SÁCH SẢN PHẨM
-        {isLoading && <span className="ml-2 text-gray-500 text-sm">(Đang tải...)</span>}
-      </h1>
-
-      <div className="flex justify-between mb-4">
-        <ProductSearch
-          searchQuery={searchQuery}
-          onSearchChange={handleSearch}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSearch(searchQuery);
-          }}
-        />
-        <DeleteButton
-          selectedCount={selectedProducts.length}
-          onDelete={handleDeleteSelected}
-        />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Quản lý sản phẩm</h1>
+        <button
+          onClick={() => router.push("/admin/products/add")}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Thêm sản phẩm mới
+        </button>
       </div>
 
-      {/* Truyền categories vào ProductTable */}
-      <ProductTable
-        products={currentProducts}
-        categories={categories} // Thêm dòng này
-        selectedProducts={selectedProducts}
-        onSelectProduct={handleSelectProduct}
-      />
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <div className="bg-white rounded-lg shadow p-6">
+        <ProductSearch 
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onSubmit={handleSearchSubmit}
+        />
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            <ProductTable
+              products={currentProducts}
+              selectedProducts={selectedProducts}
+              onSelectProduct={handleSelectProduct}
+            />
+            
+            <div className="flex justify-between items-center mt-4">
+              <DeleteButton
+                selectedCount={selectedProducts.length}
+                onDelete={handleDeleteSelected}
+              />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,13 @@
-export const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
+interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  products?: T[];
+  categories?: T[];
+  product?: T;
+}
+
+export const fetchWithAuth = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
   try {
     // Lấy token từ localStorage
     const token = localStorage.getItem("accessToken");
@@ -63,7 +72,7 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
             credentials: "include",
           });
           
-          return { ok: retryResponse.ok, status: retryResponse.status, data: await retryResponse.json() };
+          return await retryResponse.json();
         }
       } catch (refreshError) {
         console.error("❌ [fetchWithAuth] Lỗi refresh token:", refreshError);
@@ -95,7 +104,7 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
       throw new Error(responseData?.message || "Đã xảy ra lỗi");
     }
 
-    return { ok: response.ok, status: response.status, data: responseData };
+    return responseData;
   } catch (error) {
     console.error("❌ [fetchWithAuth] Lỗi:", error);
     throw error;
