@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
@@ -12,7 +12,8 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { setUser } = useAuth();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -26,20 +27,25 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+      console.log("Sending login request to:", `${API_URL}/auth/login`);
+      
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ username, password }),
-        credentials: "include", // Đọc refreshToken từ cookies
+        credentials: "include",
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Đăng nhập thất bại");
-      }
-
       const responseData = await res.json();
-      console.log("API Login Response:", responseData); // Debug API response
+      console.log("API Login Response:", responseData);
+
+      if (!res.ok) {
+        throw new Error(responseData.message || "Đăng nhập thất bại");
+      }
 
       const { user, accessToken } = responseData;
 
@@ -47,28 +53,29 @@ const LoginPage = () => {
         throw new Error("Không nhận được accessToken từ API");
       }
 
-      // Lưu accessToken vào localStorage
+      console.log("User data:", user);
+      console.log("Access token received:", accessToken);
+
+      // Lưu token và user vào localStorage
       localStorage.setItem("accessToken", accessToken);
-      // Lưu user vào localStorage
       localStorage.setItem("user", JSON.stringify(user));
 
-      console.log("Đã lưu accessToken:", localStorage.getItem("accessToken"));
+      // Cập nhật user trong AuthContext
+      login(user, accessToken);
 
-      // Cập nhật user vào AuthContext
-      setUser(user);
+      // Lấy URL chuyển hướng từ query params hoặc mặc định
+      const redirectFrom = searchParams.get("from") || (user.role === "admin" ? "/admin" : "/");
+      console.log("Redirecting to:", redirectFrom);
 
-      // Điều hướng dựa trên role
-      if (user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push("/");
-      }
+      // Chuyển hướng
+      window.location.href = redirectFrom;
+
     } catch (err: unknown) {
+      console.error("Lỗi đăng nhập:", err);
       if (err instanceof Error) {
-        console.error("Lỗi đăng nhập:", err.message);
         setError(err.message);
       } else {
-        setError("Đã xảy ra lỗi không xác định.");
+        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.");
       }
     } finally {
       setLoading(false);
@@ -91,7 +98,6 @@ const LoginPage = () => {
                 <h2 className="text-4xl text-black font-bold">Đăng nhập</h2>
               </div>
 
-              {/* Truyền handleLogin, error, loading xuống LoginForm */}
               <LoginForm handleLogin={handleLogin} error={error} loading={loading} />
 
               <div className="flex justify-center mt-4">

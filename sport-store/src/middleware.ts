@@ -2,21 +2,26 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Lấy token từ cookie
-  const accessToken = request.cookies.get('accessToken')?.value;
-  
+  // Chỉ xử lý các API routes
+  if (!request.nextUrl.pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   // Lấy path hiện tại
   const path = request.nextUrl.pathname;
 
-  // Kiểm tra nếu đang truy cập trang admin
-  if (path.startsWith('/admin')) {
-    // Nếu không có token, chuyển hướng về trang login
-    if (!accessToken) {
-      // Tạo URL tuyệt đối cho trang login
-      const baseUrl = request.nextUrl.origin;
-      const loginUrl = new URL('/user/auth/login', baseUrl);
-      loginUrl.searchParams.set('from', path);
-      return NextResponse.redirect(loginUrl);
+  // Kiểm tra nếu đang truy cập API admin
+  if (path.startsWith('/api/admin')) {
+    // Lấy token từ Authorization header
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.split(' ')[1];
+
+    // Nếu không có token, trả về lỗi 401
+    if (!token) {
+      return NextResponse.json(
+        { message: "Không có quyền truy cập" },
+        { status: 401 }
+      );
     }
 
     // Token tồn tại, cho phép tiếp tục
@@ -27,9 +32,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Chỉ áp dụng middleware cho các route cần bảo vệ
+// Chỉ áp dụng middleware cho các API routes
 export const config = {
   matcher: [
-    '/admin/:path*', // Bảo vệ tất cả các route bắt đầu bằng /admin
+    '/api/:path*', // Bảo vệ tất cả các API routes
   ],
 }; 
