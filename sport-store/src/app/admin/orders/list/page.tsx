@@ -24,19 +24,18 @@ export default function OrdersPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetchWithAuth("http://localhost:4000/api/orders/admin", { method: "GET" });
+        const response = await fetchWithAuth("/orders/admin");
 
-        if (!response || !response.ok) {
-          throw new Error("Lỗi khi lấy danh sách đơn hàng");
+        if (!response || !response.success) {
+          throw new Error(response?.message || "Không thể tải danh sách đơn hàng");
         }
 
-        const data: Order[] = await response.json();
-        if (!Array.isArray(data)) {
+        if (!Array.isArray(response.data)) {
           throw new Error("Dữ liệu API không hợp lệ");
         }
 
-        setOrders(data);
-        setFilteredOrders(data);
+        setOrders(response.data);
+        setFilteredOrders(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.");
       } finally {
