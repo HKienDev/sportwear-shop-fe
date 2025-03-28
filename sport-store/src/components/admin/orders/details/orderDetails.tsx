@@ -163,9 +163,9 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
 
         console.log("📥 Response từ server:", response);
 
-        if (!response.ok) {
+        if (!response.success) {
           console.error("❌ Lỗi khi cập nhật trạng thái:", response);
-          throw new Error(response.data.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+          throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
         }
 
         // Cập nhật trạng thái local
