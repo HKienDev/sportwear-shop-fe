@@ -1,8 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Header from "@/components/user/userLayout/header/page";
-import Footer from "@/components/user/userLayout/footer/page"; 
 import ProductList from "@/app/user/products/details/page";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
 import Chat from "@/components/common/chat/userChat";
@@ -10,7 +8,6 @@ import Chat from "@/components/common/chat/userChat";
 const HomePage = () => {
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       
       {/* Hero Banner - Cải thiện */}
       <div className="container mx-auto px-4 mt-8">
@@ -92,12 +89,14 @@ const HomePage = () => {
         </div>
       </div>
 
-      <ProductList />
+      <div className="mt-20">
+        <ProductList />
+      </div>
 
       <Chat />
 
       {/* About Section - Cải thiện */}
-      <div className="w-full bg-gray-50">
+      <div className="w-full bg-gray-50 mt-20">
         <div className="w-full flex flex-col md:flex-row">
           {/* Left side - Image */}
           <div className="w-full md:w-1/2 h-[600px] relative group overflow-hidden">
@@ -169,7 +168,6 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

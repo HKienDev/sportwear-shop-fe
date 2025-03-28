@@ -3,20 +3,27 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "@/components/user/productCard/page";
 
-// Cập nhật lại interface Product
+// Định nghĩa interface Category
+interface Category {
+  _id: string;
+  name: string;
+}
+
+// Định nghĩa interface Product
 interface Product {
   _id: string;
   id: number;
   name: string;
   category: string;
   price: number;
-  discountPrice: number;
+  discountPrice?: number;
   subtitle: string;
   description: string;
   images: { main: string; sub?: string[] }; // Sửa kiểu dữ liệu
   image?: string;
 }
 
+// Hàm lấy danh sách sản phẩm
 const fetchProducts = async (): Promise<Product[]> => {
   try {
     const res = await fetch("http://localhost:4000/api/products", {
@@ -41,8 +48,8 @@ const fetchProducts = async (): Promise<Product[]> => {
       id: typeof product.id === "number" ? product.id : 0,
       name: typeof product.name === "string" ? product.name : "No name",
       category: typeof product.category === "string" ? product.category : "Uncategorized",
-      price: typeof product.price === "string" ? Number(product.price) : 0,
-      discountPrice: typeof product.discountPrice === "string" ? Number(product.discountPrice) : 0,
+      price: typeof product.price === "number" ? product.price : parseFloat(product.price as string) || 0,
+      discountPrice: typeof product.discountPrice === "number" ? product.discountPrice : parseFloat(product.discountPrice as string) || undefined,
       subtitle: typeof product.subtitle === "string" ? product.subtitle : "No subtitle",
       description: typeof product.description === "string" ? product.description : "No description available",
       images: Array.isArray(product.images)
@@ -56,21 +63,50 @@ const fetchProducts = async (): Promise<Product[]> => {
   }
 };
 
+// Hàm lấy danh sách thể loại
+const fetchCategories = async (): Promise<Category[]> => {
+  try {
+    const res = await fetch("http://localhost:4000/api/categories", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+
+    const data: unknown = await res.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error("Invalid API response format");
+    }
+
+    return data.map((category: Record<string, unknown>) => ({
+      _id: typeof category._id === "string" ? category._id : "default-id",
+      name: typeof category.name === "string" ? category.name : "No name",
+    }));
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+};
+
 const ProductList = () => {
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getProducts = async () => {
-      const data = await fetchProducts();
-      if (Array.isArray(data)) {
-        setProducts(data);
-      } else {
-        console.error("Invalid data format:", data);
-      }
+    const fetchData = async () => {
+      const [productsData, categoriesData] = await Promise.all([fetchProducts(), fetchCategories()]);
+      setProducts(productsData);
+      setCategories(categoriesData);
       setLoading(false);
     };
-    getProducts();
+
+    fetchData();
   }, []);
 
   return (
@@ -83,7 +119,11 @@ const ProductList = () => {
           {products?.map((product, index) => {
             console.log("Rendering ProductCard with ID:", product._id);
             return (
-              <ProductCard key={product._id || `product-${index}`} {...product} />
+              <ProductCard
+                key={product._id || `product-${index}`}
+                product={product}
+                categories={categories}
+              />
             );
           })}
         </div>

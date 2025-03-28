@@ -4,11 +4,15 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-// Interface Product được cập nhật để khớp với schema của BE
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface Product {
   _id: string;
   name: string;
-  category: string;
+  category: string; // ID của thể loại
   price: number;
   discountPrice?: number;
   description: string;
@@ -18,11 +22,22 @@ interface Product {
   };
 }
 
-const ProductCard = (product: Product) => {
-  console.log("Product Data:", product); // Debug toàn bộ object
+interface ProductCardProps {
+  product: Product;
+  categories: Category[]; // Danh sách thể loại
+}
 
+const formatCurrency = (amount: number) => {
+  return amount.toLocaleString("vi-VN") + "đ";
+};
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, categories }) => {
   const { _id, name, category, price, discountPrice, description, images } = product;
-  
+
+  // Tìm tên thể loại dựa trên ID
+  const categoryName =
+    categories.find((cat) => cat._id === category)?.name || "Không xác định";
+
   return (
     <Link href={`/user/products/details/${_id}`} className="block">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 group">
@@ -44,7 +59,9 @@ const ProductCard = (product: Product) => {
         </div>
         <div className="p-5">
           <div className="mb-2">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{category}</span>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {categoryName} {/* Hiển thị tên thể loại */}
+            </span>
           </div>
           <h3 className="text-lg font-bold text-gray-800 mb-1 line-clamp-1">{name}</h3>
           <p className="text-gray-600 text-sm mb-3 line-clamp-2">{description}</p>
@@ -53,15 +70,15 @@ const ProductCard = (product: Product) => {
               {discountPrice !== undefined && discountPrice > 0 ? (
                 <>
                   <span className="text-lg font-bold text-red-500 mr-2">
-                    ${discountPrice.toFixed(2)}
+                    {formatCurrency(discountPrice)}
                   </span>
                   <span className="text-sm line-through text-gray-400">
-                    ${price.toFixed(2)}
+                    {formatCurrency(price)}
                   </span>
                 </>
               ) : (
                 <span className="text-lg font-bold text-gray-800">
-                  ${price.toFixed(2)}
+                  {formatCurrency(price)}
                 </span>
               )}
             </div>

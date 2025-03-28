@@ -4,8 +4,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
-import Header from "@/components/user/userLayout/header/page";
-import Footer from "@/components/user/userLayout/footer/page";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -76,7 +74,6 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Header />  
         <div className={`${inter.className} max-w-screen-xl mx-auto px-4 py-8`}>
         <h1 className="text-2xl font-bold mb-6">THANH TOÁN</h1>
         
@@ -320,7 +317,6 @@ export default function CheckoutPage() {
             </div>
         </div>
         </div>
-        <Footer />
     </>
   );
 }
