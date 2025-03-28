@@ -1,0 +1,54 @@
+/* Button Styles */
+.btn-primary {
+  @apply bg-blue-600 text-white px-6 py-2.5 rounded-lg flex items-center hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-red-100 text-red-600 px-6 py-2.5 rounded-lg flex items-center hover:bg-red-200 transition-all duration-200 shadow-sm hover:shadow-md;
+}
+
+/* Form Styles */
+.input-label {
+  @apply text-sm font-medium text-gray-700 mb-2;
+}
+
+.input-field {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+}
+
+/* Select Styles */
+.select-field {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white bg-no-repeat bg-[right_1rem_center] bg-[length:1.5em_1.5em] bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236B7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M10%203a1%201%200%2001.707.293l3%203a1%201%200%2001-1.414%201.414L10%205.414%207.707%207.707a1%201%200%2001-1.414-1.414l3-3A1%201%200%200110%203zm-3.707%209.293a1%201%200%20011.414%200L10%2014.586l2.293-2.293a1%201%200%20011.414%201.414l-3%203a1%201%200%2001-1.414%200l-3-3a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] pr-10;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-all duration-200;
+}
+
+/* Tag Styles */
+.tag {
+  @apply px-3 py-1.5 text-sm rounded-full flex items-center gap-1.5 transition-all duration-200;
+}
+
+.tag-blue {
+  @apply bg-blue-100 text-blue-700 hover:bg-blue-200;
+}
+
+.tag-green {
+  @apply bg-green-100 text-green-700 hover:bg-green-200;
+}
+
+/* Image Upload Styles */
+.image-upload {
+  @apply border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all duration-200;
+}
+
+.image-upload:hover {
+  @apply bg-gray-50;
+}
+
+/* Remove Button Styles */
+.remove-button {
+  @apply absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md;
+} 

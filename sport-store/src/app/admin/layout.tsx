@@ -5,6 +5,7 @@ import Sidebar from "@/components/admin/adminLayout/sidebar";
 import Topbar from "@/components/admin/adminLayout/topbar";
 import Footer from "@/components/admin/adminLayout/footer";
 import { fetchWithAuth } from "@/lib/api";
+import "@/styles/admin.css";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
