@@ -1,6 +1,4 @@
 'use client';
-import Header from "@/components/user/userLayout/header/page";
-import Footer from "@/components/user/userLayout/footer/page";
 import ProfileUser from "@/components/user/profileUser/userProfileForm";
 import MembershipTier from "@/components/admin/customers/details/membershipTier";
 import WishlistPage from "@/components/user/wishlistPage/wishlistPage";
@@ -9,7 +7,6 @@ import OrderUserPage from "@/components/user/orderUser/orderUserPage";
 export default function ProfilePage() {
   return (
     <>
-      <Header />
       <div className="container mx-auto p-4 max-w-6xl">
         {/* Tiêu đề "HỒ SƠ CÁ NHÂN" */}
         <h1 className="text-2xl font-bold mb-4">HỒ SƠ CÁ NHÂN</h1>
@@ -25,7 +22,6 @@ export default function ProfilePage() {
         {/* Phần Đơn Hàng */}
         <OrderUserPage />
       </div>
-      <Footer />
     </>
   );
 }
