@@ -9,6 +9,7 @@ import MembershipTier from "@/components/admin/customers/details/membershipTier"
 import OrderList from "@/components/admin/customers/details/orderList";
 import ResetPasswordModal from "@/components/admin/customers/details/resetPasswordModal";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { Order } from "@/types/order";
 
 interface Location {
   code: string;
@@ -71,6 +72,8 @@ export default function CustomerDetail() {
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [customerError, setCustomerError] = useState<string | null>(null);
 
   // Fetch provinces data
   const fetchProvinces = useCallback(async () => {
@@ -124,25 +127,28 @@ export default function CustomerDetail() {
   const fetchCustomerData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { ok, status, data } = await fetchWithAuth(`/users/${params.id}`);
-      
-      if (!ok) {
-        if (status === 404) {
-          toast.error("Không tìm thấy thông tin khách hàng");
-          router.push("/admin/customers/list");
-          return;
-        }
-        throw new Error("Lỗi khi tải thông tin khách hàng");
-      }
+      setCustomerError(null);
 
-      setCustomer(data as Customer);
+      // Lấy thông tin khách hàng
+      const userResponse = await fetchWithAuth(`/users/${params.id}`);
+      if (!userResponse.success) {
+        throw new Error(userResponse.message || "Không thể tải thông tin khách hàng");
+      }
+      setCustomer(userResponse.data as Customer);
+
+      // Lấy lịch sử đơn hàng
+      const ordersResponse = await fetchWithAuth(`/orders/admin/user/${params.id}`);
+      if (!ordersResponse.success) {
+        throw new Error(ordersResponse.message || "Không thể tải danh sách đơn hàng");
+      }
+      setCustomerOrders(ordersResponse.data as Order[]);
     } catch (error) {
-      console.error("Lỗi khi tải thông tin khách hàng:", error);
-      toast.error("Không thể tải thông tin khách hàng");
+      console.error("Lỗi khi tải thông tin:", error);
+      setCustomerError(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải thông tin");
     } finally {
       setIsLoading(false);
     }
-  }, [params.id, router]);
+  }, [params.id]);
 
   // Fetch initial data
   useEffect(() => {
@@ -209,17 +215,17 @@ export default function CustomerDetail() {
     if (!tempCustomer || !customer) return;
 
     try {
-      const { ok, data } = await fetchWithAuth(`/users/admin/${customer._id}`, {
+      const response = await fetchWithAuth(`/users/admin/${customer._id}`, {
         method: "PUT",
         body: JSON.stringify(tempCustomer),
       });
 
-      if (!ok) {
-        throw new Error("Lỗi khi cập nhật thông tin");
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi cập nhật thông tin");
       }
 
-      setCustomer(data as Customer);
-      setTempCustomer(data as Customer);
+      setCustomer(response.data as Customer);
+      setTempCustomer(response.data as Customer);
       toast.success("Cập nhật thông tin thành công");
     } catch (error) {
       console.error("Lỗi khi cập nhật:", error);
@@ -236,18 +242,18 @@ export default function CustomerDetail() {
     }
 
     try {
-      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}`, {
+      const response = await fetchWithAuth(`/users/admin/${customer._id}`, {
         method: "DELETE",
       });
 
-      if (!ok) {
-        throw new Error("Lỗi khi xóa khách hàng");
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi xóa khách hàng");
       }
 
       toast.success("Xóa khách hàng thành công");
-      router.push("/admin/customers/list");
+      router.push("/admin/customers");
     } catch (error) {
-      console.error("Lỗi khi xóa khách hàng:", error);
+      console.error("Lỗi khi xóa:", error);
       toast.error("Không thể xóa khách hàng");
     }
   }, [customer, router]);
@@ -257,13 +263,13 @@ export default function CustomerDetail() {
     if (!customer) return;
 
     try {
-      const { ok } = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
+      const response = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
         method: "POST",
         body: JSON.stringify({ password: newPassword }),
       });
 
-      if (!ok) {
-        throw new Error("Lỗi khi thay đổi mật khẩu");
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi thay đổi mật khẩu");
       }
 
       toast.success("Thay đổi mật khẩu thành công");
@@ -391,37 +397,43 @@ export default function CustomerDetail() {
 
   return (
     <div className="container mx-auto p-4">
-      <Header
-        onDelete={handleDeleteCustomer}
-        onChangePassword={() => setIsResetPasswordModalOpen(true)}
-        onUpdate={handleUpdateCustomer}
-      />
-      
-      <div className="flex flex-col lg:flex-row gap-4 mt-4">
-        <CustomerInfo
-          customer={convertToCustomerData(tempCustomer || customer)}
-          provinces={provinces}
-          districts={districts}
-          wards={wards}
-          onProvinceChange={handleProvinceChange}
-          onDistrictChange={handleDistrictChange}
-          onWardChange={handleWardChange}
-          onDataChange={handleDataChange}
-        />
-        
-        <MembershipTier
-          totalSpent={tempCustomer?.totalSpent || customer.totalSpent || 0}
-        />
-      </div>
+      {customerError ? (
+        <div className="text-red-500 text-center py-4">{customerError}</div>
+      ) : (
+        <>
+          <Header
+            onUpdate={handleUpdateCustomer}
+            onDelete={handleDeleteCustomer}
+            onResetPassword={() => setIsResetPasswordModalOpen(true)}
+          />
+          
+          <div className="flex flex-col lg:flex-row gap-4 mt-4">
+            <CustomerInfo
+              customer={convertToCustomerData(tempCustomer || customer)}
+              provinces={provinces}
+              districts={districts}
+              wards={wards}
+              onProvinceChange={handleProvinceChange}
+              onDistrictChange={handleDistrictChange}
+              onWardChange={handleWardChange}
+              onDataChange={handleDataChange}
+            />
+            
+            <MembershipTier
+              totalSpent={tempCustomer?.totalSpent || customer.totalSpent || 0}
+            />
+          </div>
 
-      <OrderList phone={tempCustomer?.phone || customer.phone} />
+          <OrderList orders={customerOrders} />
 
-      <ResetPasswordModal
-        isOpen={isResetPasswordModalOpen}
-        onClose={() => setIsResetPasswordModalOpen(false)}
-        onSubmit={handleChangePassword}
-        customerName={customer?.fullname || "Khách hàng"}
-      />
+          <ResetPasswordModal
+            isOpen={isResetPasswordModalOpen}
+            onClose={() => setIsResetPasswordModalOpen(false)}
+            onSubmit={handleChangePassword}
+            customerName={customer?.fullname || "Khách hàng"}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -1,10 +1,10 @@
 interface HeaderProps {
   onDelete: () => void;
-  onChangePassword: () => void;
+  onResetPassword: () => void;
   onUpdate: () => void;
 }
 
-export default function Header({ onDelete, onChangePassword, onUpdate }: HeaderProps) {
+export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderProps) {
   return (
     <div className="mb-8 flex items-center justify-between">
       <h1 className="text-3xl font-bold text-neutral-800">CHI TIẾT KHÁCH HÀNG</h1>
@@ -16,7 +16,7 @@ export default function Header({ onDelete, onChangePassword, onUpdate }: HeaderP
           <span>🗑️</span> Xóa Khách Hàng
         </button>
         <button 
-          onClick={onChangePassword}
+          onClick={onResetPassword}
           className="px-4 py-2.5 border border-neutral-400 text-neutral-600 rounded-md hover:bg-neutral-100 transition-colors duration-200 flex items-center gap-2"
         >
           <span>🔑</span> Thay Đổi Mật Khẩu

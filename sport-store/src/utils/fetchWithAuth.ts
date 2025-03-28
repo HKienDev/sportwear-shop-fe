@@ -1,4 +1,4 @@
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
@@ -7,7 +7,7 @@ interface ApiResponse<T = any> {
   product?: T;
 }
 
-export const fetchWithAuth = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
+export const fetchWithAuth = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
   try {
     // Lấy token từ localStorage
     const token = localStorage.getItem("accessToken");
@@ -43,6 +43,7 @@ export const fetchWithAuth = async <T = any>(endpoint: string, options: RequestI
 
     // Đọc response body
     const responseData = await response.json().catch(() => null);
+    console.log("🔹 [fetchWithAuth] Response data:", responseData);
 
     // Xử lý các trường hợp lỗi
     if (response.status === 401) {
@@ -102,6 +103,15 @@ export const fetchWithAuth = async <T = any>(endpoint: string, options: RequestI
     if (!response.ok) {
       console.error("❌ [fetchWithAuth] Lỗi server:", response.status, responseData);
       throw new Error(responseData?.message || "Đã xảy ra lỗi");
+    }
+
+    // Nếu response không có success hoặc data, thêm vào
+    if (!responseData.success) {
+      return {
+        success: true,
+        data: responseData,
+        message: "Thành công"
+      };
     }
 
     return responseData;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import CustomerSearch from "@/components/admin/customers/list/customerSearch";
 import CustomerTable from "@/components/admin/customers/list/customerTable";
@@ -42,7 +41,6 @@ export default function CustomerList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   // Tính toán số trang và danh sách khách hàng hiện tại
   const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
@@ -55,28 +53,27 @@ export default function CustomerList() {
   const fetchCustomers = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data: usersData, ok: usersOk, status } = await fetchWithAuth("/users");
+      const response = await fetchWithAuth("/users");
 
-      if (!usersOk) {
-        if (status === 401 || status === 403) {
-          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
-          router.push("/login");
-          return;
-        }
-        throw new Error("Lỗi khi lấy danh sách khách hàng");
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi lấy danh sách khách hàng");
+      }
+
+      if (!response.data) {
+        throw new Error("Không có dữ liệu khách hàng");
       }
       
       // Lọc chỉ lấy user (không lấy admin)
-      const userCustomers = usersData.filter((customer: Customer) => customer.role === "user");
+      const userCustomers = (response.data as Customer[]).filter((customer) => customer.role === "user");
       setCustomers(userCustomers);
       setFilteredCustomers(userCustomers);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách khách hàng:", error);
-      toast.error("Không thể tải danh sách khách hàng");
+      toast.error(error instanceof Error ? error.message : "Không thể tải danh sách khách hàng");
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
   // Lọc khách hàng theo từ khóa tìm kiếm
   const handleSearch = useCallback((query: string) => {
@@ -119,17 +116,8 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
           method: "DELETE"
         });
 
-        if (!response.ok) {
-          // Nếu có lỗi với user nào đó, dừng quá trình xóa
-          if (response.status === 403) {
-            toast.error("Bạn không có quyền xóa người dùng");
-            return;
-          }
-          if (response.status === 404) {
-            toast.error(`Không tìm thấy người dùng với ID: ${id}`);
-            continue;
-          }
-          throw new Error("Có lỗi xảy ra khi xóa người dùng");
+        if (!response.success) {
+          throw new Error(response.message || "Có lỗi xảy ra khi xóa người dùng");
         }
       }
       
@@ -138,7 +126,7 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
       fetchCustomers();
     } catch (error) {
       console.error("Lỗi khi xóa khách hàng:", error);
-      toast.error("Không thể xóa một số khách hàng. Vui lòng thử lại sau");
+      toast.error(error instanceof Error ? error.message : "Không thể xóa một số khách hàng. Vui lòng thử lại sau");
     }
   }, [selectedCustomers, fetchCustomers]);
 
