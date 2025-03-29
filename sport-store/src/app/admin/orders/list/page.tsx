@@ -6,17 +6,28 @@ import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/lib/api";
 import OrderListTable from "@/components/admin/orders/list/orderListTable";
 import OrderListFilters from "@/components/admin/orders/list/orderListFilters";
+import Pagination from "@/components/admin/orders/list/pagination";
 import { getStatusColor } from "@/components/admin/orders/list/orderStatusBadge";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function OrdersPage() {
   const router = useRouter();
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState(""); // Tìm kiếm
   const [statusFilter, setStatusFilter] = useState(""); // Bộ lọc trạng thái
+
+  // Tính toán số trang và danh sách đơn hàng hiện tại
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const currentOrders = filteredOrders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -60,6 +71,7 @@ export default function OrdersPage() {
         order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredOrders(filtered);
+    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
   }, [searchTerm, orders]);
 
   // Lọc đơn hàng theo trạng thái
@@ -69,11 +81,12 @@ export default function OrdersPage() {
     } else {
       setFilteredOrders(orders.filter((order) => order.status === statusFilter));
     }
+    setCurrentPage(1); // Reset về trang 1 khi lọc
   }, [statusFilter, orders]);
 
   // Chọn tất cả đơn hàng
   const toggleSelectAll = () => {
-    setSelectedOrders(selectedOrders.length === filteredOrders.length ? [] : filteredOrders.map((order) => order._id));
+    setSelectedOrders(selectedOrders.length === currentOrders.length ? [] : currentOrders.map((order) => order._id));
   };
 
   // Chọn một đơn hàng
@@ -103,13 +116,20 @@ export default function OrdersPage() {
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && filteredOrders.length > 0 && (
-        <OrderListTable
-          orders={filteredOrders}
-          selectedOrders={selectedOrders}
-          onToggleSelectAll={toggleSelectAll}
-          onToggleSelectOrder={toggleSelectOrder}
-          getStatusColor={getStatusColor}
-        />
+        <>
+          <OrderListTable
+            orders={currentOrders}
+            selectedOrders={selectedOrders}
+            onToggleSelectAll={toggleSelectAll}
+            onToggleSelectOrder={toggleSelectOrder}
+            getStatusColor={getStatusColor}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
     </div>
   );
