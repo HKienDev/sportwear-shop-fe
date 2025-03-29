@@ -56,7 +56,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 async function refreshAccessToken(): Promise<string | null> {
     try {
         console.log("[refreshAccessToken] Gọi API refresh...");
-        const response = await fetch("http://localhost:4000/api/auth/refresh", {
+        const response = await fetch(`${API_URL}/auth/refresh`, {
             method: "POST",
             credentials: "include", // Đọc refreshToken từ cookies
         });
