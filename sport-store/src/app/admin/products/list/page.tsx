@@ -65,14 +65,14 @@ export default function ProductList() {
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetchWithAuth<{ products: ProductResponse[] }>("/products");
+      const response = await fetchWithAuth("/products");
 
-      if (!response.success || !response.products) {
+      if (!response.success) {
         throw new Error(response.message || "Lỗi khi lấy danh sách sản phẩm");
       }
 
       // Chuyển đổi dữ liệu để phù hợp với interface Product
-      const formattedProducts = ((response as unknown) as { success: boolean; products: ProductResponse[] }).products.map((product: ProductResponse) => ({
+      const formattedProducts = response.products.map((product: ProductResponse) => ({
         _id: product._id,
         name: product.name,
         description: product.description,
