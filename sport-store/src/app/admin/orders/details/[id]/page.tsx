@@ -26,21 +26,23 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
       try {
         setIsLoading(true);
         // Kiểm tra quyền admin
-        const { data: userData } = await fetchWithAuth("/auth/check");
-        console.log("User data:", userData);
+        const userResponse = await fetchWithAuth("/auth/check");
+        console.log("User data:", userResponse);
 
-        if (!userData.user || userData.user.role !== "admin") {
+        if (!userResponse.success || !userResponse.user || userResponse.user.role !== "admin") {
           router.push("/user/auth/login");
           return;
         }
 
         // Lấy thông tin đơn hàng
-        const { data: orderData } = await fetchWithAuth(`/orders/admin/${orderId}`);
-        console.log("Order data:", orderData);
-        if (!orderData.success) {
-          throw new Error(orderData.message || "Không thể lấy thông tin đơn hàng");
+        const orderResponse = await fetchWithAuth(`/orders/admin/${orderId}`);
+        console.log("Order data:", orderResponse);
+        
+        if (!orderResponse.success) {
+          throw new Error(orderResponse.message || "Không thể lấy thông tin đơn hàng");
         }
-        setOrder(orderData.order);
+        
+        setOrder(orderResponse.order);
       } catch (error) {
         console.error("Error fetching order details:", error);
         if (error instanceof Error) {
