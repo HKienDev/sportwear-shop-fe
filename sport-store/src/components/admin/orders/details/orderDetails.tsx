@@ -94,16 +94,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
   const refreshOrderDetails = async () => {
     try {
       setIsRefreshing(true);
-      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}`);
+      const response = await fetchWithAuth(`/orders/admin/${orderId}`);
       
       if (response.success && response.order) {
         setCurrentStatus(response.order.status);
-        if (onStatusUpdate) {
-          onStatusUpdate(orderId, response.order.status);
-        }
       }
     } catch (error) {
       console.error("Error refreshing order details:", error);
+      toast.error("Không thể cập nhật thông tin đơn hàng");
     } finally {
       setIsRefreshing(false);
     }
@@ -115,11 +113,6 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       try {
         setIsLoading(true);
         
-        // Kiểm tra orderId có hợp lệ không
-        if (!orderId) {
-          throw new Error("ID đơn hàng không được để trống!");
-        }
-
         // Lấy thông tin user từ localStorage
         const userStr = localStorage.getItem("user");
         if (!userStr) {
@@ -130,58 +123,42 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         let userData;
         try {
           userData = JSON.parse(userStr);
+          console.log("User data from localStorage:", userData); // Thêm log để debug
         } catch (error) {
           console.error("Error parsing user data:", error);
           toast.error("Lỗi khi đọc thông tin người dùng");
           return;
         }
 
-        if (!userData || !userData._id) {
+        // Kiểm tra cấu trúc userData
+        if (!userData || !userData.id) {
+          console.error("Invalid user data structure:", userData); // Thêm log để debug
           toast.error("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại");
           localStorage.removeItem("user");
           return;
         }
 
-        console.log("🔄 Đang cập nhật trạng thái đơn hàng:", {
-          orderId,
-          currentStatus,
-          newStatus,
-          userData: userData._id
-        });
-
-        const requestBody = { 
-          status: newStatus,
-          updatedBy: userData._id,
-          note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
-        };
-        console.log("📤 Request body:", requestBody);
-
         const response = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
           method: "PUT",
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({ 
+            status: newStatus,
+            updatedBy: userData.id, // Sử dụng userData.id thay vì userData._id
+            note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
+          })
         });
 
-        console.log("📥 Response từ server:", response);
-
-        if (!response.success) {
-          console.error("❌ Lỗi khi cập nhật trạng thái:", response);
-          throw new Error(response.message || "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+        if (response.success) {
+          setCurrentStatus(newStatus);
+          toast.success("Cập nhật trạng thái đơn hàng thành công");
+          if (onStatusUpdate) {
+            onStatusUpdate(orderId, newStatus);
+          }
+        } else {
+          toast.error(response.message || "Không thể cập nhật trạng thái đơn hàng");
         }
-
-        // Cập nhật trạng thái local
-        setCurrentStatus(newStatus);
-        if (onStatusUpdate) {
-          onStatusUpdate(orderId, newStatus);
-        }
-
-        // Hiển thị thông báo thành công
-        toast.success("Cập nhật trạng thái đơn hàng thành công!");
-
-        // Làm mới thông tin đơn hàng
-        await refreshOrderDetails();
       } catch (error) {
         console.error("Error updating order status:", error);
-        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng");
+        toast.error("Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng");
       } finally {
         setIsLoading(false);
       }
