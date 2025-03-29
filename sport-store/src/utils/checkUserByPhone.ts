@@ -14,8 +14,8 @@ interface UserResponse {
 
 export const checkUserByPhone = async (phone: string) => {
   try {
-    const { data } = await fetchWithAuth(`/users/phone/${phone}`);
-    const response = data as UserResponse;
+    const response = await fetchWithAuth(`/users/phone/${phone}`);
+    console.log("🔹 [checkUserByPhone] Response:", response);
 
     if (!response.success) {
       console.log("❌ [checkUserByPhone] User not found:", response.message);
