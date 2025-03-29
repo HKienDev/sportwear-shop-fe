@@ -39,7 +39,7 @@ interface Product {
 }
 
 export default function OrderProducts() {
-  const { cartItems, addToCart, removeFromCart } = useCart();
+  const { cartItems = [], addToCart, removeFromCart } = useCart();
   const { paymentMethod, setPaymentMethod } = usePaymentMethod();
   const { shippingMethod, setShippingMethod } = useShippingMethod();
   const [productId, setProductId] = useState("");
@@ -60,7 +60,10 @@ export default function OrderProducts() {
         throw new Error("Không tìm thấy sản phẩm");
       }
       const data = await response.json();
-      return data;
+      if (!data.success || !data.product) {
+        throw new Error(data.message || "Không tìm thấy sản phẩm");
+      }
+      return data.product;
     } catch (error) {
       console.error("Lỗi khi lấy thông tin sản phẩm:", error);
       throw error;
@@ -80,8 +83,8 @@ export default function OrderProducts() {
       try {
         const productData = await fetchProduct(newProductId);
         setProduct(productData);
-        setAvailableSizes(productData.size);
-        setAvailableColors(productData.color);
+        setAvailableSizes(productData.size || []);
+        setAvailableColors(productData.color || []);
       } catch (error) {
         setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy thông tin sản phẩm");
       }
@@ -152,6 +155,8 @@ export default function OrderProducts() {
 
   // Tính tổng tiền với giá khuyến mãi và mã giảm giá
   const calculateTotal = () => {
+    if (!cartItems || cartItems.length === 0) return 0;
+    
     const subtotal = cartItems.reduce((total, item) => {
       const itemPrice = item.discountPrice || item.price;
       return total + (itemPrice * item.quantity);
