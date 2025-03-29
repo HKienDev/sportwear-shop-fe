@@ -166,8 +166,11 @@ export default function ProductTable({
                       <DropdownMenuItem onClick={() => onEdit(product._id)}>
                         Chỉnh sửa
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onToggleStatus(product._id, !product.isActive)}>
-                        {product.isActive ? "Ngừng bán" : "Đang bán"}
+                      <DropdownMenuItem 
+                        onClick={() => onToggleStatus(product._id, !product.isActive)}
+                        className={product.isActive ? "text-yellow-600" : "text-green-600"}
+                      >
+                        {product.isActive ? "Ngừng bán" : "Kích hoạt"}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="text-red-600"

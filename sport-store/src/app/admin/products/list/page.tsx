@@ -154,6 +154,68 @@ export default function ProductList() {
     }
   }, [selectedProducts]);
 
+  // Xử lý khi chỉnh sửa sản phẩm
+  const handleEdit = useCallback((productId: string) => {
+    router.push(`/admin/products/edit/${productId}`);
+  }, [router]);
+
+  // Xử lý khi xóa một sản phẩm
+  const handleDelete = useCallback(async (productId: string) => {
+    try {
+      const response = await fetchWithAuth(`/products/${productId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi xóa sản phẩm");
+      }
+
+      // Cập nhật danh sách sản phẩm
+      setProducts((prev) => prev.filter((product) => product._id !== productId));
+      setFilteredProducts((prev) => prev.filter((product) => product._id !== productId));
+      setSelectedProducts((prev) => prev.filter((id) => id !== productId));
+
+      toast.success("Xóa sản phẩm thành công");
+    } catch (error) {
+      console.error("Lỗi khi xóa sản phẩm:", error);
+      toast.error("Không thể xóa sản phẩm");
+    }
+  }, []);
+
+  // Xử lý khi thay đổi trạng thái sản phẩm
+  const handleToggleStatus = useCallback(async (productId: string, isActive: boolean) => {
+    try {
+      const response = await fetchWithAuth(`/products/${productId}/toggle-status`, {
+        method: "PATCH",
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || "Lỗi khi cập nhật trạng thái sản phẩm");
+      }
+
+      // Cập nhật danh sách sản phẩm
+      setProducts((prev) =>
+        prev.map((product) =>
+          product._id === productId
+            ? { ...product, isActive: response.product.isActive }
+            : product
+        )
+      );
+      setFilteredProducts((prev) =>
+        prev.map((product) =>
+          product._id === productId
+            ? { ...product, isActive: response.product.isActive }
+            : product
+        )
+      );
+
+      toast.success(response.message);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái sản phẩm:", error);
+      toast.error("Không thể cập nhật trạng thái sản phẩm");
+    }
+  }, []);
+
   // Load dữ liệu khi component mount
   useEffect(() => {
     fetchProducts();
@@ -188,6 +250,9 @@ export default function ProductList() {
               products={currentProducts}
               selectedProducts={selectedProducts}
               onSelectProduct={handleSelectProduct}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleStatus={handleToggleStatus}
             />
             
             <div className="flex justify-between items-center mt-4">
