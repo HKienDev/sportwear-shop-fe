@@ -1,66 +1,93 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useToast } from "./useToast";
+import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:4000/api/auth",
-  withCredentials: true, // Đảm bảo gửi cookies
-});
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    accessToken: string;
+    user: {
+      id: string;
+      email: string;
+      role: string;
+    };
+  };
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      message: string;
+    };
+  };
+  message: string;
+}
 
 export const useLogin = () => {
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      router.push('/'); // Chuyển hướng nếu đã đăng nhập
-    }
-  }, [router]);
-
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
-
-  const validatePassword = (password: string) => /^(?=.*[A-Z]).{8,25}$/.test(password);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setIsLoading(true);
+    setError(null);
 
-    if (!validatePassword(password)) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự, tối đa 25 ký tự và chứa ít nhất 1 chữ in hoa.');
-      return;
-    }
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-    setLoading(true);
     try {
-      const response = await api.post('/login', { username, password });
-      const { accessToken, user } = response.data;
+      console.log("Đang gửi request login...");
+      const response = await axios.post<LoginResponse>("/api/auth/login", {
+        email,
+        password,
+      });
+      console.log("Response từ server:", response.data);
 
-      // Lưu accessToken vào localStorage
-      localStorage.setItem('accessToken', accessToken);
+      if (response.data.success) {
+        // Lưu token và thông tin user
+        localStorage.setItem("accessToken", response.data.data?.accessToken || "");
+        localStorage.setItem("user", JSON.stringify(response.data.data?.user));
 
-      console.log("✅ Login successful. User:", user);
-      router.push('/');
+        toast({
+          title: "Đăng nhập thành công",
+          description: "Chào mừng bạn quay trở lại!",
+          variant: "default",
+        });
+
+        // Xử lý chuyển hướng
+        const redirectFrom = searchParams.get("redirect") || "/";
+        window.location.href = redirectFrom;
+      } else {
+        setError(response.data.message || "Đăng nhập thất bại");
+        toast({
+          title: "Lỗi đăng nhập",
+          description: response.data.message || "Vui lòng kiểm tra lại thông tin",
+          variant: "destructive",
+        });
+      }
     } catch (err) {
-      setError(axios.isAxiosError(err) ? err.response?.data?.message || 'Lỗi server' : 'Lỗi không xác định.');
+      console.error("Lỗi đăng nhập:", err);
+      const error = err as ApiError;
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại";
+      setError(errorMessage);
+      toast({
+        title: "Lỗi đăng nhập",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return {
-    username,
-    setUsername,
-    password,
-    setPassword,
-    showPassword,
-    togglePasswordVisibility,
-    error,
-    loading,
     handleSubmit,
+    isLoading,
+    error,
   };
 };

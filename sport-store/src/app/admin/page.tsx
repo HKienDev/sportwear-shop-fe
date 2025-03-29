@@ -6,30 +6,58 @@ import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
-import { fetchApi } from "@/utils/api";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
+
+// Tạo instance axios với baseURL
+const api = axios.create({
+  baseURL: "http://localhost:4000/api",
+  withCredentials: true,
+});
 
 export default function AdminPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
-        const userData = await fetchApi("/auth/check");
+        const accessToken = localStorage.getItem("accessToken");
         
-        if (!userData.user || userData.user.role !== "admin") {
-          toast.error("Bạn không có quyền truy cập trang này");
-          router.push('/user/auth/login');
+        if (!accessToken) {
+          console.log("No access token found");
+          router.replace('/user/auth/login');
           return;
         }
 
+        console.log("Checking auth with token:", accessToken);
+        const response = await api.get("/auth/check", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        console.log("Auth check response:", response.data);
+
+        if (!response.data.user || response.data.user.role !== "admin") {
+          console.log("User is not admin");
+          router.replace('/user/auth/login');
+          return;
+        }
+
+        setIsAuthenticated(true);
         setIsLoading(false);
       } catch (error) {
         console.error("Error checking auth:", error);
-        toast.error("Vui lòng đăng nhập để tiếp tục");
-        router.push('/user/auth/login');
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.status === 401) {
+          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        } else {
+          toast.error("Vui lòng đăng nhập để tiếp tục");
+        }
+        router.replace('/user/auth/login');
       }
     };
 
@@ -42,6 +70,10 @@ export default function AdminPage() {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   // Dữ liệu thống kê

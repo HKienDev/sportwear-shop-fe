@@ -88,9 +88,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (res.ok) {
             const data = await res.json();
-            if (data.user) {
-              setUser(data.user);
-              localStorage.setItem("user", JSON.stringify(data.user));
+            if (data?.user) {
+              const userData = {
+                id: data.user.id,
+                name: data.user.name || data.user.email,
+                email: data.user.email,
+                avatar: data.user.avatar,
+                role: data.user.role
+              };
+              setUser(userData);
+              localStorage.setItem("user", JSON.stringify(userData));
             }
           } else if (res.status === 401) {
             console.warn("Access token expired, trying to refresh...");

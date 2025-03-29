@@ -16,13 +16,23 @@ const LoginPage = () => {
   const { login } = useAuth();
 
   useEffect(() => {
+    // Kiểm tra nếu đã đăng nhập thì chuyển hướng
+    const accessToken = localStorage.getItem("accessToken");
+    const storedUser = localStorage.getItem("user");
+    
+    if (accessToken && storedUser) {
+      const userData = JSON.parse(storedUser);
+      const redirectFrom = searchParams.get("from") || (userData.role === "admin" ? "/admin" : "/");
+      router.replace(redirectFrom);
+    }
+
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [router, searchParams]);
 
-  const handleLogin = async (username: string, password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     setLoading(true);
     setError("");
 
@@ -30,24 +40,29 @@ const LoginPage = () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
       console.log("Sending login request to:", `${API_URL}/auth/login`);
       
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
         credentials: "include",
       });
 
-      const responseData = await res.json();
+      if (!response) {
+        throw new Error("Không thể kết nối đến server");
+      }
+
+      const responseData = await response.json();
       console.log("API Login Response:", responseData);
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error(responseData.message || "Đăng nhập thất bại");
       }
 
-      const { user, accessToken } = responseData;
+      const { data } = responseData;
+      const { user, accessToken } = data;
 
       if (!accessToken) {
         throw new Error("Không nhận được accessToken từ API");
@@ -67,8 +82,8 @@ const LoginPage = () => {
       const redirectFrom = searchParams.get("from") || (user.role === "admin" ? "/admin" : "/");
       console.log("Redirecting to:", redirectFrom);
 
-      // Chuyển hướng
-      window.location.href = redirectFrom;
+      // Chuyển hướng sử dụng router.replace thay vì push
+      router.replace(redirectFrom);
 
     } catch (err: unknown) {
       console.error("Lỗi đăng nhập:", err);

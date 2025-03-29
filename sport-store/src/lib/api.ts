@@ -1,3 +1,5 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     let accessToken = localStorage.getItem("accessToken");
     console.log("[fetchWithAuth] Access Token ban đầu:", accessToken);
@@ -21,7 +23,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     };
 
     options.headers = headers;
-    let response = await fetch(url, options);
+    let response = await fetch(`${API_URL}${url}`, options);
 
     console.log("[fetchWithAuth] Response status:", response.status);
 
@@ -44,7 +46,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
             Authorization: `Bearer ${accessToken}`,
         };
 
-        response = await fetch(url, options);
+        response = await fetch(`${API_URL}${url}`, options);
     }
 
     return response;
@@ -82,15 +84,16 @@ async function refreshAccessToken(): Promise<string | null> {
 // Hàm logout: Xóa token & chuyển hướng trang
 export async function logout() {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
 
     try {
-        await fetch("http://localhost:4000/auth/logout", { // Đảm bảo URL đúng với BE
+        await fetch(`${API_URL}/auth/logout`, {
             method: "POST",
-            credentials: "include", // Quan trọng để BE xóa refreshToken
+            credentials: "include",
         });
     } catch (error) {
         console.error("Lỗi khi gọi API logout:", error);
     }
 
-    window.location.href = "/user/auth/login"; // Chuyển về trang đăng nhập
+    window.location.href = "/user/auth/login";
 }

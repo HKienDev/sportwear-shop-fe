@@ -1,57 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/authContext";
 
 interface AdminProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const router = useRouter();
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Kiểm tra xem user có tồn tại và có role là admin không
-        if (!user) {
-          console.log("User chưa đăng nhập, chuyển hướng về trang login");
-          router.push("/user/auth/login?from=/admin");
-          return;
-        }
+    // Kiểm tra từ localStorage trước
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      router.replace("/user/auth/login?from=/admin");
+      return;
+    }
 
-        if (user.role !== "admin") {
-          console.log("User không có quyền admin, chuyển hướng về trang chủ");
-          router.push("/");
-          return;
-        }
+    const userData = JSON.parse(storedUser);
+    if (userData.role !== "admin") {
+      router.replace("/");
+      return;
+    }
+  }, [router]);
 
-        console.log("User có quyền admin, cho phép truy cập");
-      } catch (error) {
-        console.error("Lỗi kiểm tra quyền admin:", error);
-        router.push("/user/auth/login?from=/admin");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [user, router]);
-
-  // Hiển thị loading state
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  // Nếu user không tồn tại hoặc không phải admin, không render gì cả
+  // Nếu chưa có user hoặc không phải admin thì không render children
   if (!user || user.role !== "admin") {
     return null;
   }
 
-  // Nếu user là admin, render children
   return <>{children}</>;
 };
 

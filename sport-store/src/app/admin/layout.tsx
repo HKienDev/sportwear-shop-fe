@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/admin/adminLayout/sidebar";
 import Topbar from "@/components/admin/adminLayout/topbar";
@@ -10,47 +10,50 @@ import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute/page";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentPath = window.location.pathname; // Lưu trữ URL hiện tại
-        console.log("[DEBUG] Current Path:", currentPath);
-
-        const response = await fetchWithAuth("http://localhost:4000/api/auth/check");
-
-        // Kiểm tra nếu response là null hoặc undefined
+        const response = await fetchWithAuth("/auth/check");
         if (!response) {
           throw new Error("Không thể kết nối đến server");
         }
 
-        // Kiểm tra nếu response không hợp lệ (status code không phải 2xx)
         if (!response.ok) {
           throw new Error("Phiên đăng nhập hết hạn");
         }
 
         const data = await response.json();
-        console.log("✅ Người dùng đã đăng nhập:", data.user);
+        console.log("✅ Response data:", data);
 
-        // Kiểm tra vai trò người dùng
-        if (data.user.role !== "admin") {
-          console.warn("Người dùng không có quyền truy cập trang admin");
-          router.push("/"); // Chuyển hướng về trang chủ
-          return;
-        }
-
-        // Giữ nguyên trang hiện tại nếu người dùng là admin
-        if (!currentPath.startsWith("/admin")) {
-          router.push("/admin");
+        // Kiểm tra nếu user là admin
+        if (data?.user?.role === "admin") {
+          console.log("✅ Admin được phép truy cập");
+        } else {
+          console.warn("❌ Không phải admin, chuyển hướng về trang chủ");
+          router.replace("/");
         }
       } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
-        router.push("/user/auth/login"); // Chuyển hướng về trang đăng nhập
+        console.error("Lỗi khi kiểm tra quyền truy cập:", error);
+        router.replace("/user/auth/login");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Hiển thị loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <AdminProtectedRoute>

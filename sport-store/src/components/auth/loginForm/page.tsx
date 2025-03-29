@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
-  handleLogin: (username: string, password: string) => Promise<void>;
+  handleLogin: (email: string, password: string) => Promise<void>;
   error: string;
   loading: boolean;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) => {
-  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
@@ -16,7 +16,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await handleLogin(username, password);
+    await handleLogin(email, password);
   };
 
   return (
@@ -32,17 +32,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
 
       <div className="space-y-6">
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-            Tên đăng nhập
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email
           </label>
           <input
-            id="username"
-            name="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Tên đăng nhập"
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
             className="mt-1 text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
           />
         </div>
 
@@ -59,6 +60,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Nhập mật khẩu"
               className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
             />
             <button
               type="button"
