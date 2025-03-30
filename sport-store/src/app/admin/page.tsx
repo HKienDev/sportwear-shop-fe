@@ -6,12 +6,15 @@ import { useAuth } from "@/app/context/authContext";
 import Stats from "@/components/admin/dashboard/stats";
 import RevenueChart from "@/components/admin/dashboard/revenueChart";
 import RecentOrders from "@/components/admin/dashboard/recentOrders";
+import BestSellingProducts from "@/components/admin/dashboard/bestSellingProducts";
 
 export default function AdminDashboard() {
+  console.log('AdminDashboard rendering...');
   const router = useRouter();
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    console.log('AdminDashboard useEffect - user:', user, 'loading:', loading);
     if (!loading && !user) {
       router.push("/login");
     }
@@ -42,6 +45,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <RevenueChart />
           <RecentOrders />
+          <BestSellingProducts />
         </div>
       </div>
     </div>
