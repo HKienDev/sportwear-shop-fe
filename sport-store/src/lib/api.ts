@@ -97,3 +97,45 @@ export async function logout() {
 
     window.location.href = "/user/auth/login";
 }
+
+export async function getRevenue(timeRange: 'day' | 'month' | 'year' = 'day') {
+    try {
+        const response = await fetchWithAuth(`/revenue?timeRange=${timeRange}`);
+        if (!response) {
+            console.error('Không thể kết nối đến server');
+            return null;
+        }
+        
+        if (!response.ok) {
+            console.error(`Lỗi server: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu doanh thu:', error);
+        return null;
+    }
+}
+
+export async function getStats() {
+    try {
+        const response = await fetchWithAuth('/stats');
+        if (!response) {
+            console.error('Không thể kết nối đến server');
+            return null;
+        }
+        
+        if (!response.ok) {
+            console.error(`Lỗi server: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Lỗi khi lấy thống kê:', error);
+        return null;
+    }
+}
