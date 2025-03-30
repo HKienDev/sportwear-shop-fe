@@ -6,6 +6,22 @@ import { Order } from "@/types/order";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
+interface User {
+  _id: string;
+  email: string;
+  role: string;
+}
+
+interface AuthResponse {
+  success: boolean;
+  user: User;
+}
+
+interface OrderResponse {
+  success: boolean;
+  order: Order;
+}
+
 interface OrderDetailsPageProps {
   params: Promise<{
     id: string;
@@ -26,23 +42,24 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
       try {
         setIsLoading(true);
         // Kiểm tra quyền admin
-        const userResponse = await fetchWithAuth("/auth/check");
+        const userResponse = await fetchWithAuth<AuthResponse>("/auth/check");
         console.log("User data:", userResponse);
 
-        if (!userResponse.success || !userResponse.user || userResponse.user.role !== "admin") {
-          router.push("/user/auth/login");
+        if (!userResponse.success || !userResponse.data?.user || userResponse.data.user.role !== "admin") {
+          const currentPath = `/admin/orders/details/${orderId}`;
+          router.replace(`/auth/login?from=${encodeURIComponent(currentPath)}`);
           return;
         }
 
         // Lấy thông tin đơn hàng
-        const orderResponse = await fetchWithAuth(`/orders/admin/${orderId}`);
+        const orderResponse = await fetchWithAuth<OrderResponse>(`/orders/admin/${orderId}`);
         console.log("Order data:", orderResponse);
         
         if (!orderResponse.success) {
           throw new Error(orderResponse.message || "Không thể lấy thông tin đơn hàng");
         }
         
-        setOrder(orderResponse.order);
+        setOrder(orderResponse.data?.order || null);
       } catch (error) {
         console.error("Error fetching order details:", error);
         if (error instanceof Error) {

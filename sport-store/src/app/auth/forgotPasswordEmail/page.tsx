@@ -24,7 +24,7 @@ export default function ForgotPassword() {
       if (data?.message === "OTP đã được gửi đến email của bạn!") {
         localStorage.setItem('forgotPasswordEmail', email);
         setTimeout(() => {
-          router.push('/user/auth/forgotPasswordOtp');
+          router.push('/auth/forgotPasswordOtp');
         }, 100);
       } else {
         setError(data?.message || 'Email không tồn tại trong hệ thống.');
@@ -79,7 +79,7 @@ export default function ForgotPassword() {
         </form>
 
         <div className="text-center">
-          <Link href="/user/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
+          <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
