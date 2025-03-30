@@ -215,7 +215,7 @@ export default function CustomerDetail() {
     if (!tempCustomer || !customer) return;
 
     try {
-      const response = await fetchWithAuth(`/users/admin/${customer._id}`, {
+      const response = await fetchWithAuth(`/users/${customer._id}`, {
         method: "PUT",
         body: JSON.stringify(tempCustomer),
       });
@@ -263,8 +263,8 @@ export default function CustomerDetail() {
     if (!customer) return;
 
     try {
-      const response = await fetchWithAuth(`/users/admin/${customer._id}/reset-password`, {
-        method: "POST",
+      const response = await fetchWithAuth(`/users/admin/reset-password/${customer._id}`, {
+        method: "PUT",
         body: JSON.stringify({ password: newPassword }),
       });
 
