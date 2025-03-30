@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
 import Chat from "@/components/common/chat/userChat";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import ProductCard from "@/components/user/productCard/page";
 
 interface Product {
@@ -38,23 +38,35 @@ interface Product {
 }
 
 const HomePage = () => {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Kiểm tra role và chuyển hướng nếu là admin
+    const user = localStorage.getItem("user");
+    if (user) {
+      const userData = JSON.parse(user);
+      if (userData.role === "admin") {
+        router.replace("/admin");
+        return;
+      }
+    }
+
     const fetchData = async () => {
       try {
-        const productsResponse = await fetchWithAuth("/products");
+        const response = await fetch("http://localhost:4000/api/products");
+        const data = await response.json();
 
-        console.log("Products Response:", productsResponse);
+        console.log("Products Response:", data);
 
-        if (!productsResponse.success) {
+        if (!data.success) {
           throw new Error("Lỗi khi lấy dữ liệu");
         }
 
         // Kiểm tra cấu trúc dữ liệu trả về
-        const productsData = productsResponse.products;
+        const productsData = data.products;
         console.log("Products Data:", productsData);
 
         // Xử lý dữ liệu sản phẩm
@@ -75,7 +87,7 @@ const HomePage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [router]);
 
   if (loading) return <p className="text-center">Đang tải...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;

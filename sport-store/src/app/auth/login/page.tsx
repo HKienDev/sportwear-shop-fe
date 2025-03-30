@@ -16,30 +16,29 @@ const LoginPage = () => {
   const { login } = useAuth();
 
   useEffect(() => {
-    // Kiểm tra nếu đã đăng nhập thì chuyển hướng
     const accessToken = localStorage.getItem("accessToken");
     const storedUser = localStorage.getItem("user");
-    
+  
     if (accessToken && storedUser) {
       const userData = JSON.parse(storedUser);
       const redirectFrom = searchParams.get("from") || (userData.role === "admin" ? "/admin" : "/");
-      router.replace(redirectFrom);
+      console.log("useEffect redirecting to:", redirectFrom);
+  
+      // Chỉ chuyển hướng nếu không bị middleware can thiệp
+      if (!window.location.pathname.startsWith(redirectFrom)) {
+        router.replace(redirectFrom);
+      }
     }
-
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
   }, [router, searchParams]);
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
     setError("");
-
+  
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
       console.log("Sending login request to:", `${API_URL}/auth/login`);
-      
+  
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { 
@@ -49,49 +48,45 @@ const LoginPage = () => {
         body: JSON.stringify({ email, password }),
         credentials: "include",
       });
-
-      if (!response) {
+  
+      if (!response.ok) {
         throw new Error("Không thể kết nối đến server");
       }
-
+  
       const responseData = await response.json();
       console.log("API Login Response:", responseData);
-
-      if (!response.ok) {
+  
+      if (!responseData.success) {
         throw new Error(responseData.message || "Đăng nhập thất bại");
       }
-
-      const { data } = responseData;
-      const { user, accessToken } = data;
-
-      if (!accessToken) {
-        throw new Error("Không nhận được accessToken từ API");
-      }
-
-      console.log("User data:", user);
-      console.log("Access token received:", accessToken);
-
-      // Lưu token và user vào localStorage
-      localStorage.setItem("accessToken", accessToken);
+  
+      const { user, accessToken } = responseData.data;
+  
+      // Lưu token vào cookie
+      document.cookie = `accessToken=${accessToken}; path=/; max-age=604800; secure; samesite=strict`;
+  
+      // Lưu user vào localStorage
       localStorage.setItem("user", JSON.stringify(user));
-
-      // Cập nhật user trong AuthContext
-      login(user, accessToken);
-
-      // Lấy URL chuyển hướng từ query params hoặc mặc định
-      const redirectFrom = searchParams.get("from") || (user.role === "admin" ? "/admin" : "/");
-      console.log("Redirecting to:", redirectFrom);
-
-      // Chuyển hướng sử dụng router.replace thay vì push
-      router.replace(redirectFrom);
-
+  
+      // Gọi login từ context
+      await login(user, accessToken);
+  
+      // Debugging logs
+      console.log("User Role:", user.role);
+      console.log("Redirect from query param:", searchParams.get("from"));
+  
+      // Chuyển hướng dựa trên role
+      const redirectPath = user.role === "admin" ? "/admin" : "/";
+      console.log("Redirecting to:", redirectPath);
+  
+      // Sử dụng setTimeout để đảm bảo state đã được cập nhật
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 100);
+  
     } catch (err: unknown) {
       console.error("Lỗi đăng nhập:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.");
-      }
+      setError(err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.");
     } finally {
       setLoading(false);
     }

@@ -1,32 +1,34 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface CartItem {
-  cartItemId: string;
-  id: string;
+  _id: string;
   name: string;
   price: number;
-  discountPrice?: number;
   quantity: number;
-  size?: string;
-  color?: string;
-  image?: string;
+  image: string;
 }
 
 interface CartContextType {
-  cartItems: CartItem[];
+  items: CartItem[];
   addToCart: (item: CartItem) => void;
-  updateQuantity: (id: string, size: string | undefined, color: string | undefined, quantity: number) => void;
-  removeFromCart: (id: string, size: string | undefined, color: string | undefined) => void;
+  removeFromCart: (itemId: string) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType>({
+  items: [],
+  addToCart: () => {},
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
+});
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [items, setItems] = useState<CartItem[]>([]);
 
   // Load cart items from localStorage when component mounts
   useEffect(() => {
@@ -37,9 +39,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Ensure each item has a unique cartItemId
         const validatedCart = parsedCart.map((item: CartItem) => ({
           ...item,
-          cartItemId: item.cartItemId || generateUniqueId()
+          _id: item._id || generateUniqueId()
         }));
-        setCartItems(validatedCart);
+        setItems(validatedCart);
       } catch (error) {
         console.error('Error loading cart from localStorage:', error);
         localStorage.removeItem('cart'); // Clear invalid cart data
@@ -49,87 +51,53 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Save cart items to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    localStorage.setItem('cart', JSON.stringify(items));
+  }, [items]);
 
-  // Thêm sản phẩm vào giỏ
   const addToCart = (item: CartItem) => {
-    if (!item.id) {
-      console.error("Invalid cart item (missing id):", item);
-      throw new Error("Giá trị id của sản phẩm không hợp lệ");
-    }
-
-    setCartItems((prev) => {
-      const existingItem = prev.find(
-        (cartItem) =>
-          cartItem.id === item.id &&
-          cartItem.size === item.size &&
-          cartItem.color === item.color
-      );
-
+    setItems((prevItems) => {
+      const existingItem = prevItems.find((i) => i._id === item._id);
       if (existingItem) {
-        return prev.map((cartItem) =>
-          cartItem.id === item.id &&
-          cartItem.size === item.size &&
-          cartItem.color === item.color
-            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
-            : cartItem
+        return prevItems.map((i) =>
+          i._id === item._id
+            ? { ...i, quantity: i.quantity + item.quantity }
+            : i
         );
       }
-
-      const newItem = {
-        ...item,
-        cartItemId: generateUniqueId()
-      };
-      return [...prev, newItem];
+      return [...prevItems, item];
     });
   };
 
-  // Cập nhật số lượng
-  const updateQuantity = (
-    id: string,
-    size: string | undefined,
-    color: string | undefined,
-    quantity: number
-  ) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id && item.size === size && item.color === color
-          ? { ...item, quantity }
-          : item
+  const removeFromCart = (itemId: string) => {
+    setItems((prevItems) => prevItems.filter((item) => item._id !== itemId));
+  };
+
+  const updateQuantity = (itemId: string, quantity: number) => {
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item._id === itemId ? { ...item, quantity } : item
       )
     );
   };
 
-  // Xóa sản phẩm
-  const removeFromCart = (id: string, size: string | undefined, color: string | undefined) => {
-    setCartItems((prev) =>
-      prev.filter(
-        (item) =>
-          !(item.id === id && item.size === size && item.color === color)
-      )
-    );
-  };
-
-  // Xóa toàn bộ giỏ hàng
   const clearCart = () => {
-    setCartItems([]);
+    setItems([]);
     localStorage.removeItem('cart'); // Clear cart from localStorage
   };
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart }}
+      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart }}
     >
       {children}
     </CartContext.Provider>
   );
-}
+};
 
-export function useCart() {
+export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
-}
+};
