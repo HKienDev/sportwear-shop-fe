@@ -1,11 +1,16 @@
 "use client";
 
+import React, { memo } from "react";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/authContext";
 import { CustomerProvider } from "./context/customerContext";
 import { CartProvider } from "./context/cartContext";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: React.ReactNode;
+}
+
+const Providers = memo(function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
       <CustomerProvider>
@@ -21,8 +26,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
               },
               success: {
                 duration: 3000,
-                theme: {
+                iconTheme: {
                   primary: "#4aed88",
+                  secondary: "#fff",
                 },
               },
             }}
@@ -31,4 +37,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </CustomerProvider>
     </AuthProvider>
   );
-} 
+});
+
+export { Providers }; 

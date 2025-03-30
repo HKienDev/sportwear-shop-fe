@@ -1,84 +1,35 @@
 "use client";
 
 import { useAuth } from "@/app/context/authContext";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { LogIn, UserPlus } from "lucide-react";
 
 const AuthButtons = () => {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
+  const pathname = usePathname();
+  const isAuthPage = pathname.startsWith("/auth");
 
-  const handleLogin = () => {
-    router.push("/auth/login");
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-
-    logout();
-    router.push("/");
-  };
-
-  const handleProfile = () => {
-    router.push("/user/profile");
-  };
+  if (isAuthPage || user) return null;
 
   return (
-    <div className="flex gap-4 flex-wrap justify-center lg:justify-start">
-      {!user ? (
-        <>
-          <button onClick={handleLogin} className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold">
-            Đăng Nhập
-          </button>
-          <Link href="/auth/register">
-            <button className="text-lg px-5 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-semibold shadow-md">
-              Đăng Ký
-            </button>
-          </Link>
-        </>
-      ) : user.role === "admin" ? (
-        <div className="flex items-center gap-4">
-          <Image
-            src={user.avatar || "/default-image.png"}
-            alt="User Avatar"
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
-          <span className="font-semibold">{user.name} (Admin)</span>
-          <Link href="/admin">
-            <button className="text-lg px-5 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold shadow-md">
-              Quản lý
-            </button>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold"
-          >
-            Đăng Xuất
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-4">
-          <Image
-            src={user.avatar || "/default-image.png"}
-            alt="User Avatar"
-            width={32}
-            height={32}
-            className="rounded-full cursor-pointer"
-            onClick={handleProfile}
-          />
-          <span className="font-semibold">{user.name}</span>
-          <button
-            onClick={handleLogout}
-            className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold"
-          >
-            Đăng Xuất
-          </button>
-        </div>
-      )}
+    <div className="flex items-center gap-4">
+      <Link
+        href="/auth/login"
+        className="group relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-lg hover:from-gray-50 hover:to-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 hover:shadow-md"
+      >
+        <LogIn className="w-4 h-4 mr-2 text-gray-500 group-hover:text-purple-600 transition-colors duration-300" />
+        <span className="relative z-10">Đăng Nhập</span>
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:to-purple-500/5 transition-all duration-300"></div>
+      </Link>
+      <Link
+        href="/auth/register"
+        className="group relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 rounded-lg hover:from-purple-700 hover:via-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+      >
+        <UserPlus className="w-4 h-4 mr-2 text-white/90 group-hover:text-white transition-colors duration-300" />
+        <span className="relative z-10">Đăng Ký</span>
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-white/0 to-white/0 group-hover:from-white/10 group-hover:to-white/10 transition-all duration-300"></div>
+      </Link>
     </div>
   );
 };
