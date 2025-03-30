@@ -4,19 +4,18 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import { useRouter } from "next/navigation";
 
 interface User {
-  id?: string;
-  _id?: string;
-  name?: string;
+  _id: string;
+  name: string;
   email: string;
-  username?: string;
-  fullname?: string;
-  avatar?: string;
-  membershipLevel?: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
-  totalSpent?: number;
-  role?: string;
-  isActive?: boolean;
-  isVerified?: boolean;
-  createdAt?: string;
+  username: string;
+  fullname: string;
+  avatar: string;
+  membershipLevel: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
+  totalSpent: number;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
   updatedAt?: string;
 }
 
@@ -183,7 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = useCallback((userData: User, accessToken: string) => {
     console.log("Raw user data from API:", userData);
     const processedUserData = {
-      _id: userData.id,
+      _id: userData._id,
       name: userData.fullname || userData.email,
       email: userData.email,
       username: userData.username,
