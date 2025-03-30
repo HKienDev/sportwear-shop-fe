@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra quyền truy cập:", error);
-        router.replace("/user/auth/login");
+        router.replace("/auth/login");
       } finally {
         setIsLoading(false);
       }

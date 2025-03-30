@@ -16,7 +16,7 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
     // Kiểm tra từ localStorage trước
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
-      router.replace("/user/auth/login?from=/admin");
+      router.replace("/auth/login?from=/admin");
       return;
     }
 

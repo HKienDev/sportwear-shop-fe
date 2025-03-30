@@ -4,11 +4,20 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import { useRouter } from "next/navigation";
 
 interface User {
-  id: string;
-  name: string;
+  id?: string;
+  _id?: string;
+  name?: string;
   email: string;
+  username?: string;
+  fullname?: string;
   avatar?: string;
+  membershipLevel?: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
+  totalSpent?: number;
   role?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -95,12 +104,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const data = await res.json();
           if (data?.user) {
             const userData = {
-              id: data.user.id,
-              name: data.user.name || data.user.email,
+              _id: data.user.id,
+              name: data.user.fullname || data.user.email,
               email: data.user.email,
+              username: data.user.username,
+              fullname: data.user.fullname,
               avatar: data.user.avatar,
-              role: data.user.role
+              membershipLevel: data.user.membershipLevel,
+              totalSpent: data.user.totalSpent,
+              role: data.user.role,
+              isActive: data.user.isActive,
+              isVerified: data.user.isVerified,
+              createdAt: data.user.createdAt,
+              updatedAt: data.user.updatedAt
             };
+            console.log("Processed user data:", userData);
             setUser(userData);
             localStorage.setItem("user", JSON.stringify(userData));
           }
@@ -120,8 +138,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (resAfterRefresh.ok) {
               const data = await resAfterRefresh.json();
               if (data.user) {
-                setUser(data.user);
-                localStorage.setItem("user", JSON.stringify(data.user));
+                const userData = {
+                  _id: data.user.id,
+                  name: data.user.fullname || data.user.email,
+                  email: data.user.email,
+                  username: data.user.username,
+                  fullname: data.user.fullname,
+                  avatar: data.user.avatar,
+                  membershipLevel: data.user.membershipLevel,
+                  totalSpent: data.user.totalSpent,
+                  role: data.user.role,
+                  isActive: data.user.isActive,
+                  isVerified: data.user.isVerified,
+                  createdAt: data.user.createdAt,
+                  updatedAt: data.user.updatedAt
+                };
+                console.log("Processed user data after refresh:", userData);
+                setUser(userData);
+                localStorage.setItem("user", JSON.stringify(userData));
               }
             } else {
               logout();
@@ -147,11 +181,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [checkAuth]);
 
   const login = useCallback((userData: User, accessToken: string) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("accessToken", accessToken);
-    setUser(userData);
+    console.log("Raw user data from API:", userData);
+    const processedUserData = {
+      _id: userData.id,
+      name: userData.fullname || userData.email,
+      email: userData.email,
+      username: userData.username,
+      fullname: userData.fullname,
+      avatar: userData.avatar,
+      membershipLevel: userData.membershipLevel,
+      totalSpent: userData.totalSpent,
+      role: userData.role,
+      isActive: userData.isActive,
+      isVerified: userData.isVerified,
+      createdAt: userData.createdAt,
+      updatedAt: userData.updatedAt
+    };
+    console.log("Processed user data:", processedUserData);
 
-    if (userData.role === "admin") {
+    localStorage.setItem("user", JSON.stringify(processedUserData));
+    localStorage.setItem("accessToken", accessToken);
+    setUser(processedUserData);
+
+    if (processedUserData.role === "admin") {
       router.replace("/admin");
     } else {
       router.replace("/user");
