@@ -1,149 +1,147 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { FaFacebook, FaGithub, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { Facebook, Instagram, Twitter, Phone, Mail, MapPin } from "lucide-react";
 
-const Footer = () => (
-  <footer className="bg-gradient-to-b from-gray-900 to-gray-800 text-gray-300">
-    {/* Main Footer */}
-    <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
-        {/* Brand Section */}
-        <div className="flex flex-col items-center md:items-start space-y-4">
-          <div className="relative w-20 h-20">
-            <Image 
-              src="/Logo_vju.png" 
-              alt="VJU SPORT" 
-              fill
-              className="object-contain"
+interface FooterProps {
+  className?: string;
+}
+
+const Footer = ({ className = "" }: FooterProps) => (
+  <footer className={`bg-white border-t border-gray-200 ${className}`}>
+    <div className="container mx-auto px-4 py-8">
+      {/* Main Footer Content */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        {/* Company Info */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <Image
+              src="/Logo_vju.png"
+              alt="VJU Logo"
+              width={48}
+              height={48}
+              className="rounded-lg"
               priority
             />
+            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
+              VJU SPORT
+            </span>
           </div>
-          <h3 className="text-2xl font-bold text-white">VJU SPORT</h3>
-          <p className="text-sm text-gray-400 text-center md:text-left">
-            Cung cấp các sản phẩm thể thao chất lượng cao với giá cả hợp lý
+          <p className="text-gray-600">
+            Địa chỉ: Phố Lưu Hữu Phước, Cầu Diễn, Nam Từ Liêm, Hà Nội
           </p>
-        </div>
-
-        {/* Customer Service */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">Dịch Vụ Khách Hàng</h4>
-          <ul className="space-y-2">
-            <li>
-              <Link href="/faq" className="hover:text-white transition-colors duration-200">
-                Câu Hỏi Thường Gặp
-              </Link>
-            </li>
-            <li>
-              <Link href="/privacy" className="hover:text-white transition-colors duration-200">
-                Chính Sách Bảo Mật
-              </Link>
-            </li>
-            <li>
-              <Link href="/terms" className="hover:text-white transition-colors duration-200">
-                Điều Khoản & Điều Kiện
-              </Link>
-            </li>
-            <li>
-              <Link href="/support" className="hover:text-white transition-colors duration-200">
-                Hỗ Trợ
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Collaboration */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">Hợp Tác</h4>
-          <ul className="space-y-2">
-            <li>
-              <Link href="/partnership" className="hover:text-white transition-colors duration-200">
-                Hợp Tác Với Chúng Tôi
-              </Link>
-            </li>
-            <li>
-              <Link href="/opportunities" className="hover:text-white transition-colors duration-200">
-                Cơ Hội Ký Hợp Tác
-              </Link>
-            </li>
-            <li>
-              <Link href="/partner-login" className="hover:text-white transition-colors duration-200">
-                Đăng Nhập Đối Tác
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Contact */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">Liên Hệ</h4>
-          <ul className="space-y-3">
-            <li className="flex items-center space-x-2">
-              <FaEnvelope className="text-gray-400" />
-              <a href="mailto:support@vjusport.com" className="hover:text-white transition-colors duration-200">
-                support@vjusport.com
-              </a>
-            </li>
-            <li className="flex items-center space-x-2">
-              <FaPhone className="text-gray-400" />
-              <a href="tel:+84362592258" className="hover:text-white transition-colors duration-200">
-                +84 362 592 258
-              </a>
-            </li>
-            <li className="flex items-start space-x-2">
-              <FaMapMarkerAlt className="text-gray-400 mt-1" />
-              <span className="hover:text-white transition-colors duration-200">
-                Phố Lưu Hữu Phước, Phường Cầu Diễn, Quận Nam Từ Liêm, Hà Nội
-              </span>
-            </li>
-          </ul>
-        </div>
-
-        {/* Social Media */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">Kết Nối Với Chúng Tôi</h4>
           <div className="flex space-x-4">
             <a 
-              href="#" 
-              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors duration-200"
+              href="https://www.facebook.com/vjusport" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-blue-600 transition-colors"
               aria-label="Facebook"
             >
-              <FaFacebook className="w-5 h-5" />
+              <Facebook size={24} />
             </a>
             <a 
-              href="#" 
-              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors duration-200"
-              aria-label="GitHub"
+              href="https://www.instagram.com/vjusport" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-pink-600 transition-colors"
+              aria-label="Instagram"
             >
-              <FaGithub className="w-5 h-5" />
+              <Instagram size={24} />
             </a>
             <a 
-              href="#" 
-              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-700 transition-colors duration-200"
-              aria-label="LinkedIn"
+              href="https://twitter.com/vjusport" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-blue-400 transition-colors"
+              aria-label="Twitter"
             >
-              <FaLinkedin className="w-5 h-5" />
+              <Twitter size={24} />
             </a>
           </div>
         </div>
-      </div>
-    </div>
 
-    {/* Bottom Bar */}
-    <div className="border-t border-gray-700">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-          <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} VJU SPORT. All Rights Reserved.
+        {/* Quick Links */}
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 uppercase tracking-wider mb-4">Liên kết nhanh</h3>
+          <ul className="space-y-2">
+            <li>
+              <a href="#" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Trang chủ
+              </a>
+            </li>
+            <li>
+              <a href="#" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Sản phẩm
+              </a>
+            </li>
+            <li>
+              <a href="#" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Giới thiệu
+              </a>
+            </li>
+            <li>
+              <a href="#" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Liên hệ
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Contact Info */}
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 uppercase tracking-wider mb-4">Liên hệ</h3>
+          <ul className="space-y-2">
+            <li className="flex items-center text-gray-600">
+              <Phone size={20} className="mr-2" />
+              <span>+84 362 195 258</span>
+            </li>
+            <li className="flex items-center text-gray-600">
+              <Mail size={20} className="mr-2" />
+              <span>info@vjusport.com</span>
+            </li>
+            <li className="flex items-center text-gray-600">
+              <MapPin size={20} className="mr-2" />
+              <span>Nam Từ Liêm, Hà Nội</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Newsletter */}
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 uppercase tracking-wider mb-4">Đăng ký nhận tin</h3>
+          <p className="text-gray-600 mb-4">
+            Đăng ký để nhận những thông tin mới nhất về sản phẩm và khuyến mãi
           </p>
-          <div className="flex space-x-4 text-sm text-gray-400">
-            <Link href="/sitemap" className="hover:text-white transition-colors duration-200">
-              Sitemap
-            </Link>
-            <Link href="/accessibility" className="hover:text-white transition-colors duration-200">
-              Accessibility
-            </Link>
+          <form className="flex space-x-2">
+            <input
+              type="email"
+              placeholder="Email của bạn"
+              className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-red-600 text-white rounded-lg hover:from-purple-700 hover:to-red-700 transition-colors"
+            >
+              Đăng ký
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="pt-6 border-t border-gray-200">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <p className="text-gray-500">
+            © 2024 VJU SPORT. All rights reserved.
+          </p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <a href="#" className="text-gray-500 hover:text-purple-600 transition-colors">
+              Chính sách bảo mật
+            </a>
+            <a href="#" className="text-gray-500 hover:text-purple-600 transition-colors">
+              Điều khoản sử dụng
+            </a>
           </div>
         </div>
       </div>
