@@ -11,7 +11,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["IBM Plex Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-montserrat)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",
