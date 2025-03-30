@@ -47,6 +47,7 @@ interface OrderData {
     expectedDate: string;
     courier: string;
     trackingId: string;
+    fee: number;
   };
   shippingAddress: {
     fullName: string;
@@ -134,6 +135,11 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
           expectedDate: "3-5 ngày",
           courier: "Giao hàng nhanh",
           trackingId: `TK${Date.now()}`,
+          fee: shippingMethod === "Express" 
+            ? 50000 
+            : shippingMethod === "SameDay" 
+            ? 100000 
+            : 30000
         },
         shippingAddress: {
           fullName: customer.name,
