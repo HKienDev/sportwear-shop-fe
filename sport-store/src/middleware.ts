@@ -2,13 +2,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Chỉ xử lý các API routes
-  if (!request.nextUrl.pathname.startsWith('/api')) {
-    return NextResponse.next();
-  }
-
   // Lấy path hiện tại
   const path = request.nextUrl.pathname;
+
+  // Xử lý chuyển hướng cho auth routes
+  if (path.startsWith('/user/auth')) {
+    const newUrl = request.nextUrl.clone();
+    newUrl.pathname = path.replace('/user/auth', '/auth');
+    return NextResponse.redirect(newUrl);
+  }
+
+  // Chỉ xử lý các API routes
+  if (!path.startsWith('/api')) {
+    return NextResponse.next();
+  }
 
   // Kiểm tra nếu đang truy cập API admin
   if (path.startsWith('/api/admin')) {
@@ -32,9 +39,10 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Chỉ áp dụng middleware cho các API routes
+// Áp dụng middleware cho các routes cần xử lý
 export const config = {
   matcher: [
     '/api/:path*', // Bảo vệ tất cả các API routes
+    '/user/auth/:path*', // Xử lý chuyển hướng cho auth routes
   ],
 }; 

@@ -81,7 +81,7 @@ export const fetchWithAuth = async <T = unknown>(endpoint: string, options: Requ
       
       console.error("❌ [fetchWithAuth] Token hết hạn hoặc không hợp lệ");
       localStorage.removeItem("accessToken");
-      window.location.href = "/user/auth/login";
+      window.location.href = "/auth/login";
       throw new Error(responseData?.message || "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
 

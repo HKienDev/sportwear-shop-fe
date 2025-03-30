@@ -78,7 +78,7 @@ export default function RegisterVerificationOTP() {
       // Thêm thông báo đăng ký thành công
       alert('Đăng ký thành công! Bạn sẽ được chuyển đến trang đăng nhập.');
   
-      router.push('/user/auth/login');
+      router.push('/auth/login');
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         console.error('Lỗi xác thực OTP:', error.response?.data?.message || error.message);

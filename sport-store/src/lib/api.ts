@@ -95,7 +95,7 @@ export async function logout() {
         console.error("Lỗi khi gọi API logout:", error);
     }
 
-    window.location.href = "/user/auth/login";
+    window.location.href = "/auth/login";
 }
 
 export async function getRevenue(timeRange: 'day' | 'month' | 'year' = 'day') {

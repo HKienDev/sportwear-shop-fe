@@ -10,7 +10,7 @@ const AuthButtons = () => {
   const router = useRouter();
 
   const handleLogin = () => {
-    router.push("/user/auth/login");
+    router.push("/auth/login");
   };
 
   const handleLogout = () => {
@@ -32,7 +32,7 @@ const AuthButtons = () => {
           <button onClick={handleLogin} className="text-lg px-5 py-2 border rounded-xl hover:bg-gray-100 font-semibold">
             Đăng Nhập
           </button>
-          <Link href="/user/auth/register">
+          <Link href="/auth/register">
             <button className="text-lg px-5 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-semibold shadow-md">
               Đăng Ký
             </button>
