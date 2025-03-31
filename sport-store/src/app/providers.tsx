@@ -2,9 +2,9 @@
 
 import React, { memo } from "react";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/authContext";
-import { CustomerProvider } from "./context/customerContext";
-import { CartProvider } from "./context/cartContext";
+import { AuthProvider } from "../context/authContext";
+import { CustomerProvider } from "../context/customerContext";
+import { CartProvider } from "../context/cartContext";
 
 interface ProvidersProps {
   children: React.ReactNode;

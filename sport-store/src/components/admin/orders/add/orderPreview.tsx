@@ -1,8 +1,8 @@
 "use client";
 
-import { useCustomer } from "@/app/context/customerContext";
-import { useCart } from "@/app/context/cartContext";
-import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import { useCustomer } from "@/context/customerContext";
+import { useCart } from "@/context/cartContext";
+import { useShippingMethod } from "@/context/shippingMethodContext";
 import Image from "next/image";
 
 interface CartItem {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/app/context/authContext";
+import { useAuth } from "@/context/authContext";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LogIn, UserPlus } from "lucide-react";

@@ -3,8 +3,8 @@
 import { Montserrat } from "next/font/google";
 import Header from "@/components/user/userLayout/header/page";
 import Footer from "@/components/user/userLayout/footer/page";
-import { AuthProvider } from "../context/authContext";
-import { CartProvider } from "../context/cartContext";
+import { AuthProvider } from "../../context/authContext";
+import { CartProvider } from "../../context/cartContext";
 import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });

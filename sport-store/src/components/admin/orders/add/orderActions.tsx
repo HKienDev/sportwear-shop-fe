@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { useCart } from "@/app/context/cartContext";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext";
-import { useShippingMethod } from "@/app/context/shippingMethodContext";
-import { useCustomer } from "@/app/context/customerContext";
+import { useCart } from "@/context/cartContext";
+import { usePaymentMethod } from "@/context/paymentMethodContext";
+import { useShippingMethod } from "@/context/shippingMethodContext";
+import { useCustomer } from "@/context/customerContext";
 import { checkUserByPhone } from "@/utils/checkUserByPhone";
 
 interface CartItem {

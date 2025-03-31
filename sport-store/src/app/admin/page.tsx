@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/authContext";
+import { useAuth } from "@/context/authContext";
 import Stats from "@/components/admin/dashboard/stats";
 import RevenueChart from "@/components/admin/dashboard/revenueChart";
 import RecentOrders from "@/components/admin/dashboard/recentOrders";

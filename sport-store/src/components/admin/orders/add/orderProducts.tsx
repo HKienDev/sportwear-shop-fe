@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, ChangeEvent } from "react";
-import { useCart } from "@/app/context/cartContext";
-import { useShippingMethod } from "@/app/context/shippingMethodContext";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext";
+import { useCart } from "@/context/cartContext";
+import { useShippingMethod } from "@/context/shippingMethodContext";
+import { usePaymentMethod } from "@/context/paymentMethodContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
