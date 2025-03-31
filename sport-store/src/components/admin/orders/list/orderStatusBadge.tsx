@@ -1,3 +1,5 @@
+import React, { useCallback } from "react";
+
 export function getStatusColor(status: string): string {
   switch (status) {
     case "pending":
@@ -20,9 +22,11 @@ interface OrderStatusBadgeProps {
 }
 
 export default function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
+  const memoizedGetStatusColor = useCallback(getStatusColor, []);
+
   return (
-    <span className={`${getStatusColor(status)}`}>
+    <span className={`${memoizedGetStatusColor(status)}`}>
       {status}
     </span>
   );
-} 
+}

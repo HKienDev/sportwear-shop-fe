@@ -12,20 +12,38 @@ import { useCustomer } from "@/app/context/customerContext";
 import { checkUserByPhone } from "@/utils/checkUserByPhone";
 
 interface CartItem {
-  cartItemId: string;
-  id: string;
+  _id: string;
   name: string;
   price: number;
   discountPrice?: number;
   quantity: number;
+  image?: string;
   size?: string;
   color?: string;
-  image?: string;
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+    shortId: string;
+  };
 }
 
-interface ValidCartItem extends Omit<CartItem, 'size' | 'color'> {
-  size: string;
-  color: string;
+interface User {
+  _id: string;
+  email: string;
+  username: string;
+  fullname: string;
+  avatar: string;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  membershipLevel: string;
+  totalSpent: number;
+  orderCount: number;
 }
 
 interface OrderActionsProps {
@@ -35,9 +53,11 @@ interface OrderActionsProps {
 
 interface OrderData {
   items: Array<{
-    product: string;  // ID của sản phẩm
+    product: string;
     quantity: number;
     price: number;
+    size?: string;
+    color?: string;
   }>;
   totalPrice: number;
   paymentMethod: "COD" | "Stripe";
@@ -63,71 +83,60 @@ interface OrderData {
 
 export default function OrderActions({ onClose, onResetForm }: OrderActionsProps) {
   const router = useRouter();
-  const { cartItems, clearCart } = useCart();
+  const { items: cartItems, clearCart } = useCart();
+  const { customer } = useCustomer();
   const { paymentMethod } = usePaymentMethod();
   const { shippingMethod } = useShippingMethod();
-  const { customer } = useCustomer();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateOrder = async () => {
-    if (cartItems.length === 0) {
-      toast.error("Vui lòng thêm ít nhất một sản phẩm vào đơn hàng");
-      return;
-    }
-
-    if (!paymentMethod) {
-      toast.error("Vui lòng chọn phương thức thanh toán");
-      return;
-    }
-
-    if (!shippingMethod) {
-      toast.error("Vui lòng chọn phương thức vận chuyển");
-      return;
-    }
-
-    // Kiểm tra thông tin khách hàng
-    if (!customer.name || !customer.phone || !customer.address || !customer.province || !customer.district || !customer.ward) {
-      toast.error("Vui lòng điền đầy đủ thông tin khách hàng");
-      return;
-    }
-
     try {
-      setIsLoading(true);
-
-      // Kiểm tra xem số điện thoại có trùng với user nào không
-      const existingUser = await checkUserByPhone(customer.phone);
-      console.log("🔹 [handleCreateOrder] Existing user check result:", existingUser);
-
-      // Lọc ra những item có đầy đủ thông tin và ép kiểu
-      const validItems = cartItems.filter((item): item is ValidCartItem => 
-        item.size !== undefined && item.color !== undefined
-      );
-      
-      if (validItems.length !== cartItems.length) {
-        toast.error("Một số sản phẩm chưa có đầy đủ thông tin size hoặc màu sắc");
+      // Kiểm tra dữ liệu đầu vào
+      if (!customer.name || !customer.phone || !customer.address || !customer.province || !customer.district || !customer.ward) {
+        toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
         return;
       }
 
-      const totalPrice = validItems.reduce((total, item) => {
-        const itemPrice = item.discountPrice || item.price;
-        return total + (itemPrice * item.quantity);
+      if (!cartItems?.length) {
+        toast.error("Vui lòng thêm sản phẩm vào đơn hàng");
+        return;
+      }
+
+      if (!paymentMethod) {
+        toast.error("Vui lòng chọn phương thức thanh toán");
+        return;
+      }
+
+      if (!shippingMethod) {
+        toast.error("Vui lòng chọn phương thức vận chuyển");
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Kiểm tra xem số điện thoại có trùng với user nào không
+      const existingUser = await checkUserByPhone(customer.phone) as User | null;
+      console.log("🔹 [handleCreateOrder] Existing user check result:", existingUser);
+
+      // Tính tổng tiền
+      const subtotal = cartItems.reduce((total: number, item: CartItem) => {
+        return total + (item.product.price * item.quantity);
       }, 0);
 
-      // Thêm phí vận chuyển vào tổng tiền
-      const shippingFee = shippingMethod === "Express" 
-        ? 50000 
-        : shippingMethod === "SameDay" 
-        ? 100000 
-        : 30000;
-      const finalTotalPrice = totalPrice + shippingFee;
+      // Phí vận chuyển
+      const shippingFee = shippingMethod === "Express" ? 50000 : shippingMethod === "SameDay" ? 100000 : 30000;
 
+      // Tổng cộng
+      const total = subtotal + shippingFee;
+
+      // Tạo đơn hàng
       const orderData: OrderData = {
-        items: validItems.map(item => ({
-          product: item.id,
+        items: cartItems.map(item => ({
+          product: item.product._id,
           quantity: item.quantity,
-          price: item.discountPrice || item.price,
+          price: item.product.price,
         })),
-        totalPrice: finalTotalPrice,
+        totalPrice: total,
         paymentMethod: paymentMethod as "COD" | "Stripe",
         phone: customer.phone,
         shippingMethod: {
@@ -135,11 +144,7 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
           expectedDate: "3-5 ngày",
           courier: "Giao hàng nhanh",
           trackingId: `TK${Date.now()}`,
-          fee: shippingMethod === "Express" 
-            ? 50000 
-            : shippingMethod === "SameDay" 
-            ? 100000 
-            : 30000
+          fee: shippingFee,
         },
         shippingAddress: {
           fullName: customer.name,
@@ -188,17 +193,23 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
     }
   };
 
+  const handleReset = () => {
+    clearCart();
+    onResetForm();
+    toast.success("Đã làm mới form");
+  };
+
   return (
-    <div className="flex gap-4">
+    <div className="flex items-center gap-4">
       <Button variant="outline" onClick={onClose}>
         Hủy
       </Button>
-      <Button variant="outline" onClick={onResetForm}>
+      <Button variant="outline" onClick={handleReset}>
         Làm mới
       </Button>
       <Button 
         onClick={handleCreateOrder} 
-        disabled={isLoading || cartItems.length === 0 || !paymentMethod || !shippingMethod}
+        disabled={isLoading || !cartItems?.length || !paymentMethod || !shippingMethod}
       >
         {isLoading ? "Đang xử lý..." : "Tạo đơn hàng"}
       </Button>

@@ -9,6 +9,16 @@ interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+    shortId: string;
+  };
 }
 
 interface CartContextType {

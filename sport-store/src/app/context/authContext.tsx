@@ -6,19 +6,19 @@ import { useRouter } from "next/navigation";
 
 
 interface User {
- _id: string;
- name: string;
- email: string;
- username: string;
- fullname: string;
- avatar: string;
- membershipLevel: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
- totalSpent: number;
- role: string;
- isActive: boolean;
- isVerified: boolean;
- createdAt: string;
- updatedAt?: string;
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  fullname: string;
+  avatar: string;
+  membershipLevel: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
+  totalSpent: number;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
          const data = await res.json();
          if (data?.user) {
            const userData = {
-             _id: data.user.id,
+             id: data.user.id,
              name: data.user.fullname || data.user.email,
              email: data.user.email,
              username: data.user.username,
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
              const data = await resAfterRefresh.json();
              if (data.user) {
                const userData = {
-                 _id: data.user.id,
+                 id: data.user.id,
                  name: data.user.fullname || data.user.email,
                  email: data.user.email,
                  username: data.user.username,
@@ -197,7 +197,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  const login = useCallback((userData: User, accessToken: string) => {
    console.log("Raw user data from API:", userData);
    const processedUserData = {
-     _id: userData._id,
+     id: userData.id,
      name: userData.fullname || userData.email,
      email: userData.email,
      username: userData.username,

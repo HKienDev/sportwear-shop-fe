@@ -19,42 +19,42 @@ export default function AddOrderPage() {
     setFormKey(prev => prev + 1);
   };
 
-  const handleClose = () => {
-    router.push("/admin/orders/list");
-  };
-
   return (
-    <CartProvider>
-      <CustomerProvider>
-        <PaymentMethodProvider>
-          <ShippingMethodProvider>
-            <div className="p-4 pt-20">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6 sticky top-20 bg-white z-10 py-4 border-b">
-                <h1 className="text-2xl font-bold">THÊM ĐƠN HÀNG</h1>
-                <OrderActions
-                  onClose={handleClose}
-                  onResetForm={handleResetForm}
-                />
-              </div>
+    <div className="space-y-6">
+      <CartProvider>
+        <CustomerProvider>
+          <PaymentMethodProvider>
+            <ShippingMethodProvider>
+              <div className="space-y-6">
+                <div className="flex justify-between items-center bg-white rounded-lg shadow-sm p-6 relative z-10">
+                  <h1 className="text-2xl font-bold">THÊM ĐƠN HÀNG</h1>
+                  <div className="flex items-center gap-4">
+                    <OrderActions onClose={() => router.push("/admin/orders/list")} onResetForm={handleResetForm} />
+                  </div>
+                </div>
 
-              {/* Nội dung */}
-              <div className="flex flex-col xl:flex-row gap-6 mt-6">
-                {/* Cột trái */}
-                <div className="w-full xl:w-[55%] 2xl:w-3/5 flex flex-col gap-6">
-                  <CustomerInfo key={`customer-${formKey}`} />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                      <CustomerInfo key={`customer-${formKey}`} />
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                      <OrderProducts key={`products-${formKey}`} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
                   <OrderPreview key={`preview-${formKey}`} />
                 </div>
-
-                {/* Cột phải */}
-                <div className="w-full xl:w-[45%] 2xl:w-2/5">
-                  <OrderProducts key={`products-${formKey}`} />
-                </div>
               </div>
-            </div>
-          </ShippingMethodProvider>
-        </PaymentMethodProvider>
-      </CustomerProvider>
-    </CartProvider>
+            </ShippingMethodProvider>
+          </PaymentMethodProvider>
+        </CustomerProvider>
+      </CartProvider>
+    </div>
   );
 }

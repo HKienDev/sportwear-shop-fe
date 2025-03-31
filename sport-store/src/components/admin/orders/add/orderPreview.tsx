@@ -2,29 +2,35 @@
 
 import { useCustomer } from "@/app/context/customerContext";
 import { useCart } from "@/app/context/cartContext";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import Image from "next/image";
 
-interface Product {
-  id: string;
+interface CartItem {
+  _id: string;
   name: string;
   price: number;
-  discountPrice?: number;
   quantity: number;
-  size?: string;
-  color?: string;
+  image: string;
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+    shortId: string;
+  };
 }
 
 export default function OrderPreview() {
   const { customer } = useCustomer();
-  const { cartItems } = useCart();
-  const { paymentMethod } = usePaymentMethod();
+  const { items: cartItems } = useCart();
   const { shippingMethod } = useShippingMethod();
 
   // Tính tổng tiền
-  const subtotal = cartItems.reduce((total, item) => {
-    const itemPrice = item.discountPrice || item.price;
-    return total + (itemPrice * item.quantity);
+  const subtotal = cartItems.reduce((total: number, item: CartItem) => {
+    return total + (item.price * item.quantity);
   }, 0);
 
   // Phí vận chuyển
@@ -34,126 +40,74 @@ export default function OrderPreview() {
   const total = subtotal + shippingFee;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-bold mb-4">XEM TRƯỚC ĐƠN HÀNG</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-200 text-sm min-w-[800px] xl:min-w-0">
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold">XEM TRƯỚC ĐƠN HÀNG</h3>
+
+      {/* Thông tin khách hàng */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h4 className="font-medium mb-2">Thông tin giao hàng</h4>
+        <div className="text-sm text-gray-600 space-y-1">
+          <p>Họ tên: {customer.name}</p>
+          <p>Số điện thoại: {customer.phone}</p>
+          <p>Địa chỉ: {customer.address}</p>
+          <p>
+            {customer.ward?.name}, {customer.district?.name}, {customer.province?.name}
+          </p>
+        </div>
+      </div>
+
+      {/* Danh sách sản phẩm */}
+      <div className="bg-white rounded-lg overflow-hidden">
+        <table className="w-full">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-200 p-2 text-left w-1/4 xl:w-1/3">Thông tin</th>
-              <th className="border border-gray-200 p-2 text-left">Chi tiết</th>
+            <tr className="bg-gray-50">
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Sản phẩm</th>
+              <th className="px-6 py-3 text-center text-sm font-medium text-gray-500">Số lượng</th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Đơn giá</th>
             </tr>
           </thead>
           <tbody>
-            {/* Thông tin khách hàng */}
-            <tr className="border border-gray-200">
-              <td className="border border-gray-200 p-2 font-medium bg-gray-50">THÔNG TIN KHÁCH HÀNG</td>
-              <td className="border border-gray-200 p-2">
-                <div className="space-y-1">
-                  <p><span className="font-medium">Họ tên:</span> {customer.name}</p>
-                  <p><span className="font-medium">Số điện thoại:</span> {customer.phone}</p>
-                  <p><span className="font-medium">Địa chỉ:</span> {customer.address}</p>
-                  <p><span className="font-medium">Tỉnh/Thành phố:</span> {customer.province?.name}</p>
-                  <p><span className="font-medium">Quận/Huyện:</span> {customer.district?.name}</p>
-                  <p><span className="font-medium">Phường/Xã:</span> {customer.ward?.name}</p>
-                </div>
-              </td>
-            </tr>
-
-            {/* Thông tin đơn hàng */}
-            <tr className="border border-gray-200">
-              <td className="border border-gray-200 p-2 font-medium bg-gray-50">THÔNG TIN ĐƠN HÀNG</td>
-              <td className="border border-gray-200 p-2">
-                <div className="space-y-1">
-                  <p><span className="font-medium">Phương thức thanh toán:</span> {paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : "Thanh toán qua Stripe"}</p>
-                  <p><span className="font-medium">Phương thức vận chuyển:</span> {
-                    shippingMethod === "Express"
-                      ? "Vận chuyển nhanh"
-                      : shippingMethod === "SameDay"
-                      ? "Vận chuyển trong ngày"
-                      : "Vận chuyển thường"
-                  }</p>
-                </div>
-              </td>
-            </tr>
-
-            {/* Sản phẩm */}
-            <tr className="border border-gray-200">
-              <td className="border border-gray-200 p-2 font-medium bg-gray-50">SẢN PHẨM</td>
-              <td className="border border-gray-200 p-2">
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-200 text-sm">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-gray-200 p-2 text-left w-[80px]">ID</th>
-                        <th className="border border-gray-200 p-2 text-left">Tên sản phẩm</th>
-                        <th className="border border-gray-200 p-2 text-left w-[120px]">Phân loại</th>
-                        <th className="border border-gray-200 p-2 text-right w-[120px]">Đơn giá</th>
-                        <th className="border border-gray-200 p-2 text-center w-[60px]">SL</th>
-                        <th className="border border-gray-200 p-2 text-right w-[140px]">Thành tiền</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cartItems.length > 0 ? (
-                        cartItems.map((item: Product) => (
-                          <tr
-                            key={`${item.id}-${item.size || "none"}-${item.color || "none"}`}
-                            className="border border-gray-200"
-                          >
-                            <td className="border border-gray-200 p-2 whitespace-nowrap">#{item.id}</td>
-                            <td className="border border-gray-200 p-2 text-blue-600 underline cursor-pointer">
-                              {item.name}
-                            </td>
-                            <td className="border border-gray-200 p-2 whitespace-nowrap">
-                              {item.size && <div>Size: {item.size}</div>}
-                              {item.color && <div>Màu: {item.color}</div>}
-                            </td>
-                            <td className="border border-gray-200 p-2 text-right whitespace-nowrap">
-                              <div className="font-semibold">
-                                {(item.discountPrice || item.price).toLocaleString()} VND
-                              </div>
-                              {item.discountPrice && (
-                                <div className="text-sm text-gray-500 line-through">
-                                  {item.price.toLocaleString()} VND
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-gray-200 p-2 text-center whitespace-nowrap">{item.quantity}</td>
-                            <td className="border border-gray-200 p-2 text-right whitespace-nowrap font-semibold">
-                              {((item.discountPrice || item.price) * item.quantity).toLocaleString()} VND
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="border border-gray-200 p-2 text-center text-gray-500">
-                            Chưa có sản phẩm nào
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Tổng tiền */}
-                <div className="mt-4 border-t pt-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Tạm tính:</span>
-                    <span>{subtotal.toLocaleString()} VND</span>
+            {cartItems.map((item: CartItem) => (
+              <tr key={item._id} className="border-b hover:bg-gray-50">
+                <td className="py-4 px-6">
+                  <div className="flex items-center">
+                    <div className="relative w-16 h-16">
+                      <Image
+                        src={item.product.images.main || "/images/placeholder.png"}
+                        alt={item.product.name}
+                        fill
+                        className="object-cover rounded"
+                      />
+                    </div>
+                    <div className="ml-4">
+                      <div className="font-medium">{item.product.name}</div>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Phí vận chuyển:</span>
-                    <span>{shippingFee.toLocaleString()} VND</span>
-                  </div>
-                  <div className="flex justify-between font-medium mt-2">
-                    <span>Tổng cộng:</span>
-                    <span>{total.toLocaleString()} VND</span>
-                  </div>
-                </div>
-              </td>
-            </tr>
+                </td>
+                <td className="py-4 px-6 text-center">{item.quantity}</td>
+                <td className="py-4 px-6 text-right">
+                  {item.price.toLocaleString("vi-VN")}đ
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Tổng tiền */}
+      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Tạm tính:</span>
+          <span>{subtotal.toLocaleString("vi-VN")}đ</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Phí vận chuyển:</span>
+          <span>{shippingFee.toLocaleString("vi-VN")}đ</span>
+        </div>
+        <div className="flex justify-between font-medium text-base pt-2 border-t">
+          <span>Tổng cộng:</span>
+          <span>{total.toLocaleString("vi-VN")}đ</span>
+        </div>
       </div>
     </div>
   );

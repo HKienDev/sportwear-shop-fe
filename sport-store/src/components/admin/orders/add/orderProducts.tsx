@@ -2,27 +2,14 @@
 
 import { useState, ChangeEvent } from "react";
 import { useCart } from "@/app/context/cartContext";
-import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 import { useShippingMethod } from "@/app/context/shippingMethodContext";
+import { usePaymentMethod } from "@/app/context/paymentMethodContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
-import { generateUniqueId } from "@/utils/generateUniqueId";
-
-interface CartItem {
-  cartItemId: string;
-  id: string;
-  name: string;
-  price: number;
-  discountPrice?: number;
-  quantity: number;
-  size: string;
-  color: string;
-  image?: string;
-}
 
 interface Product {
   _id: string;
@@ -36,18 +23,37 @@ interface Product {
     main: string;
     sub: string[];
   };
+  shortId: string;
+}
+
+interface CartItem {
+  _id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+    shortId: string;
+  };
 }
 
 export default function OrderProducts() {
-  const { cartItems = [], addToCart, removeFromCart } = useCart();
+  const { items: cartItems, addToCart, removeFromCart } = useCart();
   const { paymentMethod, setPaymentMethod } = usePaymentMethod();
   const { shippingMethod, setShippingMethod } = useShippingMethod();
-  const [productId, setProductId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
   const [error, setError] = useState("");
-  const [product, setProduct] = useState<Product | null>(null);
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [promoCode, setPromoCode] = useState("");
@@ -72,17 +78,17 @@ export default function OrderProducts() {
 
   const handleProductIdChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const newProductId = e.target.value;
-    setProductId(newProductId);
+    setSearchTerm(newProductId);
     setSize("");
     setColor("");
     setAvailableSizes([]);
     setAvailableColors([]);
-    setProduct(null);
+    setSelectedProduct(null);
 
     if (newProductId) {
       try {
         const productData = await fetchProduct(newProductId);
-        setProduct(productData);
+        setSelectedProduct(productData);
         setAvailableSizes(productData.size || []);
         setAvailableColors(productData.color || []);
       } catch (error) {
@@ -91,61 +97,25 @@ export default function OrderProducts() {
     }
   };
 
-  const handleAddProduct = async () => {
-    if (!productId || !size || !color) {
-      setError("Vui lòng điền đầy đủ thông tin sản phẩm");
-      return;
-    }
-
-    if (!product) {
-      setError("Không tìm thấy thông tin sản phẩm");
-      return;
-    }
-
-    // Kiểm tra size và color có hợp lệ không
-    if (!product.size.includes(size)) {
-      setError("Size không hợp lệ cho sản phẩm này");
-      return;
-    }
-
-    if (!product.color.includes(color)) {
-      setError("Màu sắc không hợp lệ cho sản phẩm này");
-      return;
-    }
-
-    // Kiểm tra số lượng tồn kho
-    if (quantity > product.stock) {
-      setError(`Số lượng trong kho chỉ còn ${product.stock}`);
-      return;
-    }
-
-    try {
-      const newItem: CartItem = {
-        cartItemId: generateUniqueId(),
-        id: productId,
+  const handleAddToCart = (product: Product) => {
+    const cartItem: CartItem = {
+      _id: product._id,
+      name: product.name,
+      price: product.discountPrice || product.price,
+      quantity: 1,
+      image: product.images.main || "/images/placeholder.png",
+      product: {
+        _id: product._id,
         name: product.name,
-        price: product.price,
-        discountPrice: product.discountPrice,
-        quantity,
-        size,
-        color,
-        image: product.images.main
-      };
-
-      addToCart(newItem);
-
-      // Reset form
-      setProductId("");
-      setQuantity(1);
-      setSize("");
-      setColor("");
-      setError("");
-      setProduct(null);
-      setAvailableSizes([]);
-      setAvailableColors([]);
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Có lỗi xảy ra khi thêm sản phẩm");
-    }
+        price: product.discountPrice || product.price,
+        images: {
+          main: product.images.main || "/images/placeholder.png",
+          sub: product.images.sub || []
+        },
+        shortId: product.shortId
+      }
+    };
+    addToCart(cartItem);
   };
 
   const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -153,16 +123,16 @@ export default function OrderProducts() {
     setQuantity(value < 1 ? 1 : value);
   };
 
-  // Tính tổng tiền với giá khuyến mãi và mã giảm giá
-  const calculateTotal = () => {
-    if (!cartItems || cartItems.length === 0) return 0;
-    
-    const subtotal = cartItems.reduce((total, item) => {
-      const itemPrice = item.discountPrice || item.price;
-      return total + (itemPrice * item.quantity);
-    }, 0);
-    return subtotal - promoDiscount;
-  };
+  // Tính tổng tiền
+  const subtotal = cartItems.reduce((total: number, item: CartItem) => {
+    return total + (item.product.price * item.quantity);
+  }, 0);
+
+  // Phí vận chuyển
+  const shippingFee = shippingMethod === "Express" ? 50000 : shippingMethod === "SameDay" ? 100000 : 30000;
+
+  // Tổng cộng
+  const total = subtotal + shippingFee;
 
   const handleApplyPromoCode = async () => {
     try {
@@ -188,10 +158,10 @@ export default function OrderProducts() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="productId">Mã sản phẩm</Label>
+              <Label htmlFor="searchTerm">Mã sản phẩm</Label>
               <Input
-                id="productId"
-                value={productId}
+                id="searchTerm"
+                value={searchTerm}
                 onChange={handleProductIdChange}
                 placeholder="Nhập mã sản phẩm"
               />
@@ -242,17 +212,26 @@ export default function OrderProducts() {
             </div>
           </div>
 
-          {product && (
+          {selectedProduct && (
             <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-              <p className="font-medium">Sản phẩm: {product.name}</p>
-              <p>Giá: {product.discountPrice ? product.discountPrice.toLocaleString() : product.price.toLocaleString()} VNĐ</p>
-              <p>Tồn kho: {product.stock}</p>
+              <p className="font-medium">Sản phẩm: {selectedProduct.name}</p>
+              <p>
+                Giá: {selectedProduct.discountPrice ? (
+                  <>
+                    <span className="line-through text-gray-400 mr-2">{selectedProduct.price.toLocaleString()}</span>
+                    <span className="text-red-500">{selectedProduct.discountPrice.toLocaleString()}</span>
+                  </>
+                ) : (
+                  selectedProduct.price.toLocaleString()
+                )} VNĐ
+              </p>
+              <p>Tồn kho: {selectedProduct.stock}</p>
             </div>
           )}
 
           {error && <p className="text-sm text-red-500 bg-red-50 p-3 rounded">{error}</p>}
 
-          <Button onClick={handleAddProduct} className="w-full">
+          <Button onClick={() => handleAddToCart(selectedProduct as Product)} className="w-full">
             Thêm sản phẩm
           </Button>
         </div>
@@ -261,28 +240,32 @@ export default function OrderProducts() {
         <div className="mt-6">
           <h3 className="font-semibold mb-4">Sản phẩm đã thêm</h3>
           <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-            {cartItems.map((item) => (
-              <div
-                key={item.cartItemId}
-                className="flex items-start justify-between bg-gray-50 p-4 rounded-lg"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.name}</p>
-                  <div className="text-sm text-gray-600 mt-1 space-y-1">
-                    <p>Size: {item.size}</p>
-                    <p>Màu: {item.color}</p>
-                    <p>Số lượng: {item.quantity}</p>
-                    <p>Đơn giá: {(item.discountPrice || item.price).toLocaleString()} VNĐ</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeFromCart(item.id, item.size, item.color)}
-                  className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+            {cartItems?.length > 0 ? (
+              cartItems.map((item: CartItem) => (
+                <div
+                  key={item._id}
+                  className="flex items-start justify-between bg-gray-50 p-4 rounded-lg"
                 >
-                  <X size={20} />
-                </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.name}</p>
+                    <div className="text-sm text-gray-600 mt-1 space-y-1">
+                      <p>Số lượng: {item.quantity}</p>
+                      <p>Đơn giá: {item.price.toLocaleString()} VNĐ</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeFromCart(item._id)}
+                    className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                Chưa có sản phẩm nào
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -340,7 +323,7 @@ export default function OrderProducts() {
         <div className="pt-4 border-t">
           <div className="flex justify-between items-center">
             <span className="font-semibold">Tổng tiền:</span>
-            <span className="text-xl font-bold">{calculateTotal().toLocaleString()} VNĐ</span>
+            <span className="text-xl font-bold">{total.toLocaleString()} VNĐ</span>
           </div>
         </div>
       </CardContent>
