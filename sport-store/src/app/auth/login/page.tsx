@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
-import { useAuth } from "@/app/context/authContext";
+import { useAuth } from "@/context/authContext";
 
 const LoginPage = () => {
   const [error, setError] = useState("");

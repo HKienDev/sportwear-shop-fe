@@ -9,7 +9,7 @@ import Image from "next/image";
 import ShoppingCartButton from "./shoppingCartButton/page";
 import AuthButtons from "./authButtons/page";
 import UserMenu from "./userMenu/page";
-import { useAuth } from "@/app/context/authContext";
+import { useAuth } from "@/context/authContext";
 
 interface Category {
   _id: string;
