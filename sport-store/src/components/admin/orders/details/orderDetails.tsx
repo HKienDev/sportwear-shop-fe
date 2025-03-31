@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import OrderHeader from "./orderHeader";
 import DeliveryTracking from "./deliveryTracking";
@@ -8,7 +8,7 @@ import ShippingMethod from "./shippingMethod";
 import OrderTable from "./orderTable";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import CancelOrder from "./cancelOrder";
 
@@ -79,6 +79,35 @@ export const orderStatusInfo = {
   }
 } as const;
 
+interface OrderItem {
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+  };
+  quantity: number;
+  price: number;
+}
+
+interface OrderTableItem {
+  product: { 
+    _id: string; 
+    name: string; 
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+    shortId: string;
+  };
+  quantity: number;
+  price: number;
+}
+
 interface OrderDetailsProps {
   order: Order;
   orderId: string;
@@ -87,89 +116,122 @@ interface OrderDetailsProps {
 
 export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDetailsProps) {
   const [currentStatus, setCurrentStatus] = useState<Order["status"]>(order.status);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Hàm để lấy lại thông tin đơn hàng mới nhất
-  const refreshOrderDetails = async () => {
+  const refreshOrderDetails = useCallback(async () => {
     try {
-      setIsRefreshing(true);
-      const response = await fetchWithAuth(`/orders/admin/${orderId}`);
+      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}`);
       
-      if (response.success && response.order) {
-        setCurrentStatus(response.order.status);
+      if (response.success && response.data?.status) {
+        setCurrentStatus(response.data.status);
       }
     } catch (error) {
       console.error("Error refreshing order details:", error);
       toast.error("Không thể cập nhật thông tin đơn hàng");
-    } finally {
-      setIsRefreshing(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    refreshOrderDetails();
+  }, [refreshOrderDetails]);
 
   // Hàm xử lý cập nhật trạng thái đơn hàng
   const handleUpdateStatus = (newStatus: Order["status"]) => {
     const updateStatus = async () => {
       try {
-        setIsLoading(true);
-        
-        // Lấy thông tin user từ localStorage
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          toast.error("Vui lòng đăng nhập lại");
-          return;
-        }
-
-        let userData;
-        try {
-          userData = JSON.parse(userStr);
-          console.log("User data from localStorage:", userData); // Thêm log để debug
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          toast.error("Lỗi khi đọc thông tin người dùng");
-          return;
-        }
-
-        // Kiểm tra cấu trúc userData
-        if (!userData || !userData.id) {
-          console.error("Invalid user data structure:", userData); // Thêm log để debug
-          toast.error("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại");
-          localStorage.removeItem("user");
-          return;
-        }
-
-        const response = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+        setIsUpdating(true);
+        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}/status`, {
           method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({ 
             status: newStatus,
-            updatedBy: userData.id, // Sử dụng userData.id thay vì userData._id
-            note: `Cập nhật trạng thái từ ${currentStatus} sang ${newStatus}`
-          })
+            updatedBy: order.user
+          }),
         });
 
-        if (response.success) {
-          setCurrentStatus(newStatus);
-          toast.success("Cập nhật trạng thái đơn hàng thành công");
-          if (onStatusUpdate) {
-            onStatusUpdate(orderId, newStatus);
-          }
-        } else {
-          toast.error(response.message || "Không thể cập nhật trạng thái đơn hàng");
+        if (!response.success) {
+          throw new Error(response.message || "Không thể cập nhật trạng thái đơn hàng");
         }
+
+        setCurrentStatus(newStatus);
+        toast.success("Cập nhật trạng thái đơn hàng thành công");
+        onStatusUpdate?.(orderId, newStatus);
       } catch (error) {
-        console.error("Error updating order status:", error);
-        toast.error("Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng");
+        console.error("Lỗi cập nhật trạng thái:", error);
+        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái");
       } finally {
-        setIsLoading(false);
+        setIsUpdating(false);
       }
     };
 
     updateStatus();
   };
 
+  // Hàm xử lý cập nhật trạng thái từ component CancelOrder
+  const handleCancelOrderStatusUpdate = (id: string, newStatus: string) => {
+    const updateStatus = async () => {
+      try {
+        setIsUpdating(true);
+        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${id}/status`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            status: newStatus,
+            updatedBy: order.user
+          }),
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || "Không thể cập nhật trạng thái đơn hàng");
+        }
+
+        setCurrentStatus(newStatus as Order["status"]);
+        toast.success("Cập nhật trạng thái đơn hàng thành công");
+        onStatusUpdate?.(id, newStatus as Order["status"]);
+      } catch (error) {
+        console.error("Lỗi cập nhật trạng thái:", error);
+        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái");
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+
+    updateStatus();
+  };
+
+  // Chuyển đổi items từ Order sang OrderTableItem cho OrderTable
+  const orderTableItems: OrderTableItem[] = order.items.map((item) => ({
+    product: {
+      _id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      images: item.product.images,
+      shortId: item.product._id.slice(-6)
+    },
+    quantity: item.quantity,
+    price: item.price
+  }));
+
+  // Chuyển đổi items từ Order sang OrderItem cho CancelOrder
+  const cancelOrderItems: OrderItem[] = order.items.map(item => ({
+    product: {
+      _id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      images: item.product.images
+    },
+    quantity: item.quantity,
+    price: item.price
+  }));
+
   // Render nút hành động dựa trên trạng thái hiện tại
   const renderActionButton = () => {
-    const isDisabled = isLoading || isRefreshing;
+    const isDisabled = isUpdating;
     
     switch (currentStatus) {
       case "pending":
@@ -207,21 +269,6 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     }
   };
 
-  // Hàm xử lý cập nhật trạng thái từ component CancelOrder
-  const handleCancelOrderStatusUpdate = (id: string, newStatus: string) => {
-    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
-    
-    if (validStatuses.includes(newStatus as Order["status"])) {
-      const status = newStatus as Order["status"];
-      setCurrentStatus(status);
-      if (onStatusUpdate) {
-        onStatusUpdate(id, status);
-      }
-    } else {
-      console.error("Invalid status:", newStatus);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <OrderHeader
@@ -238,7 +285,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             handleUpdateStatus(status as Order["status"]);
           }
         }}
-        isLoading={isLoading || isRefreshing}
+        isLoading={isUpdating}
       />
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
@@ -259,17 +306,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         />
       </div>
       <OrderTable
-        items={order.items.map(item => ({
-          product: {
-            _id: item.product._id,
-            name: item.product.name,
-            price: item.price,
-            images: item.product.images,
-            shortId: item.product._id.slice(-6)
-          },
-          quantity: item.quantity,
-          price: item.price
-        }))}
+        items={orderTableItems}
         shippingMethod={{
           name: order.shippingMethod.method,
           fee: order.shippingMethod.method === "Standard" 
@@ -287,18 +324,9 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         <CancelOrder
           orderId={orderId}
           status={currentStatus}
-          items={order.items.map(item => ({
-            product: {
-              _id: item.product._id,
-              name: item.product.name,
-              price: item.price,
-              images: item.product.images
-            },
-            quantity: item.quantity,
-            price: item.price
-          }))}
+          items={cancelOrderItems}
           onStatusUpdate={handleCancelOrderStatusUpdate}
-          isDisabled={isLoading || isRefreshing}
+          isDisabled={isUpdating}
         />
       </div>
     </div>

@@ -1,83 +1,15 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
-import { Order } from "@/types/order";
+import { useParams } from "next/navigation";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { useOrderDetails } from "@/hooks/useOrderDetails";
 
-interface User {
-  _id: string;
-  email: string;
-  role: string;
-}
+export default function OrderDetailsPage() {
+  const params = useParams();
+  const orderId = params.id as string;
+  const { order, loading, error, refreshOrder } = useOrderDetails(orderId);
 
-interface AuthResponse {
-  success: boolean;
-  user: User;
-}
-
-interface OrderResponse {
-  success: boolean;
-  order: Order;
-}
-
-interface OrderDetailsPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
-  const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const resolvedParams = use(params);
-  const orderId = resolvedParams.id;
-
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      try {
-        setIsLoading(true);
-        // Kiểm tra quyền admin
-        const userResponse = await fetchWithAuth<AuthResponse>("/auth/check");
-        console.log("User data:", userResponse);
-
-        if (!userResponse.success || !userResponse.data?.user || userResponse.data.user.role !== "admin") {
-          const currentPath = `/admin/orders/details/${orderId}`;
-          router.replace(`/auth/login?from=${encodeURIComponent(currentPath)}`);
-          return;
-        }
-
-        // Lấy thông tin đơn hàng
-        const orderResponse = await fetchWithAuth<OrderResponse>(`/orders/admin/${orderId}`);
-        console.log("Order data:", orderResponse);
-        
-        if (!orderResponse.success) {
-          throw new Error(orderResponse.message || "Không thể lấy thông tin đơn hàng");
-        }
-        
-        setOrder(orderResponse.data?.order || null);
-      } catch (error) {
-        console.error("Error fetching order details:", error);
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError("Đã xảy ra lỗi khi tải thông tin đơn hàng");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (orderId) {
-      fetchOrderDetails();
-    }
-  }, [orderId, router]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8">
         <div className="max-w-7xl mx-auto">
@@ -95,6 +27,9 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-red-500 text-center">{error}</div>
+            <button onClick={refreshOrder} className="mt-4 text-blue-500 underline">
+              Thử lại
+            </button>
           </div>
         </div>
       </div>
@@ -117,13 +52,8 @@ const OrderDetailsPage = ({ params }: OrderDetailsPageProps) => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">CHI TIẾT ĐƠN HÀNG</h1>
       <div className="max-w-7xl mx-auto">
-        <OrderDetails
-          order={order}
-          orderId={order._id}
-        />
+        <OrderDetails order={order} orderId={order._id} />
       </div>
     </div>
   );
-};
-
-export default OrderDetailsPage; 
+}

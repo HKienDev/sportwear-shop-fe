@@ -18,7 +18,7 @@ export default function OrderUserPage() {
           </thead>
           <tbody>
             {[...Array(8)].map((_, index) => (
-              <tr key={index} className="border-t">
+              <tr key={`order-${index + 1}`} className="border-t">
                 <td className="p-3">
                   <a href="#" className="text-blue-500 hover:underline">
                     #2131

@@ -102,64 +102,50 @@ const getUserRole = async (token: string): Promise<string | null> => {
 };
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  console.log("Middleware executed for path:", path);
-
-  // Các route công khai không cần xác thực
-  const publicRoutes = [
-    "/auth/login",
-    "/auth/register",
-    "/auth/forgotPasswordEmail",
-    "/auth/otpVerifyRegister",
-  ];
-
-  if (publicRoutes.some((route) => path.startsWith(route))) {
+  // Bỏ qua các route không cần xác thực
+  if (
+    request.nextUrl.pathname.startsWith('/_next') ||
+    request.nextUrl.pathname.startsWith('/api') ||
+    request.nextUrl.pathname.startsWith('/static') ||
+    request.nextUrl.pathname.startsWith('/images') ||
+    request.nextUrl.pathname === '/auth/login' ||
+    request.nextUrl.pathname === '/auth/register' ||
+    request.nextUrl.pathname === '/auth/forgot-password' ||
+    request.nextUrl.pathname === '/auth/reset-password'
+  ) {
     return NextResponse.next();
   }
 
-  // Đọc token từ cookie
-  const token = request.cookies.get("accessToken")?.value;
-  if (!token || !(await verifyToken(token))) {
-    const newToken = await refreshToken();
-    if (!newToken) {
-      console.log("Middleware redirecting to /auth/login");
-      return NextResponse.redirect(new URL("/auth/login", request.url));
-    }
+  const token = request.cookies.get('accessToken')?.value;
 
-    // Lưu token mới vào cookie
-    const response = NextResponse.next();
-    response.cookies.set("accessToken", newToken, {
-      expires: 7,
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "strict",
-    });
-    return response;
+  // Nếu không có token và đang ở trang login, cho phép truy cập
+  if (!token && request.nextUrl.pathname === '/auth/login') {
+    return NextResponse.next();
   }
+
+  // Nếu không có token, chuyển hướng về trang login
+  if (!token) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('from', request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Kiểm tra token và role
+  const isValid = await verifyToken(token);
+  if (!isValid) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('from', request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const userRole = await getUserRole(token);
+  console.log("User role in middleware:", userRole);
 
   // Kiểm tra quyền truy cập admin
-  const role = await getUserRole(token);
-  console.log("User role in middleware:", role);
-
-  // Xử lý chuyển hướng dựa trên role
-  if (path === "/") {
-    if (role === "admin") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    } else {
-      return NextResponse.redirect(new URL("/user", request.url));
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
     }
-  }
-
-  // Nếu không phải admin và cố gắng truy cập /admin, chuyển hướng sang /user
-  if (role !== "admin" && path.startsWith("/admin")) {
-    console.log("Middleware redirecting from /admin to /user");
-    return NextResponse.redirect(new URL("/user", request.url));
-  }
-
-  // Nếu là admin và cố gắng truy cập /user, chuyển hướng sang /admin
-  if (role === "admin" && path.startsWith("/user")) {
-    console.log("Middleware redirecting from /user to /admin");
-    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return NextResponse.next();
@@ -167,6 +153,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

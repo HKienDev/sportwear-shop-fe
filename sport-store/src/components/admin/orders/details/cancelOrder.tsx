@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +14,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 
@@ -48,11 +48,11 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   const refreshOrderDetails = async () => {
     try {
       setIsRefreshing(true);
-      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}`);
+      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}`);
       
-      if (response.success && response.order) {
+      if (response.success && response.data?.status) {
         if (onStatusUpdate) {
-          onStatusUpdate(orderId, response.order.status);
+          onStatusUpdate(orderId, response.data.status);
         }
       }
     } catch (error) {
@@ -101,7 +101,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
         restoreStock: true // Thêm flag để server biết cần hoàn lại stock
       };
 
-      const { data: response } = await fetchWithAuth(`/orders/admin/${orderId}/status`, {
+      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
         body: JSON.stringify(cancelData)
       });
 
-      if (!response.success) {
+      if (!response.success || !response.data?.status) {
         throw new Error(response.message || "Không thể hủy đơn hàng");
       }
 

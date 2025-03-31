@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Order } from "@/types/order";
 import { fetchWithAuth } from "@/lib/api";
 import OrderListTable from "@/components/admin/orders/list/orderListTable";
 import OrderListFilters from "@/components/admin/orders/list/orderListFilters";
 import Pagination from "@/components/admin/orders/list/pagination";
-import { getStatusColor } from "@/components/admin/orders/list/orderStatusBadge";
 
 const ITEMS_PER_PAGE = 10;
+
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data: Order[];
+}
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -29,75 +34,106 @@ export default function OrdersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await fetchWithAuth("/orders/admin");
-        if (!response) {
-          throw new Error("Không thể kết nối đến server");
-        }
-
-        const responseData = await response.json();
-        console.log("Orders API Response:", responseData);
-
-        if (!responseData.success) {
-          throw new Error(responseData.message || "Không thể tải danh sách đơn hàng");
-        }
-
-        if (!Array.isArray(responseData.data)) {
-          throw new Error("Dữ liệu API không hợp lệ");
-        }
-
-        setOrders(responseData.data);
-        setFilteredOrders(responseData.data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.");
-      } finally {
-        setLoading(false);
+      const response = await fetchWithAuth("/orders/admin");
+      if (!response) {
+        throw new Error("Không thể kết nối đến máy chủ");
       }
-    };
+      
+      const data = await response.json() as ApiResponse;
+      
+      if (!data?.success) {
+        throw new Error(data?.message || "Không thể tải danh sách đơn hàng");
+      }
 
-    fetchOrders();
-  }, []);
+      if (!Array.isArray(data?.data)) {
+        throw new Error("Dữ liệu không hợp lệ");
+      }
 
-  // Tìm kiếm đơn hàng theo mã đơn hoặc tên khách hàng
-  useEffect(() => {
-    const filtered = orders.filter(
-      (order) =>
-        order.shortId.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredOrders(filtered);
-    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
-  }, [searchTerm, orders]);
+      setOrders(data.data);
+      setFilteredOrders(data.data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Có lỗi xảy ra khi tải danh sách đơn hàng";
+      setError(errorMessage);
 
-  // Lọc đơn hàng theo trạng thái
-  useEffect(() => {
-    if (!statusFilter) {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter((order) => order.status === statusFilter));
+      if (errorMessage.includes("đăng nhập")) {
+        router.push("/auth/login");
+      }
+    } finally {
+      setLoading(false);
     }
-    setCurrentPage(1); // Reset về trang 1 khi lọc
-  }, [statusFilter, orders]);
+  }, [router]);
 
-  // Chọn tất cả đơn hàng
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    let filtered = orders;
+
+    // Tìm kiếm theo searchTerm
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (order) =>
+          order.shortId.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          order.shippingAddress?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Lọc theo trạng thái
+    if (statusFilter) {
+      filtered = filtered.filter((order) => order.status === statusFilter);
+    }
+
+    setFilteredOrders(filtered);
+    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm hoặc lọc
+  }, [searchTerm, statusFilter, orders]);
+
   const toggleSelectAll = () => {
     setSelectedOrders(selectedOrders.length === currentOrders.length ? [] : currentOrders.map((order) => order._id));
   };
 
-  // Chọn một đơn hàng
   const toggleSelectOrder = (id: string) => {
     setSelectedOrders((prev) => (prev.includes(id) ? prev.filter((orderId) => orderId !== id) : [...prev, id]));
   };
 
-  // Xử lý thêm đơn hàng mới
   const handleAddOrder = () => {
     router.push("/admin/orders/add");
   };
+
+  const getStatusColor = useCallback((status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500";
+      case "shipped":
+        return "bg-green-500";
+      case "delivered":
+        return "bg-blue-500";
+      default:
+        return "bg-gray-500";
+    }
+  }, []);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    fetchOrders();
+  };
+
+  if (error) {
+    return (
+      <div className="text-red-500">
+        <p>{error}</p>
+        <button onClick={handleRetry} className="text-blue-500 underline mt-2">
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
@@ -113,7 +149,6 @@ export default function OrdersPage() {
       />
 
       {loading && <p>Đang tải...</p>}
-      {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && filteredOrders.length > 0 && (
         <>

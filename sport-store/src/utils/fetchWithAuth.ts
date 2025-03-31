@@ -1,20 +1,55 @@
-interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
-  products?: T[];
-  categories?: T[];
-  product?: T;
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+    fullname: string;
+    avatar: string;
+    role: string;
+    isActive: boolean;
+    isVerified: boolean;
+    membershipLevel: string;
+    totalSpent: number;
+    orderCount: number;
+  };
 }
 
-export const fetchWithAuth = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
+let isRefreshing = false; // Biến cờ để kiểm soát việc làm mới token
+let failedRequestsQueue: Array<() => void> = []; // Hàng đợi các request thất bại do token hết hạn
+
+async function refreshToken(): Promise<string | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.accessToken) {
+      return data.accessToken;
+    }
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+  }
+  return null;
+}
+
+export const fetchWithAuth = async <T = unknown>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> => {
   try {
     // Lấy token từ localStorage
     const token = localStorage.getItem("accessToken");
-    console.log("🔹 [fetchWithAuth] Initial token:", token);
 
     if (!token) {
-      console.error("❌ [fetchWithAuth] Không tìm thấy token");
       throw new Error("Vui lòng đăng nhập để tiếp tục");
     }
 
@@ -31,92 +66,60 @@ export const fetchWithAuth = async <T = unknown>(endpoint: string, options: Requ
     };
 
     // Gọi API với token
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
       credentials: "include", // Thêm credentials để gửi cookies
     });
 
-    // Log response status và headers
-    console.log("🔹 [fetchWithAuth] Response status:", response.status);
-    console.log("🔹 [fetchWithAuth] Response headers:", Object.fromEntries(response.headers.entries()));
-
     // Đọc response body
     const responseData = await response.json().catch(() => null);
-    console.log("🔹 [fetchWithAuth] Response data:", responseData);
 
     // Xử lý các trường hợp lỗi
     if (response.status === 401) {
-      // Thử refresh token
-      try {
-        const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-        });
+      if (!isRefreshing) {
+        isRefreshing = true;
 
-        if (!refreshResponse.ok) {
-          throw new Error("Không thể refresh token");
+        // Thử refresh token
+        const newToken = await refreshToken();
+        if (!newToken) {
+          throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
         }
 
-        const refreshData = await refreshResponse.json();
-        if (refreshData.accessToken) {
-          // Lưu access token mới
-          localStorage.setItem("accessToken", refreshData.accessToken);
-          
-          // Thử gọi lại API với token mới
-          const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}${endpoint}`, {
-            ...options,
-            headers: {
-              ...headers,
-              Authorization: `Bearer ${refreshData.accessToken}`,
-            },
-            credentials: "include",
+        // Lưu token mới vào localStorage
+        localStorage.setItem("accessToken", newToken);
+
+        // Cập nhật token cho các request trong hàng đợi
+        failedRequestsQueue.forEach((callback) => callback());
+        failedRequestsQueue = [];
+        isRefreshing = false;
+
+        // Gọi lại API với token mới
+        return fetchWithAuth<T>(endpoint, options);
+      } else {
+        // Nếu đang làm mới token, thêm request vào hàng đợi
+        return new Promise((resolve, reject) => {
+          failedRequestsQueue.push(async () => {
+            try {
+              resolve(await fetchWithAuth<T>(endpoint, options));
+            } catch (error) {
+              reject(error);
+            }
           });
-          
-          return await retryResponse.json();
-        }
-      } catch (refreshError) {
-        console.error("❌ [fetchWithAuth] Lỗi refresh token:", refreshError);
+        });
       }
-      
-      console.error("❌ [fetchWithAuth] Token hết hạn hoặc không hợp lệ");
-      localStorage.removeItem("accessToken");
-      window.location.href = "/auth/login";
-      throw new Error(responseData?.message || "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
-    }
-
-    if (response.status === 403) {
-      console.error("❌ [fetchWithAuth] Không có quyền truy cập");
-      throw new Error(responseData?.message || "Bạn không có quyền truy cập tài nguyên này");
-    }
-
-    if (response.status === 404) {
-      console.error("❌ [fetchWithAuth] Không tìm thấy tài nguyên");
-      throw new Error(responseData?.message || "Không tìm thấy tài nguyên");
-    }
-
-    if (response.status === 400) {
-      console.error("❌ [fetchWithAuth] Dữ liệu không hợp lệ:", responseData);
-      throw new Error(responseData?.message || "Dữ liệu gửi đi không hợp lệ");
     }
 
     if (!response.ok) {
-      console.error("❌ [fetchWithAuth] Lỗi server:", response.status, responseData);
-      throw new Error(responseData?.message || "Đã xảy ra lỗi");
-    }
-
-    // Nếu response không có success hoặc data, thêm vào
-    if (!responseData.success) {
-      return {
-        success: true,
-        data: responseData,
-        message: "Thành công"
-      };
+      throw new Error(responseData?.message || "Không thể kết nối đến server");
     }
 
     return responseData;
   } catch (error) {
-    console.error("❌ [fetchWithAuth] Lỗi:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Có lỗi xảy ra khi gọi API");
   }
-}; 
+};
