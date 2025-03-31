@@ -17,21 +17,23 @@ const GoogleLoginButton = () => {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleGoogleLogin}
-      className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-    >
-      <Image
-        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-        alt="Google"
-        width={20}
-        height={20}
-        priority
-        unoptimized
-      />
-      Đăng nhập với Google
-    </button>
+    <div className="flex justify-center">
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="w-72 py-3 bg-black text-white rounded-full hover:bg-gray-800 disabled:opacity-50 font-semibold shadow-lg flex items-center justify-center gap-2"
+      >
+        <Image
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          alt="Google"
+          width={20}
+          height={20}
+          priority
+          unoptimized
+        />
+        Đăng nhập với Google
+      </button>
+    </div>
   );
 };
 

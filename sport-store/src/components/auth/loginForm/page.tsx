@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
-  handleLogin: (email: string, password: string) => Promise<void>;
+  handleLogin: (username: string, password: string) => Promise<void>;
   error: string;
   loading: boolean;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) => {
-  const [email, setEmail] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
@@ -16,34 +16,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await handleLogin(email, password);
+    await handleLogin(username, password);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && <div className="text-red-500 text-center">{error}</div>}
-
-      <div className="text-center text-sm">
-        <span className="text-gray-600">Chưa có tài khoản? </span>
-        <a href="/auth/register" className="font-bold text-red-600 hover:text-blue-500">
-          Đăng ký ngay
-        </a>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-6 flex flex-col items-center">
+      {error && <div className="text-red-500 font-semibold">{error}</div>}
 
       <div className="space-y-6">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+            Tên đăng nhập
           </label>
           <input
-            id="email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            id="username"
+            name="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Tên đăng nhập"
             className="mt-1 text-black block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
           />
         </div>
 
@@ -60,7 +52,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Nhập mật khẩu"
               className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
             />
             <button
               type="button"
@@ -71,23 +62,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) =>
             </button>
           </div>
         </div>
-
-        <div className="flex items-center justify-end">
-          <a href="/auth/forgotPasswordEmail" className="text-base text-black hover:text-blue-500">
-            Quên mật khẩu?
-          </a>
-        </div>
       </div>
 
-      <div className="space-y-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
-        >
-          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-        </button>
+      <div className="flex justify-between w-72">
+        <a href="/auth/forgotPasswordEmail" className="text-sm text-red-600 hover:underline">Quên mật khẩu?</a>
+        <a href="/auth/register" className="text-sm font-medium text-black hover:text-red-600">Đăng ký ngay</a>
       </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-72 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 font-semibold shadow-lg"
+      >
+        {loading ? 'Đang đăng nhập...' : 'Tiếp tục'}
+      </button>
     </form>
   );
 };
