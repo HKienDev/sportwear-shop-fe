@@ -118,6 +118,10 @@ export const fetchWithAuth = async <T = unknown>(
     return responseData;
   } catch (error) {
     if (error instanceof Error) {
+      // Nếu lỗi liên quan đến xác thực, dispatch event logout
+      if (error.message.includes("Phiên đăng nhập đã hết hạn")) {
+        window.dispatchEvent(new CustomEvent('logout'));
+      }
       throw new Error(error.message);
     }
     throw new Error("Có lỗi xảy ra khi gọi API");

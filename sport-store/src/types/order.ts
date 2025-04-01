@@ -1,33 +1,20 @@
+import type { User, Product } from "./base";
+
+export interface OrderItem {
+  product: Product;
+  quantity: number;
+  price: number;
+}
+
 export interface Order {
   _id: string;
   shortId: string;
-  user: string | null;
-  items: {
-    product: {
-      _id: string;
-      name: string;
-      price: number;
-      discountPrice?: number;
-      images: {
-        main: string;
-        sub: string[];
-      };
-    };
-    quantity: number;
-    price: number;
-  }[];
+  user: User;
+  items: OrderItem[];
   totalPrice: number;
-  paymentMethod: "COD" | "Stripe";
-  paymentStatus: "pending" | "paid";
-  paymentIntentId?: string;
+  paymentMethod: "cash" | "banking" | "momo";
+  paymentStatus: "pending" | "paid" | "failed";
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  shippingMethod: {
-    method: string;
-    expectedDate: string;
-    courier: string;
-    trackingId: string;
-    fee: number;
-  };
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -35,18 +22,8 @@ export interface Order {
     city: string;
     district: string;
     ward: string;
-    postalCode: string;
   };
-  cancelledAt?: Date;
-  cancelledBy?: string;
-  cancellationReason?: string;
-  statusHistory: {
-    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-    updatedAt: Date;
-    updatedBy: string;
-    note?: string;
-  }[];
-  isTotalSpentUpdated: boolean;
+  note?: string;
   createdAt: string;
   updatedAt: string;
 } 

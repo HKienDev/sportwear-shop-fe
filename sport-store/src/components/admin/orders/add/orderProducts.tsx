@@ -2,7 +2,7 @@
 
 import { useState, ChangeEvent } from "react";
 import { useCart } from "@/context/cartContext";
-import { useShippingMethod } from "@/context/shippingMethodContext";
+import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import { usePaymentMethod } from "@/context/paymentMethodContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
+import { CartItem } from "@/types/cart";
 
 interface Product {
   _id: string;
@@ -26,26 +27,8 @@ interface Product {
   shortId: string;
 }
 
-interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    images: {
-      main: string;
-      sub: string[];
-    };
-    shortId: string;
-  };
-}
-
 export default function OrderProducts() {
-  const { items: cartItems, addToCart, removeFromCart } = useCart();
+  const { items: cartItems, addItem, removeItem } = useCart();
   const { paymentMethod, setPaymentMethod } = usePaymentMethod();
   const { shippingMethod, setShippingMethod } = useShippingMethod();
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,23 +82,13 @@ export default function OrderProducts() {
 
   const handleAddToCart = (product: Product) => {
     const cartItem: CartItem = {
-      _id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.discountPrice || product.price,
       quantity: 1,
-      image: product.images.main || "/images/placeholder.png",
-      product: {
-        _id: product._id,
-        name: product.name,
-        price: product.discountPrice || product.price,
-        images: {
-          main: product.images.main || "/images/placeholder.png",
-          sub: product.images.sub || []
-        },
-        shortId: product.shortId
-      }
+      image: product.images.main || "/images/placeholder.png"
     };
-    addToCart(cartItem);
+    addItem(cartItem);
   };
 
   const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -125,11 +98,13 @@ export default function OrderProducts() {
 
   // Tính tổng tiền
   const subtotal = cartItems.reduce((total: number, item: CartItem) => {
-    return total + (item.product.price * item.quantity);
+    return total + (item.price * item.quantity);
   }, 0);
 
   // Phí vận chuyển
-  const shippingFee = shippingMethod === "Express" ? 50000 : shippingMethod === "SameDay" ? 100000 : 30000;
+  const shippingFee = shippingMethod === ShippingMethod.EXPRESS ? 50000 : 
+                     shippingMethod === ShippingMethod.SAME_DAY ? 100000 : 
+                     30000;
 
   // Tổng cộng
   const total = subtotal + shippingFee;
@@ -243,7 +218,7 @@ export default function OrderProducts() {
             {cartItems?.length > 0 ? (
               cartItems.map((item: CartItem) => (
                 <div
-                  key={item._id}
+                  key={item.productId}
                   className="flex items-start justify-between bg-gray-50 p-4 rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
@@ -254,7 +229,7 @@ export default function OrderProducts() {
                     </div>
                   </div>
                   <button
-                    onClick={() => removeFromCart(item._id)}
+                    onClick={() => removeItem(item.productId)}
                     className="ml-4 text-red-500 hover:text-red-700 transition-colors"
                   >
                     <X size={20} />

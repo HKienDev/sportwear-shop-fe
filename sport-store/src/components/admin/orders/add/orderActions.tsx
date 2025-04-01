@@ -7,30 +7,10 @@ import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { useCart } from "@/context/cartContext";
 import { usePaymentMethod } from "@/context/paymentMethodContext";
-import { useShippingMethod } from "@/context/shippingMethodContext";
+import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import { useCustomer } from "@/context/customerContext";
 import { checkUserByPhone } from "@/utils/checkUserByPhone";
-
-interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  discountPrice?: number;
-  quantity: number;
-  image?: string;
-  size?: string;
-  color?: string;
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    images: {
-      main: string;
-      sub: string[];
-    };
-    shortId: string;
-  };
-}
+import { CartItem } from "@/types/cart";
 
 interface User {
   _id: string;
@@ -120,11 +100,13 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
 
       // Tính tổng tiền
       const subtotal = cartItems.reduce((total: number, item: CartItem) => {
-        return total + (item.product.price * item.quantity);
+        return total + (item.price * item.quantity);
       }, 0);
 
       // Phí vận chuyển
-      const shippingFee = shippingMethod === "Express" ? 50000 : shippingMethod === "SameDay" ? 100000 : 30000;
+      const shippingFee = shippingMethod === ShippingMethod.EXPRESS ? 50000 : 
+                         shippingMethod === ShippingMethod.SAME_DAY ? 100000 : 
+                         30000;
 
       // Tổng cộng
       const total = subtotal + shippingFee;
@@ -132,9 +114,9 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
       // Tạo đơn hàng
       const orderData: OrderData = {
         items: cartItems.map(item => ({
-          product: item.product._id,
+          product: item.productId,
           quantity: item.quantity,
-          price: item.product.price,
+          price: item.price,
         })),
         totalPrice: total,
         paymentMethod: paymentMethod as "COD" | "Stripe",

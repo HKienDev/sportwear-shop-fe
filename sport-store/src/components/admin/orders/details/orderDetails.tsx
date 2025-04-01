@@ -210,7 +210,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       _id: item.product._id,
       name: item.product.name,
       price: item.product.price,
-      images: item.product.images,
+      images: {
+        main: item.product.images[0] || "",
+        sub: item.product.images.slice(1) || []
+      },
       shortId: item.product._id.slice(-6)
     },
     quantity: item.quantity,
@@ -223,7 +226,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       _id: item.product._id,
       name: item.product.name,
       price: item.product.price,
-      images: item.product.images
+      images: {
+        main: item.product.images[0] || "",
+        sub: item.product.images.slice(1) || []
+      }
     },
     quantity: item.quantity,
     price: item.price
@@ -273,7 +279,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         orderId={orderId}
-        customerId={order.user || "Không có dữ liệu"}
+        customerId={order.user._id || "Không có dữ liệu"}
         lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
         paymentStatus={order.status === "delivered" ? "Đã thanh toán" : "Chưa thanh toán"}
@@ -295,25 +301,19 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           city={order.shippingAddress?.city || "Không có dữ liệu"}
           district={order.shippingAddress?.district || "Không có dữ liệu"}
           ward={order.shippingAddress?.ward || "Không có dữ liệu"}
-          postalCode={order.shippingAddress?.postalCode || "Không có dữ liệu"}
         />
         <ShippingMethod
-          method={order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
+          method={order.paymentMethod === "cash" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
           trackingId={orderId}
-          shippingMethod={order.shippingMethod.method === "standard" ? "Vận chuyển thường" : "Vận chuyển nhanh"}
         />
       </div>
       <OrderTable
         items={orderTableItems}
         shippingMethod={{
-          name: order.shippingMethod.method,
-          fee: order.shippingMethod.method === "Standard" 
-            ? 30000 
-            : order.shippingMethod.method === "Express" 
-              ? 50000 
-              : 100000 // SameDay
+          name: "Standard",
+          fee: 30000
         }}
         discount={0}
       />

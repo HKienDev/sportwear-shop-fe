@@ -1,20 +1,21 @@
 import { fetchWithAuth } from "./fetchWithAuth";
+import type { ApiResponse } from "@/types/api";
 
-interface UserResponse {
-  success: boolean;
-  exists: boolean;
-  message: string;
-  user?: {
-    _id: string;
-    username: string;
-    email: string;
-    phone: string;
-  };
+interface UserData {
+  _id: string;
+  username: string;
+  email: string;
+  phone: string;
 }
 
-export const checkUserByPhone = async (phone: string) => {
+interface UserResponseData {
+  exists: boolean;
+  user?: UserData;
+}
+
+export const checkUserByPhone = async (phone: string): Promise<UserData | null> => {
   try {
-    const response = await fetchWithAuth(`/users/phone/${phone}`);
+    const response = await fetchWithAuth<UserResponseData>(`/users/phone/${phone}`);
     console.log("🔹 [checkUserByPhone] Response:", response);
 
     if (!response.success) {
@@ -22,13 +23,13 @@ export const checkUserByPhone = async (phone: string) => {
       return null;
     }
 
-    if (!response.exists || !response.user) {
+    if (!response.data?.exists || !response.data?.user) {
       console.log("❌ [checkUserByPhone] No user data returned");
       return null;
     }
 
-    console.log("✅ [checkUserByPhone] Found user:", response.user);
-    return response.user;
+    console.log("✅ [checkUserByPhone] Found user:", response.data.user);
+    return response.data.user;
   } catch (error) {
     console.error("❌ [checkUserByPhone] Error:", error);
     return null;

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Order } from "@/types/order";
+import { toast } from "react-hot-toast";
+import apiClient from '@/lib/api';
+import { ERROR_MESSAGES } from "@/config/constants";
+import type { Order } from "@/types/order";
 
 export const useOrderDetails = (orderId: string) => {
   const [order, setOrder] = useState<Order | null>(null);
@@ -11,15 +13,18 @@ export const useOrderDetails = (orderId: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetchWithAuth<Order>(`/api/orders/admin/${orderId}`);
+      const response = await apiClient.orders.getById(orderId);
       
-      if (!response.success || !response.data) {
-        throw new Error(response.message || "Không thể lấy thông tin đơn hàng");
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || ERROR_MESSAGES.ORDER_NOT_FOUND);
       }
 
-      setOrder(response.data);
+      setOrder(response.data.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra khi tải thông tin đơn hàng");
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error('Error fetching order details:', err);
     } finally {
       setLoading(false);
     }

@@ -1,44 +1,32 @@
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
+import apiClient from './api';
+import type { ApiResponse } from '@/types/api';
 
-interface FetchOptions extends RequestInit {
-  method?: string;
-  headers?: Record<string, string>;
-  body?: string;
-}
+export const fetchWithAuth = async <T>(
+    url: string,
+    _options: RequestInit = {}
+): Promise<ApiResponse<T>> => {
+    try {
+        const authResponse = await apiClient.auth.checkAuth();
+        if (!authResponse.data.success) {
+            throw new Error('Auth check failed');
+        }
 
-export async function fetchWithAuth<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<ApiResponse<T>> {
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      throw new Error("Không tìm thấy token");
+        const response = await fetch(url, {
+            ..._options,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ..._options.headers,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch with auth error:', error);
+        throw error;
     }
-
-    const response = await fetch(`http://localhost:4000/api${endpoint}`, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Lỗi kết nối đến server");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Lỗi không xác định");
-  }
-} 
+}; 

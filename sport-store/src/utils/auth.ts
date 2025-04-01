@@ -1,4 +1,5 @@
 import { fetchApi } from './api';
+import { isAdmin as checkAdmin } from './roleUtils';
 
 export const getAuthToken = async (): Promise<string | null> => {
   try {
@@ -98,7 +99,15 @@ export const getUserRole = () => {
 };
 
 export const isAdmin = () => {
-  return getUserRole() === 'admin';
+  try {
+    const user = localStorage.getItem('user');
+    if (!user) return false;
+    const userData = JSON.parse(user);
+    return checkAdmin(userData);
+  } catch (error) {
+    console.error('❌ Lỗi khi kiểm tra admin:', error);
+    return false;
+  }
 };
 
 export const refreshToken = async () => {

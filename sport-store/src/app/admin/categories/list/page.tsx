@@ -7,13 +7,16 @@ import CategorySearch from "@/components/admin/categories/list/categorySearch";
 import CategoryTable from "@/components/admin/categories/list/categoryTable";
 import Pagination from "@/components/admin/categories/list/pagination";
 import DeleteButton from "@/components/admin/categories/list/categoryButton";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { fetchApi } from "@/utils/api";
+import type { ApiResponse } from "@/types/api";
 
 interface Category {
   _id: string;
   name: string;
   productCount: number;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export default function CategoryList() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -25,7 +28,6 @@ export default function CategoryList() {
   const router = useRouter();
 
   // Tính toán số trang và danh sách thể loại hiện tại
-  const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
   const currentCategories = filteredCategories.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -36,19 +38,20 @@ export default function CategoryList() {
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, ok, status } = await fetchWithAuth("/categories");
+      const response = await fetchApi("/categories");
 
-      if (!ok) {
-        if (status === 401 || status === 403) {
-          toast.error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập");
+      if (!response.success) {
+        toast.error(response.message || "Lỗi khi lấy danh sách thể loại");
+        if (response.message?.includes("unauthorized") || response.message?.includes("forbidden")) {
           router.push("/login");
           return;
         }
-        throw new Error("Lỗi khi lấy danh sách thể loại");
+        throw new Error(response.message);
       }
 
-      setCategories(data);
-      setFilteredCategories(data);
+      const categoriesData = response.data as Category[];
+      setCategories(categoriesData || []);
+      setFilteredCategories(categoriesData || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách thể loại:", error);
       toast.error("Không thể tải danh sách thể loại");
@@ -88,21 +91,21 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
     try {
       // Xóa tuần tự để có thể xử lý lỗi cho từng thể loại
       for (const id of selectedCategories) {
-        const response = await fetchWithAuth(`/categories/admin/${id}`, {
+        const response = await fetchApi(`/categories/admin/${id}`, {
           method: "DELETE",
         });
 
-        if (!response.ok) {
-          // Nếu có lỗi với thể loại nào đó, dừng quá trình xóa
-          if (response.status === 403) {
+        if (!response.success) {
+          const errorMessage = response.message || "Có lỗi xảy ra khi xóa thể loại";
+          if (errorMessage.includes("forbidden")) {
             toast.error("Bạn không có quyền xóa thể loại");
             return;
           }
-          if (response.status === 404) {
+          if (errorMessage.includes("not found")) {
             toast.error(`Không tìm thấy thể loại với ID: ${id}`);
             continue;
           }
-          throw new Error("Có lỗi xảy ra khi xóa thể loại");
+          throw new Error(errorMessage);
         }
       }
 

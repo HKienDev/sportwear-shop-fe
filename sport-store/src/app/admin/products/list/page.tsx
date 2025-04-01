@@ -43,6 +43,20 @@ interface Product {
   sku: string;
 }
 
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data: ProductResponse[];
+}
+
+interface ToggleStatusResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    isActive: boolean;
+  };
+}
+
 const ITEMS_PER_PAGE = 10;
 
 export default function ProductList() {
@@ -65,14 +79,14 @@ export default function ProductList() {
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetchWithAuth("/products");
+      const response = await fetchWithAuth("/products") as ApiResponse;
 
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi lấy danh sách sản phẩm");
       }
 
       // Chuyển đổi dữ liệu để phù hợp với interface Product
-      const formattedProducts = response.products.map((product: ProductResponse) => ({
+      const formattedProducts = response.data.map((product: ProductResponse) => ({
         _id: product._id,
         name: product.name,
         description: product.description,
@@ -187,7 +201,7 @@ export default function ProductList() {
     try {
       const response = await fetchWithAuth(`/products/${productId}/toggle-status`, {
         method: "PATCH",
-      });
+      }) as ToggleStatusResponse;
 
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi cập nhật trạng thái sản phẩm");
@@ -197,19 +211,19 @@ export default function ProductList() {
       setProducts((prev) =>
         prev.map((product) =>
           product._id === productId
-            ? { ...product, isActive: response.product.isActive }
+            ? { ...product, isActive: response.data.isActive }
             : product
         )
       );
       setFilteredProducts((prev) =>
         prev.map((product) =>
           product._id === productId
-            ? { ...product, isActive: response.product.isActive }
+            ? { ...product, isActive: response.data.isActive }
             : product
         )
       );
 
-      toast.success(response.message);
+      toast.success(response.message || "Cập nhật trạng thái thành công");
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái sản phẩm:", error);
       toast.error("Không thể cập nhật trạng thái sản phẩm");
