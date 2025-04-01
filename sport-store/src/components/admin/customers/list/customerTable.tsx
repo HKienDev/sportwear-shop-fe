@@ -1,126 +1,214 @@
-import { Mail, Phone } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+'use client';
 
-interface Customer {
-  _id: string;
-  fullname: string;
-  email: string;
-  phone: string;
-  lastActivity: string;
-  orderCount: number;
-  totalSpent: number;
-  avatar: string;
-  isActive: boolean;
-}
+import { useState } from 'react';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Customer } from '@/types/customer';
+import { Eye, Mail, Phone, Trash2, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { deleteCustomer } from '@/services/customerService';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 interface CustomerTableProps {
-  customers: Customer[];
-  selectedCustomers: string[];
-  onSelectCustomer: (id: string) => void;
+    customers: Customer[];
+    onDelete: (id: string) => void;
+    onViewDetails: (id: string) => void;
 }
 
-export default function CustomerTable({ customers, selectedCustomers, onSelectCustomer }: CustomerTableProps) {
-  return (
-    <div className="bg-white rounded-lg shadow overflow-x-auto relative">
-      <table className="min-w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="p-4">
-              <input 
-                type="checkbox" 
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  if (isChecked) {
-                    customers.forEach(customer => onSelectCustomer(customer._id));
-                  } else {
-                    selectedCustomers.forEach(id => onSelectCustomer(id));
-                  }
-                }}
-                checked={selectedCustomers.length === customers.length && customers.length > 0}
-              />
-            </th>
-            <th className="p-4 text-left">Tên Khách Hàng</th>
-            <th className="p-4 text-left">Liên Hệ</th>
-            <th className="p-4 text-left">Tổng Đơn Hàng</th>
-            <th className="p-4 text-left">Tổng Chi Tiêu</th>
-            <th className="p-4 text-left">Trạng Thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          {customers.length > 0 ? (
-            customers.map((customer) => (
-              <tr key={customer._id} className="border-b hover:bg-gray-50">
-                <td className="p-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedCustomers.includes(customer._id)}
-                    onChange={() => onSelectCustomer(customer._id)}
-                  />
-                </td>
-                <td className="p-4 flex items-center">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                    <Image
-                      src={customer.avatar || "/avatarDefault.jpg"}
-                      alt={customer.fullname || "Avatar"}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
+export function CustomerTable({
+    customers,
+    onDelete,
+    onViewDetails
+}: CustomerTableProps) {
+    const router = useRouter();
+    const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedCustomers(customers.map(customer => customer._id));
+        } else {
+            setSelectedCustomers([]);
+        }
+    };
+
+    const handleSelectCustomer = (id: string) => {
+        setSelectedCustomers(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(customerId => customerId !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+    };
+
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteCustomer(id);
+            onDelete(id);
+            toast.success('Xóa khách hàng thành công');
+        } catch (error) {
+            toast.error('Xóa khách hàng thất bại');
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedCustomers.length === 0) {
+            toast.warning('Vui lòng chọn khách hàng cần xóa');
+            return;
+        }
+
+        try {
+            await Promise.all(
+                selectedCustomers.map((id) => deleteCustomer(id))
+            );
+            selectedCustomers.forEach((id) => onDelete(id));
+            setSelectedCustomers([]);
+            toast.success('Xóa khách hàng thành công');
+        } catch (error) {
+            toast.error('Xóa khách hàng thất bại');
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="select-all"
+                        checked={selectedCustomers.length === customers.length}
+                        onCheckedChange={handleSelectAll}
                     />
-                  </div>
-                  <div className="ml-3">
-                    <div className="font-medium">
-                      <Link 
-                        href={`/admin/customers/details/${customer._id}`}
-                        className="hover:text-blue-600 hover:underline"
-                      >
-                        {customer.fullname || "Khách hàng chưa thêm"}
-                      </Link>
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {customer.lastActivity || "Chưa có hoạt động"}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center mb-1">
-                    <Mail size={16} className="mr-2 text-gray-500" />
-                    <span>{customer.email}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Phone size={16} className="mr-2 text-gray-500" />
-                    <span>{customer.phone || "Chưa cập nhật"}</span>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <Link 
-                    href={`/admin/customers/details/${customer._id}`}
-                    className="hover:text-blue-600 hover:underline"
-                  >
-                    {customer.orderCount || 0} đơn
-                  </Link>
-                </td>
-                <td className="p-4">{customer.totalSpent?.toLocaleString() || 0}₫</td>
-                <td className="p-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm ${
-                      customer.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {customer.isActive ? "Hoạt động" : "Không hoạt động"}
-                  </span>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={6} className="text-center py-4">Không có khách hàng nào.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+                    <label
+                        htmlFor="select-all"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        Chọn tất cả
+                    </label>
+                </div>
+                {selectedCustomers.length > 0 && (
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleBulkDelete}
+                        className="flex items-center space-x-2"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Xóa ({selectedCustomers.length})</span>
+                    </Button>
+                )}
+            </div>
+
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-12"></TableHead>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Thông tin</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Số điện thoại</TableHead>
+                            <TableHead>Ngày tham gia</TableHead>
+                            <TableHead>Trạng thái</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {customers.map((customer) => (
+                            <TableRow key={customer._id}>
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selectedCustomers.includes(customer._id)}
+                                        onCheckedChange={() => handleSelectCustomer(customer._id)}
+                                    />
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                    {customer._id.slice(-6)}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                            <span className="text-sm font-medium text-gray-600">
+                                                {customer.name.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div className="font-medium">{customer.name}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {customer.address}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{customer.email}</TableCell>
+                                <TableCell>{customer.phone}</TableCell>
+                                <TableCell>
+                                    {new Date(customer.createdAt).toLocaleDateString("vi-VN", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                    })}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={customer.isActive ? "success" : "destructive"}
+                                        className="capitalize"
+                                    >
+                                        {customer.isActive ? "Hoạt động" : "Không hoạt động"}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0 hover:bg-gray-100"
+                                            >
+                                                <span className="sr-only">Mở menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() => onViewDetails(customer._id)}
+                                                className="cursor-pointer"
+                                            >
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                Chi tiết
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleDelete(customer._id)}
+                                                className="cursor-pointer text-red-600 focus:text-red-600"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Xóa
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
 } 

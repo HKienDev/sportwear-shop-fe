@@ -19,22 +19,18 @@ export type ApiResponseData =
     | null
     | undefined;
 
-export interface ApiResponse<T = ApiResponseData> {
+export interface ApiResponse<T = any> {
     success: boolean;
     message?: string;
     data?: T;
+    error?: string;
 }
 
 export interface ApiError {
-    success: false;
     message: string;
-    errors?: Record<string, string[]>;
-    response?: {
-        data?: {
-            message: string;
-            errors?: Record<string, string[]>;
-        };
-    };
+    code?: string;
+    status?: number;
+    details?: any;
 }
 
 export interface PaginationParams {

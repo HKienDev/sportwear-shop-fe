@@ -173,20 +173,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 document.cookie = `refreshToken=${refreshToken}; path=/; secure; samesite=strict`;
                 
                 // Lưu thông tin user và token
-                await Promise.all([
-                    new Promise(resolve => {
-                        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
-                        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
-                        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
-                        resolve(null);
-                    }),
-                    new Promise(resolve => {
-                        setUser(userData);
-                        setIsAuthenticated(true);
-                        resolve(null);
-                    })
-                ]);
-
+                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+                localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+                localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+                
+                setUser(userData);
+                setIsAuthenticated(true);
                 toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
                 
                 // Xử lý chuyển hướng
