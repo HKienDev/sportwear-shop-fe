@@ -21,22 +21,22 @@ export default function CouponActions({ selectedCount, onDelete, disabled }: Cou
   };
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-3">
       <Link href="/admin/coupons/add" passHref>
         <button
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+          className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
         >
-          <Plus size={16} />
+          <Plus size={18} />
           Thêm mã khuyến mại
         </button>
       </Link>
 
       <button
-        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+        className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
         onClick={handleDelete}
         disabled={selectedCount === 0 || isDeleting || disabled}
       >
-        <Trash size={16} className={isDeleting ? "animate-spin" : ""} />
+        <Trash size={18} className={isDeleting ? "animate-spin" : ""} />
         {isDeleting ? "Đang xóa..." : `Xóa (${selectedCount})`}
       </button>
     </div>

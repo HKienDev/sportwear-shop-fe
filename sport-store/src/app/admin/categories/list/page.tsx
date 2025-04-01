@@ -8,12 +8,13 @@ import CategoryTable from "@/components/admin/categories/list/categoryTable";
 import Pagination from "@/components/admin/categories/list/pagination";
 import DeleteButton from "@/components/admin/categories/list/categoryButton";
 import { fetchApi } from "@/utils/api";
-import type { ApiResponse } from "@/types/api";
 
 interface Category {
   _id: string;
   name: string;
   productCount: number;
+  createdAt: string;
+  isActive: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -124,39 +125,56 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
   }, [fetchCategories]);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        DANH SÁCH THỂ LOẠI
-        {isLoading && <span className="ml-2 text-gray-500 text-sm">(Đang tải...)</span>}
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="container mx-auto p-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                DANH SÁCH THỂ LOẠI
+              </h1>
+              {isLoading && (
+                <div className="mt-2 flex items-center text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  <span className="text-sm">Đang tải...</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-      <div className="flex justify-between mb-4">
-        <CategorySearch
-          searchQuery={searchQuery}
-          onSearchChange={handleSearch}
-          onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-            handleSearch(searchQuery);
-          }}
-        />
-        <DeleteButton
-          selectedCount={selectedCategories.length}
-          onDelete={handleDeleteSelected}
-        />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <CategorySearch
+              searchQuery={searchQuery}
+              onSearchChange={handleSearch}
+              onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                handleSearch(searchQuery);
+              }}
+            />
+            <DeleteButton
+              selectedCount={selectedCategories.length}
+              onDelete={handleDeleteSelected}
+            />
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <CategoryTable
+              categories={currentCategories}
+              selectedCategories={selectedCategories}
+              onSelectCategory={handleSelectCategory}
+              onDeleteCategory={handleDeleteSelected}
+            />
+          </div>
+
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </div>
       </div>
-
-      {/* Truyền danh sách thể loại vào bảng */}
-      <CategoryTable
-        categories={currentCategories}
-        selectedCategories={selectedCategories}
-        onSelectCategory={handleSelectCategory}
-      />
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
     </div>
   );
 }

@@ -48,23 +48,26 @@ export const login = async (email: string, password: string): Promise<ApiRespons
         
         if (!response?.data) {
             console.log('❌ No response data');
-            return {
-                success: false,
-                message: 'Login failed',
-                data: undefined
-            };
+            throw new Error('Đăng nhập thất bại');
         }
         
-        const responseData = response.data as unknown as ApiResponse<AuthResponseData>;
+        // Kiểm tra nếu response là string (trường hợp lỗi rate limiting)
+        if (typeof response.data === 'string') {
+            console.log('❌ Rate limit error:', response.data);
+            throw new Error(response.data);
+        }
+        
+        const responseData = response.data as ApiResponse<AuthResponseData>;
         console.log('📦 Parsed response data:', responseData);
         
-        if (responseData.success && responseData.data) {
-            const { user, accessToken, refreshToken } = responseData.data;
-            console.log('✅ Login successful, setting auth data');
-            setAuthData({ accessToken, refreshToken, user });
-        } else {
+        if (!responseData.success || !responseData.data) {
             console.log('❌ Login failed:', responseData.message);
+            throw new Error(responseData.message || 'Đăng nhập thất bại');
         }
+
+        const { user, accessToken, refreshToken } = responseData.data;
+        console.log('✅ Login successful, setting auth data');
+        setAuthData({ accessToken, refreshToken, user });
         
         return responseData;
     } catch (error) {

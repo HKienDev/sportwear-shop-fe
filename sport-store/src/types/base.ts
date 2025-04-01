@@ -1,20 +1,21 @@
+import type { OrderItem } from './order';
+
 export interface BaseEntity {
     _id: string;
     createdAt: string;
     updatedAt: string;
 }
 
-export interface User extends BaseEntity {
-    email: string;
+export interface User {
+    _id: string;
     name: string;
-    fullname?: string;
-    phone: string;
-    role: 'user' | 'admin';
-    status: 'active' | 'inactive' | 'blocked';
-    isVerified: boolean;
+    email: string;
+    phone?: string;
+    address?: string;
     avatar?: string;
-    membershipLevel?: string;
-    totalSpent?: number;
+    role: 'admin' | 'user';
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Category extends BaseEntity {
@@ -26,34 +27,39 @@ export interface Category extends BaseEntity {
     isActive: boolean;
 }
 
-export interface Product extends BaseEntity {
+export interface Product {
+    _id: string;
     name: string;
-    slug: string;
     description: string;
     price: number;
-    discountPrice?: number;
-    categoryId: string;
     images: string[];
+    category: string;
     stock: number;
     isActive: boolean;
-    specifications?: Record<string, string>;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CartItem {
+    _id: string;
     productId: string;
     quantity: number;
     price: number;
-    product: Product;
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface Order extends BaseEntity {
+export interface Order {
+    _id: string;
     shortId: string;
+    userId: string;
     user: User;
-    items: CartItem[];
+    items: OrderItem[];
+    total: number;
     totalPrice: number;
     status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-    paymentMethod: 'cash' | 'banking' | 'momo';
     paymentStatus: 'pending' | 'paid' | 'failed';
+    paymentMethod: 'cash' | 'banking' | 'momo';
     shippingAddress: {
         fullName: string;
         phone: string;
@@ -63,6 +69,8 @@ export interface Order extends BaseEntity {
         ward: string;
     };
     note?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Stats {
