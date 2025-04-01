@@ -29,7 +29,8 @@ export async function middleware(request: NextRequest) {
         // Parse user data
         let user;
         try {
-            user = JSON.parse(userCookie);
+            const decodedUserCookie = decodeURIComponent(userCookie);
+            user = JSON.parse(decodedUserCookie);
         } catch (error) {
             console.error('❌ Lỗi khi parse user data:', error);
             const response = NextResponse.redirect(new URL('/auth/login', request.url));

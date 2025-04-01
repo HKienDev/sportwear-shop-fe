@@ -160,11 +160,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             setLoading(true);
             isAuthenticatingRef.current = true;
+            console.log('🔐 Attempting login with email:', data.email);
             const response = await loginService(data.email, data.password);
-            console.log('Login response:', response);
+            console.log('📥 Login response:', response);
             
-            if (response.success && response.data?.user) {
+            if (response.success && response.data) {
                 const { user: userData, accessToken, refreshToken } = response.data;
+                console.log('✅ Login successful, setting auth data');
                 
                 // Lưu token vào cookie
                 document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict`;
@@ -200,6 +202,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     router.push(redirectPath);
                 }
             } else {
+                console.log('❌ Login failed:', response.message);
                 setUser(null);
                 setIsAuthenticated(false);
                 throw new Error(response.message || 'Đăng nhập thất bại');

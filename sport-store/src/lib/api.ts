@@ -52,7 +52,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 };
 
 // Tạo instance Axios
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
     headers: {
@@ -235,25 +235,30 @@ const apiClient = {
     auth: {
         login: async (email: string, password: string) => {
             try {
+                console.log('🔐 Making login request to:', `${API_URL}/auth/login`);
                 const response = await api.post<ApiResponse<LoginResponse['data']>>('/auth/login', { email, password });
+                console.log('📥 Login response:', response.data);
+                
                 if (response.data.success && response.data.data) {
                     // Reset refresh attempts khi login thành công
                     resetRefreshAttempts();
                     // Lưu thông tin user vào localStorage và cookie
                     const userData = response.data.data.user;
                     localStorage.setItem('user', JSON.stringify(userData));
-                    document.cookie = `user=${JSON.stringify(userData)}; path=/;`;
+                    // Encode user data trước khi lưu vào cookie
+                    const encodedUserData = encodeURIComponent(JSON.stringify(userData));
+                    document.cookie = `user=${encodedUserData}; path=/;`;
                     
                     // Chuyển hướng dựa vào role
                     if (userData.role === 'admin') {
-                        window.location.href = '/admin';
+                        window.location.replace('/admin');
                     } else {
-                        window.location.href = '/';
+                        window.location.replace('/');
                     }
                 }
                 return response;
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('🚨 Login request error:', error);
                 throw error;
             }
         },
@@ -262,8 +267,9 @@ const apiClient = {
         },
         logout: async () => {
             try {
+                // Gọi API logout
                 const response = await api.post<ApiResponse<EmptyResponse['data']>>('/auth/logout');
-                // Xóa cookies và localStorage ngay cả khi API trả về lỗi
+                // Luôn xóa dữ liệu local
                 document.cookie.split(';').forEach(cookie => {
                     const [name] = cookie.split('=');
                     document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
@@ -271,7 +277,8 @@ const apiClient = {
                 localStorage.clear();
                 return response;
             } catch (error) {
-                // Xóa cookies và localStorage ngay cả khi API trả về lỗi
+                console.error('Logout API error:', error);
+                // Vẫn xóa dữ liệu local ngay cả khi có lỗi
                 document.cookie.split(';').forEach(cookie => {
                     const [name] = cookie.split('=');
                     document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;

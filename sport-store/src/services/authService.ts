@@ -7,7 +7,8 @@ import type {
     TokenVerifyResponse,
     ProfileResponse,
     EmptyResponse,
-    AuthUser
+    AuthUser,
+    AuthResponseData
 } from '@/types/auth';
 import apiClient from '@/lib/api';
 import type { ApiResponse } from '@/types/api';
@@ -39,16 +40,35 @@ const clearAuthData = (): void => {
 };
 
 // Auth service functions
-export const login = async (email: string, password: string): Promise<ApiResponse<LoginResponse['data']>> => {
+export const login = async (email: string, password: string): Promise<ApiResponse<AuthResponseData>> => {
     try {
+        console.log('🔐 Attempting login with email:', email);
         const response = await apiClient.auth.login(email, password);
-        if (response.data.success && response.data.data?.user) {
-            const { user, accessToken, refreshToken } = response.data.data;
-            setAuthData({ accessToken, refreshToken, user });
+        console.log('📥 Login response:', response);
+        
+        if (!response?.data) {
+            console.log('❌ No response data');
+            return {
+                success: false,
+                message: 'Login failed',
+                data: undefined
+            };
         }
-        return response.data;
+        
+        const responseData = response.data as unknown as ApiResponse<AuthResponseData>;
+        console.log('📦 Parsed response data:', responseData);
+        
+        if (responseData.success && responseData.data) {
+            const { user, accessToken, refreshToken } = responseData.data;
+            console.log('✅ Login successful, setting auth data');
+            setAuthData({ accessToken, refreshToken, user });
+        } else {
+            console.log('❌ Login failed:', responseData.message);
+        }
+        
+        return responseData;
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('🚨 Login error:', error);
         throw error;
     }
 };

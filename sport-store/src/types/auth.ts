@@ -1,11 +1,11 @@
 import type { User } from './base';
 
-export type AuthUser = User & {
+export interface AuthUser extends User {
     role: 'admin' | 'user';
     isActive: boolean;
     isVerified: boolean;
     lastLoginAt?: string;
-};
+}
 
 export interface LoginRequest {
     email: string;
@@ -101,4 +101,40 @@ export interface AuthContextType extends AuthState {
     requestUpdate: () => Promise<void>;
     updateUser: (data: UpdateProfileRequest) => Promise<void>;
     loginWithGoogle: (token: string) => Promise<{ success: boolean }>;
+}
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
 } 
