@@ -2,26 +2,9 @@
 
 import { useCustomer } from "@/context/customerContext";
 import { useCart } from "@/context/cartContext";
-import { useShippingMethod } from "@/context/shippingMethodContext";
+import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import Image from "next/image";
-
-interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    images: {
-      main: string;
-      sub: string[];
-    };
-    shortId: string;
-  };
-}
+import { CartItem } from "@/types/cart";
 
 export default function OrderPreview() {
   const { customer } = useCustomer();
@@ -34,7 +17,9 @@ export default function OrderPreview() {
   }, 0);
 
   // Phí vận chuyển
-  const shippingFee = shippingMethod === "Express" ? 50000 : shippingMethod === "SameDay" ? 100000 : 30000;
+  const shippingFee = shippingMethod === ShippingMethod.EXPRESS ? 50000 : 
+                     shippingMethod === ShippingMethod.SAME_DAY ? 100000 : 
+                     30000;
 
   // Tổng cộng
   const total = subtotal + shippingFee;
@@ -64,29 +49,33 @@ export default function OrderPreview() {
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Sản phẩm</th>
               <th className="px-6 py-3 text-center text-sm font-medium text-gray-500">Số lượng</th>
               <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Đơn giá</th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Thành tiền</th>
             </tr>
           </thead>
           <tbody>
             {cartItems.map((item: CartItem) => (
-              <tr key={item._id} className="border-b hover:bg-gray-50">
+              <tr key={item.productId} className="border-b hover:bg-gray-50">
                 <td className="py-4 px-6">
                   <div className="flex items-center">
                     <div className="relative w-16 h-16">
                       <Image
-                        src={item.product.images.main || "/images/placeholder.png"}
-                        alt={item.product.name}
+                        src={item.image}
+                        alt={item.name}
                         fill
                         className="object-cover rounded"
                       />
                     </div>
                     <div className="ml-4">
-                      <div className="font-medium">{item.product.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{item.name}</div>
                     </div>
                   </div>
                 </td>
-                <td className="py-4 px-6 text-center">{item.quantity}</td>
-                <td className="py-4 px-6 text-right">
-                  {item.price.toLocaleString("vi-VN")}đ
+                <td className="py-4 px-6 text-sm text-gray-500">{item.quantity}</td>
+                <td className="py-4 px-6 text-sm text-gray-500">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                </td>
+                <td className="py-4 px-6 text-sm text-gray-500">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                 </td>
               </tr>
             ))}

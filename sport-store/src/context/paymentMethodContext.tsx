@@ -2,15 +2,21 @@
 
 import { createContext, useState, useContext } from "react";
 
+export enum PaymentMethod {
+  COD = "COD",
+  BANKING = "BANKING",
+  MOMO = "MOMO"
+}
+
 interface PaymentMethodContextType {
-  paymentMethod: string;
-  setPaymentMethod: (method: string) => void;
+  paymentMethod: PaymentMethod;
+  setPaymentMethod: (method: PaymentMethod) => void;
 }
 
 const PaymentMethodContext = createContext<PaymentMethodContextType | undefined>(undefined);
 
 export function PaymentMethodProvider({ children }: { children: React.ReactNode }) {
-  const [paymentMethod, setPaymentMethod] = useState("COD"); // Mặc định là COD
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
 
   return (
     <PaymentMethodContext.Provider value={{ paymentMethod, setPaymentMethod }}>

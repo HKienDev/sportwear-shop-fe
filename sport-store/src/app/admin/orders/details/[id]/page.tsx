@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { useOrderDetails } from "@/hooks/useOrderDetails";
+import type { Order } from "@/types/order";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -48,11 +49,14 @@ export default function OrderDetailsPage() {
     );
   }
 
+  // Đảm bảo order không phải null trước khi render
+  const orderData: Order = order;
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">CHI TIẾT ĐƠN HÀNG</h1>
       <div className="max-w-7xl mx-auto">
-        <OrderDetails order={order} orderId={order._id} />
+        <OrderDetails order={orderData} orderId={orderData._id} />
       </div>
     </div>
   );

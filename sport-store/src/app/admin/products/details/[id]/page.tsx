@@ -9,11 +9,11 @@ import ProductInfo from "@/components/admin/products/details/ProductInfo";
 import ProductImages from "@/components/admin/products/details/ProductImages";
 import ProductVariants from "@/components/admin/products/details/ProductVariants";
 
-interface PageProps {
+type PageProps = {
   params: {
     id: string;
   };
-}
+};
 
 export default function ProductDetailsPage({ params }: PageProps) {
   const router = useRouter();

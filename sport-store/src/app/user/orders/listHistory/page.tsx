@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data: Order[];
+}
+
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -11,9 +17,9 @@ export default function OrderHistoryPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetchWithAuth("/orders/user");
-        if (!response.ok) {
-          throw new Error("Failed to fetch orders");
+        const response = await fetchWithAuth("/orders/user") as ApiResponse;
+        if (!response.success) {
+          throw new Error(response.message || "Failed to fetch orders");
         }
         setOrders(response.data);
       } catch (error) {

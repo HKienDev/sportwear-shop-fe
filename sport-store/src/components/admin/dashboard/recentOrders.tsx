@@ -1,225 +1,64 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { fetchWithAuth } from '@/lib/api';
+'use client';
 
-interface Order {
-  _id: string;
-  orderNumber: string;
-  customerName: string;
-  totalPrice: number;
-  status: string;
-  createdAt: string;
-  user?: { name: string };
-  shippingAddress?: { fullName: string };
+import type { RecentOrder } from '@/types/dashboard';
+import { formatCurrency } from '@/lib/utils';
+
+interface RecentOrdersProps {
+  orders: RecentOrder[];
 }
 
-interface ApiResponse {
-  success: boolean;
-  data: Order[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export default function RecentOrders() {
-  const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<ApiResponse['pagination']>({ page: 1, limit: 10, total: 0, totalPages: 0 });
-  const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetchWithAuth(`/orders/admin/recent?page=${currentPage}&limit=10`);
-        if (response) {
-          const data = await response.json() as ApiResponse;
-          if (data.success) {
-            setOrders(data.data);
-            setPagination(data.pagination);
-          }
-        }
-      } catch (error) {
-        console.error('Lỗi khi lấy danh sách đơn hàng:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [currentPage]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Chờ xử lý';
-      case 'processing':
-        return 'Đang xử lý';
-      case 'shipped':
-        return 'Đang giao';
-      case 'delivered':
-        return 'Đã giao';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
-  };
-
-  if (loading) {
+export default function RecentOrders({ orders }: RecentOrdersProps) {
+  if (!orders.length) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-          ))}
-        </div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-gray-500">Không có đơn hàng gần đây</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h3 className="text-lg font-semibold mb-4">Đơn hàng đang giao</h3>
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Đơn Hàng Gần Đây</h2>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead>
-            <tr className="text-left text-sm text-gray-500 border-b">
-              <th className="pb-3 font-medium">Mã đơn</th>
-              <th className="pb-3 font-medium">Khách hàng</th>
-              <th className="pb-3 font-medium">Tổng tiền</th>
-              <th className="pb-3 font-medium">Trạng thái</th>
-              <th className="pb-3 font-medium">Ngày tạo</th>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã Đơn</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách Hàng</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng Tiền</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng Thái</th>
             </tr>
           </thead>
-          <tbody className="text-sm">
+          <tbody className="bg-white divide-y divide-gray-200">
             {orders.map((order) => (
-              <tr 
-                key={order._id}
-                className="border-b cursor-pointer hover:bg-gray-50"
-                onClick={() => router.push(`/admin/orders/details/${order._id}`)}
-              >
-                <td className="py-3 text-gray-900 font-medium">
-                  #{order.orderNumber ? order.orderNumber.slice(-6) : order._id.slice(-6)}
+              <tr key={order._id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  #{order.orderNumber}
                 </td>
-                <td className="py-3 text-gray-600">
-                  {order.user?.name || order.shippingAddress?.fullName || 'Khách vãng lai'}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {order.customerName}
                 </td>
-                <td className="py-3 text-gray-900">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalPrice)}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatCurrency(order.total)}
                 </td>
-                <td className="py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                    {getStatusText(order.status)}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {order.status === 'delivered' ? 'Đã Giao' :
+                     order.status === 'processing' ? 'Đang Xử Lý' :
+                     order.status === 'pending' ? 'Chờ Xử Lý' :
+                     'Đã Hủy'}
                   </span>
-                </td>
-                <td className="py-3 text-gray-600">
-                  {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {/* Phân trang */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến {Math.min(pagination.page * pagination.limit, pagination.total)} trong tổng số {pagination.total} đơn hàng
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className={`px-2 py-1 rounded-md text-sm font-medium ${
-                currentPage === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`px-2 py-1 rounded-md text-sm font-medium ${
-                currentPage === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Hiển thị các nút số trang */}
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  currentPage === pageNum
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
-              disabled={currentPage === pagination.totalPages}
-              className={`px-2 py-1 rounded-md text-sm font-medium ${
-                currentPage === pagination.totalPages
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setCurrentPage(pagination.totalPages)}
-              disabled={currentPage === pagination.totalPages}
-              className={`px-2 py-1 rounded-md text-sm font-medium ${
-                currentPage === pagination.totalPages
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

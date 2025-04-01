@@ -39,12 +39,7 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetchWithAuth("/orders/admin");
-      if (!response) {
-        throw new Error("Không thể kết nối đến máy chủ");
-      }
-      
-      const data = await response.json() as ApiResponse;
+      const data = await fetchWithAuth("/orders/admin") as ApiResponse;
       
       if (!data?.success) {
         throw new Error(data?.message || "Không thể tải danh sách đơn hàng");
@@ -98,48 +93,74 @@ export default function OrdersPage() {
   };
 
   const toggleSelectOrder = (id: string) => {
-    setSelectedOrders((prev) => (prev.includes(id) ? prev.filter((orderId) => orderId !== id) : [...prev, id]));
+    setSelectedOrders(prev => 
+      prev.includes(id) 
+        ? prev.filter(orderId => orderId !== id)
+        : [...prev, id]
+    );
   };
 
   const handleAddOrder = () => {
     router.push("/admin/orders/add");
   };
 
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500";
-      case "shipped":
-        return "bg-green-500";
-      case "delivered":
-        return "bg-blue-500";
-      default:
-        return "bg-gray-500";
-    }
-  }, []);
-
   const handleRetry = () => {
-    setError(null);
-    setLoading(true);
     fetchOrders();
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500";
+      case "processing":
+        return "bg-blue-500";
+      case "shipped":
+        return "bg-purple-500";
+      case "delivered":
+        return "bg-green-500";
+      case "cancelled":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
-      <div className="text-red-500">
-        <p>{error}</p>
-        <button onClick={handleRetry} className="text-blue-500 underline mt-2">
-          Thử lại
-        </button>
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Thử lại
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">DANH SÁCH ĐƠN HÀNG</h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+        <button
+          onClick={handleAddOrder}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Thêm đơn hàng mới
+        </button>
+      </div>
 
-      {/* Thanh tìm kiếm & Bộ lọc */}
       <OrderListFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -148,24 +169,19 @@ export default function OrdersPage() {
         onAddOrder={handleAddOrder}
       />
 
-      {loading && <p>Đang tải...</p>}
+      <OrderListTable
+        orders={currentOrders}
+        selectedOrders={selectedOrders}
+        onToggleSelectAll={toggleSelectAll}
+        onToggleSelectOrder={toggleSelectOrder}
+        getStatusColor={getStatusColor}
+      />
 
-      {!loading && !error && filteredOrders.length > 0 && (
-        <>
-          <OrderListTable
-            orders={currentOrders}
-            selectedOrders={selectedOrders}
-            onToggleSelectAll={toggleSelectAll}
-            onToggleSelectOrder={toggleSelectOrder}
-            getStatusColor={getStatusColor}
-          />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

@@ -1,38 +1,45 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/authContext";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/authContext';
+import { ROUTES } from '@/config/constants';
 
-interface AdminProtectedRouteProps {
-  children: ReactNode;
-}
+export default function AdminProtectedRoute({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    const router = useRouter();
+    const { user, loading } = useAuth();
 
-const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
-  const router = useRouter();
-  const { user } = useAuth();
+    useEffect(() => {
+        if (!loading && !user) {
+            console.log('❌ Chưa đăng nhập, chuyển hướng về trang login');
+            router.replace(ROUTES.LOGIN);
+            return;
+        }
 
-  useEffect(() => {
-    // Kiểm tra từ localStorage trước
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      router.replace("/auth/login?from=/admin");
-      return;
+        if (user && user.role === 'user') {
+            console.log('❌ User không có quyền truy cập admin, chuyển hướng về trang user');
+            router.replace(ROUTES.USER);
+            return;
+        }
+
+        if (user && user.role !== 'admin') {
+            console.log('❌ Không phải admin, chuyển hướng về trang chủ');
+            router.replace(ROUTES.HOME);
+            return;
+        }
+    }, [user, loading, router]);
+
+    if (loading) {
+        return <div>Loading...</div>;
     }
 
-    const userData = JSON.parse(storedUser);
-    if (userData.role !== "admin") {
-      router.replace("/");
-      return;
+    if (!user || user.role !== 'admin') {
+        return null;
     }
-  }, [router]);
 
-  // Nếu chưa có user hoặc không phải admin thì không render children
-  if (!user || user.role !== "admin") {
-    return null;
-  }
-
-  return <>{children}</>;
-};
-
-export default AdminProtectedRoute; 
+    return <>{children}</>;
+} 

@@ -2,15 +2,21 @@
 
 import { createContext, useState, useContext } from "react";
 
+export enum ShippingMethod {
+  STANDARD = "STANDARD",
+  EXPRESS = "EXPRESS",
+  SAME_DAY = "SAME_DAY"
+}
+
 interface ShippingMethodContextType {
-  shippingMethod: string;
-  setShippingMethod: (method: string) => void;
+  shippingMethod: ShippingMethod;
+  setShippingMethod: (method: ShippingMethod) => void;
 }
 
 const ShippingMethodContext = createContext<ShippingMethodContextType | undefined>(undefined);
 
 export function ShippingMethodProvider({ children }: { children: React.ReactNode }) {
-  const [shippingMethod, setShippingMethod] = useState("Standard"); // Mặc định là Standard
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>(ShippingMethod.STANDARD);
 
   return (
     <ShippingMethodContext.Provider value={{ shippingMethod, setShippingMethod }}>

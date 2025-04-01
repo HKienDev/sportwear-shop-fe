@@ -1,9 +1,10 @@
 "use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
-import { logout } from "@/lib/api";
+import { useAuth } from '@/context/authContext';
 import { 
   LayoutDashboard, 
   Users, 
@@ -93,6 +94,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
+  const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Toggle menu con
   const toggleMenu = (menuPath: string) => {
@@ -100,6 +103,21 @@ export default function Sidebar() {
       ...prev,
       [menuPath]: !prev[menuPath],
     }));
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+      // Chuyển hướng về trang login sau khi đăng xuất thành công
+      window.location.href = '/auth/login';
+    } catch (error) {
+      console.error('Lỗi khi đăng xuất:', error);
+      // Vẫn chuyển hướng về trang login ngay cả khi có lỗi
+      window.location.href = '/auth/login';
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -123,11 +141,12 @@ export default function Sidebar() {
             <li key={item.path} className="mb-2">
               {item.path === "logout" ? (
                 <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all flex items-center gap-2"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Icon size={20} />
-                  {item.name}
+                  {isLoggingOut ? 'Đang đăng xuất...' : item.name}
                 </button>
               ) : (
                 <div

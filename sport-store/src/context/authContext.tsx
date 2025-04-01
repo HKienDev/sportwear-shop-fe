@@ -1,256 +1,433 @@
 "use client";
 
-
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  fullname: string;
-  avatar: string;
-  membershipLevel: "Hạng Sắt" | "Hạng Bạc" | "Hạng Vàng" | "Hạng Bạch Kim" | "Hạng Kim Cương";
-  totalSpent: number;
-  role: string;
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt?: string;
-}
-
+import type { NextRouter } from 'next/router';
+import { toast } from 'react-hot-toast';
+import { SUCCESS_MESSAGES, ROUTES, AUTH_CONFIG } from '@/config/constants';
+import { TOKEN_CONFIG } from '@/config/token';
+import type { AuthUser } from '@/types/auth';
+import type {
+    LoginRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    VerifyOTPRequest,
+    UpdateProfileRequest
+} from '@/types/auth';
+import {
+    login as loginService,
+    register as registerService,
+    logout as logoutService,
+    verifyOTP as verifyOTPService,
+    resendOTP as resendOTPService,
+    forgotPassword as forgotPasswordService,
+    resetPassword as resetPasswordService,
+    updateProfile as updateProfileService,
+    checkAuth,
+    requestUpdate as requestUpdateService,
+    updateUser as updateUserService,
+    loginWithGoogle as loginWithGoogleService
+} from '@/services/authService';
+import { handleRedirect } from '@/utils/navigationUtils';
 
 interface AuthContextType {
- user: User | null;
- loading: boolean;
- setUser: (user: User | null) => void;
- login: (userData: User, accessToken: string) => void;
- logout: () => void;
- refreshAccessToken: () => Promise<string | null>;
- checkAuth: () => Promise<void>;
+    user: AuthUser | null;
+    loading: boolean;
+    isAuthenticated: boolean;
+    login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
+    logout: () => Promise<void>;
+    verifyOTP: (data: VerifyOTPRequest) => Promise<void>;
+    resendOTP: (data: { email: string }) => Promise<{ success: boolean }>;
+    forgotPassword: (email: string) => Promise<void>;
+    resetPassword: (data: ResetPasswordRequest) => Promise<void>;
+    updateProfile: (data: UpdateProfileRequest) => Promise<void>;
+    verifyAccount: (data: VerifyOTPRequest) => Promise<void>;
+    requestUpdate: () => Promise<void>;
+    updateUser: (data: UpdateProfileRequest) => Promise<void>;
+    loginWithGoogle: (token: string) => Promise<{ success: boolean }>;
+    setUser: (user: AuthUser | null) => void;
+    checkAuthStatus: () => Promise<void>;
 }
 
-
-const AuthContext = createContext<AuthContextType>({
- user: null,
- loading: true,
- setUser: () => {},
- login: async () => {},
- logout: async () => {},
- refreshAccessToken: async () => null,
- checkAuth: async () => {},
-});
-
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
- const [user, setUser] = useState<User | null>(null);
- const [loading, setLoading] = useState(true);
- const router = useRouter();
+    const router = useRouter() as unknown as NextRouter;
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const isAuthenticatingRef = useRef(false);
+    const lastCheckRef = useRef<number>(0);
+    const checkAuthPromiseRef = useRef<Promise<void> | null>(null);
 
+    const checkAuthStatus = useCallback(async () => {
+        try {
+            // Nếu đang có request check auth đang chạy, đợi nó hoàn thành
+            if (checkAuthPromiseRef.current) {
+                console.log('⏳ Đang có request check auth đang chạy, đợi kết quả');
+                await checkAuthPromiseRef.current;
+                return;
+            }
 
- const logout = useCallback(() => {
-   console.log("Logout called");
-   localStorage.removeItem("user");
-   localStorage.removeItem("accessToken");
-   setUser(null);
-   router.replace("/auth/login");
- }, [router]);
+            // Kiểm tra cooldown
+            const now = Date.now();
+            if (now - lastCheckRef.current < AUTH_CONFIG.CHECK_INTERVAL) {
+                console.log('⏳ Đang trong thời gian cooldown, bỏ qua check auth');
+                return;
+            }
 
+            // Kiểm tra xem có token trong localStorage không
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            if (!token) {
+                console.log('🔒 Không tìm thấy token, bỏ qua check auth');
+                setUser(null);
+                setIsAuthenticated(false);
+                setLoading(false);
+                return;
+            }
 
- const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-   try {
-     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`, {
-       method: "POST",
-       credentials: "include",
-     });
+            // Tạo promise mới và lưu vào ref
+            checkAuthPromiseRef.current = (async () => {
+                try {
+                    const response = await checkAuth();
+                    if (response.success && response.user) {
+                        // Lưu user vào localStorage
+                        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(response.user));
+                        setUser(response.user);
+                        setIsAuthenticated(true);
+                    } else {
+                        // Xóa user khỏi localStorage nếu không có user
+                        localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                        setUser(null);
+                        setIsAuthenticated(false);
+                    }
+                } catch (error) {
+                    console.error('❌ Lỗi khi check auth:', error);
+                    // Xóa user khỏi localStorage khi có lỗi
+                    localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                    setUser(null);
+                    setIsAuthenticated(false);
+                    
+                    // Nếu đang ở trang auth và không phải lỗi cooldown, không cần xử lý gì thêm
+                    if (window.location.pathname.startsWith('/auth/') && error instanceof Error && error.message !== 'Auth check cooldown') {
+                        return;
+                    }
+                    
+                    // Nếu không phải trang auth, chuyển hướng về trang login
+                    if (!window.location.pathname.startsWith('/auth/')) {
+                        const currentPath = window.location.pathname;
+                        router.push(`/auth/login?from=${encodeURIComponent(currentPath)}`);
+                    }
+                } finally {
+                    lastCheckRef.current = Date.now();
+                    setLoading(false);
+                    checkAuthPromiseRef.current = null;
+                }
+            })();
 
+            // Đợi promise hoàn thành
+            await checkAuthPromiseRef.current;
+        } catch (error) {
+            console.error('❌ Lỗi khi check auth:', error);
+            setLoading(false);
+        }
+    }, [router]);
 
-     if (!response.ok) {
-       console.error("Refresh Token không hợp lệ:", response.status);
-       return null;
-     }
+    useEffect(() => {
+        // Chỉ check auth khi component mount
+        checkAuthStatus();
 
+        // Chỉ set interval nếu user đã đăng nhập
+        let intervalId: NodeJS.Timeout | null = null;
+        if (isAuthenticated) {
+            intervalId = setInterval(() => {
+                const now = Date.now();
+                if (now - lastCheckRef.current >= AUTH_CONFIG.CHECK_INTERVAL) {
+                    checkAuthStatus();
+                }
+            }, AUTH_CONFIG.CHECK_INTERVAL);
+        }
 
-     const data = await response.json();
-     if (data.accessToken) {
-       localStorage.setItem("accessToken", data.accessToken);
-       return data.accessToken;
-     }
-   } catch (error) {
-     console.error("Lỗi kết nối API refresh token:", error);
-   }
-   return null;
- }, []);
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [isAuthenticated, checkAuthStatus]);
 
+    const login = async (data: LoginRequest) => {
+        try {
+            setLoading(true);
+            isAuthenticatingRef.current = true;
+            const response = await loginService(data.email, data.password);
+            console.log('Login response:', response);
+            
+            if (response.success && response.data?.user) {
+                const { user: userData, accessToken, refreshToken } = response.data;
+                
+                // Lưu token vào cookie
+                document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict`;
+                document.cookie = `refreshToken=${refreshToken}; path=/; secure; samesite=strict`;
+                
+                // Lưu thông tin user và token
+                await Promise.all([
+                    new Promise(resolve => {
+                        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+                        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+                        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+                        resolve(null);
+                    }),
+                    new Promise(resolve => {
+                        setUser(userData);
+                        setIsAuthenticated(true);
+                        resolve(null);
+                    })
+                ]);
 
- const checkAuth = useCallback(async () => {
-   setLoading(true);
-   const storedUser = localStorage.getItem("user");
-   const token = localStorage.getItem("accessToken");
-   const currentPath = window.location.pathname;
+                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+                
+                // Xử lý chuyển hướng
+                const urlParams = new URLSearchParams(window.location.search);
+                const from = urlParams.get('from');
+                const redirectPath = from ? decodeURIComponent(from) : (userData.role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.HOME);
+                console.log('🔄 Redirecting after login to:', redirectPath);
 
+                // Sử dụng window.location.href cho admin để reload hoàn toàn
+                if (userData.role === 'admin' && redirectPath.includes('/admin')) {
+                    window.location.href = redirectPath;
+                } else {
+                    router.push(redirectPath);
+                }
+            } else {
+                setUser(null);
+                setIsAuthenticated(false);
+                throw new Error(response.message || 'Đăng nhập thất bại');
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi đăng nhập:', error);
+            setUser(null);
+            setIsAuthenticated(false);
+            throw error;
+        } finally {
+            setLoading(false);
+            isAuthenticatingRef.current = false;
+        }
+    };
 
-   const exemptPaths = [
-     "/auth/login",
-     "/auth/otpVerifyRegister",
-     "/auth/forgotPasswordEmail",
-   ];
-   if (exemptPaths.includes(currentPath)) {
-     setLoading(false);
-     return;
-   }
+    const register = async (data: RegisterRequest) => {
+        try {
+            const response = await registerService(data);
+            if (response.success) {
+                toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
+                await handleRedirect(router, null, window.location.pathname);
+            }
+        } catch (error) {
+            console.error('Registration failed:', error);
+            throw error;
+        }
+    };
 
+    const logout = async () => {
+        try {
+            await logoutService();
+            setUser(null);
+            setIsAuthenticated(false);
+            setLoading(false);
+            toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
+            await handleRedirect(router, null, window.location.pathname);
+        } catch (error) {
+            console.error('Logout failed:', error);
+            throw error;
+        }
+    };
 
-   if (storedUser && token) {
-     setUser(JSON.parse(storedUser) as User);
-     try {
-       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/check`, {
-         headers: { Authorization: `Bearer ${token}` },
-         credentials: "include",
-       });
+    const verifyOTP = async (data: VerifyOTPRequest) => {
+        try {
+            await verifyOTPService(data);
+            toast.success(SUCCESS_MESSAGES.ACCOUNT_VERIFIED);
+            await handleRedirect(router, null, window.location.pathname);
+        } catch (error) {
+            console.error('OTP verification failed:', error);
+            throw error;
+        }
+    };
 
+    const resendOTP = async (data: { email: string }) => {
+        try {
+            setLoading(true);
+            const response = await resendOTPService(data.email);
+            console.log('Resend OTP response:', response);
+            
+            if (response.success) {
+                setLoading(false);
+                toast.success(SUCCESS_MESSAGES.ACCOUNT_VERIFIED);
+                return { success: true };
+            } else {
+                setLoading(false);
+                throw new Error(response.message || 'Gửi lại mã OTP thất bại');
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi gửi lại mã OTP:', error);
+            setLoading(false);
+            throw error;
+        }
+    };
 
-       if (res.ok) {
-         const data = await res.json();
-         if (data?.user) {
-           const userData = {
-             id: data.user.id,
-             name: data.user.fullname || data.user.email,
-             email: data.user.email,
-             username: data.user.username,
-             fullname: data.user.fullname,
-             avatar: data.user.avatar,
-             membershipLevel: data.user.membershipLevel,
-             totalSpent: data.user.totalSpent,
-             role: data.user.role,
-             isActive: data.user.isActive,
-             isVerified: data.user.isVerified,
-             createdAt: data.user.createdAt,
-             updatedAt: data.user.updatedAt
-           };
-           console.log("Processed user data:", userData);
-           setUser(userData);
-           localStorage.setItem("user", JSON.stringify(userData));
-         }
-       } else if (res.status === 401) {
-         console.warn("Access token expired, trying to refresh...");
-         const newAccessToken = await refreshAccessToken();
-         if (!newAccessToken) {
-           console.warn("Failed to refresh token, logging out...");
-           logout();
-         } else {
-           console.log("Token refreshed successfully");
-           const resAfterRefresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/check`, {
-             headers: { Authorization: `Bearer ${newAccessToken}` },
-             credentials: "include",
-           });
-          
-           if (resAfterRefresh.ok) {
-             const data = await resAfterRefresh.json();
-             if (data.user) {
-               const userData = {
-                 id: data.user.id,
-                 name: data.user.fullname || data.user.email,
-                 email: data.user.email,
-                 username: data.user.username,
-                 fullname: data.user.fullname,
-                 avatar: data.user.avatar,
-                 membershipLevel: data.user.membershipLevel,
-                 totalSpent: data.user.totalSpent,
-                 role: data.user.role,
-                 isActive: data.user.isActive,
-                 isVerified: data.user.isVerified,
-                 createdAt: data.user.createdAt,
-                 updatedAt: data.user.updatedAt
-               };
-               console.log("Processed user data after refresh:", userData);
-               setUser(userData);
-               localStorage.setItem("user", JSON.stringify(userData));
-             }
-           } else {
-             logout();
-           }
-         }
-       } else {
-         console.warn("Unexpected error, logging out...");
-         logout();
-       }
-     } catch (error) {
-       console.error("Error checking auth:", error);
-       logout();
-     }
-   } else {
-     console.log("No user found, logging out");
-     logout();
-   }
-   setLoading(false);
- }, [logout, refreshAccessToken]);
+    const forgotPassword = async (email: string) => {
+        try {
+            await forgotPasswordService(email);
+            toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
+            await handleRedirect(router, null, window.location.pathname);
+        } catch (error) {
+            console.error('Forgot password failed:', error);
+            throw error;
+        }
+    };
 
+    const resetPassword = async (data: ResetPasswordRequest) => {
+        try {
+            await resetPasswordService(data.token, data.newPassword);
+            toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
+            await handleRedirect(router, null, window.location.pathname);
+        } catch (error) {
+            console.error('Reset password failed:', error);
+            throw error;
+        }
+    };
 
- useEffect(() => {
-   checkAuth();
- }, [checkAuth]);
+    const updateProfile = async (data: UpdateProfileRequest) => {
+        try {
+            await updateProfileService(data);
+            toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE_SUCCESS);
+            await handleRedirect(router, user, window.location.pathname);
+        } catch (error) {
+            console.error('Update profile failed:', error);
+            throw error;
+        }
+    };
 
+    const verifyAccount = async (data: VerifyOTPRequest) => {
+        try {
+            await verifyOTPService(data);
+            toast.success(SUCCESS_MESSAGES.ACCOUNT_VERIFIED);
+            await handleRedirect(router, null, window.location.pathname);
+        } catch (error) {
+            console.error('Account verification failed:', error);
+            throw error;
+        }
+    };
 
- const login = useCallback((userData: User, accessToken: string) => {
-   console.log("Raw user data from API:", userData);
-   const processedUserData = {
-     id: userData.id,
-     name: userData.fullname || userData.email,
-     email: userData.email,
-     username: userData.username,
-     fullname: userData.fullname,
-     avatar: userData.avatar,
-     membershipLevel: userData.membershipLevel,
-     totalSpent: userData.totalSpent,
-     role: userData.role,
-     isActive: userData.isActive,
-     isVerified: userData.isVerified,
-     createdAt: userData.createdAt,
-     updatedAt: userData.updatedAt
-   };
-   console.log("Processed user data:", processedUserData);
+    const requestUpdate = async () => {
+        try {
+            await requestUpdateService();
+            toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
+            await handleRedirect(router, user, window.location.pathname);
+        } catch (error) {
+            console.error('Request update failed:', error);
+            throw error;
+        }
+    };
 
+    const updateUser = async (data: UpdateProfileRequest) => {
+        try {
+            await updateUserService(data);
+            toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE_SUCCESS);
+            await handleRedirect(router, user, window.location.pathname);
+        } catch (error) {
+            console.error('Update user failed:', error);
+            throw error;
+        }
+    };
 
-   localStorage.setItem("user", JSON.stringify(processedUserData));
-   localStorage.setItem("accessToken", accessToken);
-   setUser(processedUserData);
+    const loginWithGoogle = async (token: string) => {
+        try {
+            setLoading(true);
+            const response = await loginWithGoogleService(token);
+            console.log('Google login response:', response);
+            
+            if (response.success && response.data?.user) {
+                const userData = response.data.user;
+                setUser(userData);
+                setIsAuthenticated(true);
+                setLoading(false);
+                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+                const urlParams = new URLSearchParams(window.location.search);
+                const from = urlParams.get('from') || undefined;
+                const redirectPath = from || (userData.role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.HOME);
+                console.log('🔄 Redirecting after login:', redirectPath);
+                await router.replace(redirectPath);
+                return { success: true };
+            } else {
+                setUser(null);
+                setIsAuthenticated(false);
+                setLoading(false);
+                throw new Error(response.message || 'Đăng nhập với Google thất bại');
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi đăng nhập với Google:', error);
+            setUser(null);
+            setIsAuthenticated(false);
+            setLoading(false);
+            throw error;
+        }
+    };
 
+    // Thêm useEffect để lắng nghe sự kiện logout
+    useEffect(() => {
+        const handleLogout = () => {
+            setUser(null);
+            setIsAuthenticated(false);
+            setLoading(false);
+            handleRedirect(router, null, window.location.pathname);
+        };
 
-   if (processedUserData.role === "admin") {
-     router.replace("/admin");
-   } else {
-     router.replace("/user");
-   }
- }, [router]);
+        window.addEventListener('logout', handleLogout);
+        return () => window.removeEventListener('logout', handleLogout);
+    }, [router]);
 
+    // Thêm useEffect để lắng nghe sự kiện userUpdated
+    useEffect(() => {
+        const handleUserUpdated = (event: CustomEvent) => {
+            setUser(event.detail);
+        };
 
- const value = {
-   user,
-   loading,
-   setUser,
-   login,
-   logout,
-   refreshAccessToken,
-   checkAuth,
- };
+        window.addEventListener('userUpdated', handleUserUpdated as EventListener);
+        return () => window.removeEventListener('userUpdated', handleUserUpdated as EventListener);
+    }, []);
 
+    const value = {
+        user,
+        loading,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        verifyOTP,
+        resendOTP,
+        forgotPassword,
+        resetPassword,
+        updateProfile,
+        verifyAccount,
+        requestUpdate,
+        updateUser,
+        loginWithGoogle,
+        setUser,
+        checkAuthStatus
+    };
 
- return (
-   <AuthContext.Provider value={value}>
-     {children}
-   </AuthContext.Provider>
- );
-};
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
 
-
-export const useAuth = (): AuthContextType => {
- const context = useContext(AuthContext);
- if (!context) {
-   throw new Error("useAuth must be used within an AuthProvider");
- }
- return context;
-};
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+}
 
