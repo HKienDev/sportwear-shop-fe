@@ -33,14 +33,23 @@ const LoginContent = () => {
     setError("");
   
     try {
+      console.log('🔐 Attempting login with email:', email);
       await login({ email, password });
+      console.log('✅ Login successful');
       
       // Redirect based on role
       const redirectPath = searchParams.get("from") || "/";
+      console.log('🔄 Redirecting to:', redirectPath);
       router.replace(redirectPath);
     } catch (err: unknown) {
-      console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : ERROR_MESSAGES.SERVER_ERROR);
+      console.error("❌ Login error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        setError((err as { message: string }).message);
+      } else {
+        setError(ERROR_MESSAGES.SERVER_ERROR);
+      }
     } finally {
       setLoading(false);
     }

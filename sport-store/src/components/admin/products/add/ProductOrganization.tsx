@@ -1,194 +1,137 @@
-import { Tag as TagIcon } from 'lucide-react';
-import { useState, useEffect } from "react";
+import { FolderTree, Tag, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api';
 
 interface Category {
   _id: string;
   name: string;
-  description?: string;
-  parentCategory?: string | null;
-  image?: string;
-  productCount: number;
-  createdAt: string;
-  updatedAt: string;
+  subcategories: string[];
 }
 
 interface ProductOrganizationProps {
   category: string;
-  isActive: boolean;
-  tags: string[];
+  subcategory: string;
   onCategoryChange: (value: string) => void;
-  onIsActiveChange: (value: boolean) => void;
-  onTagsChange: (value: string[]) => void;
+  onSubcategoryChange: (value: string) => void;
 }
 
 export default function ProductOrganization({
   category,
-  isActive,
-  tags,
+  subcategory,
   onCategoryChange,
-  onIsActiveChange,
-  onTagsChange,
+  onSubcategoryChange,
 }: ProductOrganizationProps) {
-  const [newTag, setNewTag] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await fetch('http://localhost:4000/api/categories');
-      
-      if (!response.ok) {
-        throw new Error('Không thể tải danh sách danh mục');
-      }
-      
-      const data = await response.json();
-      
-      // Kiểm tra cấu trúc dữ liệu trả về
-      if (!Array.isArray(data)) {
-        setCategories([]);
-        throw new Error('Dữ liệu không đúng định dạng');
-      }
-      
-      // Kiểm tra và lọc dữ liệu hợp lệ
-      const validCategories = data.filter((cat): cat is Category => {
-        return cat && 
-               typeof cat._id === 'string' && 
-               typeof cat.name === 'string';
-      });
-      
-      setCategories(validCategories);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
-      setCategories([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/categories');
+        if (Array.isArray(response.data.data)) {
+          setCategories(response.data.data);
+        } else {
+          setCategories([]);
+          setError('Dữ liệu danh mục không hợp lệ');
+        }
+      } catch (err) {
+        setError('Không thể tải danh mục. Vui lòng thử lại sau.');
+        console.error('Error fetching categories:', err);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCategories();
   }, []);
 
-  const handleAddTag = () => {
-    if (newTag && !tags.includes(newTag)) {
-      onTagsChange([...tags, newTag]);
-      setNewTag("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    onTagsChange(tags.filter(tag => tag !== tagToRemove));
-  };
+  const selectedCategory = categories.find((cat) => cat._id === category);
 
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-6 flex items-center">
-        <TagIcon className="mr-2 text-green-500" size={24} />
-        Tổ Chức Sản Phẩm
+    <div className="card bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+      <h2 className="text-lg font-semibold mb-6 flex items-center text-gray-800">
+        <FolderTree className="mr-2 text-purple-500" size={24} />
+        Phân Loại Sản Phẩm
       </h2>
-      
-      <div className="space-y-5">
-        <div>
-          <label className="input-label">Danh Mục</label>
-          <div className="mt-2">
-            {isLoading ? (
-              <div className="animate-pulse bg-gray-100 h-10 rounded-md"></div>
-            ) : error ? (
-              <div className="flex flex-col gap-2">
-                <div className="text-red-500 text-sm">{error}</div>
-                <button 
-                  onClick={fetchCategories}
-                  className="text-blue-500 hover:text-blue-700 text-sm"
-                >
-                  Thử lại
-                </button>
-              </div>
-            ) : (
-              <select 
-                className="select-field"
-                value={category}
-                onChange={(e) => onCategoryChange(e.target.value)}
-              >
-                <option value="">Chọn danh mục</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          {categories.length === 0 && !isLoading && !error && (
-            <p className="mt-1 text-sm text-gray-500">
-              Chưa có danh mục nào. Vui lòng thêm danh mục trong phần quản lý.
-            </p>
-          )}
-        </div>
 
+      <div className="space-y-6">
+        {/* Category Selection */}
         <div>
-          <label className="input-label">Trạng Thái</label>
-          <div className="mt-2 flex items-center space-x-4">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                className="form-radio text-blue-600"
-                name="status"
-                checked={isActive}
-                onChange={() => onIsActiveChange(true)}
-              />
-              <span className="ml-2">Hiển thị</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                className="form-radio text-blue-600"
-                name="status"
-                checked={!isActive}
-                onChange={() => onIsActiveChange(false)}
-              />
-              <span className="ml-2">Ẩn</span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="input-label">Tags</label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tags.map((tag) => (
-              <span 
-                key={tag} 
-                className="tag tag-blue"
-              >
-                {tag}
-                <button
-                  onClick={() => handleRemoveTag(tag)}
-                  className="ml-1 hover:text-blue-900"
-                >
-                  ×
-                </button>
-              </span>
+          <label className="input-label text-gray-700">Danh Mục</label>
+          <select
+            className="input-field focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            value={category}
+            onChange={(e) => {
+              onCategoryChange(e.target.value);
+              onSubcategoryChange('');
+            }}
+          >
+            <option value="">Chọn danh mục</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
             ))}
+          </select>
+        </div>
+
+        {/* Subcategory Selection */}
+        <div>
+          <label className="input-label text-gray-700">Danh Mục Con</label>
+          <select
+            className="input-field focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            value={subcategory}
+            onChange={(e) => onSubcategoryChange(e.target.value)}
+            disabled={!category}
+          >
+            <option value="">Chọn danh mục con</option>
+            {selectedCategory?.subcategories.map((sub) => (
+              <option key={sub} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
           </div>
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              className="input-field flex-1"
-              placeholder="Thêm tag mới..."
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-            />
-            <button
-              onClick={handleAddTag}
-              className="btn-secondary px-4"
-              type="button"
-            >
-              Thêm
-            </button>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Summary */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Tổng Kết</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Danh mục:</span>
+              <span className="font-medium">
+                {selectedCategory?.name || 'Chưa chọn'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Danh mục con:</span>
+              <span className="font-medium">
+                {subcategory || 'Chưa chọn'}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Số danh mục con:</span>
+              <span className="font-medium">
+                {selectedCategory?.subcategories.length || 0}
+              </span>
+            </div>
           </div>
         </div>
       </div>

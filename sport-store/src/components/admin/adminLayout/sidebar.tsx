@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { name: "Trang Chủ", path: "/admin", icon: LayoutDashboard, subMenu: [] },
+  { name: "Trang Chủ", path: "/admin/dashboard", icon: LayoutDashboard, subMenu: [] },
   {
     name: "Đơn Hàng",
     path: "/admin/orders",
@@ -108,8 +108,9 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+      // Gọi API logout
       await logout();
-      // Chuyển hướng về trang login sau khi đăng xuất thành công
+      // Chuyển hướng về trang login
       window.location.href = '/auth/login';
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);
@@ -121,13 +122,15 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-[#FAFAFA] border-r border-gray-200 h-screen fixed left-0 top-0 p-4 flex flex-col">
+    <div className="w-64 bg-white border-r border-gray-100 h-screen fixed left-0 top-0 p-4 flex flex-col shadow-sm">
       {/* Logo + Gạch dưới */}
-      <div className="text-lg font-bold text-center pb-3 border-b border-gray-300">
-        VJU SPORT
+      <div className="text-xl font-bold text-center pb-4 border-b border-gray-100">
+        <span className="bg-gradient-to-r from-[#4EB09D] to-[#2C7A7B] bg-clip-text text-transparent">
+          VJU SPORT
+        </span>
       </div>
 
-      <ul className="mt-4 flex-grow">
+      <ul className="mt-6 flex-grow space-y-1">
         {menuItems.map((item) => {
           const isActive =
             (item.path === "/admin" && pathname === "/admin") ||
@@ -138,14 +141,14 @@ export default function Sidebar() {
           const Icon = item.icon;
 
           return (
-            <li key={item.path} className="mb-2">
+            <li key={item.path} className="relative">
               {item.path === "logout" ? (
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="w-full text-left px-4 py-3 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-left px-4 py-3 rounded-lg font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
-                  <Icon size={20} />
+                  <Icon size={20} className="group-hover:scale-110 transition-transform" />
                   {isLoggingOut ? 'Đang đăng xuất...' : item.name}
                 </button>
               ) : (
@@ -157,17 +160,23 @@ export default function Sidebar() {
                       router.push(item.path);
                     }
                   }}
-                  className={`flex justify-between items-center px-4 py-3 rounded-md transition-all font-medium cursor-pointer ${
-                    isActive && !isOpen ? "bg-[#4EB09D] text-white" : "text-[#858594] hover:bg-gray-100"
+                  className={`flex justify-between items-center px-4 py-3 rounded-lg transition-all font-medium cursor-pointer group ${
+                    isActive && !isOpen 
+                      ? "bg-[#4EB09D] text-white shadow-sm" 
+                      : "text-gray-600 hover:bg-gray-50 hover:text-[#4EB09D]"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon size={20} />
+                  <div className="flex items-center gap-3">
+                    <Icon size={20} className={`transition-transform group-hover:scale-110 ${
+                      isActive ? "text-white" : "text-gray-400 group-hover:text-[#4EB09D]"
+                    }`} />
                     {item.name}
                   </div>
                   {item.subMenu.length > 0 && (
-                    <span className="ml-2 transition-transform duration-300">
-                      {isOpen ? <FaChevronDown /> : <FaChevronRight />}
+                    <span className={`ml-2 transition-all duration-300 ${
+                      isActive ? "text-white" : "text-gray-400"
+                    }`}>
+                      {isOpen ? <FaChevronDown size={14} /> : <FaChevronRight size={14} />}
                     </span>
                   )}
                 </div>
@@ -175,18 +184,22 @@ export default function Sidebar() {
 
               {/* Menu con */}
               {isOpen && item.subMenu.length > 0 && (
-                <ul className="pl-4 mt-2 transition-all duration-300">
+                <ul className="pl-4 mt-2 space-y-1 transition-all duration-300">
                   {item.subMenu.map((subItem) => {
                     const isSubActive = pathname === subItem.path;
                     return (
-                      <li key={subItem.path} className="mb-1">
+                      <li key={subItem.path}>
                         <Link
                           href={subItem.path}
-                          className={`block px-4 py-2 rounded-md transition-all font-medium ${
-                            isSubActive ? "bg-[#4EB09D] text-white" : "text-[#858594] hover:bg-gray-100"
+                          className={`block px-4 py-2 rounded-lg transition-all font-medium group ${
+                            isSubActive 
+                              ? "bg-[#4EB09D] text-white shadow-sm" 
+                              : "text-gray-600 hover:bg-gray-50 hover:text-[#4EB09D]"
                           }`}
                         >
-                          {subItem.name}
+                          <span className="relative pl-4 before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:rounded-full before:bg-current before:opacity-50">
+                            {subItem.name}
+                          </span>
                         </Link>
                       </li>
                     );

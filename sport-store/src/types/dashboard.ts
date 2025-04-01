@@ -16,6 +16,7 @@ export interface BestSellingProduct {
   category: string;
   totalSales: number;
   image: string;
+  price: number;
 }
 
 export interface RecentOrder {
