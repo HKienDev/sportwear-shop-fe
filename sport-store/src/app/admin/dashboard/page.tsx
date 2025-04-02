@@ -104,7 +104,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Trang Quản Trị</h1>
-              <p className="text-gray-600 mt-1">Chào mừng, {user?.name || 'Admin'}</p>
+              <p className="text-gray-600 mt-1">Chào mừng, {user?.fullname || 'Admin'}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,4 @@
-import type { User } from './base';
+import type { User, Gender, UserRole, MembershipLevel, AuthStatus } from './base';
 
 export interface Customer extends User {
   isActive: boolean;
@@ -25,17 +25,37 @@ export interface CustomerSearchParams {
 }
 
 export interface CustomerCreateInput {
-  name: string;
+  fullname: string;
   email: string;
   phone: string;
-  address: string;
+  address: {
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+  };
+  gender: Gender;
+  role: UserRole;
+  membershipLevel: MembershipLevel;
+  points: number;
+  authStatus: AuthStatus;
   isActive?: boolean;
 }
 
 export interface CustomerUpdateInput {
-  name?: string;
+  fullname?: string;
   email?: string;
   phone?: string;
-  address?: string;
+  address?: {
+    province?: string;
+    district?: string;
+    ward?: string;
+    street?: string;
+  };
+  gender?: Gender;
+  role?: UserRole;
+  membershipLevel?: MembershipLevel;
+  points?: number;
+  authStatus?: AuthStatus;
   isActive?: boolean;
 } 
