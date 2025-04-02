@@ -1,5 +1,6 @@
-import { Info, Tag, Layers, Box, Hash } from "lucide-react";
+import { Info, Tag, Layers, Box, Hash, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface BasicInfoProps {
   name: string;
@@ -70,16 +71,24 @@ export default function BasicInfo({
   };
 
   return (
-    <div className="card bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-      <h2 className="text-lg font-semibold mb-6 flex items-center text-gray-800">
-        <Info className="mr-2 text-blue-500" size={24} />
-        Thông Tin Cơ Bản
-      </h2>
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+      <div className="p-6 border-b border-gray-100">
+        <h2 className="text-lg font-semibold flex items-center text-gray-900">
+          <Info className="mr-2 text-blue-500" size={24} />
+          Thông Tin Cơ Bản
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">Nhập thông tin cơ bản về sản phẩm của bạn</p>
+      </div>
 
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Product Name */}
         <div>
-          <label className="input-label text-gray-700">Tên Sản Phẩm</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Tên Sản Phẩm
+            <Tooltip content="Tên sản phẩm sẽ hiển thị trên trang web và trong kết quả tìm kiếm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <input
             type="text"
             className="input-field focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -91,7 +100,12 @@ export default function BasicInfo({
 
         {/* Brand */}
         <div>
-          <label className="input-label text-gray-700">Thương Hiệu</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Thương Hiệu
+            <Tooltip content="Tên thương hiệu sản xuất sản phẩm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <input
             type="text"
             className="input-field focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -103,7 +117,12 @@ export default function BasicInfo({
 
         {/* SKU */}
         <div>
-          <label className="input-label text-gray-700">Mã Sản Phẩm (SKU)</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Mã Sản Phẩm (SKU)
+            <Tooltip content="Mã định danh duy nhất cho sản phẩm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <div className="flex gap-2 mt-2">
             <input
               type="text"
@@ -115,7 +134,7 @@ export default function BasicInfo({
             <button
               type="button"
               onClick={handleGenerateNewSku}
-              className="btn-secondary whitespace-nowrap hover:bg-orange-600 transition-colors duration-200"
+              className="btn-secondary hover:bg-orange-600 transition-colors duration-200"
             >
               Tạo Mới
             </button>
@@ -127,7 +146,12 @@ export default function BasicInfo({
 
         {/* Description */}
         <div>
-          <label className="input-label text-gray-700">Mô Tả</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Mô Tả
+            <Tooltip content="Mô tả chi tiết về sản phẩm, bao gồm các tính năng và lợi ích">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <textarea
             className="input-field min-h-[120px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Nhập mô tả chi tiết về sản phẩm"
@@ -141,6 +165,9 @@ export default function BasicInfo({
           <label className="input-label text-gray-700 flex items-center">
             <Tag className="mr-2 h-4 w-4 text-gray-500" />
             Tags
+            <Tooltip content="Thêm các từ khóa để giúp khách hàng dễ dàng tìm thấy sản phẩm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
           </label>
           <div className="mt-2">
             <input
@@ -170,8 +197,11 @@ export default function BasicInfo({
         </div>
 
         {/* Summary */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Tổng Kết</h3>
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+            <Layers className="mr-2 h-4 w-4 text-gray-500" />
+            Tổng Kết
+          </h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Tên sản phẩm:</span>

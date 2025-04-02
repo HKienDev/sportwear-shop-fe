@@ -1,164 +1,239 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Search, Filter, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Category, CategoryListResponse } from "@/types/category";
+import { formatDate } from "@/lib/utils";
 import { toast } from "react-hot-toast";
-import CategorySearch from "@/components/admin/categories/list/categorySearch";
-import CategoryTable from "@/components/admin/categories/list/categoryTable";
-import Pagination from "@/components/admin/categories/list/pagination";
-import DeleteButton from "@/components/admin/categories/list/categoryButton";
-import { useAuth } from "@/context/authContext";
+import Image from "next/image";
 
-interface Category {
-  _id: string;
-  name: string;
-  productCount: number;
-  createdAt: string;
-  isActive: boolean;
-}
-
-const ITEMS_PER_PAGE = 10;
-
-export default function CategoryList() {
+export default function CategoryListPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
 
-  // Kiểm tra quyền admin
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      router.push('/');
-    }
-  }, [isAuthenticated, user, router]);
-
-  // Lấy danh sách thể loại từ API
   const fetchCategories = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-        ...(searchQuery && { search: searchQuery }),
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+      const apiUrl = `${API_URL}/categories?page=${page}&limit=${limit}&query=${searchQuery}`;
+      console.log("Fetching categories from:", apiUrl);
+
+      const response = await fetch(apiUrl, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      const response = await fetch(`/api/categories/admin?${queryParams}`);
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách thể loại");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      if (!data.success) {
-        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách thể loại");
-      }
+      const data: CategoryListResponse = await response.json();
+      console.log("Categories response:", data);
 
-      setCategories(data.data.categories || []);
-      setTotalPages(data.data.pagination.totalPages || 1);
+      if (data.success) {
+        setCategories(data.data.categories);
+        setTotal(data.data.pagination.total);
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
+      }
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách thể loại:", error);
-      toast.error(error instanceof Error ? error.message : "Không thể tải danh sách thể loại");
+      console.error("Error fetching categories:", error);
+      toast.error("Có lỗi xảy ra khi tải danh sách danh mục");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [currentPage, searchQuery]);
+  }, [page, limit, searchQuery]);
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Xử lý tìm kiếm
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-  }, []);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
 
-  // Xử lý chọn/bỏ chọn thể loại
-  const handleSelectCategory = useCallback((id: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((categoryId) => categoryId !== id) : [...prev, id]
-    );
-  }, []);
+  const handleEdit = (categoryId: string) => {
+    router.push(`/admin/categories/edit/${categoryId}`);
+  };
 
-  // Xử lý xóa thể loại đã chọn
-  const handleDeleteSelected = useCallback(async () => {
-    if (!selectedCategories.length) return;
-
-    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedCategories.length} thể loại đã chọn?
-Lưu ý: Hành động này không thể hoàn tác!`)) {
-      return;
-    }
+  const handleDelete = async (categoryId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return;
 
     try {
-      // Xóa tuần tự để có thể xử lý lỗi cho từng thể loại
-      for (const id of selectedCategories) {
-        const response = await fetch(`/api/categories/admin/${id}`, {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
+        {
           method: "DELETE",
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Có lỗi xảy ra khi xóa thể loại");
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success("Xóa thể loại thành công");
-      fetchCategories();
-      setSelectedCategories([]);
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Xóa danh mục thành công");
+        fetchCategories();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi xóa danh mục");
+      }
     } catch (error) {
-      console.error("Lỗi khi xóa thể loại:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa thể loại");
+      console.error("Error deleting category:", error);
     }
-  }, [selectedCategories, fetchCategories]);
+  };
 
-  // Xử lý chuyển trang
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
-
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return null;
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý thể loại</h1>
-        <button
-          onClick={() => router.push("/admin/categories/add")}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Thêm thể loại mới
-        </button>
+        <h1 className="text-2xl font-bold">Quản lý danh mục</h1>
+        <Button onClick={() => router.push("/admin/categories/add")}>
+          <Plus className="mr-2 h-4 w-4" />
+          Thêm danh mục
+        </Button>
       </div>
 
-      <CategorySearch onSearch={handleSearch} />
-      
-      <div className="mt-4">
-        <CategoryTable
-          categories={categories}
-          selectedCategories={selectedCategories}
-          onSelectCategory={handleSelectCategory}
-          isLoading={isLoading}
-        />
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+          <Input
+            placeholder="Tìm kiếm danh mục..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="pl-10"
+          />
+        </div>
+        <Button variant="outline">
+          <Filter className="mr-2 h-4 w-4" />
+          Lọc
+        </Button>
       </div>
 
-      <div className="mt-4 flex justify-between items-center">
-        <DeleteButton
-          selectedCount={selectedCategories.length}
-          onDelete={handleDeleteSelected}
-        />
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+      <div className="border rounded-lg overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="hidden sm:table-cell">ID</TableHead>
+              <TableHead className="w-[60px] sm:w-[80px]">Ảnh</TableHead>
+              <TableHead className="min-w-[120px]">Tên danh mục</TableHead>
+              <TableHead className="hidden md:table-cell">Slug</TableHead>
+              <TableHead className="hidden lg:table-cell">Mô tả</TableHead>
+              <TableHead className="hidden sm:table-cell">Trạng thái</TableHead>
+              <TableHead className="hidden xl:table-cell">Ngày tạo</TableHead>
+              <TableHead className="w-[50px]">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category._id}>
+                <TableCell className="hidden sm:table-cell font-medium">{category.categoryId}</TableCell>
+                <TableCell>
+                  <div className="relative w-[clamp(2.5rem,5vw,3rem)] h-[clamp(2.5rem,5vw,3rem)]">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      fill
+                      className="object-cover rounded-md"
+                      sizes="(max-width: 768px) 40px, 48px"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell className="hidden md:table-cell">{category.slug}</TableCell>
+                <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                  {category.description}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge
+                    variant={category.isActive ? "success" : "destructive"}
+                    className="text-xs sm:text-sm"
+                  >
+                    {category.isActive ? "Hoạt động" : "Không hoạt động"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden xl:table-cell">{formatDate(category.createdAt)}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(category._id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(category._id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Xóa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <div>
+          Tổng số: {total} danh mục
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Trước
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page * limit >= total}
+          >
+            Sau
+          </Button>
+        </div>
       </div>
     </div>
   );

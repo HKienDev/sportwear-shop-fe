@@ -1,18 +1,23 @@
-import { FolderTree, Tag, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
-
-interface Category {
-  _id: string;
-  name: string;
-  subcategories: string[];
-}
+import { FolderTree, HelpCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface ProductOrganizationProps {
   category: string;
   subcategory: string;
   onCategoryChange: (value: string) => void;
   onSubcategoryChange: (value: string) => void;
+}
+
+interface Category {
+  _id: string;
+  name: string;
+  subcategories: Subcategory[];
+}
+
+interface Subcategory {
+  _id: string;
+  name: string;
 }
 
 export default function ProductOrganization({
@@ -23,23 +28,22 @@ export default function ProductOrganization({
 }: ProductOrganizationProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
-        const response = await api.get('/categories');
-        if (Array.isArray(response.data.data)) {
-          setCategories(response.data.data);
-        } else {
-          setCategories([]);
-          setError('Dữ liệu danh mục không hợp lệ');
+        const response = await fetch('http://localhost:4000/api/categories/admin');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
         }
-      } catch (err) {
-        setError('Không thể tải danh mục. Vui lòng thử lại sau.');
-        console.error('Error fetching categories:', err);
-        setCategories([]);
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data);
+        } else {
+          throw new Error(data.message || 'Failed to fetch categories');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
       } finally {
         setLoading(false);
       }
@@ -48,25 +52,33 @@ export default function ProductOrganization({
     fetchCategories();
   }, []);
 
-  const selectedCategory = categories.find((cat) => cat._id === category);
+  const selectedCategory = categories.find(cat => cat._id === category);
 
   return (
-    <div className="card bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-      <h2 className="text-lg font-semibold mb-6 flex items-center text-gray-800">
-        <FolderTree className="mr-2 text-purple-500" size={24} />
-        Phân Loại Sản Phẩm
-      </h2>
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+      <div className="p-6 border-b border-gray-100">
+        <h2 className="text-lg font-semibold flex items-center text-gray-900">
+          <FolderTree className="mr-2 text-blue-500" size={24} />
+          Phân Loại Sản Phẩm
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">Chọn danh mục và phân loại cho sản phẩm</p>
+      </div>
 
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Category Selection */}
         <div>
-          <label className="input-label text-gray-700">Danh Mục</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Danh Mục
+            <Tooltip content="Chọn danh mục chính cho sản phẩm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <select
-            className="input-field focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="input-field focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={category}
             onChange={(e) => {
               onCategoryChange(e.target.value);
-              onSubcategoryChange('');
+              onSubcategoryChange(''); // Reset subcategory when category changes
             }}
           >
             <option value="">Chọn danh mục</option>
@@ -80,39 +92,30 @@ export default function ProductOrganization({
 
         {/* Subcategory Selection */}
         <div>
-          <label className="input-label text-gray-700">Danh Mục Con</label>
+          <label className="input-label text-gray-700 flex items-center">
+            Phân Loại
+            <Tooltip content="Chọn phân loại chi tiết cho sản phẩm">
+              <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+            </Tooltip>
+          </label>
           <select
-            className="input-field focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="input-field focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={subcategory}
             onChange={(e) => onSubcategoryChange(e.target.value)}
             disabled={!category}
           >
-            <option value="">Chọn danh mục con</option>
+            <option value="">Chọn phân loại</option>
             {selectedCategory?.subcategories.map((sub) => (
-              <option key={sub} value={sub}>
-                {sub}
+              <option key={sub._id} value={sub._id}>
+                {sub.name}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
         {/* Summary */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Tổng Kết</h3>
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Tổng Kết</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Danh mục:</span>
@@ -121,15 +124,9 @@ export default function ProductOrganization({
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Danh mục con:</span>
+              <span className="text-gray-500">Phân loại:</span>
               <span className="font-medium">
-                {subcategory || 'Chưa chọn'}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Số danh mục con:</span>
-              <span className="font-medium">
-                {selectedCategory?.subcategories.length || 0}
+                {selectedCategory?.subcategories.find(sub => sub._id === subcategory)?.name || 'Chưa chọn'}
               </span>
             </div>
           </div>

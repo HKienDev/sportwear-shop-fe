@@ -1,137 +1,199 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
-import { Save, Loader2 } from 'lucide-react';
-import { fetchApi } from '@/utils/api';
+"use client";
 
-interface CategoryFormData {
-  name: string;
-  description: string;
-  isActive: boolean;
-}
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { toast } from "sonner";
+
+const formSchema = z.object({
+  name: z.string().min(2, "Tên danh mục phải có ít nhất 2 ký tự"),
+  description: z.string().max(500, "Mô tả không được vượt quá 500 ký tự").default(""),
+  image: z.string().min(1, "Vui lòng chọn ảnh cho danh mục"),
+  isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function CategoryForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<CategoryFormData>({
-    name: '',
-    description: '',
-    isActive: true
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      image: "",
+      isActive: true,
+      isFeatured: false,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  async function onSubmit(values: FormValues) {
     try {
-      const response = await fetchApi('/categories/admin', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+      console.log("Creating category with data:", values);
 
-      if (!response.success) {
-        throw new Error(response.message || 'Có lỗi xảy ra khi thêm thể loại');
+      const response = await fetch(
+        `${API_URL}/categories`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
       }
 
-      toast.success('Thêm thể loại thành công!');
-      router.push('/admin/categories/list');
-    } catch (error) {
-      console.error('Lỗi khi thêm thể loại:', error);
-      toast.error(error instanceof Error ? error.message : 'Không thể thêm thể loại');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const data = await response.json();
+      console.log("Create category response:", data);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
-  };
+      if (data.success) {
+        toast.success("Tạo danh mục thành công");
+        router.push("/admin/categories/list");
+      } else {
+        throw new Error(data.message || "Có lỗi xảy ra khi tạo danh mục");
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo danh mục");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-          Thêm Thể Loại Mới
-        </h2>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-[clamp(1.5rem,3vw,2rem)]">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Tên danh mục</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Nhập tên danh mục" 
+                  className="text-[clamp(0.875rem,1.5vw,1rem)]"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
+            </FormItem>
+          )}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Tên thể loại
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
-              placeholder="Nhập tên thể loại"
-            />
-          </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Mô tả</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Nhập mô tả danh mục"
+                  className="resize-none text-[clamp(0.875rem,1.5vw,1rem)] min-h-[clamp(6rem,12vw,8rem)]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
+            </FormItem>
+          )}
+        />
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Mô tả
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
-              placeholder="Nhập mô tả thể loại"
-            />
-          </div>
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Hình ảnh danh mục</FormLabel>
+              <FormControl>
+                <ImageUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={loading}
+                />
+              </FormControl>
+              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
+            </FormItem>
+          )}
+        />
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-              Hiển thị thể loại
-            </label>
-          </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[clamp(1rem,2vw,1.5rem)]">
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Hoạt động</FormLabel>
+              </FormItem>
+            )}
+          />
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Lưu
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          <FormField
+            control={form.control}
+            name="isFeatured"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Nổi bật</FormLabel>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-end gap-[clamp(0.75rem,1.5vw,1rem)]">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/admin/categories/list")}
+            className="w-full sm:w-auto text-[clamp(0.875rem,1.5vw,1rem)]"
+          >
+            Hủy
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={loading}
+            className="w-full sm:w-auto text-[clamp(0.875rem,1.5vw,1rem)]"
+          >
+            {loading ? "Đang tạo..." : "Tạo danh mục"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 } 
