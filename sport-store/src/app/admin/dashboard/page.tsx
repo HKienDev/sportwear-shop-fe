@@ -29,51 +29,66 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-      return;
-    }
+    const checkAuth = async () => {
+      if (!authLoading && !user) {
+        console.log('👤 Không có user, chuyển hướng về trang login');
+        await router.push("/auth/login");
+        return;
+      }
 
-    if (user && user.role !== "admin") {
-      router.push("/");
-      return;
-    }
+      if (user && user.role !== "admin") {
+        console.log('👤 User không phải admin, chuyển hướng về trang user');
+        await router.push("/user");
+        return;
+      }
 
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const [stats, revenue, recentOrders, bestSellingProducts] = await Promise.all([
-          getStats(),
-          getRevenue(),
-          getRecentOrders(),
-          getBestSellingProducts()
-        ]);
-
-        setData({
-          stats,
-          revenue: revenue || [],
-          recentOrders: recentOrders || [],
-          bestSellingProducts: bestSellingProducts || []
-        });
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError("Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.");
-      } finally {
-        setIsLoading(false);
+      if (user && user.role === "admin") {
+        console.log('👤 User là admin, bắt đầu fetch data');
+        await fetchDashboardData();
       }
     };
 
-    if (user && user.role === "admin") {
-      fetchDashboardData();
-      // Refresh data every 5 minutes
-      const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
+    void checkAuth();
+
+    // Refresh data every 5 minutes
+    const interval = setInterval(() => {
+      if (user && user.role === "admin") {
+        void fetchDashboardData();
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, [user, authLoading, router]);
 
-  if (authLoading) {
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('📊 Fetching dashboard data...');
+      const [stats, revenue, recentOrders, bestSellingProducts] = await Promise.all([
+        getStats(),
+        getRevenue(),
+        getRecentOrders(),
+        getBestSellingProducts()
+      ]);
+
+      console.log('✅ Dashboard data fetched successfully');
+      setData({
+        stats,
+        revenue: revenue || [],
+        recentOrders: recentOrders || [],
+        bestSellingProducts: bestSellingProducts || []
+      });
+    } catch (err) {
+      console.error("❌ Error fetching dashboard data:", err);
+      setError("Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4EB09D]"></div>

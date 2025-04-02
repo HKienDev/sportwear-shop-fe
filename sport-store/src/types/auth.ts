@@ -46,38 +46,43 @@ export interface AuthResponseData {
 }
 
 export interface LoginResponse {
-    data?: AuthResponseData;
+    success: boolean;
     message?: string;
+    data?: AuthResponseData;
 }
 
 export interface AuthCheckResponse {
     success: boolean;
-    user?: AuthUser;
     message?: string;
+    user?: AuthUser;
 }
 
 export interface TokenVerifyResponse {
+    success: boolean;
+    message?: string;
     data?: {
         user: AuthUser;
     };
-    message?: string;
 }
 
 export interface ProfileResponse {
+    success: boolean;
+    message?: string;
     data?: {
         user: AuthUser;
     };
-    message?: string;
 }
 
 export interface EmptyResponse {
-    data?: null;
+    success: boolean;
     message?: string;
+    data?: null;
 }
 
 export interface GoogleAuthResponse {
-    data?: AuthResponseData;
+    success: boolean;
     message?: string;
+    data?: AuthResponseData;
 }
 
 export interface AuthState {
@@ -88,7 +93,7 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-    login: (data: LoginRequest) => Promise<void>;
+    login: (data: LoginRequest) => Promise<LoginResponse>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     verifyOTP: (data: VerifyOTPRequest) => Promise<void>;
@@ -100,6 +105,8 @@ export interface AuthContextType extends AuthState {
     requestUpdate: () => Promise<void>;
     updateUser: (data: UpdateProfileRequest) => Promise<void>;
     loginWithGoogle: (token: string) => Promise<{ success: boolean }>;
+    setUser: (user: AuthUser | null) => void;
+    checkAuthStatus: () => Promise<void>;
 }
 
 export interface LoginCredentials {

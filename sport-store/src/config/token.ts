@@ -20,8 +20,8 @@ export const TOKEN_CONFIG = {
     
     COOKIE_OPTIONS: {
         PATH: '/',
-        SECURE: true,
-        SAME_SITE: 'strict',
+        SECURE: process.env.NODE_ENV === 'production',
+        SAME_SITE: 'lax',
         HTTP_ONLY: true,
     } as const,
 } as const;

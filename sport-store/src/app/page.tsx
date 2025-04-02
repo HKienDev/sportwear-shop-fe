@@ -1,25 +1,47 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../context/authContext";
-import { handleRedirect } from "@/utils/navigationUtils";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/authContext';
+import { UserRole } from '@/types/base';
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const hasRedirected = useRef(false);
-  const lastCheckTime = useRef(0);
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
-    const now = Date.now();
-    if (!loading && !hasRedirected.current && (now - lastCheckTime.current) > 2000) {
-      lastCheckTime.current = now;
-      hasRedirected.current = true;
-      console.log('🔄 Home page redirect check:', { user, loading });
-      handleRedirect(router, user, window.location.pathname);
-    }
-  }, [user, loading, router]);
+    const checkAuthAndRedirect = async () => {
+      try {
+        // Nếu đã đăng nhập, xử lý chuyển hướng dựa trên role
+        if (isAuthenticated && user) {
+          console.log('👤 User đã đăng nhập, thực hiện chuyển hướng:', {
+            role: user.role,
+            currentPath: window.location.pathname
+          });
 
+          // Chuyển hướng dựa trên role
+          if (user.role === UserRole.ADMIN) {
+            console.log('👑 User là admin, chuyển hướng đến dashboard');
+            router.push('/admin/dashboard');
+          } else {
+            console.log('👤 User là user thường, chuyển hướng đến trang user');
+            router.push('/user');
+          }
+        } else {
+          console.log('🔒 User chưa đăng nhập, chuyển hướng về trang login');
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('❌ Lỗi khi kiểm tra xác thực:', error);
+        // Nếu có lỗi, chuyển hướng về trang login
+        router.push('/auth/login');
+      }
+    };
+
+    // Thực hiện kiểm tra và chuyển hướng
+    checkAuthAndRedirect();
+  }, [isAuthenticated, user, router]);
+
+  // Không render gì cả khi đang xử lý chuyển hướng
   return null;
 } 

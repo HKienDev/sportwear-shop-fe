@@ -1,21 +1,22 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { NextRouter } from 'next/router';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { toast } from 'react-hot-toast';
-import { SUCCESS_MESSAGES, ROUTES, AUTH_CONFIG } from '@/config/constants';
+import { SUCCESS_MESSAGES } from '@/config/constants';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { AuthUser } from '@/types/auth';
+import { UserRole } from '@/types/base';
 import type {
-    LoginRequest,
     RegisterRequest,
     ResetPasswordRequest,
     VerifyOTPRequest,
-    UpdateProfileRequest
+    UpdateProfileRequest,
+    LoginResponse
 } from '@/types/auth';
 import {
-    login as loginService,
     register as registerService,
     logout as logoutService,
     verifyOTP as verifyOTPService,
@@ -23,18 +24,19 @@ import {
     forgotPassword as forgotPasswordService,
     resetPassword as resetPasswordService,
     updateProfile as updateProfileService,
-    checkAuth,
     requestUpdate as requestUpdateService,
     updateUser as updateUserService,
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
 import { handleRedirect } from '@/utils/navigationUtils';
+import apiClient from '@/lib/api';
+import debounce from 'lodash/debounce';
 
 interface AuthContextType {
     user: AuthUser | null;
     loading: boolean;
     isAuthenticated: boolean;
-    login: (data: LoginRequest) => Promise<void>;
+    login: (credentials: { email: string; password: string }) => Promise<LoginResponse>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     verifyOTP: (data: VerifyOTPRequest) => Promise<void>;
@@ -50,103 +52,115 @@ interface AuthContextType {
     checkAuthStatus: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const router = useRouter() as unknown as NextRouter;
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const isAuthenticatingRef = useRef(false);
-    const lastCheckRef = useRef<number>(0);
-    const checkAuthPromiseRef = useRef<Promise<void> | null>(null);
+const AUTH_CONFIG = {
+    CHECK_INTERVAL: 5000, // 5 seconds
+    TOKEN_KEY: 'token',
+    USER_KEY: 'user'
+} as const;
 
-    const checkAuthStatus = useCallback(async () => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const router = useRouter() as AppRouterInstance;
+    const [user, setUser] = React.useState<AuthUser | null>(null);
+    const [loading, setLoading] = React.useState(false);
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+    const checkAuthPromiseRef = React.useRef<Promise<void> | null>(null);
+    const lastCheckRef = React.useRef<number>(0);
+    const isAuthenticatingRef = React.useRef(false);
+
+    const checkAuthStatus = React.useCallback(async () => {
         try {
-            // Nếu đang có request check auth đang chạy, đợi nó hoàn thành
             if (checkAuthPromiseRef.current) {
                 console.log('⏳ Đang có request check auth đang chạy, đợi kết quả');
-                await checkAuthPromiseRef.current;
                 return;
             }
 
-            // Kiểm tra cooldown
             const now = Date.now();
             if (now - lastCheckRef.current < AUTH_CONFIG.CHECK_INTERVAL) {
-                console.log('⏳ Đang trong thời gian cooldown, bỏ qua check auth');
                 return;
             }
 
-            // Kiểm tra xem có token trong localStorage không
-            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
             if (!token) {
-                console.log('🔒 Không tìm thấy token, bỏ qua check auth');
-                setUser(null);
-                setIsAuthenticated(false);
-                setLoading(false);
                 return;
             }
 
-            // Tạo promise mới và lưu vào ref
             checkAuthPromiseRef.current = (async () => {
                 try {
-                    const response = await checkAuth();
-                    if (response.success && response.user) {
-                        // Lưu user vào localStorage
-                        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(response.user));
-                        setUser(response.user);
+                    const response = await apiClient.auth.check();
+                    console.log('📥 Auth check response:', response.data);
+                    
+                    if (response.data.success && response.data.data) {
+                        console.log('🔍 Auth check data structure:', response.data.data);
+                        
+                        const responseData = response.data.data as unknown;
+                        const userData = responseData as AuthUser;
+
+                        if (!userData || !userData.role || !userData.email) {
+                            console.error('❌ Invalid user data structure:', userData);
+                            throw new Error('Invalid user data structure');
+                        }
+
+                        localStorage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(userData));
+                        setUser(userData);
                         setIsAuthenticated(true);
+
+                        const currentPath = window.location.pathname;
+                        console.log('🔄 Current path:', currentPath);
+                        console.log('👤 User role:', userData.role);
+
+                        await handleRedirect(router, userData, currentPath);
                     } else {
-                        // Xóa user khỏi localStorage nếu không có user
-                        localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                        localStorage.removeItem(AUTH_CONFIG.USER_KEY);
+                        localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
                         setUser(null);
                         setIsAuthenticated(false);
+
+                        if (!window.location.pathname.startsWith('/auth/')) {
+                            await handleRedirect(router, null, window.location.pathname);
+                        }
                     }
                 } catch (error) {
                     console.error('❌ Lỗi khi check auth:', error);
-                    // Xóa user khỏi localStorage khi có lỗi
-                    localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                    localStorage.removeItem(AUTH_CONFIG.USER_KEY);
+                    localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
                     setUser(null);
                     setIsAuthenticated(false);
                     
-                    // Nếu đang ở trang auth và không phải lỗi cooldown, không cần xử lý gì thêm
-                    if (window.location.pathname.startsWith('/auth/') && error instanceof Error && error.message !== 'Auth check cooldown') {
-                        return;
-                    }
-                    
-                    // Nếu không phải trang auth, chuyển hướng về trang login
                     if (!window.location.pathname.startsWith('/auth/')) {
-                        const currentPath = window.location.pathname;
-                        router.push(`/auth/login?from=${encodeURIComponent(currentPath)}`);
+                        await handleRedirect(router, null, window.location.pathname);
                     }
                 } finally {
-                    lastCheckRef.current = Date.now();
-                    setLoading(false);
                     checkAuthPromiseRef.current = null;
+                    lastCheckRef.current = Date.now();
                 }
             })();
 
-            // Đợi promise hoàn thành
             await checkAuthPromiseRef.current;
         } catch (error) {
-            console.error('❌ Lỗi khi check auth:', error);
-            setLoading(false);
+            console.error('❌ Error in checkAuthStatus:', error);
         }
     }, [router]);
 
-    useEffect(() => {
-        // Chỉ check auth khi component mount
-        checkAuthStatus();
+    const debouncedCheckAuth = React.useCallback(
+        () => {
+            const debouncedFn = debounce(() => {
+                void checkAuthStatus();
+            }, 1000);
+            debouncedFn();
+        },
+        [checkAuthStatus]
+    );
 
-        // Chỉ set interval nếu user đã đăng nhập
+    React.useEffect(() => {
+        if (!window.location.pathname.startsWith('/auth/')) {
+            void debouncedCheckAuth();
+        }
+
         let intervalId: NodeJS.Timeout | null = null;
-        if (isAuthenticated) {
-            intervalId = setInterval(() => {
-                const now = Date.now();
-                if (now - lastCheckRef.current >= AUTH_CONFIG.CHECK_INTERVAL) {
-                    checkAuthStatus();
-                }
-            }, AUTH_CONFIG.CHECK_INTERVAL);
+        if (isAuthenticated && !window.location.pathname.startsWith('/auth/')) {
+            intervalId = setInterval(() => void debouncedCheckAuth(), AUTH_CONFIG.CHECK_INTERVAL);
         }
 
         return () => {
@@ -154,56 +168,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 clearInterval(intervalId);
             }
         };
-    }, [isAuthenticated, checkAuthStatus]);
+    }, [isAuthenticated, debouncedCheckAuth]);
 
-    const login = async (data: LoginRequest) => {
+    const login = async (credentials: { email: string; password: string }): Promise<LoginResponse> => {
         try {
-            setLoading(true);
+            if (isAuthenticatingRef.current) {
+                console.log('⏳ Đang có request đăng nhập đang chạy, đợi kết quả');
+                return { success: false, message: 'Đang xử lý đăng nhập' };
+            }
+
             isAuthenticatingRef.current = true;
-            console.log('🔐 Attempting login with email:', data.email);
-            const response = await loginService(data.email, data.password);
-            console.log('📥 Login response:', response);
-            
-            if (response.success && response.data) {
-                const { user: userData, accessToken, refreshToken } = response.data;
-                console.log('✅ Login successful, setting auth data');
-                
-                // Lưu token vào cookie
-                document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict`;
-                document.cookie = `refreshToken=${refreshToken}; path=/; secure; samesite=strict`;
-                
-                // Lưu thông tin user và token
-                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+            setLoading(true);
+            console.log('🔑 Đang thử đăng nhập với email:', credentials.email);
+
+            const response = await apiClient.auth.login(credentials.email, credentials.password);
+            console.log('📥 Login response:', response.data);
+
+            if (response.data.success && response.data.data) {
+                const { accessToken, user: userData } = response.data.data;
+                console.log('✅ Đăng nhập thành công, user data:', userData);
+
+                // Lưu token vào localStorage
                 localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
-                localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
-                
+                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+
+                // Lưu token vào cookie với options
+                const cookieOptions = `${TOKEN_CONFIG.COOKIE_OPTIONS.PATH}; ${TOKEN_CONFIG.COOKIE_OPTIONS.SAME_SITE}; ${TOKEN_CONFIG.COOKIE_OPTIONS.SECURE ? 'Secure;' : ''} ${TOKEN_CONFIG.COOKIE_OPTIONS.HTTP_ONLY ? 'HttpOnly;' : ''}`;
+                document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; ${cookieOptions}`;
+
+                // Lưu user data vào cookie
+                const userCookieData = {
+                    _id: userData._id,
+                    email: userData.email,
+                    role: userData.role,
+                    isActive: userData.isActive,
+                    isVerified: userData.isVerified,
+                    authStatus: userData.authStatus,
+                    username: userData.username,
+                    fullname: userData.fullname,
+                    phone: userData.phone,
+                    avatar: userData.avatar,
+                    gender: userData.gender,
+                    dob: userData.dob,
+                    address: userData.address,
+                    membershipLevel: userData.membershipLevel,
+                    points: userData.points
+                };
+                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodeURIComponent(JSON.stringify(userCookieData))}; ${cookieOptions}`;
+
+                // Cập nhật state
                 setUser(userData);
                 setIsAuthenticated(true);
-                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-                
-                // Xử lý chuyển hướng
-                const urlParams = new URLSearchParams(window.location.search);
-                const from = urlParams.get('from');
-                const redirectPath = from ? decodeURIComponent(from) : (userData.role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.HOME);
-                console.log('🔄 Redirecting after login to:', redirectPath);
 
-                // Sử dụng window.location.href cho admin để reload hoàn toàn
-                if (userData.role === 'admin' && redirectPath.includes('/admin')) {
-                    window.location.href = redirectPath;
+                // Đợi một chút để đảm bảo state đã được cập nhật
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Chuyển hướng dựa trên role
+                if (userData.role === UserRole.ADMIN) {
+                    console.log('👑 User là admin, chuyển hướng đến dashboard');
+                    router.push('/admin/dashboard');
                 } else {
-                    router.push(redirectPath);
+                    console.log('👤 User là user thường, chuyển hướng đến trang chủ');
+                    router.push('/');
                 }
+
+                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+                return response.data;
             } else {
-                console.log('❌ Login failed:', response.message);
-                setUser(null);
-                setIsAuthenticated(false);
-                throw new Error(response.message || 'Đăng nhập thất bại');
+                console.error('❌ Đăng nhập thất bại:', response.data.message);
+                toast.error(response.data.message || 'Đăng nhập thất bại');
+                return response.data;
             }
         } catch (error) {
             console.error('❌ Lỗi khi đăng nhập:', error);
-            setUser(null);
-            setIsAuthenticated(false);
-            throw error;
+            toast.error('Đăng nhập thất bại');
+            return { success: false, message: 'Đăng nhập thất bại' };
         } finally {
             setLoading(false);
             isAuthenticatingRef.current = false;
@@ -342,14 +381,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('Google login response:', response);
             
             if (response.success && response.data?.user) {
-                const userData = response.data.user;
+                const userData = response.data.user as AuthUser;
                 setUser(userData);
                 setIsAuthenticated(true);
                 setLoading(false);
                 toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
                 const urlParams = new URLSearchParams(window.location.search);
                 const from = urlParams.get('from') || undefined;
-                const redirectPath = from || (userData.role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.HOME);
+                const redirectPath = from || (userData.role === UserRole.ADMIN ? '/admin/dashboard' : '/user');
                 console.log('🔄 Redirecting after login:', redirectPath);
                 await router.replace(redirectPath);
                 return { success: true };
@@ -368,7 +407,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    // Thêm useEffect để lắng nghe sự kiện logout
     useEffect(() => {
         const handleLogout = () => {
             setUser(null);
@@ -381,7 +419,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => window.removeEventListener('logout', handleLogout);
     }, [router]);
 
-    // Thêm useEffect để lắng nghe sự kiện userUpdated
     useEffect(() => {
         const handleUserUpdated = (event: CustomEvent) => {
             setUser(event.detail);
@@ -419,7 +456,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
+    const context = React.useContext(AuthContext);
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
