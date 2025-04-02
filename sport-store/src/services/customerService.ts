@@ -19,10 +19,21 @@ export const customerService = {
   // Lấy danh sách khách hàng
   getCustomers: async (page: number = 1, limit: number = 10) => {
     try {
-      const response = await apiClient.get<ApiResponse<CustomerResponse>>(
-        `/customers?page=${page}&limit=${limit}`
+      const response = await apiClient.get<Customer[]>(
+        `/admin/users?page=${page}&limit=${limit}`
       );
-      return response.data;
+      // Chuyển đổi response thành định dạng CustomerResponse
+      return {
+        success: true,
+        message: "Lấy danh sách khách hàng thành công",
+        data: {
+          customers: response.data,
+          total: response.data.length,
+          page,
+          limit,
+          totalPages: Math.ceil(response.data.length / limit)
+        }
+      };
     } catch (error) {
       console.error("Error fetching customers:", error);
       throw error;
@@ -32,10 +43,14 @@ export const customerService = {
   // Lấy thông tin chi tiết khách hàng
   getCustomerById: async (id: string) => {
     try {
-      const response = await apiClient.get<ApiResponse<Customer>>(
-        `/customers/${id}`
+      const response = await apiClient.get<Customer>(
+        `/admin/users/${id}`
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Lấy thông tin khách hàng thành công",
+        data: response.data
+      };
     } catch (error) {
       console.error("Error fetching customer:", error);
       throw error;
@@ -45,11 +60,15 @@ export const customerService = {
   // Tạo khách hàng mới
   createCustomer: async (customerData: Partial<Customer>) => {
     try {
-      const response = await apiClient.post<ApiResponse<Customer>>(
-        "/customers",
+      const response = await apiClient.post<Customer>(
+        "/admin/users",
         customerData
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Tạo khách hàng thành công",
+        data: response.data
+      };
     } catch (error) {
       console.error("Error creating customer:", error);
       throw error;
@@ -59,11 +78,15 @@ export const customerService = {
   // Cập nhật thông tin khách hàng
   updateCustomer: async (id: string, customerData: Partial<Customer>) => {
     try {
-      const response = await apiClient.put<ApiResponse<Customer>>(
-        `/customers/${id}`,
+      const response = await apiClient.put<Customer>(
+        `/admin/users/${id}`,
         customerData
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Cập nhật thông tin khách hàng thành công",
+        data: response.data
+      };
     } catch (error) {
       console.error("Error updating customer:", error);
       throw error;
@@ -73,10 +96,14 @@ export const customerService = {
   // Xóa khách hàng
   deleteCustomer: async (id: string) => {
     try {
-      const response = await apiClient.delete<ApiResponse<Customer>>(
-        `/customers/${id}`
+      const response = await apiClient.delete<Customer>(
+        `/admin/users/${id}`
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Xóa khách hàng thành công",
+        data: response.data
+      };
     } catch (error) {
       console.error("Error deleting customer:", error);
       throw error;
@@ -86,11 +113,15 @@ export const customerService = {
   // Xóa nhiều khách hàng
   deleteManyCustomers: async (ids: string[]) => {
     try {
-      const response = await apiClient.delete<ApiResponse<Customer[]>>(
-        "/customers/bulk",
+      const response = await apiClient.delete<Customer[]>(
+        "/admin/users/bulk",
         { data: { ids } }
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Xóa nhiều khách hàng thành công",
+        data: response.data
+      };
     } catch (error) {
       console.error("Error deleting customers:", error);
       throw error;
@@ -100,10 +131,20 @@ export const customerService = {
   // Tìm kiếm khách hàng
   searchCustomers: async (query: string, page: number = 1, limit: number = 10) => {
     try {
-      const response = await apiClient.get<ApiResponse<CustomerResponse>>(
-        `/customers/search?q=${query}&page=${page}&limit=${limit}`
+      const response = await apiClient.get<Customer[]>(
+        `/admin/users/search?q=${query}&page=${page}&limit=${limit}`
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Tìm kiếm khách hàng thành công",
+        data: {
+          customers: response.data,
+          total: response.data.length,
+          page,
+          limit,
+          totalPages: Math.ceil(response.data.length / limit)
+        }
+      };
     } catch (error) {
       console.error("Error searching customers:", error);
       throw error;

@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/context/authContext";
+import { toast } from "react-hot-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
@@ -15,88 +17,64 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  handleLogin: (email: string, password: string) => Promise<void>;
   error: string;
   loading: boolean;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, error, loading }) => {
-  const [showPassword, setShowPassword] = useState(false);
+const LoginForm = ({ error, loading }: LoginFormProps) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useAuth();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const onSubmit = async (data: LoginFormData) => {
-    await handleLogin(data.email, data.password);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const result = await login(email, password);
+      if (!result.success) {
+        toast.error(result.message || "Đăng nhập thất bại");
+      }
+    } catch (error) {
+      toast.error("Đăng nhập thất bại");
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 flex flex-col items-center w-full max-w-md"
-    >
-      {/* Error Message */}
-      {error && (
-        <div className="text-red-500 font-semibold text-sm">{error}</div>
-      )}
-
-      {/* Email Input */}
-      <div className="flex flex-col w-full relative">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email
+        </label>
         <input
-          {...register("email")}
           type="email"
           id="email"
-          placeholder="Email"
-          className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-sm text-black placeholder-gray-500"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          required
         />
-        {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-        )}
       </div>
-
-      {/* Password Input */}
-      <div className="flex flex-col w-full relative">
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          Mật khẩu
+        </label>
         <input
-          {...register("password")}
-          type={showPassword ? "text" : "password"}
+          type="password"
           id="password"
-          placeholder="Mật khẩu"
-          className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-sm text-black placeholder-gray-500"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          required
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-        >
-          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-        </button>
-        {errors.password && (
-          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-        )}
       </div>
-
-      {/* Links */}
-      <div className="flex justify-between w-full text-sm text-gray-700">
-        <Link href="/auth/forgot-password" className="hover:text-red-600">
-          Quên mật khẩu?
-        </Link>
-        <Link href="/auth/register" className="font-medium hover:text-red-600">
-          Đăng ký ngay
-        </Link>
-      </div>
-
-      {/* Submit Button */}
+      {error && (
+        <div className="text-red-600 text-sm">{error}</div>
+      )}
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 font-semibold shadow-lg transition-all"
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
       >
-        {loading ? "Đang đăng nhập..." : "Tiếp tục"}
+        {loading ? "Đang xử lý..." : "Đăng nhập"}
       </button>
     </form>
   );

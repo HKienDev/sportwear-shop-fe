@@ -7,7 +7,7 @@ import CategorySearch from "@/components/admin/categories/list/categorySearch";
 import CategoryTable from "@/components/admin/categories/list/categoryTable";
 import Pagination from "@/components/admin/categories/list/pagination";
 import DeleteButton from "@/components/admin/categories/list/categoryButton";
-import { fetchApi } from "@/utils/api";
+import { useAuth } from "@/context/authContext";
 
 interface Category {
   _id: string;
@@ -20,58 +20,63 @@ interface Category {
 const ITEMS_PER_PAGE = 10;
 
 export default function CategoryList() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  // Tính toán số trang và danh sách thể loại hiện tại
-  const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
-  const currentCategories = filteredCategories.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Kiểm tra quyền admin
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/');
+    }
+  }, [isAuthenticated, user, router]);
 
   // Lấy danh sách thể loại từ API
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetchApi("/categories");
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+        ...(searchQuery && { search: searchQuery }),
+      });
 
-      if (!response.success) {
-        toast.error(response.message || "Lỗi khi lấy danh sách thể loại");
-        if (response.message?.includes("unauthorized") || response.message?.includes("forbidden")) {
-          router.push("/login");
-          return;
-        }
-        throw new Error(response.message);
+      const response = await fetch(`/api/categories/admin?${queryParams}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách thể loại");
       }
 
-      const categoriesData = response.data as Category[];
-      setCategories(categoriesData || []);
-      setFilteredCategories(categoriesData || []);
+      if (!data.success) {
+        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách thể loại");
+      }
+
+      setCategories(data.data.categories || []);
+      setTotalPages(data.data.pagination.totalPages || 1);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách thể loại:", error);
-      toast.error("Không thể tải danh sách thể loại");
+      toast.error(error instanceof Error ? error.message : "Không thể tải danh sách thể loại");
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [currentPage, searchQuery]);
 
-  // Lọc thể loại theo từ khóa tìm kiếm
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Xử lý tìm kiếm
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    const lowercaseQuery = query.toLowerCase();
-    const filtered = categories.filter((category) => {
-      // Tìm kiếm theo tên thể loại
-      return category.name?.toLowerCase().includes(lowercaseQuery);
-    });
-    setFilteredCategories(filtered);
     setCurrentPage(1);
-  }, [categories]);
+  }, []);
 
   // Xử lý chọn/bỏ chọn thể loại
   const handleSelectCategory = useCallback((id: string) => {
@@ -92,88 +97,68 @@ Lưu ý: Hành động này không thể hoàn tác!`)) {
     try {
       // Xóa tuần tự để có thể xử lý lỗi cho từng thể loại
       for (const id of selectedCategories) {
-        const response = await fetchApi(`/categories/admin/${id}`, {
+        const response = await fetch(`/api/categories/admin/${id}`, {
           method: "DELETE",
         });
 
-        if (!response.success) {
-          const errorMessage = response.message || "Có lỗi xảy ra khi xóa thể loại";
-          if (errorMessage.includes("forbidden")) {
-            toast.error("Bạn không có quyền xóa thể loại");
-            return;
-          }
-          if (errorMessage.includes("not found")) {
-            toast.error(`Không tìm thấy thể loại với ID: ${id}`);
-            continue;
-          }
-          throw new Error(errorMessage);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Có lỗi xảy ra khi xóa thể loại");
         }
       }
 
-      toast.success(`Đã xóa thành công ${selectedCategories.length} thể loại`);
-      setSelectedCategories([]);
+      toast.success("Xóa thể loại thành công");
       fetchCategories();
+      setSelectedCategories([]);
     } catch (error) {
       console.error("Lỗi khi xóa thể loại:", error);
-      toast.error("Không thể xóa một số thể loại. Vui lòng thử lại sau");
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa thể loại");
     }
   }, [selectedCategories, fetchCategories]);
 
-  // Tải danh sách thể loại khi component được mount
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  // Xử lý chuyển trang
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  if (!isAuthenticated || user?.role !== 'admin') {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto p-6">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                DANH SÁCH THỂ LOẠI
-              </h1>
-              {isLoading && (
-                <div className="mt-2 flex items-center text-gray-500">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                  <span className="text-sm">Đang tải...</span>
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Quản lý thể loại</h1>
+        <button
+          onClick={() => router.push("/admin/categories/add")}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Thêm thể loại mới
+        </button>
+      </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <CategorySearch
-              searchQuery={searchQuery}
-              onSearchChange={handleSearch}
-              onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-                e.preventDefault();
-                handleSearch(searchQuery);
-              }}
-            />
-            <DeleteButton
-              selectedCount={selectedCategories.length}
-              onDelete={handleDeleteSelected}
-            />
-          </div>
+      <CategorySearch onSearch={handleSearch} />
+      
+      <div className="mt-4">
+        <CategoryTable
+          categories={categories}
+          selectedCategories={selectedCategories}
+          onSelectCategory={handleSelectCategory}
+          isLoading={isLoading}
+        />
+      </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <CategoryTable
-              categories={currentCategories}
-              selectedCategories={selectedCategories}
-              onSelectCategory={handleSelectCategory}
-              onDeleteCategory={handleDeleteSelected}
-            />
-          </div>
-
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        </div>
+      <div className="mt-4 flex justify-between items-center">
+        <DeleteButton
+          selectedCount={selectedCategories.length}
+          onDelete={handleDeleteSelected}
+        />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   );

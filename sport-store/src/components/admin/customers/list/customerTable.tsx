@@ -19,7 +19,7 @@ import { Customer } from '@/types/customer';
 import { Eye, Mail, Phone, Trash2, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { deleteCustomer } from '@/services/customerService';
+import { customerService } from '@/services/customerService';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -62,7 +62,7 @@ export function CustomerTable({
 
     const handleDelete = async (id: string) => {
         try {
-            await deleteCustomer(id);
+            await customerService.deleteCustomer(id);
             onDelete(id);
             toast.success('Xóa khách hàng thành công');
         } catch (error) {
@@ -78,7 +78,7 @@ export function CustomerTable({
 
         try {
             await Promise.all(
-                selectedCustomers.map((id) => deleteCustomer(id))
+                selectedCustomers.map((id) => customerService.deleteCustomer(id))
             );
             selectedCustomers.forEach((id) => onDelete(id));
             setSelectedCustomers([]);
@@ -90,7 +90,7 @@ export function CustomerTable({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="select-all"
@@ -109,7 +109,7 @@ export function CustomerTable({
                         variant="destructive"
                         size="sm"
                         onClick={handleBulkDelete}
-                        className="flex items-center space-x-2"
+                        className="flex items-center space-x-2 w-full sm:w-auto"
                     >
                         <Trash2 className="h-4 w-4" />
                         <span>Xóa ({selectedCustomers.length})</span>
@@ -117,17 +117,17 @@ export function CustomerTable({
                 )}
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-hidden">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12"></TableHead>
-                            <TableHead>ID</TableHead>
+                            <TableHead className="hidden sm:table-cell">ID</TableHead>
                             <TableHead>Thông tin</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Số điện thoại</TableHead>
-                            <TableHead>Ngày tham gia</TableHead>
-                            <TableHead>Trạng thái</TableHead>
+                            <TableHead className="hidden md:table-cell">Email</TableHead>
+                            <TableHead className="hidden lg:table-cell">Số điện thoại</TableHead>
+                            <TableHead className="hidden xl:table-cell">Ngày tham gia</TableHead>
+                            <TableHead className="hidden sm:table-cell">Trạng thái</TableHead>
                             <TableHead className="w-12"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -140,34 +140,34 @@ export function CustomerTable({
                                         onCheckedChange={() => handleSelectCustomer(customer._id)}
                                     />
                                 </TableCell>
-                                <TableCell className="font-medium">
+                                <TableCell className="hidden sm:table-cell font-medium">
                                     {customer._id.slice(-6)}
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center space-x-3">
                                         <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                                             <span className="text-sm font-medium text-gray-600">
-                                                {customer.name.charAt(0).toUpperCase()}
+                                                {customer.fullname?.charAt(0)?.toUpperCase() || '?'}
                                             </span>
                                         </div>
                                         <div>
-                                            <div className="font-medium">{customer.name}</div>
+                                            <div className="font-medium">{customer.fullname}</div>
                                             <div className="text-sm text-gray-500">
-                                                {customer.address}
+                                                {customer.address?.street || 'Chưa cập nhật'}
                                             </div>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell>{customer.email}</TableCell>
-                                <TableCell>{customer.phone}</TableCell>
-                                <TableCell>
+                                <TableCell className="hidden md:table-cell">{customer.email}</TableCell>
+                                <TableCell className="hidden lg:table-cell">{customer.phone}</TableCell>
+                                <TableCell className="hidden xl:table-cell">
                                     {new Date(customer.createdAt).toLocaleDateString("vi-VN", {
                                         year: "numeric",
                                         month: "long",
                                         day: "numeric",
                                     })}
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="hidden sm:table-cell">
                                     <Badge
                                         variant={customer.isActive ? "success" : "destructive"}
                                         className="capitalize"

@@ -42,8 +42,13 @@ export default function OrderListPage() {
       if (!response.ok) throw new Error("Có lỗi xảy ra khi lấy danh sách đơn hàng");
 
       const data = await response.json();
-      setOrders(data.orders);
-      setTotalPages(Math.ceil(data.total / 10));
+      
+      if (!data.success) {
+        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      }
+
+      setOrders(data.data.orders);
+      setTotalPages(data.data.pagination.totalPages);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
       toast.error("Có lỗi xảy ra khi lấy danh sách đơn hàng");

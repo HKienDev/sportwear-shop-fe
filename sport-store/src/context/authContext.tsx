@@ -1,13 +1,13 @@
 "use client";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { toast } from 'react-hot-toast';
-import { SUCCESS_MESSAGES } from '@/config/constants';
+import React, { useCallback, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { AuthUser } from '@/types/auth';
+import { handleRedirect } from '@/utils/navigationUtils';
+import { api } from '@/lib/api';
+import { toast } from 'react-hot-toast';
+import { SUCCESS_MESSAGES } from '@/config/constants';
 import { UserRole } from '@/types/base';
 import type {
     RegisterRequest,
@@ -28,15 +28,16 @@ import {
     updateUser as updateUserService,
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
-import { handleRedirect } from '@/utils/navigationUtils';
-import apiClient from '@/lib/api';
-import debounce from 'lodash/debounce';
+import { AxiosError } from 'axios';
+
+// Constants
+// const CHECK_INTERVAL = 5000; // 5 seconds
 
 interface AuthContextType {
     user: AuthUser | null;
     loading: boolean;
     isAuthenticated: boolean;
-    login: (credentials: { email: string; password: string }) => Promise<LoginResponse>;
+    login: (email: string, password: string) => Promise<LoginResponse>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     verifyOTP: (data: VerifyOTPRequest) => Promise<void>;
@@ -54,198 +55,191 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_CONFIG = {
-    CHECK_INTERVAL: 5000, // 5 seconds
-    TOKEN_KEY: 'token',
-    USER_KEY: 'user'
-} as const;
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const router = useRouter();
+    const isAuthenticatingRef = useRef(false);
+    const lastCheckRef = useRef<number>(0);
+    const retryCountRef = useRef<number>(0);
+    const maxRetries = 3;
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const router = useRouter() as AppRouterInstance;
-    const [user, setUser] = React.useState<AuthUser | null>(null);
-    const [loading, setLoading] = React.useState(false);
-    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-    const checkAuthPromiseRef = React.useRef<Promise<void> | null>(null);
-    const lastCheckRef = React.useRef<number>(0);
-    const isAuthenticatingRef = React.useRef(false);
-
-    const checkAuthStatus = React.useCallback(async () => {
+    const checkAuthStatus = useCallback(async () => {
         try {
-            if (checkAuthPromiseRef.current) {
-                console.log('⏳ Đang có request check auth đang chạy, đợi kết quả');
+            // Kiểm tra xem có đang xác thực không
+            if (isAuthenticatingRef.current) {
+                console.log("⏳ Đang có request xác thực đang chạy, đợi kết quả");
                 return;
             }
 
+            // Kiểm tra thời gian từ lần check cuối
             const now = Date.now();
-            if (now - lastCheckRef.current < AUTH_CONFIG.CHECK_INTERVAL) {
+            if (now - lastCheckRef.current < 5000) { // 5 giây
+                console.log("⏳ Đợi ít nhất 5 giây giữa các lần check");
                 return;
             }
 
-            const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
-            if (!token) {
+            isAuthenticatingRef.current = true;
+            console.log("🔍 Checking auth status...");
+            
+            // Kiểm tra token trong localStorage
+            const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+
+            if (!accessToken) {
+                console.log("❌ No access token found");
+                setIsAuthenticated(false);
+                setUser(null);
                 return;
             }
 
-            checkAuthPromiseRef.current = (async () => {
+            // Gọi API kiểm tra xác thực với retry mechanism
+            let response;
+            while (retryCountRef.current < maxRetries) {
                 try {
-                    const response = await apiClient.auth.check();
-                    console.log('📥 Auth check response:', response.data);
+                    response = await api.get("/auth/check");
+                    console.log("📥 Auth check response:", response);
+                    break;
+                } catch (error: any) {
+                    console.error("❌ Error in auth check:", error);
                     
-                    if (response.data.success && response.data.data) {
-                        console.log('🔍 Auth check data structure:', response.data.data);
-                        
-                        const responseData = response.data.data as unknown;
-                        const userData = responseData as AuthUser;
-
-                        if (!userData || !userData.role || !userData.email) {
-                            console.error('❌ Invalid user data structure:', userData);
-                            throw new Error('Invalid user data structure');
-                        }
-
-                        localStorage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(userData));
-                        setUser(userData);
-                        setIsAuthenticated(true);
-
-                        const currentPath = window.location.pathname;
-                        console.log('🔄 Current path:', currentPath);
-                        console.log('👤 User role:', userData.role);
-
-                        await handleRedirect(router, userData, currentPath);
-                    } else {
-                        localStorage.removeItem(AUTH_CONFIG.USER_KEY);
-                        localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-                        setUser(null);
-                        setIsAuthenticated(false);
-
-                        if (!window.location.pathname.startsWith('/auth/')) {
-                            await handleRedirect(router, null, window.location.pathname);
+                    // Nếu lỗi 401 và có refresh token, thử refresh
+                    if (error.response?.status === 401 && refreshToken) {
+                        try {
+                            console.log("🔄 Attempting to refresh token...");
+                            const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
+                            
+                            if (refreshResponse.data.success) {
+                                const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
+                                
+                                // Lưu cả 2 token mới
+                                localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
+                                localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
+                                
+                                // Cập nhật header
+                                api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+                                
+                                // Cập nhật state
+                                setUser(userData);
+                                setIsAuthenticated(true);
+                                
+                                // Thử lại request ban đầu
+                                response = await api.get("/auth/check");
+                                break;
+                            }
+                        } catch (refreshError) {
+                            console.error("❌ Token refresh failed:", refreshError);
                         }
                     }
-                } catch (error) {
-                    console.error('❌ Lỗi khi check auth:', error);
-                    localStorage.removeItem(AUTH_CONFIG.USER_KEY);
-                    localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-                    setUser(null);
-                    setIsAuthenticated(false);
                     
-                    if (!window.location.pathname.startsWith('/auth/')) {
-                        await handleRedirect(router, null, window.location.pathname);
+                    retryCountRef.current++;
+                    if (retryCountRef.current === maxRetries) {
+                        throw error;
                     }
-                } finally {
-                    checkAuthPromiseRef.current = null;
-                    lastCheckRef.current = Date.now();
+                    console.log(`🔄 Retrying auth check (${retryCountRef.current}/${maxRetries})...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCountRef.current));
                 }
-            })();
-
-            await checkAuthPromiseRef.current;
-        } catch (error) {
-            console.error('❌ Error in checkAuthStatus:', error);
-        }
-    }, [router]);
-
-    const debouncedCheckAuth = React.useCallback(
-        () => {
-            const debouncedFn = debounce(() => {
-                void checkAuthStatus();
-            }, 1000);
-            debouncedFn();
-        },
-        [checkAuthStatus]
-    );
-
-    React.useEffect(() => {
-        if (!window.location.pathname.startsWith('/auth/')) {
-            void debouncedCheckAuth();
-        }
-
-        let intervalId: NodeJS.Timeout | null = null;
-        if (isAuthenticated && !window.location.pathname.startsWith('/auth/')) {
-            intervalId = setInterval(() => void debouncedCheckAuth(), AUTH_CONFIG.CHECK_INTERVAL);
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
             }
-        };
-    }, [isAuthenticated, debouncedCheckAuth]);
 
-    const login = async (credentials: { email: string; password: string }): Promise<LoginResponse> => {
+            if (response?.data.success) {
+                const userData = response.data.data;
+                
+                // Kiểm tra dữ liệu user có tồn tại
+                if (!userData) {
+                    console.log("❌ No user data in response");
+                    throw new Error("No user data");
+                }
+
+                // Cập nhật state
+                setUser(userData);
+                setIsAuthenticated(true);
+
+                // Lưu vào localStorage
+                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+
+                // Reset retry count on success
+                retryCountRef.current = 0;
+            } else {
+                console.log("❌ Auth check failed");
+                setIsAuthenticated(false);
+                setUser(null);
+                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+            }
+        } catch (error) {
+            console.error("❌ Error in auth check:", error);
+            setIsAuthenticated(false);
+            setUser(null);
+            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+
+            // Nếu lỗi 401, xóa token
+            if (error.response?.status === 401) {
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                delete api.defaults.headers.common['Authorization'];
+            }
+        } finally {
+            isAuthenticatingRef.current = false;
+            lastCheckRef.current = Date.now();
+        }
+    }, []);
+
+    const login = async (email: string, password: string) => {
         try {
             if (isAuthenticatingRef.current) {
-                console.log('⏳ Đang có request đăng nhập đang chạy, đợi kết quả');
-                return { success: false, message: 'Đang xử lý đăng nhập' };
+                console.log("⏳ Đang có request đăng nhập đang chạy, đợi kết quả");
+                return { success: false, message: "Đang xử lý đăng nhập" };
             }
 
             isAuthenticatingRef.current = true;
             setLoading(true);
-            console.log('🔑 Đang thử đăng nhập với email:', credentials.email);
+            console.log("🔑 Đang thử đăng nhập với email:", email);
 
-            const response = await apiClient.auth.login(credentials.email, credentials.password);
-            console.log('📥 Login response:', response.data);
+            const response = await api.post("/auth/login", { email, password });
+            console.log("📥 Login response:", response);
 
             if (response.data.success && response.data.data) {
                 const { accessToken, user: userData } = response.data.data;
-                console.log('✅ Đăng nhập thành công, user data:', userData);
+                console.log("✅ Đăng nhập thành công, user data:", userData);
 
                 // Lưu token vào localStorage
                 localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
                 localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
 
-                // Lưu token vào cookie với options
-                const cookieOptions = `${TOKEN_CONFIG.COOKIE_OPTIONS.PATH}; ${TOKEN_CONFIG.COOKIE_OPTIONS.SAME_SITE}; ${TOKEN_CONFIG.COOKIE_OPTIONS.SECURE ? 'Secure;' : ''} ${TOKEN_CONFIG.COOKIE_OPTIONS.HTTP_ONLY ? 'HttpOnly;' : ''}`;
-                document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; ${cookieOptions}`;
-
-                // Lưu user data vào cookie
-                const userCookieData = {
-                    _id: userData._id,
-                    email: userData.email,
-                    role: userData.role,
-                    isActive: userData.isActive,
-                    isVerified: userData.isVerified,
-                    authStatus: userData.authStatus,
-                    username: userData.username,
-                    fullname: userData.fullname,
-                    phone: userData.phone,
-                    avatar: userData.avatar,
-                    gender: userData.gender,
-                    dob: userData.dob,
-                    address: userData.address,
-                    membershipLevel: userData.membershipLevel,
-                    points: userData.points
-                };
-                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodeURIComponent(JSON.stringify(userCookieData))}; ${cookieOptions}`;
-
                 // Cập nhật state
                 setUser(userData);
                 setIsAuthenticated(true);
+
+                // Set token vào header cho tất cả các request
+                api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
                 // Đợi một chút để đảm bảo state đã được cập nhật
                 await new Promise(resolve => setTimeout(resolve, 100));
 
                 // Chuyển hướng dựa trên role
                 if (userData.role === UserRole.ADMIN) {
-                    console.log('👑 User là admin, chuyển hướng đến dashboard');
-                    router.push('/admin/dashboard');
+                    console.log("👑 User là admin, chuyển hướng đến dashboard");
+                    router.push("/admin/dashboard");
                 } else {
-                    console.log('👤 User là user thường, chuyển hướng đến trang chủ');
-                    router.push('/');
+                    console.log("👤 User là user thường, chuyển hướng đến trang chủ");
+                    router.push("/");
                 }
 
                 toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
                 return response.data;
             } else {
-                console.error('❌ Đăng nhập thất bại:', response.data.message);
-                toast.error(response.data.message || 'Đăng nhập thất bại');
-                return response.data;
+                console.error("❌ Đăng nhập thất bại:", response.data.message);
+                toast.error(response.data.message || "Đăng nhập thất bại");
+                return { success: false, message: response.data.message };
             }
         } catch (error) {
-            console.error('❌ Lỗi khi đăng nhập:', error);
-            toast.error('Đăng nhập thất bại');
-            return { success: false, message: 'Đăng nhập thất bại' };
+            console.error("❌ Lỗi khi đăng nhập:", error);
+            const errorMessage = error instanceof Error ? error.message : "Đăng nhập thất bại";
+            toast.error(errorMessage);
+            return { success: false, message: errorMessage };
         } finally {
-            setLoading(false);
             isAuthenticatingRef.current = false;
+            setLoading(false);
         }
     };
 
@@ -406,27 +400,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw error;
         }
     };
-
-    useEffect(() => {
-        const handleLogout = () => {
-            setUser(null);
-            setIsAuthenticated(false);
-            setLoading(false);
-            handleRedirect(router, null, window.location.pathname);
-        };
-
-        window.addEventListener('logout', handleLogout);
-        return () => window.removeEventListener('logout', handleLogout);
-    }, [router]);
-
-    useEffect(() => {
-        const handleUserUpdated = (event: CustomEvent) => {
-            setUser(event.detail);
-        };
-
-        window.addEventListener('userUpdated', handleUserUpdated as EventListener);
-        return () => window.removeEventListener('userUpdated', handleUserUpdated as EventListener);
-    }, []);
 
     const value = {
         user,

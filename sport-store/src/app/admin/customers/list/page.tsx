@@ -82,15 +82,15 @@ export default function CustomerList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-6 space-y-6 max-w-[1920px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Khách hàng</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Khách hàng</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Quản lý danh sách khách hàng của bạn
           </p>
         </div>
-        <Button onClick={() => router.push("/admin/customers/add")}>
+        <Button onClick={() => router.push("/admin/customers/add")} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Thêm khách hàng
         </Button>
@@ -104,11 +104,13 @@ export default function CustomerList() {
 
       <CustomerSearch onSearch={handleSearch} onFilterChange={handleFilterChange} />
 
-      <CustomerTable
-        customers={customers}
-        onDelete={handleDelete}
-        onViewDetails={handleViewDetails}
-      />
+      <div className="overflow-x-auto">
+        <CustomerTable
+          customers={customers}
+          onDelete={handleDelete}
+          onViewDetails={handleViewDetails}
+        />
+      </div>
     </div>
   );
 }

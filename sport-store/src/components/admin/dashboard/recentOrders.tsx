@@ -6,11 +6,23 @@ import type { RecentOrder } from '@/types/dashboard';
 
 interface RecentOrdersProps {
   orders: RecentOrder[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalOrders: number;
+    hasMore: boolean;
+  };
   isLoading?: boolean;
+  onLoadMore?: () => void;
 }
 
-export default function RecentOrders({ orders = [], isLoading = false }: RecentOrdersProps) {
-  if (isLoading) {
+export default function RecentOrders({ 
+  orders = [], 
+  pagination,
+  isLoading = false,
+  onLoadMore
+}: RecentOrdersProps) {
+  if (isLoading && !orders.length) {
     return (
       <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-4">
         {[...Array(5)].map((_, index) => (
@@ -114,6 +126,19 @@ export default function RecentOrders({ orders = [], isLoading = false }: RecentO
           </div>
         </Link>
       ))}
+
+      {/* Pagination */}
+      {pagination.hasMore && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={onLoadMore}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-[#4EB09D] hover:text-[#2C7A7B] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Đang tải...' : 'Tải thêm'}
+          </button>
+        </div>
+      )}
     </div>
   );
 } 

@@ -11,7 +11,18 @@ export const AUTH_CONFIG = {
         '/products',
         '/categories',
         '/about',
-        '/contact'
+        '/contact',
+        '/api/products',
+        '/api/categories',
+        '/api/auth'
+    ] as const,
+    PROTECTED_ROUTES: [
+        '/admin',
+        '/profile',
+        '/cart',
+        '/checkout',
+        '/orders',
+        '/settings'
     ] as const,
     USER_KEY: 'user'
 } as const; 

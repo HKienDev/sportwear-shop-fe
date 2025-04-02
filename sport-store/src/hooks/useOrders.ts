@@ -5,6 +5,7 @@ import apiClient from '@/lib/api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
 import type { Order, OrderQueryParams } from '@/types/api';
 import type { CreateOrderData, UpdateOrderData } from '@/types/base';
+import { OrderStatus, PaymentStatus } from '@/types/base';
 
 export function useOrders(options: OrderQueryParams = {}) {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -62,8 +63,8 @@ export function useOrders(options: OrderQueryParams = {}) {
 
             const orderData: CreateOrderData = {
                 ...data,
-                status: 'pending',
-                paymentStatus: 'pending'
+                status: OrderStatus.PENDING,
+                paymentStatus: PaymentStatus.PENDING
             };
 
             const response = await apiClient.orders.create(orderData);
@@ -83,7 +84,7 @@ export function useOrders(options: OrderQueryParams = {}) {
         try {
             const updateData: UpdateOrderData = {
                 id,
-                status: 'cancelled'
+                status: OrderStatus.CANCELLED
             };
 
             const response = await apiClient.orders.update(id, updateData);
