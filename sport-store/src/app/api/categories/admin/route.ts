@@ -5,7 +5,7 @@ import { TOKEN_CONFIG } from '@/config/token';
 export async function GET(request: Request) {
   try {
     // Lấy access token từ cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const accessToken = cookieStore.get(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME)?.value;
 
     if (!accessToken) {

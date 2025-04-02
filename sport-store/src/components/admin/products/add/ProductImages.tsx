@@ -1,27 +1,50 @@
-import { Image as ImageIcon, Upload, Trash2, Loader2 } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import Image from 'next/image';
+import { Image, Upload, X, HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
+import { toast } from "react-hot-toast";
 
 interface ProductImagesProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
 }
 
-export default function ProductImages({
-  images,
-  onImagesChange,
-}: ProductImagesProps) {
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function ProductImages({ images, onImagesChange }: ProductImagesProps) {
+  const [isDragging, setIsDragging] = useState(false);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    await handleFiles(files);
+  };
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await handleFiles(files);
+  };
+
+  const handleFiles = async (files: File[]) => {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      toast.error('Vui lòng chọn file ảnh hợp lệ');
+      return;
+    }
+
     try {
-      setUploading(true);
-      setError(null);
-
       const formData = new FormData();
-      acceptedFiles.forEach((file) => {
+      imageFiles.forEach(file => {
         formData.append('images', file);
       });
 
@@ -36,112 +59,102 @@ export default function ProductImages({
 
       const data = await response.json();
       onImagesChange([...images, ...data.urls]);
-    } catch (err) {
-      setError('Không thể tải lên ảnh. Vui lòng thử lại.');
-      console.error('Upload error:', err);
-    } finally {
-      setUploading(false);
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error('Có lỗi xảy ra khi tải ảnh lên');
     }
-  }, [images, onImagesChange]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-    },
-    maxSize: 5 * 1024 * 1024, // 5MB
-  });
+  };
 
   const handleRemoveImage = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
+    const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
   };
 
   return (
-    <div className="card bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-      <h2 className="text-lg font-semibold mb-6 flex items-center text-gray-800">
-        <ImageIcon className="mr-2 text-pink-500" size={24} />
-        Hình Ảnh Sản Phẩm
-      </h2>
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+      <div className="p-6 border-b border-gray-100">
+        <h2 className="text-lg font-semibold flex items-center text-gray-900">
+          <Image className="mr-2 text-blue-500" size={24} />
+          Hình Ảnh Sản Phẩm
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">Tải lên hình ảnh sản phẩm của bạn</p>
+      </div>
 
-      <div className="space-y-6">
-        {/* Dropzone */}
+      <div className="p-6">
+        {/* Upload Area */}
         <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 ${
-            isDragActive
-              ? 'border-pink-500 bg-pink-50'
-              : 'border-gray-300 hover:border-pink-500'
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${
+            isDragging
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
           }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          <input {...getInputProps()} />
-          <Upload className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="mt-2 text-sm text-gray-600">
-            {isDragActive
-              ? 'Thả ảnh vào đây...'
-              : 'Kéo thả ảnh vào đây hoặc click để chọn'}
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            Hỗ trợ: PNG, JPG, JPEG, GIF (tối đa 5MB)
-          </p>
+          <div className="flex flex-col items-center">
+            <Upload className="w-12 h-12 text-gray-400 mb-4" />
+            <div className="space-y-2">
+              <p className="text-gray-600">
+                Kéo và thả ảnh vào đây hoặc{' '}
+                <label className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                  <span>chọn file</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileInput}
+                  />
+                </label>
+              </p>
+              <p className="text-sm text-gray-500">
+                Hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)
+              </p>
+            </div>
+          </div>
         </div>
-
-        {/* Uploading State */}
-        {uploading && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
 
         {/* Image Grid */}
         {images.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((image, index) => (
-              <div
-                key={index}
-                className="relative group aspect-square rounded-lg overflow-hidden"
-              >
-                <Image
-                  src={image}
-                  alt={`Product image ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-                <button
-                  onClick={() => handleRemoveImage(index)}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Summary */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Tổng Kết</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Số lượng ảnh:</span>
-              <span className="font-medium">{images.length} ảnh</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Trạng thái:</span>
-              <span className="font-medium">
-                {uploading ? 'Đang tải lên...' : 'Sẵn sàng'}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                <Image className="mr-2 h-4 w-4 text-gray-500" />
+                Hình ảnh đã tải lên
+                <Tooltip content="Bạn có thể kéo thả để sắp xếp lại thứ tự ảnh">
+                  <HelpCircle className="ml-2 h-4 w-4 text-gray-400" />
+                </Tooltip>
+              </h3>
+              <span className="text-sm text-gray-500">
+                {images.length} / 10 ảnh
               </span>
             </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
+                >
+                  <img
+                    src={image}
+                    alt={`Product image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-200 flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="opacity-0 group-hover:opacity-100 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ const nextConfig = {
         ignoreDuringBuilds: true,
     },
     images: {
-        domains: ['upload.wikimedia.org', 'localhost'],
+        domains: ['upload.wikimedia.org', 'localhost', 'res.cloudinary.com'],
         remotePatterns: [
             {
                 protocol: 'http',

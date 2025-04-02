@@ -47,7 +47,7 @@ export default function AdminLayout({
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-gray-900"></div>
+                <div className="h-[clamp(4rem,8vw,8rem)] w-[clamp(4rem,8vw,8rem)] animate-spin rounded-full border-b-2 border-t-2 border-gray-900"></div>
             </div>
         );
     }
@@ -61,20 +61,22 @@ export default function AdminLayout({
             {/* Sidebar */}
             <div className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } lg:translate-x-0 lg:static lg:inset-0`}>
+            } lg:translate-x-0 lg:static lg:inset-0 w-[clamp(240px,25vw,280px)]`}>
                 <Sidebar />
             </div>
 
             {/* Main Content */}
             <div className={`flex flex-col min-h-screen transition-all duration-300 ${
-                isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'
+                isSidebarOpen ? 'lg:ml-[clamp(240px,25vw,280px)]' : 'lg:ml-0'
             }`}>
                 {/* Topbar */}
                 <Topbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
 
                 {/* Main Content Area */}
-                <main className="flex-1 pt-14 pb-16">
-                    {children}
+                <main className="flex-1 pt-[clamp(3rem,6vw,4rem)] pb-[clamp(3rem,6vw,4rem)] px-[clamp(0.5rem,2vw,1rem)] sm:px-[clamp(1rem,3vw,1.5rem)] lg:px-[clamp(1.5rem,4vw,2rem)]">
+                    <div className="mx-auto max-w-[clamp(640px,90vw,1280px)]">
+                        {children}
+                    </div>
                 </main>
 
                 {/* Footer */}
@@ -84,7 +86,7 @@ export default function AdminLayout({
             {/* Overlay for mobile */}
             {isSidebarOpen && (
                 <div 
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}

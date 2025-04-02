@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CategoryPaginationProps {
     currentPage: number;
@@ -40,44 +41,49 @@ interface CategoryPaginationProps {
     };
 
     return (
-      <div className="flex items-center justify-center space-x-2">
-        <button
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft size={20} className="text-gray-600" />
-        </button>
-
-        <div className="flex items-center space-x-1">
-          {getPageNumbers().map((pageNumber, index) => (
-            pageNumber === '...' ? (
-              <span key={`dots-${index}`} className="px-3 py-1 text-gray-500">
-                {pageNumber}
-              </span>
-            ) : (
-              <button
-                key={pageNumber}
-                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                  currentPage === pageNumber
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20'
-                    : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
-                }`}
-                onClick={() => onPageChange(pageNumber as number)}
-              >
-                {pageNumber}
-              </button>
-            )
-          ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4 mt-3 sm:mt-4">
+        <div className="text-[clamp(0.75rem,1.5vw,1rem)] text-muted-foreground">
+          Hiển thị {startIndex + 1} - {Math.min(endIndex, total)} / {total} danh mục
         </div>
-
-        <button
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <ChevronRight size={20} className="text-gray-600" />
-        </button>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="text-[clamp(0.75rem,1.5vw,1rem)]"
+          >
+            Trước
+          </Button>
+          <div className="flex items-center gap-1 sm:gap-2">
+            {getPageNumbers().map((pageNumber, index) => (
+              pageNumber === '...' ? (
+                <span key={`dots-${index}`} className="px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-gray-500 text-[10px] sm:text-xs md:text-sm">
+                  {pageNumber}
+                </span>
+              ) : (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onPageChange(pageNumber as number)}
+                  className="min-w-[clamp(2rem,4vw,2.5rem)] h-[clamp(1.5rem,3vw,2.5rem)] text-[clamp(0.75rem,1.5vw,1rem)]"
+                >
+                  {pageNumber}
+                </Button>
+              )
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="text-[clamp(0.75rem,1.5vw,1rem)]"
+          >
+            Sau
+          </Button>
+        </div>
       </div>
     );
   }
