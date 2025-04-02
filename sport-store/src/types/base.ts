@@ -6,14 +6,58 @@ export interface BaseEntity {
     updatedAt: string;
 }
 
+export enum MembershipLevel {
+    IRON = "Hạng Sắt",
+    SILVER = "Hạng Bạc",
+    GOLD = "Hạng Vàng",
+    PLATINUM = "Hạng Bạch Kim",
+    DIAMOND = "Hạng Kim Cương"
+}
+
+export enum Gender {
+    MALE = "male",
+    FEMALE = "female",
+    OTHER = "other"
+}
+
+export enum UserRole {
+    USER = "user",
+    ADMIN = "admin"
+}
+
+export enum AuthStatus {
+    PENDING = "pending",
+    VERIFIED = "verified",
+    BLOCKED = "blocked"
+}
+
 export interface User {
     _id: string;
-    name: string;
+    username?: string;
     email: string;
-    phone?: string;
-    address?: string;
+    password?: string;
+    fullname: string;
+    phone: string;
     avatar?: string;
-    role: 'admin' | 'user';
+    gender: Gender;
+    dob?: Date;
+    address: {
+        province: string;
+        district: string;
+        ward: string;
+        street: string;
+    };
+    googleId?: string;
+    googleEmail?: string;
+    role: UserRole;
+    membershipLevel: MembershipLevel;
+    points: number;
+    authStatus: AuthStatus;
+    lastLogin?: Date;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
+    verificationToken?: string;
+    verificationTokenExpires?: Date;
     createdAt: string;
     updatedAt: string;
 }

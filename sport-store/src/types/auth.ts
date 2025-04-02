@@ -1,7 +1,6 @@
 import type { User } from './base';
 
 export interface AuthUser extends User {
-    role: 'admin' | 'user';
     isActive: boolean;
     isVerified: boolean;
     lastLoginAt?: string;
