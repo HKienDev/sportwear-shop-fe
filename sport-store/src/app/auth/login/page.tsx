@@ -7,15 +7,12 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
 import { useAuth } from "@/context/authContext";
-import { ERROR_MESSAGES } from "@/config/constants";
 import { handleRedirect } from "@/utils/navigationUtils";
 
 const LoginPage = () => {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [animateForm, setAnimateForm] = useState(false);
   const router = useRouter();
-  const { login, isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     // Add entrance animation
@@ -31,34 +28,6 @@ const LoginPage = () => {
       handleRedirect(router, user, window.location.pathname);
     }
   }, [isAuthenticated, user, router]);
-
-  const handleLogin = async (email: string, password: string) => {
-    setLoading(true);
-    setError("");
-
-    try {
-      console.log("🔐 Attempting login with email:", email);
-      const response = await login({ email, password });
-      console.log("✅ Login successful", response);
-
-      if (response.success && response.data?.user) {
-        handleRedirect(router, response.data.user, window.location.pathname);
-      } else {
-        setError(response.message || ERROR_MESSAGES.SERVER_ERROR);
-      }
-    } catch (err: unknown) {
-      console.error("❌ Login error:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else if (typeof err === "object" && err !== null && "message" in err) {
-        setError((err as { message: string }).message);
-      } else {
-        setError(ERROR_MESSAGES.SERVER_ERROR);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
@@ -184,23 +153,8 @@ const LoginPage = () => {
                   <div className="w-16 h-1 bg-gradient-to-r from-gray-200 via-red-500 to-gray-200 rounded-full"></div>
                 </div>
               </div>
-              {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-50 border-l-4 border-red-500 text-red-600">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>{error}</span>
-                  </div>
-                </div>
-              )}
               <div className="space-y-5">
-                {/* Placeholder for your LoginForm component */}
-                <LoginForm handleLogin={handleLogin} error={error} loading={loading} />
+                <LoginForm error="" loading={false} />
               </div>
               <div className="mt-8">
                 <div className="relative">

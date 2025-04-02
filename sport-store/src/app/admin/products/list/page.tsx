@@ -31,6 +31,13 @@ export default function ProductListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Kiểm tra quyền admin
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/');
+    }
+  }, [isAuthenticated, user, router]);
+
   // Fetch products
   const fetchProducts = useCallback(async () => {
     try {
@@ -42,14 +49,21 @@ export default function ProductListPage() {
       });
 
       const response = await fetch(`/api/products/admin?${queryParams}`);
-      if (!response.ok) throw new Error("Có lỗi xảy ra khi lấy danh sách sản phẩm");
-
       const data = await response.json();
-      setProducts(data.products);
-      setTotalPages(Math.ceil(data.total / 10));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách sản phẩm");
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách sản phẩm");
+      }
+
+      setProducts(data.data.products || []);
+      setTotalPages(data.data.pagination.totalPages || 1);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách sản phẩm:", error);
-      toast.error("Có lỗi xảy ra khi lấy danh sách sản phẩm");
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách sản phẩm");
     } finally {
       setIsLoading(false);
     }
@@ -146,12 +160,6 @@ export default function ProductListPage() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  // Redirect if not authenticated or not admin
-  if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/admin/login');
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">

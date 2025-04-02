@@ -64,7 +64,27 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .step {
+    counter-increment: step;
+  }
+
+  .step:before {
+    @apply absolute w-9 bg-muted;
+    @apply ml-[-50px] mt-[-4px];
+    @apply rounded-full font-mono font-medium text-center text-base inline-block;
+    @apply h-9 w-9;
+    @apply content-[counter(step)];
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
   }
 }

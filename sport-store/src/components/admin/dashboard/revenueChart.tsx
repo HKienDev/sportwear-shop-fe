@@ -15,14 +15,23 @@ import {
 
 interface RevenueChartProps {
   data: RevenueData[];
+  lastUpdated: string;
+  months: number;
   isLoading?: boolean;
+  onPeriodChange?: (months: number) => void;
 }
 
-export default function RevenueChart({ data = [], isLoading = false }: RevenueChartProps) {
+export default function RevenueChart({ 
+  data = [], 
+  lastUpdated,
+  months,
+  isLoading = false,
+  onPeriodChange
+}: RevenueChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'month' | 'year'>('month');
   const totalRevenue = Array.isArray(data) ? data.reduce((sum, item) => sum + item.revenue, 0) : 0;
 
-  if (isLoading) {
+  if (isLoading && !data.length) {
     return (
       <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-6 animate-pulse">
         {/* Header Skeleton */}
@@ -65,38 +74,52 @@ export default function RevenueChart({ data = [], isLoading = false }: RevenueCh
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Tổng Doanh Thu</h2>
-          <p className="text-2xl font-bold text-[#4EB09D] mt-1">{formatCurrency(totalRevenue)} VND</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-2xl font-bold text-[#4EB09D]">{formatCurrency(totalRevenue)} VND</p>
+            <span className="text-sm text-gray-500">
+              (Cập nhật: {new Date(lastUpdated).toLocaleString('vi-VN')})
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
           <button
-            onClick={() => setSelectedPeriod('day')}
+            onClick={() => {
+              setSelectedPeriod('day');
+              onPeriodChange?.(30);
+            }}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               selectedPeriod === 'day'
                 ? 'bg-[#4EB09D] text-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Ngày
+            30 ngày
           </button>
           <button
-            onClick={() => setSelectedPeriod('month')}
+            onClick={() => {
+              setSelectedPeriod('month');
+              onPeriodChange?.(6);
+            }}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               selectedPeriod === 'month'
                 ? 'bg-[#4EB09D] text-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Tháng
+            6 tháng
           </button>
           <button
-            onClick={() => setSelectedPeriod('year')}
+            onClick={() => {
+              setSelectedPeriod('year');
+              onPeriodChange?.(12);
+            }}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               selectedPeriod === 'year'
                 ? 'bg-[#4EB09D] text-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Năm
+            1 năm
           </button>
         </div>
       </div>

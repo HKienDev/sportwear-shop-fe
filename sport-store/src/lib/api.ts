@@ -29,6 +29,24 @@ import type {
 } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
 
+// Khởi tạo apiClient với cấu hình mặc định
+export const apiClient = {
+    ...axios.create({
+        baseURL: API_URL,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+    }),
+    setAuthToken: (token: string | null) => {
+        if (token) {
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+            delete apiClient.defaults.headers.common['Authorization'];
+        }
+    }
+};
+
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     try {
         const response = await fetch(`${API_URL}${url}`, {
@@ -217,7 +235,7 @@ api.interceptors.response.use(
 );
 
 // API methods
-const apiClient = {
+const apiClientMethods = {
     // Auth
     auth: {
         login: async (email: string, password: string) => {
@@ -401,4 +419,4 @@ const apiClient = {
     }
 };
 
-export default apiClient;
+export default apiClientMethods;

@@ -52,19 +52,21 @@ dashboardApi.interceptors.response.use(
     }
 );
 
-export const getBestSellingProducts = async (): Promise<BestSellingProduct[]> => {
-    try {
-        const response = await dashboardApi.get('/best-selling-products');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching best selling products:', error);
-        throw error;
-    }
-};
+export interface RecentOrdersResponse {
+    orders: RecentOrder[];
+    pagination: {
+        currentPage: number;
+        totalPages: number;
+        totalOrders: number;
+        hasMore: boolean;
+    };
+}
 
-export const getRecentOrders = async (): Promise<RecentOrder[]> => {
+export const getRecentOrders = async (page: number = 1, limit: number = 5): Promise<RecentOrdersResponse> => {
     try {
-        const response = await dashboardApi.get('/recent-orders');
+        const response = await dashboardApi.get('/recent-orders', {
+            params: { page, limit }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching recent orders:', error);
@@ -72,9 +74,42 @@ export const getRecentOrders = async (): Promise<RecentOrder[]> => {
     }
 };
 
-export const getRevenue = async (): Promise<RevenueData[]> => {
+export interface RevenueResponse {
+    data: RevenueData[];
+    lastUpdated: string;
+    months: number;
+}
+
+export interface BestSellingProductsResponse {
+    products: BestSellingProduct[];
+    lastUpdated: string;
+    limit: number;
+    days: number;
+}
+
+export interface DashboardStatsResponse {
+    totalOrders: number;
+    totalRevenue: number;
+    totalCustomers: number;
+    totalProducts: number;
+    lastUpdated: string;
+}
+
+export const getStats = async (): Promise<DashboardStatsResponse> => {
     try {
-        const response = await dashboardApi.get('/revenue');
+        const response = await dashboardApi.get('/stats');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        throw error;
+    }
+};
+
+export const getRevenue = async (months: number = 6): Promise<RevenueResponse> => {
+    try {
+        const response = await dashboardApi.get('/revenue', {
+            params: { months }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching revenue data:', error);
@@ -82,12 +117,14 @@ export const getRevenue = async (): Promise<RevenueData[]> => {
     }
 };
 
-export const getStats = async (): Promise<DashboardStats> => {
+export const getBestSellingProducts = async (limit: number = 5, days: number = 30): Promise<BestSellingProductsResponse> => {
     try {
-        const response = await dashboardApi.get('/stats');
+        const response = await dashboardApi.get('/best-selling-products', {
+            params: { limit, days }
+        });
         return response.data;
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error('Error fetching best selling products:', error);
         throw error;
     }
 }; 

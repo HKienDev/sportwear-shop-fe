@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${montserrat.variable} font-sans`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
         <AuthProvider>
           <CartProvider>
             <CustomerProvider>

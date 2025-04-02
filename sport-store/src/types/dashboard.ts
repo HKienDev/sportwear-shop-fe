@@ -13,10 +13,11 @@ export interface DashboardStats {
 export interface BestSellingProduct {
   _id: string;
   name: string;
+  image?: string;
   category: string;
   totalSales: number;
-  image: string;
-  price: number;
+  totalRevenue: number;
+  averagePrice: number;
 }
 
 export interface RecentOrder {

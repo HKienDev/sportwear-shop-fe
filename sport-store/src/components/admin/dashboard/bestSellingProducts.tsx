@@ -7,11 +7,20 @@ import type { BestSellingProduct } from '@/types/dashboard';
 
 interface BestSellingProductsProps {
   products: BestSellingProduct[];
+  lastUpdated: string;
+  days: number;
   isLoading?: boolean;
+  onPeriodChange?: (days: number) => void;
 }
 
-export default function BestSellingProducts({ products = [], isLoading = false }: BestSellingProductsProps) {
-  if (isLoading) {
+export default function BestSellingProducts({ 
+  products = [], 
+  lastUpdated,
+  days,
+  isLoading = false,
+  onPeriodChange
+}: BestSellingProductsProps) {
+  if (isLoading && !products.length) {
     return (
       <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-4">
         {[...Array(5)].map((_, index) => (
@@ -41,6 +50,48 @@ export default function BestSellingProducts({ products = [], isLoading = false }
 
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-4">
+      {/* Header with Period Selector */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">
+            Cập nhật: {new Date(lastUpdated).toLocaleString('vi-VN')}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+          <button
+            onClick={() => onPeriodChange?.(7)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              days === 7
+                ? 'bg-[#4EB09D] text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            7 ngày
+          </button>
+          <button
+            onClick={() => onPeriodChange?.(30)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              days === 30
+                ? 'bg-[#4EB09D] text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            30 ngày
+          </button>
+          <button
+            onClick={() => onPeriodChange?.(90)}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              days === 90
+                ? 'bg-[#4EB09D] text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            90 ngày
+          </button>
+        </div>
+      </div>
+
+      {/* Products List */}
       {products.map((product, index) => (
         <Link
           key={product._id}
@@ -83,11 +134,15 @@ export default function BestSellingProducts({ products = [], isLoading = false }
                 <span className="text-xs text-gray-500">
                   Đã bán {product.totalSales}
                 </span>
+                <span className="text-xs text-gray-300">•</span>
+                <span className="text-xs text-gray-500">
+                  {formatCurrency(product.totalRevenue)}
+                </span>
               </div>
             </div>
             <div className="flex-shrink-0">
               <p className="text-sm font-medium text-[#4EB09D]">
-                {formatCurrency(product.price)}
+                {formatCurrency(product.averagePrice)}
               </p>
             </div>
           </div>

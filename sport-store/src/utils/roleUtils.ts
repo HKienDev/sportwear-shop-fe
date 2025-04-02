@@ -1,6 +1,7 @@
 import type { AuthUser } from '@/types/auth';
 import type { AppRouter } from '@/types/router';
 import { checkAuth } from '@/services/authService';
+import { ApiResponse } from '@/types/base';
 
 /**
  * Kiểm tra xem user có phải là admin không
@@ -17,12 +18,12 @@ export const checkAdminAccess = async (): Promise<boolean> => {
     try {
         const response = await checkAuth();
         
-        if (!response.success || !response.user) {
+        if (!response.success || !response.data?.user) {
             console.log('❌ API check auth thất bại hoặc không có user');
             return false;
         }
 
-        const isAdminUser = isAdmin(response.user);
+        const isAdminUser = isAdmin(response.data.user);
         console.log(isAdminUser ? '✅ Admin được phép truy cập' : '❌ Không phải admin');
         return isAdminUser;
     } catch (error) {
@@ -34,10 +35,11 @@ export const checkAdminAccess = async (): Promise<boolean> => {
 /**
  * Xử lý chuyển hướng dựa trên quyền admin
  */
-export const handleAdminAccess = async (router: any): Promise<boolean> => {
+export const handleAdminAccess = async (router: AppRouter): Promise<boolean> => {
     const hasAccess = await checkAdminAccess();
     if (!hasAccess) {
         console.log('❌ Không phải admin');
+        router.push('/auth/login');
     }
     return hasAccess;
 };
