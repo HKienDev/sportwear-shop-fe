@@ -2,20 +2,20 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
 import { useAuth } from "@/context/authContext";
 import { ERROR_MESSAGES } from "@/config/constants";
+import { handleRedirect } from "@/utils/navigationUtils";
 
 const LoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [animateForm, setAnimateForm] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     // Add entrance animation
@@ -23,12 +23,14 @@ const LoginPage = () => {
       setAnimateForm(true);
     }, 100);
 
-    // Redirect if already authenticated
-    if (isAuthenticated) {
-      const redirectFrom = searchParams.get("from") || "/";
-      router.replace(redirectFrom);
+    if (isAuthenticated && user) {
+      console.log('🔄 User đã đăng nhập, thực hiện chuyển hướng:', {
+        role: user.role,
+        currentPath: window.location.pathname
+      });
+      handleRedirect(router, user, window.location.pathname);
     }
-  }, [router, searchParams, isAuthenticated]);
+  }, [isAuthenticated, user, router]);
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
@@ -36,13 +38,14 @@ const LoginPage = () => {
 
     try {
       console.log("🔐 Attempting login with email:", email);
-      await login({ email, password });
-      console.log("✅ Login successful");
+      const response = await login({ email, password });
+      console.log("✅ Login successful", response);
 
-      // Redirect based on role
-      const redirectPath = searchParams.get("from") || "/";
-      console.log("🔄 Redirecting to:", redirectPath);
-      router.replace(redirectPath);
+      if (response.success && response.data?.user) {
+        handleRedirect(router, response.data.user, window.location.pathname);
+      } else {
+        setError(response.message || ERROR_MESSAGES.SERVER_ERROR);
+      }
     } catch (err: unknown) {
       console.error("❌ Login error:", err);
       if (err instanceof Error) {
@@ -94,8 +97,8 @@ const LoginPage = () => {
                 <Image
                   src="/image.png"
                   alt="Sports Player"
-                  layout="fill"
-                  objectFit="cover"
+                  fill
+                  sizes="50vw"
                   className="opacity-50 mix-blend-normal"
                   priority
                 />

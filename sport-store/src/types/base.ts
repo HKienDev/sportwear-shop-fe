@@ -2,8 +2,8 @@ import type { OrderItem } from './order';
 
 export interface BaseEntity {
     _id: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export enum MembershipLevel {
@@ -31,6 +31,26 @@ export enum AuthStatus {
     BLOCKED = "blocked"
 }
 
+export enum OrderStatus {
+    PENDING = "pending",
+    PROCESSING = "processing",
+    SHIPPED = "shipped",
+    DELIVERED = "delivered",
+    CANCELLED = "cancelled"
+}
+
+export enum PaymentStatus {
+    PENDING = "pending",
+    PAID = "paid",
+    FAILED = "failed"
+}
+
+export enum PaymentMethod {
+    CASH = "cash",
+    BANKING = "banking",
+    MOMO = "momo"
+}
+
 export interface User {
     _id: string;
     username?: string;
@@ -52,14 +72,19 @@ export interface User {
     role: UserRole;
     membershipLevel: MembershipLevel;
     points: number;
+    totalSpent: number;
+    orderCount: number;
     authStatus: AuthStatus;
     lastLogin?: Date;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
     verificationToken?: string;
     verificationTokenExpires?: Date;
-    createdAt: string;
-    updatedAt: string;
+    loginAttempts: number;
+    lockedUntil?: Date;
+    pendingUpdate?: Record<string, unknown>;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Category extends BaseEntity {
@@ -80,8 +105,8 @@ export interface Product {
     category: string;
     stock: number;
     isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface CartItem {
@@ -89,8 +114,8 @@ export interface CartItem {
     productId: string;
     quantity: number;
     price: number;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Order {
@@ -99,22 +124,20 @@ export interface Order {
     userId: string;
     user: User;
     items: OrderItem[];
-    total: number;
-    totalPrice: number;
-    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-    paymentStatus: 'pending' | 'paid' | 'failed';
-    paymentMethod: 'cash' | 'banking' | 'momo';
+    totalAmount: number;
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    paymentMethod: PaymentMethod;
     shippingAddress: {
-        fullName: string;
-        phone: string;
-        address: string;
-        city: string;
+        province: string;
         district: string;
         ward: string;
+        street: string;
     };
+    shippingFee: number;
     note?: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Stats {

@@ -21,7 +21,7 @@ export const PAGINATION = {
 
 // Auth Configuration
 export const AUTH_CONFIG = {
-    CHECK_INTERVAL: 60000, // 1 phút
+    CHECK_INTERVAL: 2000, // 2 giây
     REDIRECT_DELAY: 2000, // 2 giây
     MAX_REDIRECT_ATTEMPTS: 2,
     REDIRECT_COOLDOWN: 5000, // 5 giây

@@ -76,10 +76,6 @@ const REFRESH_COOLDOWN = 5000; // 5 giây
 const MAX_REFRESH_ATTEMPTS = 3; // Số lần thử refresh tối đa
 let refreshAttempts = 0;
 
-// Rate limiting cho auth check
-let lastAuthCheck = 0;
-const AUTH_CHECK_COOLDOWN = 5000; // 5 giây
-
 const canRefresh = () => {
     const now = Date.now();
     if (now - lastRefreshTime < REFRESH_COOLDOWN) {
@@ -90,15 +86,6 @@ const canRefresh = () => {
     }
     lastRefreshTime = now;
     refreshAttempts++;
-    return true;
-};
-
-const canCheckAuth = () => {
-    const now = Date.now();
-    if (now - lastAuthCheck < AUTH_CHECK_COOLDOWN) {
-        return false;
-    }
-    lastAuthCheck = now;
     return true;
 };
 
@@ -238,24 +225,6 @@ const apiClient = {
                 console.log('🔐 Making login request to:', `${API_URL}/auth/login`);
                 const response = await api.post<ApiResponse<LoginResponse['data']>>('/auth/login', { email, password });
                 console.log('📥 Login response:', response.data);
-                
-                if (response.data.success && response.data.data) {
-                    // Reset refresh attempts khi login thành công
-                    resetRefreshAttempts();
-                    // Lưu thông tin user vào localStorage và cookie
-                    const userData = response.data.data.user;
-                    localStorage.setItem('user', JSON.stringify(userData));
-                    // Encode user data trước khi lưu vào cookie
-                    const encodedUserData = encodeURIComponent(JSON.stringify(userData));
-                    document.cookie = `user=${encodedUserData}; path=/;`;
-                    
-                    // Chuyển hướng dựa vào role
-                    if (userData.role === 'admin') {
-                        window.location.replace('/admin');
-                    } else {
-                        window.location.replace('/');
-                    }
-                }
                 return response;
             } catch (error) {
                 console.error('🚨 Login request error:', error);
@@ -267,23 +236,18 @@ const apiClient = {
         },
         logout: async () => {
             try {
-                // Gọi API logout
-                const response = await api.post<ApiResponse<EmptyResponse['data']>>('/auth/logout');
-                // Luôn xóa dữ liệu local
+                const response = await api.post<ApiResponse<EmptyResponse>>('/auth/logout');
+                // Xóa cookies và localStorage khi logout
                 document.cookie.split(';').forEach(cookie => {
                     const [name] = cookie.split('=');
                     document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
                 });
-                localStorage.clear();
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
                 return response;
             } catch (error) {
-                console.error('Logout API error:', error);
-                // Vẫn xóa dữ liệu local ngay cả khi có lỗi
-                document.cookie.split(';').forEach(cookie => {
-                    const [name] = cookie.split('=');
-                    document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-                });
-                localStorage.clear();
+                console.error('Logout error:', error);
                 throw error;
             }
         },
@@ -326,17 +290,25 @@ const apiClient = {
         verifyToken: async () => {
             return api.get<ApiResponse<TokenVerifyResponse['data']>>('/auth/verify-token');
         },
-        checkAuth: async () => {
-            // Kiểm tra xem có nên gọi API không
-            if (!canCheckAuth()) {
-                return Promise.reject(new Error('Auth check cooldown'));
+        check: async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No token found');
+                }
+                
+                const response = await api.get<ApiResponse<AuthCheckResponse>>('/auth/check', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                return response;
+            } catch (error) {
+                console.error('Auth check error:', error);
+                throw error;
             }
-            // Kiểm tra xem có user trong localStorage không
-            const user = localStorage.getItem('user');
-            if (!user) {
-                return Promise.reject(new Error('No user found'));
-            }
-            return api.get<AuthCheckResponse>('/auth/check');
         },
         refreshToken: async () => {
             return api.post<ApiResponse<LoginResponse['data']>>('/auth/refresh-token');

@@ -1,62 +1,93 @@
-import { ROUTES } from '@/config/constants';
-import type { User } from '@/types/base';
-import type { AppRouter } from '@/types/router';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { AuthUser } from '@/types/auth';
+import { debounce } from 'lodash';
 
+// Định nghĩa enum UserRole
+export enum UserRole {
+    ADMIN = 'admin',
+    USER = 'user'
+}
+
+// Thời gian chờ chuyển hướng (ms)
+const REDIRECT_DELAY = 300;
+
+// Trạng thái chuyển hướng
 let isRedirecting = false;
-let lastRedirectTime = 0;
-const REDIRECT_COOLDOWN = 2000; // 2 giây
 
-export const handleRedirect = async (
-    router: AppRouter,
-    user: User | null,
-    currentPath: string,
-    from?: string
-) => {
-    const now = Date.now();
-    if (isRedirecting || (now - lastRedirectTime) < REDIRECT_COOLDOWN) {
-        console.log('🔄 Already redirecting or in cooldown, skipping...');
-        return;
-    }
-
+// Debounced version của handleRedirect
+export const handleRedirect = debounce(async (
+    router: AppRouterInstance,
+    user: AuthUser | null,
+    currentPath: string
+): Promise<void> => {
     try {
+        // Nếu đang chuyển hướng, không thực hiện thêm
+        if (isRedirecting) {
+            console.log('⚠️ Đang trong quá trình chuyển hướng, bỏ qua');
+            return;
+        }
+
+        // Nếu không có router, không thực hiện chuyển hướng
+        if (!router) {
+            console.warn('⚠️ Router không khả dụng, không thể chuyển hướng');
+            return;
+        }
+
+        // Đánh dấu đang chuyển hướng
         isRedirecting = true;
-        lastRedirectTime = now;
 
-        console.log('🔄 Handling redirect:', { user, currentPath, from });
+        // Xác định đường dẫn chuyển hướng
+        let redirectPath = '/';
 
-        // Nếu đang ở trang login hoặc register
-        if (currentPath === '/auth/login' || currentPath === '/auth/register') {
-            if (user) {
-                // Nếu đã đăng nhập, chuyển hướng dựa vào role
-                const redirectPath = from || (user.role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.HOME);
-                console.log('🔄 Redirecting to:', redirectPath);
-                
-                // Đợi chuyển hướng hoàn thành
-                await new Promise(resolve => setTimeout(resolve, 100));
-                await router.replace(redirectPath);
+        // Nếu có user, xử lý chuyển hướng dựa trên role
+        if (user) {
+            console.log('👤 Xử lý chuyển hướng cho user:', {
+                role: user.role,
+                currentPath
+            });
+
+            // Xác định đường dẫn chuyển hướng dựa trên role
+            if (user.role === UserRole.ADMIN) {
+                redirectPath = '/admin/dashboard';
+            } else {
+                redirectPath = '/user/';
+            }
+
+            // Nếu đang ở trang auth, thực hiện chuyển hướng
+            if (currentPath.startsWith('/auth/')) {
+                // Nếu đường dẫn chuyển hướng giống với đường dẫn hiện tại, không thực hiện chuyển hướng
+                if (redirectPath === currentPath) {
+                    console.log('⚠️ Đường dẫn chuyển hướng giống với đường dẫn hiện tại, bỏ qua');
+                    isRedirecting = false;
+                    return;
+                }
             }
         } else {
-            // Nếu không đang ở trang login/register
-            if (!user) {
-                // Nếu chưa đăng nhập, chuyển về login
-                console.log('🔄 No user, redirecting to login');
-                const redirectUrl = new URL(ROUTES.LOGIN, window.location.origin);
-                // Chỉ thêm from param nếu currentPath không phải là login hoặc register
-                if (!currentPath.includes('/auth/')) {
-                    redirectUrl.searchParams.set('from', currentPath);
-                }
-                await router.replace(redirectUrl.toString());
-            } else if (user.role === 'admin' && !currentPath.startsWith('/admin')) {
-                // Nếu là admin nhưng không ở trang admin
-                console.log('🔄 Admin user, redirecting to dashboard');
-                await router.replace(ROUTES.ADMIN.DASHBOARD);
-            } else if (user.role !== 'admin' && currentPath.startsWith('/admin')) {
-                // Nếu không phải admin nhưng đang ở trang admin
-                console.log('🔄 Non-admin user, redirecting to home');
-                await router.replace(ROUTES.HOME);
+            // Nếu không có user và đang ở trang cần xác thực
+            if (currentPath.startsWith('/admin/') || currentPath.startsWith('/user/')) {
+                redirectPath = '/auth/login';
             }
         }
-    } finally {
+
+        // Log thông tin chuyển hướng
+        console.log('🔄 Thực hiện chuyển hướng:', {
+            from: currentPath,
+            to: redirectPath,
+            hasUser: !!user,
+            userRole: user?.role
+        });
+
+        // Thực hiện chuyển hướng với router.push
+        await router.push(redirectPath);
+
+        // Đợi một chút để đảm bảo chuyển hướng hoàn tất
+        await new Promise(resolve => setTimeout(resolve, REDIRECT_DELAY));
+
+        // Reset trạng thái chuyển hướng
         isRedirecting = false;
+    } catch (error) {
+        console.error('❌ Lỗi khi chuyển hướng:', error);
+        isRedirecting = false;
+        throw error;
     }
-}; 
+}, 500); 

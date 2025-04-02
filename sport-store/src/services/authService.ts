@@ -7,8 +7,7 @@ import type {
     TokenVerifyResponse,
     ProfileResponse,
     EmptyResponse,
-    AuthUser,
-    AuthResponseData
+    AuthUser
 } from '@/types/auth';
 import apiClient from '@/lib/api';
 import type { ApiResponse } from '@/types/api';
@@ -16,7 +15,7 @@ import { isAdmin } from '@/utils/roleUtils';
 import { setAuthCookies, clearAuthCookies } from '@/utils/cookieUtils';
 import { setAuthStorage, clearAuthStorage } from '@/utils/storageUtils';
 import { TOKEN_CONFIG } from '@/config/token';
-import { canCheckAuth, startAuthCheck, endAuthCheck } from '@/utils/cooldownUtils';
+import { AxiosError } from 'axios';
 
 interface AuthData {
     accessToken: string;
@@ -34,44 +33,39 @@ const setAuthData = ({ accessToken, refreshToken, user }: AuthData): void => {
     console.log('👑 Is admin:', isAdmin(user));
 };
 
-const clearAuthData = (): void => {
-    clearAuthCookies();
-    clearAuthStorage();
-};
-
 // Auth service functions
-export const login = async (email: string, password: string): Promise<ApiResponse<AuthResponseData>> => {
+export const login = async (email: string, password: string): Promise<ApiResponse<LoginResponse['data']>> => {
     try {
-        console.log('🔐 Attempting login with email:', email);
+        console.log('🔐 Making login request to:', `/auth/login`);
         const response = await apiClient.auth.login(email, password);
-        console.log('📥 Login response:', response);
+        console.log('📥 Login response:', response.data);
         
-        if (!response?.data) {
-            console.log('❌ No response data');
-            throw new Error('Đăng nhập thất bại');
-        }
-        
-        // Kiểm tra nếu response là string (trường hợp lỗi rate limiting)
-        if (typeof response.data === 'string') {
-            console.log('❌ Rate limit error:', response.data);
-            throw new Error(response.data);
-        }
-        
-        const responseData = response.data as ApiResponse<AuthResponseData>;
-        console.log('📦 Parsed response data:', responseData);
-        
-        if (!responseData.success || !responseData.data) {
-            console.log('❌ Login failed:', responseData.message);
-            throw new Error(responseData.message || 'Đăng nhập thất bại');
-        }
+        if (response.data.success && response.data.data) {
+            const { user, accessToken, refreshToken } = response.data.data;
+            // Lưu thông tin xác thực
+            setAuthData({ accessToken, refreshToken, user });
+            
+            // Log role check
+            console.log('🔑 User role:', user.role);
+            console.log('👑 Is admin:', isAdmin(user));
 
-        const { user, accessToken, refreshToken } = responseData.data;
-        console.log('✅ Login successful, setting auth data');
-        setAuthData({ accessToken, refreshToken, user });
-        
-        return responseData;
+            // Không redirect ở đây, để component xử lý
+        }
+        return response.data;
     } catch (error) {
-        console.error('🚨 Login error:', error);
+        if (error instanceof AxiosError) {
+            if (error.code === 'ERR_NETWORK') {
+                console.error('🚨 Network error - Kiểm tra kết nối mạng hoặc server');
+            } else if (error.response?.status === 401) {
+                console.error('🚨 Sai email hoặc mật khẩu');
+            } else if (error.response?.status === 403) {
+                console.error('🚨 Tài khoản bị khóa');
+            } else {
+                console.error('🚨 Login request error:', error.message);
+            }
+        } else {
+            console.error('🚨 Login request error:', error);
+        }
         throw error;
     }
 };
@@ -86,16 +80,13 @@ export const register = async (data: { email: string; password: string; name: st
     }
 };
 
-export const logout = async (): Promise<ApiResponse<EmptyResponse['data']>> => {
+export const logout = async (): Promise<ApiResponse<EmptyResponse>> => {
     try {
         const response = await apiClient.auth.logout();
-        if (response.data.success) {
-            clearAuthData();
-        }
+        clearAuthData();
         return response.data;
     } catch (error) {
         console.error('Logout error:', error);
-        clearAuthData(); // Clear data even if API call fails
         throw error;
     }
 };
@@ -190,6 +181,11 @@ export const googleCallback = async (code: string): Promise<ApiResponse<GoogleAu
             const { user, accessToken, refreshToken } = response.data.data;
             setAuthData({ accessToken, refreshToken, user });
             
+            // Log role check
+            console.log('🔑 User role:', user.role);
+            console.log('👑 Is admin:', isAdmin(user));
+            
+            // Redirect based on role
             if (user.role === 'admin') {
                 window.location.replace('/admin');
             } else {
@@ -240,9 +236,11 @@ export const updateUser = async (data: UpdateProfileRequest): Promise<ApiRespons
 export const getProfile = async (): Promise<ApiResponse<ProfileResponse['data']>> => {
     try {
         const response = await apiClient.auth.getProfile();
-        if (response.data.success && response.data.data) {
-            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(response.data.data));
-            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${JSON.stringify(response.data.data)}; path=/;`;
+        if (response.data.success && response.data.data?.user) {
+            const { user } = response.data.data;
+            const userStr = JSON.stringify(user);
+            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userStr);
+            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
         }
         return response.data;
     } catch (error) {
@@ -261,48 +259,36 @@ export const verifyToken = async (): Promise<ApiResponse<TokenVerifyResponse['da
     }
 };
 
-export const checkAuth = async (force: boolean = false): Promise<AuthCheckResponse> => {
+export const checkAuth = async (): Promise<ApiResponse<AuthCheckResponse>> => {
     try {
-        // Kiểm tra cooldown trước khi thực hiện check, trừ khi force=true
-        if (!force && !canCheckAuth()) {
-            console.log('⏳ Đang trong thời gian cooldown, bỏ qua check auth');
-            throw new Error('Auth check cooldown');
-        }
-
-        // Bắt đầu check auth
-        startAuthCheck();
-
-        // Kiểm tra xem có token trong localStorage không
-        const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-        if (!token) {
-            clearAuthData();
-            throw new Error('No token found');
-        }
-
-        const response = await apiClient.auth.checkAuth();
+        // Thêm delay 1s để tránh race condition sau khi login
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Kết thúc check auth
-        endAuthCheck();
-
-        if (response.data.success && response.data.user) {
-            const { user } = response.data;
+        const response = await apiClient.auth.check();
+        if (response.data.success && response.data.data) {
+            const { user } = response.data.data;
+            // Cập nhật thông tin user trong localStorage và cookie
             const userStr = JSON.stringify(user);
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userStr);
             document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
-            
-            // Log role check
-            console.log('🔑 User role:', user.role);
-            console.log('👑 Is admin:', isAdmin(user));
-        } else {
-            clearAuthData();
-            throw new Error('No user found');
         }
-
         return response.data;
     } catch (error) {
-        // Kết thúc check auth nếu có lỗi
-        endAuthCheck();
-        console.error('Check auth error:', error);
+        // Nếu lỗi CORS hoặc Network, thử lấy user từ localStorage
+        if (error instanceof AxiosError) {
+            if (error.code === 'ERR_NETWORK' || error.message?.includes('CORS')) {
+                const userStr = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    return {
+                        success: true,
+                        message: 'Loaded user from cache',
+                        data: { user }
+                    } as ApiResponse<AuthCheckResponse>;
+                }
+            }
+        }
+        console.error('Auth check error:', error);
         throw error;
     }
 };
@@ -330,18 +316,19 @@ export const refreshToken = async (): Promise<ApiResponse<LoginResponse['data']>
 export const loginWithGoogle = async (token: string): Promise<ApiResponse<LoginResponse['data']>> => {
     try {
         const response = await apiClient.auth.googleCallback(token);
-        if (response.data.success && response.data.data?.user) {
-            const userData = response.data.data.user;
-            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
-            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${JSON.stringify(userData)}; path=/;`;
-            
-            // Log role check
-            console.log('🔑 User role:', userData.role);
-            console.log('👑 Is admin:', isAdmin(userData));
+        if (response.data.success && response.data.data) {
+            const { user, accessToken, refreshToken } = response.data.data;
+            setAuthData({ accessToken, refreshToken, user });
         }
         return response.data;
     } catch (error) {
         console.error('Login with Google error:', error);
         throw error;
     }
-}; 
+};
+
+function clearAuthData(): void {
+    // Clear cookies and localStorage
+    clearAuthCookies();
+    clearAuthStorage();
+} 

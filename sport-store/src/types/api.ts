@@ -11,7 +11,7 @@ export type ApiResponseData =
     | CartItem 
     | CartItem[]
     | LoginResponse['data']
-    | AuthCheckResponse['data']
+    | AuthCheckResponse['user']
     | TokenVerifyResponse['data']
     | ProfileResponse['data']
     | GoogleAuthResponse['data']
@@ -19,7 +19,7 @@ export type ApiResponseData =
     | null
     | undefined;
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     success: boolean;
     message?: string;
     data?: T;
@@ -30,7 +30,7 @@ export interface ApiError {
     message: string;
     code?: string;
     status?: number;
-    details?: any;
+    details?: Record<string, unknown>;
 }
 
 export interface PaginationParams {
