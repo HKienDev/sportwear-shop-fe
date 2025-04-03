@@ -6,7 +6,7 @@ import { CartProvider } from "@/context/cartContext";
 import { CustomerProvider } from "@/context/customerContext";
 import { PaymentMethodProvider } from "@/context/paymentMethodContext";
 import { ShippingMethodProvider } from "@/context/shippingMethodContext";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toast";
 
 const montserrat = Montserrat({ 
   subsets: ["latin"],
@@ -33,13 +33,7 @@ export default function RootLayout({
               <PaymentMethodProvider>
                 <ShippingMethodProvider>
                   {children}
-                  <Toaster 
-                    position="top-right"
-                    richColors
-                    closeButton
-                    expand={true}
-                    duration={3000}
-                  />
+                  <Toaster />
                 </ShippingMethodProvider>
               </PaymentMethodProvider>
             </CustomerProvider>
