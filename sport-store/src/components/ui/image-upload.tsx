@@ -92,31 +92,34 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
   return (
     <div className="space-y-4">
       {value ? (
-        <div className="relative w-full h-[200px]">
+        <div className="relative w-full aspect-[4/3] min-h-[120px] max-h-[180px] bg-muted rounded-md overflow-hidden">
           <Image
             src={value}
             alt="Uploaded image"
             fill
-            className="object-cover rounded-md"
+            className="object-contain"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2"
-            onClick={handleRemove}
-            disabled={disabled || isUploading}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={handleRemove}
+              disabled={disabled || isUploading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full h-[200px] border-2 border-dashed rounded-md">
-          <Upload className="h-8 w-8 mb-2 text-gray-500" />
-          <p className="text-sm text-gray-500 mb-2">
+        <div className="flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[120px] max-h-[180px] border-2 border-dashed rounded-md">
+          <Upload className="h-6 w-6 mb-1.5 text-gray-500" />
+          <p className="text-sm text-gray-500 mb-1.5">
             Kéo thả ảnh vào đây hoặc click để chọn
           </p>
-          <p className="text-xs text-gray-400 mb-2">
+          <p className="text-xs text-gray-400 mb-1.5">
             Tối đa 5MB, định dạng JPG, PNG hoặc WEBP
           </p>
           <Input

@@ -3,32 +3,67 @@ export interface Category {
   categoryId: string;
   name: string;
   slug: string;
-  description: string;
+  description?: string;
   image: string;
   isActive: boolean;
-  isFeatured: boolean;
-  isDeleted: boolean;
-  deletedAt?: string;
-  deletedBy?: string;
-  createdBy: string;
-  updatedBy?: string;
+  productCount: number;
+  createdBy: {
+    _id: string;
+    name: string;
+  };
+  updatedBy?: {
+    _id: string;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
-  hasProducts: boolean;
 }
 
 export interface CategoryFormData {
   name: string;
-  description: string;
+  description?: string;
   image: string;
   isActive: boolean;
-  isFeatured: boolean;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  image: string;
+  isActive?: boolean;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  description?: string;
+  image?: string;
+  isActive?: boolean;
 }
 
 export interface CategoryResponse {
   success: boolean;
   message: string;
-  data: Category;
+  data: {
+    category?: Category;
+    categories?: Category[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface CategoryQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: string;
+  isActive?: boolean;
+  sort?: string;
+  order?: string;
+  _t?: number;
 }
 
 export interface CategoryListResponse {

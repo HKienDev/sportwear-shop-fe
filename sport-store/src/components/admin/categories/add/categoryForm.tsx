@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -13,19 +16,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { ImageUpload } from "@/components/ui/image-upload";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
+import Image from "next/image";
+import { uploadToCloudinary } from "@/utils/cloudinary";
+import categoryService from "@/services/categoryService";
+import { CreateCategoryRequest, Category } from "@/types/category";
 
 const formSchema = z.object({
   name: z.string().min(2, "Tên danh mục phải có ít nhất 2 ký tự"),
-  description: z.string().max(500, "Mô tả không được vượt quá 500 ký tự").default(""),
+  description: z.string().max(500, "Mô tả không được vượt quá 500 ký tự").optional(),
   image: z.string().min(1, "Vui lòng chọn ảnh cho danh mục"),
   isActive: z.boolean().default(true),
-  isFeatured: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,6 +43,23 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CategoryForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Lấy danh sách categories khi component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryService.getAllCategories();
+        if (response.success && response.data.categories) {
+          setCategories(response.data.categories);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,159 +68,250 @@ export default function CategoryForm() {
       description: "",
       image: "",
       isActive: true,
-      isFeatured: false,
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  // Thêm hàm kiểm tra tên trùng lặp
+  const checkDuplicateName = (name: string) => {
+    const isDuplicate = categories.some(category => 
+      category.name.toLowerCase() === name.toLowerCase()
+    );
+    if (isDuplicate) {
+      form.setError("name", {
+        type: "manual",
+        message: "Tên danh mục đã tồn tại"
+      });
+      toast.error("Tên danh mục đã tồn tại");
+      return true;
+    }
+    return false;
+  };
+
+  // Thêm hàm xử lý khi tên thay đổi
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    form.setValue("name", name);
+    
+    // Xóa lỗi trước đó nếu có
+    if (form.formState.errors.name) {
+      form.clearErrors("name");
+    }
+
+    if (name.length >= 2) {
+      const isDuplicate = checkDuplicateName(name);
+      if (!isDuplicate) {
+        toast.success("Tên danh mục hợp lệ");
+      }
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        form.setValue("image", base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onSubmit = async (data: FormValues) => {
     try {
       setLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-      console.log("Creating category with data:", values);
-
-      const response = await fetch(
-        `${API_URL}/categories`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+      
+      // Kiểm tra ảnh
+      if (!data.image || data.image === '') {
+        form.setError("image", {
+          type: "manual",
+          message: "Vui lòng chọn ảnh cho danh mục"
+        });
+        toast.error("Vui lòng chọn ảnh cho danh mục");
+        return;
       }
 
-      const data = await response.json();
-      console.log("Create category response:", data);
+      // Upload ảnh lên Cloudinary
+      let imageUrl = '';
+      try {
+        // Chuyển base64 thành file
+        const base64Data = data.image.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteArrays = [];
+        
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteArrays.push(byteCharacters.charCodeAt(i));
+        }
+        
+        const byteArray = new Uint8Array(byteArrays);
+        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+        const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+        
+        // Upload lên Cloudinary
+        imageUrl = await uploadToCloudinary(file);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        form.setError("image", {
+          type: "manual",
+          message: "Lỗi khi upload ảnh lên Cloudinary"
+        });
+        toast.error("Lỗi khi upload ảnh lên Cloudinary");
+        return;
+      }
 
-      if (data.success) {
+      // Tạo dữ liệu gửi lên server
+      const categoryData: CreateCategoryRequest = {
+        name: data.name,
+        description: data.description || "",
+        image: imageUrl,
+        isActive: data.isActive
+      };
+
+      // Gọi API tạo category
+      const response = await categoryService.createCategory(categoryData);
+      
+      if (response.success) {
         toast.success("Tạo danh mục thành công");
         router.push("/admin/categories/list");
+        router.refresh();
       } else {
-        throw new Error(data.message || "Có lỗi xảy ra khi tạo danh mục");
+        toast.error(response.message || "Có lỗi xảy ra khi tạo danh mục");
       }
     } catch (error) {
       console.error("Error creating category:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo danh mục");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Có lỗi xảy ra khi tạo danh mục");
+      }
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-[clamp(1.5rem,3vw,2rem)]">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Tên danh mục</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Nhập tên danh mục" 
-                  className="text-[clamp(0.875rem,1.5vw,1rem)]"
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Mô tả</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Nhập mô tả danh mục"
-                  className="resize-none text-[clamp(0.875rem,1.5vw,1rem)] min-h-[clamp(6rem,12vw,8rem)]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Hình ảnh danh mục</FormLabel>
-              <FormControl>
-                <ImageUpload
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={loading}
-                />
-              </FormControl>
-              <FormMessage className="text-[clamp(0.75rem,1.25vw,0.875rem)]" />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[clamp(1rem,2vw,1.5rem)]">
-          <FormField
-            control={form.control}
-            name="isActive"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Hoạt động</FormLabel>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isFeatured"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="text-[clamp(0.875rem,1.5vw,1rem)]">Nổi bật</FormLabel>
-              </FormItem>
-            )}
-          />
+    <Card className="w-full">
+      <CardHeader className="pb-0 p-3 sm:p-4 md:p-6 md:pb-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
+          <div className="space-y-1">
+            <CardTitle className="text-[clamp(0.875rem,2vw,1.5rem)] font-semibold">
+              Thêm danh mục mới
+            </CardTitle>
+            <CardDescription className="text-[clamp(0.75rem,1.5vw,1rem)]">
+              Thêm một danh mục sản phẩm mới vào hệ thống
+            </CardDescription>
+          </div>
         </div>
-
-        <div className="flex flex-col sm:flex-row justify-end gap-[clamp(0.75rem,1.5vw,1rem)]">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/admin/categories/list")}
-            className="w-full sm:w-auto text-[clamp(0.875rem,1.5vw,1rem)]"
-          >
-            Hủy
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="w-full sm:w-auto text-[clamp(0.875rem,1.5vw,1rem)]"
-          >
-            {loading ? "Đang tạo..." : "Tạo danh mục"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      </CardHeader>
+      <CardContent className="p-3 pt-4 sm:p-4 sm:pt-5 md:p-6 md:pt-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tên danh mục</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Nhập tên danh mục" 
+                          {...field}
+                          onChange={handleNameChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mô tả</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Nhập mô tả danh mục"
+                          className="resize-none min-h-[120px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Ảnh danh mục</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col gap-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                          />
+                          {imagePreview && (
+                            <div className="relative w-full h-48 rounded-md overflow-hidden border">
+                              <Image
+                                src={imagePreview}
+                                alt="Preview"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Trạng thái</FormLabel>
+                        <FormDescription>
+                          Kích hoạt hoặc vô hiệu hóa danh mục
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Đang tạo..." : "Tạo danh mục"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 } 

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Power, MoreHorizontal, Loader2, Trash, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -23,58 +22,111 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Category } from "@/types/category";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import CategoryFilter from "./categoryFilter";
+import categoryService from "@/services/categoryService";
+import { CategoryQueryParams } from "@/types/category";
+import { Input } from "@/components/ui/input";
 
-export default function CategoryTable() {
+interface CategoryTableProps {
+  searchQuery?: string;
+  filters?: {
+    status: string | null;
+  };
+  onSearch?: (query: string) => void;
+  onFilterChange?: (filters: { status: string | null }) => void;
+}
+
+type SortField = "name" | "createdAt" | "status";
+type SortOrder = "asc" | "desc";
+
+export default function CategoryTable({
+  searchQuery = "",
+  filters = { status: null },
+  onSearch = () => {},
+  onFilterChange = () => {},
+}: CategoryTableProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  const totalPages = useMemo(() => Math.ceil(total / limit), [total, limit]);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/categories?page=${page}&limit=${limit}&query=${searchQuery}`;
-      console.log("Fetching categories from:", apiUrl);
+      setLoading(true);
+      
+      const params: CategoryQueryParams = {
+        page,
+        limit,
+        ...(searchQuery && { 
+          search: searchQuery 
+        }),
+        ...(filters.status && !searchQuery && { isActive: filters.status === "active" }),
+        sort: sortField,
+        order: sortOrder,
+        _t: Date.now()
+      };
 
-      const response = await fetch(apiUrl, {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      console.log('Fetching categories with params:', params);
+      
+      const response = await categoryService.getAllCategories(params);
+      console.log('API Response:', response);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Categories response:", data);
-
-      if (data.success) {
-        setCategories(data.data.categories);
-        setTotal(data.data.pagination.total);
+      if (response.success) {
+        setCategories(response.data.categories || []);
+        setTotal(response.data.pagination?.total || 0);
       } else {
-        toast.error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
+        toast.error(response.message || 'Có lỗi xảy ra khi tải danh sách danh mục');
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Có lỗi xảy ra khi tải danh sách danh mục");
+      console.error('Error fetching categories:', error);
+      if (error instanceof Error) {
+        toast.error(error.message || 'Có lỗi xảy ra khi tải danh sách danh mục');
+      } else {
+        toast.error('Có lỗi xảy ra khi tải danh sách danh mục');
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchQuery]);
+  }, [page, limit, searchQuery, filters, sortField, sortOrder]);
 
   useEffect(() => {
-    fetchCategories();
+    const timer = setTimeout(() => {
+      fetchCategories();
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [fetchCategories]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleFilterChange = (newFilters: { status: string | null }) => {
+    onFilterChange(newFilters);
     setPage(1);
   };
 
@@ -82,209 +134,342 @@ export default function CategoryTable() {
     router.push(`/admin/categories/edit/${categoryId}`);
   };
 
-  const handleDelete = async (categoryId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return;
-
+  const handleToggleStatus = async (categoryId: string, currentStatus: boolean) => {
     try {
+      setLoadingId(categoryId);
+      console.log("Toggling status for category:", categoryId);
+      console.log("Current status:", currentStatus);
+      console.log("New status:", !currentStatus);
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
         {
-          method: "DELETE",
-          credentials: "include",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
+          body: JSON.stringify({
+            isActive: !currentStatus,
+          }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      console.log("Toggle status response:", data);
+
+      if (data.success) {
+        toast.success(
+          `Đã ${!currentStatus ? "kích hoạt" : "vô hiệu hóa"} danh mục`
+        );
+        fetchCategories();
+      } else {
+        throw new Error(data.message || "Có lỗi xảy ra");
       }
+    } catch (error) {
+      console.error("Error toggling category status:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleDelete = async (categoryId: string) => {
+    setCategoryToDelete(categoryId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete) return;
+
+    try {
+      setLoadingId(categoryToDelete);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryToDelete}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Xóa danh mục thành công");
+        toast.success("Đã xóa danh mục thành công");
         fetchCategories();
       } else {
-        toast.error(data.message || "Có lỗi xảy ra khi xóa danh mục");
+        throw new Error(data.message || "Có lỗi xảy ra");
       }
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error("Có lỗi xảy ra khi xóa danh mục");
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+    } finally {
+      setLoadingId(null);
+      setCategoryToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortOrder === "asc" ? (
+      <ChevronUp className="w-4 h-4 ml-1" />
+    ) : (
+      <ChevronDown className="w-4 h-4 ml-1" />
+    );
+  };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full card">
       <CardHeader className="p-3 sm:p-4 md:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-[clamp(0.875rem,2vw,1.5rem)] font-semibold">Danh sách danh mục</CardTitle>
-            <CardDescription className="text-[clamp(0.75rem,1.5vw,1rem)]">
+            <CardTitle className="card-title text-[clamp(0.875rem,2vw,1.5rem)] font-semibold">
+              Danh sách danh mục
+            </CardTitle>
+            <CardDescription className="card-description text-[clamp(0.75rem,1.5vw,1rem)]">
               Quản lý tất cả danh mục sản phẩm trong hệ thống
             </CardDescription>
           </div>
-          <Button 
-            onClick={() => router.push("/admin/categories/add")}
-            className="w-full sm:w-auto text-[clamp(0.75rem,1.5vw,1rem)]"
-          >
-            <Plus className="w-[clamp(0.875rem,1.5vw,1.25rem)] h-[clamp(0.875rem,1.5vw,1.25rem)] mr-2" />
-            Thêm danh mục
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-3 sm:p-4 md:p-6">
-        <div className="flex items-center mb-3 sm:mb-4 md:mb-6">
-          <div className="relative flex-1 max-w-[clamp(200px,30vw,400px)]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-[clamp(0.875rem,1.5vw,1.25rem)] h-[clamp(0.875rem,1.5vw,1.25rem)]" />
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4">
             <Input
               placeholder="Tìm kiếm danh mục..."
               value={searchQuery}
-              onChange={handleSearch}
-              className="pl-9 sm:pl-10 text-[clamp(0.75rem,1.5vw,1rem)]"
+              onChange={(e) => onSearch(e.target.value)}
+              className="w-full sm:w-[200px]"
             />
+            <CategoryFilter
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
+            <Button 
+              onClick={() => router.push("/admin/categories/add")}
+              className="button w-full sm:w-auto text-[clamp(0.75rem,1.5vw,1rem)]"
+            >
+              <Plus className="w-[clamp(0.875rem,1.5vw,1.25rem)] h-[clamp(0.875rem,1.5vw,1.25rem)] mr-2" />
+              Thêm danh mục
+            </Button>
           </div>
         </div>
-
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[clamp(60px,8vw,100px)] text-[clamp(0.75rem,1.5vw,1rem)]">Mã danh mục</TableHead>
-                <TableHead className="w-[clamp(60px,8vw,100px)] text-[clamp(0.75rem,1.5vw,1rem)]">Ảnh</TableHead>
-                <TableHead className="text-[clamp(0.75rem,1.5vw,1rem)]">Tên danh mục</TableHead>
-                <TableHead className="hidden md:table-cell text-[clamp(0.75rem,1.5vw,1rem)]">Mô tả</TableHead>
-                <TableHead className="w-[clamp(60px,8vw,100px)] text-[clamp(0.75rem,1.5vw,1rem)]">Trạng thái</TableHead>
-                <TableHead className="w-[clamp(60px,8vw,100px)] text-[clamp(0.75rem,1.5vw,1rem)]">Nổi bật</TableHead>
-                <TableHead className="hidden md:table-cell w-[clamp(120px,15vw,150px)] text-[clamp(0.75rem,1.5vw,1rem)]">Ngày tạo</TableHead>
-                <TableHead className="w-[clamp(60px,8vw,100px)] text-right text-[clamp(0.75rem,1.5vw,1rem)]">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: limit }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 8 }).map((_, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <Skeleton className="h-[clamp(1rem,2vw,1.5rem)] w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : categories.length === 0 ? (
+      </CardHeader>
+      <CardContent className="p-3 sm:p-4 md:p-6">
+        <div className="space-y-4">
+          <div className="rounded-md border overflow-x-auto table-container">
+            <Table className="table w-full">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground h-[clamp(6rem,15vw,8rem)] text-[clamp(0.75rem,1.5vw,1rem)]">
-                    Không có danh mục nào
-                  </TableCell>
+                  <TableHead className="w-[100px] text-[clamp(0.75rem,1.5vw,1rem)]">
+                    Mã
+                  </TableHead>
+                  <TableHead className="w-[100px] text-[clamp(0.75rem,1.5vw,1rem)]">
+                    Ảnh
+                  </TableHead>
+                  <TableHead 
+                    className="min-w-[200px] text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+                    onClick={() => handleSort("name")}
+                  >
+                    <div className="flex items-center">
+                      Tên danh mục
+                      {renderSortIcon("name")}
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[300px] text-[clamp(0.75rem,1.5vw,1rem)]">
+                    Mô tả
+                  </TableHead>
+                  <TableHead 
+                    className="w-[150px] whitespace-nowrap text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+                    onClick={() => handleSort("status")}
+                  >
+                    <div className="flex items-center">
+                      Trạng thái
+                      {renderSortIcon("status")}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="w-[180px] text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center">
+                      Ngày tạo
+                      {renderSortIcon("createdAt")}
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[100px] text-right text-[clamp(0.75rem,1.5vw,1rem)]">
+                    Thao tác
+                  </TableHead>
                 </TableRow>
-              ) : (
-                categories.map((category) => (
-                  <TableRow key={category.categoryId}>
-                    <TableCell className="font-medium text-[clamp(0.75rem,1.5vw,1rem)]">
-                      {category.categoryId}
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: limit }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[50px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[150px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[200px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[80px]" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-[100px]" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-4 w-[80px]" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : categories.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      Không tìm thấy danh mục nào
                     </TableCell>
-                    <TableCell>
-                      {category.image ? (
-                        <div className="relative w-[clamp(2.5rem,5vw,4rem)] h-[clamp(2.5rem,5vw,4rem)] rounded-lg overflow-hidden border">
+                  </TableRow>
+                ) : (
+                  categories.map((category) => (
+                    <TableRow key={category._id}>
+                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
+                        {category.categoryId}
+                      </TableCell>
+                      <TableCell>
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden">
                           <Image
-                            src={category.image}
+                            src={category.image || "/placeholder.png"}
                             alt={category.name}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 480px) 40px, (max-width: 768px) 48px, 64px"
                           />
                         </div>
-                      ) : (
-                        <div className="w-[clamp(2.5rem,5vw,4rem)] h-[clamp(2.5rem,5vw,4rem)] rounded-lg bg-muted flex items-center justify-center border">
-                          <span className="text-muted-foreground text-[clamp(0.625rem,1.25vw,0.875rem)]">No image</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">{category.name}</TableCell>
-                    <TableCell className="hidden md:table-cell max-w-[clamp(150px,25vw,200px)] text-[clamp(0.75rem,1.5vw,1rem)]">
-                      <p className="truncate" title={category.description || ""}>
-                        {category.description || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={category.isActive ? "success" : "secondary"}
-                        className="text-[clamp(0.625rem,1.25vw,0.875rem)]"
-                      >
-                        {category.isActive ? "Hoạt động" : "Ẩn"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={category.isFeatured ? "default" : "outline"}
-                        className="text-[clamp(0.625rem,1.25vw,0.875rem)]"
-                      >
-                        {category.isFeatured ? "Có" : "Không"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-[clamp(0.75rem,1.5vw,1rem)]">
-                      {formatDate(category.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1 sm:gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(category.categoryId)}
-                          className="h-[clamp(1.5rem,3vw,2.5rem)] w-[clamp(1.5rem,3vw,2.5rem)]"
+                      </TableCell>
+                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
+                        {category.name}
+                      </TableCell>
+                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
+                        {category.description}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={category.isActive ? "success" : "destructive"}
+                          className="text-[clamp(0.75rem,1.5vw,1rem)]"
                         >
-                          <Edit className="w-[clamp(0.625rem,1.25vw,1rem)] h-[clamp(0.625rem,1.25vw,1rem)]" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(category.categoryId)}
-                          className="h-[clamp(1.5rem,3vw,2.5rem)] w-[clamp(1.5rem,3vw,2.5rem)]"
-                        >
-                          <Trash2 className="w-[clamp(0.625rem,1.25vw,1rem)] h-[clamp(0.625rem,1.25vw,1rem)]" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                          {category.isActive ? "Hoạt động" : "Vô hiệu hóa"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
+                        {formatDate(category.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              disabled={loadingId === category._id}
+                            >
+                              <span className="sr-only">Mở menu</span>
+                              {loadingId === category._id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MoreHorizontal className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(category._id)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(category._id, category.isActive)}
+                              className="cursor-pointer"
+                            >
+                              <Power className="mr-2 h-4 w-4" />
+                              {category.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(category._id)}
+                              className="cursor-pointer text-destructive"
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4 mt-3 sm:mt-4">
-            <div className="text-[clamp(0.75rem,1.5vw,1rem)] text-muted-foreground">
-              Hiển thị {categories.length} / {total} danh mục
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-center space-x-2 py-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1 || loading}
-                className="text-[clamp(0.75rem,1.5vw,1rem)]"
+                disabled={page === 1}
               >
                 Trước
               </Button>
-              <div className="text-[clamp(0.75rem,1.5vw,1rem)]">
-                Trang {page} / {totalPages}
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <Button
+                    key={p}
+                    variant={page === p ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </Button>
+                ))}
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages || loading}
-                className="text-[clamp(0.75rem,1.5vw,1rem)]"
+                disabled={page === totalPages}
               >
                 Sau
               </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>Xóa</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

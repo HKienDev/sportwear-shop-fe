@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
 import { Coupon } from "@/types/coupon";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CouponTable } from "@/components/admin/coupons/couponTable";
 import { CouponSearch } from "@/components/admin/coupons/couponSearch";
@@ -24,21 +21,7 @@ export default function CouponListPage() {
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        if (!user) {
-            router.push("/login");
-            return;
-        }
-
-        if (user.role !== "admin") {
-            router.push("/");
-            return;
-        }
-
-        fetchCoupons();
-    }, [user, router, currentPage, searchQuery]);
-
-    const fetchCoupons = async () => {
+    const fetchCoupons = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await fetch(
@@ -58,7 +41,21 @@ export default function CouponListPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [currentPage, searchQuery]);
+
+    useEffect(() => {
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+
+        if (user.role !== "admin") {
+            router.push("/");
+            return;
+        }
+
+        fetchCoupons();
+    }, [user, router, fetchCoupons]);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);

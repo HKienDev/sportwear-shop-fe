@@ -8,7 +8,7 @@ import RevenueChart from "@/components/admin/dashboard/revenueChart";
 import RecentOrders from "@/components/admin/dashboard/recentOrders";
 import BestSellingProducts from "@/components/admin/dashboard/bestSellingProducts";
 import { getStats, getRevenue, getRecentOrders, getBestSellingProducts } from "@/services/dashboardService";
-import type { DashboardStats, RevenueData, RecentOrder, BestSellingProduct } from "@/types/dashboard";
+import type { DashboardStatsResponse, RevenueResponse, RecentOrdersResponse, BestSellingProductsResponse } from "@/services/dashboardService";
 import Link from "next/link";
 
 export default function AdminDashboard() {
@@ -17,15 +17,15 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{
-    stats: DashboardStats | null;
-    revenue: RevenueData[];
-    recentOrders: RecentOrder[];
-    bestSellingProducts: BestSellingProduct[];
+    stats: DashboardStatsResponse | null;
+    revenue: RevenueResponse | null;
+    recentOrders: RecentOrdersResponse | null;
+    bestSellingProducts: BestSellingProductsResponse | null;
   }>({
     stats: null,
-    revenue: [],
-    recentOrders: [],
-    bestSellingProducts: []
+    revenue: null,
+    recentOrders: null,
+    bestSellingProducts: null
   });
 
   useEffect(() => {
@@ -76,9 +76,9 @@ export default function AdminDashboard() {
       console.log('✅ Dashboard data fetched successfully');
       setData({
         stats,
-        revenue: revenue || [],
-        recentOrders: recentOrders || [],
-        bestSellingProducts: bestSellingProducts || []
+        revenue,
+        recentOrders,
+        bestSellingProducts
       });
     } catch (err) {
       console.error("❌ Error fetching dashboard data:", err);
@@ -139,7 +139,16 @@ export default function AdminDashboard() {
 
           {/* Revenue Chart */}
           <div>
-            <RevenueChart data={data.revenue} isLoading={isLoading} />
+            <RevenueChart 
+              data={data.revenue?.data || []} 
+              isLoading={isLoading} 
+              lastUpdated={data.revenue?.lastUpdated || new Date().toISOString()}
+              months={data.revenue?.months || 6}
+              onPeriodChange={(months) => {
+                // Handle period change
+                console.log('Period changed to', months, 'months');
+              }}
+            />
           </div>
 
           {/* Orders and Products */}
@@ -151,7 +160,16 @@ export default function AdminDashboard() {
                   Xem tất cả
                 </Link>
               </div>
-              <RecentOrders orders={data.recentOrders} isLoading={isLoading} />
+              <RecentOrders 
+                orders={data.recentOrders?.orders || []} 
+                isLoading={isLoading} 
+                pagination={data.recentOrders?.pagination || {
+                  currentPage: 1,
+                  totalPages: 1,
+                  totalOrders: 0,
+                  hasMore: false
+                }}
+              />
             </div>
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -160,7 +178,16 @@ export default function AdminDashboard() {
                   Xem tất cả
                 </Link>
               </div>
-              <BestSellingProducts products={data.bestSellingProducts} isLoading={isLoading} />
+              <BestSellingProducts 
+                products={data.bestSellingProducts?.products || []} 
+                isLoading={isLoading} 
+                lastUpdated={data.bestSellingProducts?.lastUpdated || new Date().toISOString()}
+                days={data.bestSellingProducts?.days || 30}
+                onPeriodChange={(days) => {
+                  // Handle period change
+                  console.log('Period changed to', days, 'days');
+                }}
+              />
             </div>
           </div>
         </div>
