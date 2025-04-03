@@ -1,27 +1,48 @@
 export interface Product {
-  _id?: string;
+  _id: string;
   name: string;
   description: string;
-  brand: string;
   price: number;
-  discountPrice?: number;
   stock: number;
   category: string;
+  brand: string;
+  images: string[];
+  specifications?: Record<string, string>;
   isActive: boolean;
-  images: {
-    main: string;
-    sub: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductQueryParams {
+  keyword?: string;
+  category?: string;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: 'price' | 'name' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface ProductResponse {
+  success: boolean;
+  message: string;
+  data: {
+    products: Product[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
   };
-  color: string[];
-  size: string[];
-  sku: string;
-  tags: string[];
-  ratings?: {
-    average: number;
-    count: number;
-  };
-  createdAt?: string;
-  updatedAt?: string;
+}
+
+export interface SingleProductResponse {
+  success: boolean;
+  message: string;
+  data: Product;
 }
 
 export interface ProductFormData extends Omit<Product, 'images'> {
