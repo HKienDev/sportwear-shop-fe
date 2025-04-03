@@ -78,4 +78,10 @@ export interface CategoryListResponse {
       totalPages: number;
     };
   };
+}
+
+export interface SingleCategoryResponse {
+  success: boolean;
+  message: string;
+  data: Category;
 } 

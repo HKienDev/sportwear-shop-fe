@@ -57,7 +57,7 @@ const CategoryFilter = ({
           }}
           className={filters.status === "inactive" ? "bg-accent" : ""}
         >
-          Vô hiệu hóa
+          Tạm dừng
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

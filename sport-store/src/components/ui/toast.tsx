@@ -122,19 +122,28 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 export function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
+      {...props}
       className="toaster group"
       toastOptions={{
         classNames: {
-          toast:
+          toast: cn(
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            "animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out",
+            "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none"
+          ),
+          title: "group-[.toast]:text-foreground group-[.toast]:font-semibold",
           description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          success: "group-[.toast]:bg-green-50 group-[.toast]:text-green-700 group-[.toast]:border-green-200",
+          error: "group-[.toast]:bg-red-50 group-[.toast]:text-red-700 group-[.toast]:border-red-200",
+          warning: "group-[.toast]:bg-yellow-50 group-[.toast]:text-yellow-700 group-[.toast]:border-yellow-200",
+          info: "group-[.toast]:bg-blue-50 group-[.toast]:text-blue-700 group-[.toast]:border-blue-200",
         },
+        duration: 3000,
+        position: "top-right",
+        unstyled: false,
       }}
-      {...props}
     />
   )
 }
