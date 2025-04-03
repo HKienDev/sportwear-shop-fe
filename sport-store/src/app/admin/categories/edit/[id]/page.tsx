@@ -8,6 +8,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import CategoryForm from "@/components/admin/categories/edit/CategoryForm";
 import CategoryInfo from "@/components/admin/categories/edit/CategoryInfo";
+import ProductTable from "@/components/admin/categories/edit/ProductTable";
 import categoryService from "@/services/categoryService";
 import { Category } from "@/types/category";
 import { use } from "react";
@@ -79,8 +80,8 @@ export default function EditCategoryPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           onClick={() => router.push("/admin/categories")}
@@ -111,6 +112,15 @@ export default function EditCategoryPage({ params }: PageProps) {
           ) : (
             <CategoryInfo category={category} />
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách sản phẩm</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductTable categoryId={category.categoryId} />
         </CardContent>
       </Card>
     </div>
