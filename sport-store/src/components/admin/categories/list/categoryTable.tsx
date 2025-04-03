@@ -55,7 +55,7 @@ interface CategoryTableProps {
   onFilterChange?: (filters: { status: string | null }) => void;
 }
 
-type SortField = "name" | "createdAt" | "status";
+type SortField = "name" | "createdAt" | "status" | "productCount";
 type SortOrder = "asc" | "desc";
 
 export default function CategoryTable({
@@ -141,30 +141,17 @@ export default function CategoryTable({
       console.log("Current status:", currentStatus);
       console.log("New status:", !currentStatus);
       
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            isActive: !currentStatus,
-          }),
-        }
-      );
+      const response = await categoryService.updateCategory(categoryId, {
+        isActive: !currentStatus
+      });
 
-      const data = await response.json();
-      console.log("Toggle status response:", data);
-
-      if (data.success) {
+      if (response.success) {
         toast.success(
-          `Đã ${!currentStatus ? "kích hoạt" : "vô hiệu hóa"} danh mục`
+          `Đã ${!currentStatus ? "Kích hoạt" : "Tạm dừng"} danh mục`
         );
         fetchCategories();
       } else {
-        throw new Error(data.message || "Có lỗi xảy ra");
+        throw new Error(response.message || "Có lỗi xảy ra");
       }
     } catch (error) {
       console.error("Error toggling category status:", error);
@@ -251,210 +238,203 @@ export default function CategoryTable({
               filters={filters}
               onFilterChange={handleFilterChange}
             />
-            <Button 
+            <Button
               onClick={() => router.push("/admin/categories/add")}
-              className="button w-full sm:w-auto text-[clamp(0.75rem,1.5vw,1rem)]"
+              className="flex items-center gap-2"
             >
-              <Plus className="w-[clamp(0.875rem,1.5vw,1.25rem)] h-[clamp(0.875rem,1.5vw,1.25rem)] mr-2" />
-              Thêm danh mục
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Thêm danh mục</span>
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-3 sm:p-4 md:p-6">
-        <div className="space-y-4">
-          <div className="rounded-md border overflow-x-auto table-container">
-            <Table className="table w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px] text-[clamp(0.75rem,1.5vw,1rem)]">
-                    Mã
-                  </TableHead>
-                  <TableHead className="w-[100px] text-[clamp(0.75rem,1.5vw,1rem)]">
-                    Ảnh
-                  </TableHead>
-                  <TableHead 
-                    className="min-w-[200px] text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Mã</TableHead>
+                <TableHead className="w-[100px]">Ảnh</TableHead>
+                <TableHead className="min-w-[200px]">
+                  <div
+                    className="flex items-center cursor-pointer"
                     onClick={() => handleSort("name")}
                   >
-                    <div className="flex items-center">
-                      Tên danh mục
-                      {renderSortIcon("name")}
-                    </div>
-                  </TableHead>
-                  <TableHead className="min-w-[300px] text-[clamp(0.75rem,1.5vw,1rem)]">
-                    Mô tả
-                  </TableHead>
-                  <TableHead 
-                    className="w-[150px] whitespace-nowrap text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+                    Tên danh mục
+                    {renderSortIcon("name")}
+                  </div>
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleSort("productCount")}
+                  >
+                    Số sản phẩm
+                    {renderSortIcon("productCount")}
+                  </div>
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  <div
+                    className="flex items-center cursor-pointer"
                     onClick={() => handleSort("status")}
                   >
-                    <div className="flex items-center">
-                      Trạng thái
-                      {renderSortIcon("status")}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="w-[180px] text-[clamp(0.75rem,1.5vw,1rem)] cursor-pointer"
+                    Trạng thái
+                    {renderSortIcon("status")}
+                  </div>
+                </TableHead>
+                <TableHead className="w-[180px]">
+                  <div
+                    className="flex items-center cursor-pointer"
                     onClick={() => handleSort("createdAt")}
                   >
-                    <div className="flex items-center">
-                      Ngày tạo
-                      {renderSortIcon("createdAt")}
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[100px] text-right text-[clamp(0.75rem,1.5vw,1rem)]">
-                    Thao tác
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: limit }).map((_, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[50px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[150px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[200px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[80px]" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-[100px]" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-4 w-[80px]" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : categories.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      Không tìm thấy danh mục nào
+                    Ngày tạo
+                    {renderSortIcon("createdAt")}
+                  </div>
+                </TableHead>
+                <TableHead className="w-[100px] text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[50px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[150px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[80px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-8 w-8 ml-auto" />
                     </TableCell>
                   </TableRow>
-                ) : (
-                  categories.map((category) => (
-                    <TableRow key={category._id}>
-                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
-                        {category.categoryId}
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                          <Image
-                            src={category.image || "/placeholder.png"}
-                            alt={category.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
-                        {category.name}
-                      </TableCell>
-                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
-                        {category.description}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={category.isActive ? "success" : "destructive"}
-                          className="text-[clamp(0.75rem,1.5vw,1rem)]"
-                        >
-                          {category.isActive ? "Hoạt động" : "Vô hiệu hóa"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-[clamp(0.75rem,1.5vw,1rem)]">
-                        {formatDate(category.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              disabled={loadingId === category._id}
-                            >
-                              <span className="sr-only">Mở menu</span>
-                              {loadingId === category._id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <MoreHorizontal className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(category._id)}
-                              className="cursor-pointer"
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Chỉnh sửa
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleStatus(category._id, category.isActive)}
-                              className="cursor-pointer"
-                            >
-                              <Power className="mr-2 h-4 w-4" />
-                              {category.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(category._id)}
-                              className="cursor-pointer text-destructive"
-                            >
-                              <Trash className="mr-2 h-4 w-4" />
-                              Xóa
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {!loading && totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-2 py-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Trước
-              </Button>
-              <div className="flex items-center space-x-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <Button
-                    key={p}
-                    variant={page === p ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </Button>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Sau
-              </Button>
-            </div>
-          )}
+                ))
+              ) : categories.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Không tìm thấy danh mục nào
+                  </TableCell>
+                </TableRow>
+              ) : (
+                categories.map((category) => (
+                  <TableRow key={category._id}>
+                    <TableCell className="font-medium">{category.categoryId}</TableCell>
+                    <TableCell>
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                        <Image
+                          src={category.image}
+                          alt={category.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {category.productCount || 0} sản phẩm
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={category.isActive ? "success" : "destructive"}
+                      >
+                        {category.isActive ? "Hoạt động" : "Tạm dừng"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(category.createdAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            disabled={loadingId === category._id}
+                          >
+                            <span className="sr-only">Mở menu</span>
+                            {loadingId === category._id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEdit(category._id)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleToggleStatus(category._id, category.isActive)
+                            }
+                          >
+                            <Power className="w-4 h-4 mr-2" />
+                            {category.isActive ? "Tạm dừng" : "Kích hoạt"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(category._id)}
+                            className="text-destructive"
+                          >
+                            <Trash className="w-4 h-4 mr-2" />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Trước
+            </Button>
+            <div className="flex items-center space-x-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <Button
+                  key={p}
+                  variant={page === p ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Sau
+            </Button>
+          </div>
+        )}
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>

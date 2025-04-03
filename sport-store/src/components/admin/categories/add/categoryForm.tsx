@@ -30,6 +30,7 @@ import Image from "next/image";
 import { uploadToCloudinary } from "@/utils/cloudinary";
 import categoryService from "@/services/categoryService";
 import { CreateCategoryRequest, Category } from "@/types/category";
+import { X, Upload } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Tên danh mục phải có ít nhất 2 ký tự"),
@@ -176,6 +177,12 @@ export default function CategoryForm() {
         router.push("/admin/categories/list");
         router.refresh();
       } else {
+        if (response.message?.includes("đã tồn tại")) {
+          form.setError("name", {
+            type: "manual",
+            message: response.message
+          });
+        }
         toast.error(response.message || "Có lỗi xảy ra khi tạo danh mục");
       }
     } catch (error) {
@@ -252,20 +259,52 @@ export default function CategoryForm() {
                     <FormItem>
                       <FormLabel>Ảnh danh mục</FormLabel>
                       <FormControl>
-                        <div className="flex flex-col gap-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                          />
-                          {imagePreview && (
-                            <div className="relative w-full h-48 rounded-md overflow-hidden border">
+                        <div className="space-y-4">
+                          {imagePreview ? (
+                            <div className="relative w-full aspect-[4/3] min-h-[120px] max-h-[180px] bg-muted rounded-md overflow-hidden">
                               <Image
                                 src={imagePreview}
                                 alt="Preview"
                                 fill
-                                className="object-cover"
+                                className="object-contain"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2"
+                                onClick={() => {
+                                  setImagePreview(null);
+                                  form.setValue("image", "");
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[120px] max-h-[180px] border-2 border-dashed rounded-md">
+                              <Upload className="h-6 w-6 mb-1.5 text-gray-500" />
+                              <p className="text-sm text-gray-500 mb-1.5">
+                                Kéo thả ảnh vào đây hoặc click để chọn
+                              </p>
+                              <p className="text-xs text-gray-400 mb-1.5">
+                                Tối đa 5MB, định dạng JPG, PNG hoặc WEBP
+                              </p>
+                              <Input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
+                                className="hidden"
+                                id="image-upload"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById("image-upload")?.click()}
+                              >
+                                Chọn ảnh
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -280,9 +319,9 @@ export default function CategoryForm() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Trạng thái</FormLabel>
+                        <FormLabel className="text-base">Kích hoạt</FormLabel>
                         <FormDescription>
-                          Kích hoạt hoặc vô hiệu hóa danh mục
+                          Danh mục sẽ được hiển thị trên trang web
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -296,7 +335,7 @@ export default function CategoryForm() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end space-x-4">
               <Button
                 type="button"
                 variant="outline"
