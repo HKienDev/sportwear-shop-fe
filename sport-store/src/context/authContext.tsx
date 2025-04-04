@@ -101,11 +101,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     response = await api.get("/auth/check");
                     console.log("📥 Auth check response:", response);
                     break;
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error("❌ Error in auth check:", error);
                     
                     // Nếu lỗi 401 và có refresh token, thử refresh
-                    if (error.response?.status === 401 && refreshToken) {
+                    if (error instanceof AxiosError && error.response?.status === 401 && refreshToken) {
                         try {
                             console.log("🔄 Attempting to refresh token...");
                             const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
@@ -166,14 +166,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(null);
                 localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("❌ Error in auth check:", error);
             setIsAuthenticated(false);
             setUser(null);
             localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
 
             // Nếu lỗi 401, xóa token
-            if (error.response?.status === 401) {
+            if (error instanceof AxiosError && error.response?.status === 401) {
                 localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                 localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 delete api.defaults.headers.common['Authorization'];
@@ -198,45 +198,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const response = await api.post("/auth/login", { email, password });
             console.log("📥 Login response:", response);
 
-            if (response.data.success && response.data.data) {
-                const { accessToken, user: userData } = response.data.data;
-                console.log("✅ Đăng nhập thành công, user data:", userData);
+            if (!response.data) {
+                console.error("❌ Không có dữ liệu trong response");
+                return { success: false, message: "Không nhận được dữ liệu từ server" };
+            }
 
-                // Lưu token vào localStorage
-                localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
-                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
-
-                // Cập nhật state
-                setUser(userData);
-                setIsAuthenticated(true);
-
-                // Set token vào header cho tất cả các request
-                api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-                // Đợi một chút để đảm bảo state đã được cập nhật
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                // Chuyển hướng dựa trên role
-                if (userData.role === UserRole.ADMIN) {
-                    console.log("👑 User là admin, chuyển hướng đến dashboard");
-                    router.push("/admin/dashboard");
-                } else {
-                    console.log("👤 User là user thường, chuyển hướng đến trang chủ");
-                    router.push("/");
-                }
-
-                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-                return response.data;
-            } else {
+            // Kiểm tra success từ response
+            if (!response.data.success) {
                 console.error("❌ Đăng nhập thất bại:", response.data.message);
-                toast.error(response.data.message || "Đăng nhập thất bại");
                 return { success: false, message: response.data.message };
             }
-        } catch (error) {
-            console.error("❌ Lỗi khi đăng nhập:", error);
-            const errorMessage = error instanceof Error ? error.message : "Đăng nhập thất bại";
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+
+            // Lấy dữ liệu từ response.data.data
+            const { accessToken, refreshToken, user } = response.data.data;
+
+            if (!accessToken || !refreshToken || !user) {
+                console.error("❌ Thiếu thông tin trong response:", response.data.data);
+                return { success: false, message: "Dữ liệu đăng nhập không hợp lệ" };
+            }
+
+            // Lưu tokens
+            localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+            localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+
+            // Cập nhật state
+            setUser(user);
+            setIsAuthenticated(true);
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+            return { success: true, message: "Đăng nhập thành công" };
+        } catch (error: unknown) {
+            console.error("❌ Lỗi đăng nhập:", error);
+            if (error instanceof AxiosError) {
+                if (error.response) {
+                    const errorData = error.response.data;
+                    // Kiểm tra nếu có message từ server
+                    if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+                        return { 
+                            success: false, 
+                            message: errorData.message || "Lỗi server"
+                        };
+                    }
+                    // Kiểm tra nếu có errors array
+                    if (errorData && typeof errorData === 'object' && 'errors' in errorData && Array.isArray(errorData.errors)) {
+                        const errorMessages = errorData.errors.map((err: { message?: string }) => err.message || JSON.stringify(err)).join(', ');
+                        return {
+                            success: false,
+                            message: errorMessages || "Lỗi server"
+                        };
+                    }
+                    return { 
+                        success: false, 
+                        message: "Lỗi server: " + (error.response.status === 500 ? "Lỗi máy chủ nội bộ" : error.response.statusText)
+                    };
+                } else if (error.request) {
+                    return { 
+                        success: false, 
+                        message: "Không thể kết nối đến server" 
+                    };
+                }
+            }
+            return { success: false, message: "Đăng nhập thất bại" };
         } finally {
             isAuthenticatingRef.current = false;
             setLoading(false);

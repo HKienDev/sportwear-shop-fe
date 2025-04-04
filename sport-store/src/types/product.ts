@@ -45,9 +45,50 @@ export interface SingleProductResponse {
   data: Product;
 }
 
-export interface ProductFormData extends Omit<Product, 'images'> {
-  mainImage: string;
-  additionalImages: string[];
+export interface ProductFormData {
+  name: string;
+  description: string;
+  brand: string;
+  originalPrice: number;
+  salePrice: number;
+  stock: number;
+  categoryId: string;
+  mainImage: string | null;
+  subImages: string[];
+  colors: string[];
+  sizes: string[];
+  tags: string[];
+  isActive: boolean;
+}
+
+export interface ProductFormErrors {
+  name?: string;
+  description?: string;
+  brand?: string;
+  originalPrice?: string;
+  salePrice?: string;
+  stock?: string;
+  categoryId?: string;
+  mainImage?: string;
+  subImages?: string;
+  colors?: string;
+  sizes?: string;
+  tags?: string;
+}
+
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+}
+
+export interface ProductFormState {
+  data: ProductFormData;
+  errors: ProductFormErrors;
+  isLoading: boolean;
+  isSubmitting: boolean;
+  categories: Category[];
 }
 
 export interface ApiResponse<T> {
