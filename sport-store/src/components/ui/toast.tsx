@@ -124,6 +124,7 @@ export function Toaster({ ...props }: ToasterProps) {
     <Sonner
       {...props}
       className="toaster group"
+      position="top-right"
       toastOptions={{
         classNames: {
           toast: cn(
@@ -141,7 +142,6 @@ export function Toaster({ ...props }: ToasterProps) {
           info: "group-[.toast]:bg-blue-50 group-[.toast]:text-blue-700 group-[.toast]:border-blue-200",
         },
         duration: 3000,
-        position: "top-right",
         unstyled: false,
       }}
     />

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api';
 import { ApiResponse } from '@/types/api';
 import { Coupon } from '@/types/coupon';
+import axios from 'axios';
 
 export interface CreateCouponData {
     code?: string;
@@ -41,10 +42,31 @@ export const couponService = {
     // Lấy chi tiết mã giảm giá
     getCouponById: async (id: string): Promise<ApiResponse<Coupon>> => {
         try {
+            if (!id) {
+                throw new Error('ID mã giảm giá không hợp lệ');
+            }
+            
             const response = await apiClient.get(`/coupons/${id}`);
+            
+            if (!response.data) {
+                throw new Error('Không nhận được dữ liệu từ server');
+            }
+            
             return response.data;
         } catch (error) {
             console.error('Get coupon error:', error);
+            
+            // Xử lý lỗi cụ thể
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 404) {
+                    throw new Error('Không tìm thấy mã giảm giá');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Lỗi server khi lấy thông tin mã giảm giá');
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                }
+            }
+            
             throw error;
         }
     },

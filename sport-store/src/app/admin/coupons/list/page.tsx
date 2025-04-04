@@ -1,51 +1,58 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/authContext";
 import { Coupon } from "@/types/coupon";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { couponService } from "@/services/couponService";
 import { toast } from "sonner";
-import { CouponTable } from "@/components/admin/coupons/couponTable";
-import { CouponSearch } from "@/components/admin/coupons/couponSearch";
+import CouponTable from "@/components/admin/coupons/list/couponTable";
+import CouponSearch from "@/components/admin/coupons/list/couponSearch";
+import CouponFilter from "@/components/admin/coupons/list/couponFilter";
 import { Pagination } from "@/components/ui/pagination";
+import { Plus, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function CouponListPage() {
     const router = useRouter();
     const { user } = useAuth();
     const [coupons, setCoupons] = useState<Coupon[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchCoupons = useCallback(async () => {
         try {
-            setIsLoading(true);
-            const response = await fetch(
-                `/api/coupons/admin?page=${currentPage}&limit=10&search=${searchQuery}`
-            );
+            setLoading(true);
+            const response = await couponService.getCoupons({
+                page: currentPage,
+                limit: 10,
+                search: searchQuery,
+                ...(statusFilter ? { status: statusFilter } : {}),
+            });
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch coupons");
+            if (response.success && response.data) {
+                setCoupons(response.data.coupons);
+                setTotalPages(Math.ceil(response.data.total / 10));
+            } else {
+                toast.error("Không thể tải danh sách mã giảm giá");
             }
-
-            const data = await response.json();
-            setCoupons(data.data.coupons);
-            setTotalPages(data.data.pagination.totalPages);
         } catch (error) {
             console.error("Error fetching coupons:", error);
-            toast.error("Không thể tải danh sách mã giảm giá");
+            toast.error("Đã xảy ra lỗi khi tải danh sách mã giảm giá");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
-    }, [currentPage, searchQuery]);
+    }, [currentPage, searchQuery, statusFilter]);
 
     useEffect(() => {
         if (!user) {
-            router.push("/login");
+            router.push("/auth/login");
             return;
         }
 
@@ -59,6 +66,11 @@ export default function CouponListPage() {
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
+        setCurrentPage(1);
+    };
+
+    const handleFilter = (status: string | null) => {
+        setStatusFilter(status);
         setCurrentPage(1);
     };
 
@@ -85,70 +97,150 @@ export default function CouponListPage() {
     const handleDeleteSelected = async () => {
         if (!selectedCoupons.length) return;
 
+        if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedCoupons.length} mã giảm giá đã chọn?`)) {
+            return;
+        }
+
         try {
-            const response = await fetch("/api/coupons/admin/bulk-delete", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ couponIds: selectedCoupons }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to delete coupons");
+            setIsDeleting(true);
+            const response = await couponService.deleteManyCoupons(selectedCoupons);
+            if (response.success) {
+                toast.success(`Đã xóa ${selectedCoupons.length} mã giảm giá thành công`);
+                setSelectedCoupons([]);
+                fetchCoupons();
+            } else {
+                toast.error(response.message || "Không thể xóa mã giảm giá");
             }
-
-            toast.success("Xóa mã giảm giá thành công");
-            setSelectedCoupons([]);
-            fetchCoupons();
         } catch (error) {
             console.error("Error deleting coupons:", error);
-            toast.error("Không thể xóa mã giảm giá");
+            toast.error("Đã xảy ra lỗi khi xóa mã giảm giá");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) {
+            return;
+        }
+
+        try {
+            const response = await couponService.deleteCoupon(id);
+            if (response.success) {
+                toast.success("Xóa mã giảm giá thành công");
+                fetchCoupons();
+            } else {
+                toast.error(response.message || "Không thể xóa mã giảm giá");
+            }
+        } catch (error) {
+            console.error("Error deleting coupon:", error);
+            toast.error("Đã xảy ra lỗi khi xóa mã giảm giá");
+        }
+    };
+
+    const handlePause = async (id: string) => {
+        try {
+            const response = await couponService.pauseCoupon(id);
+            if (response.success) {
+                toast.success("Tạm dừng mã giảm giá thành công");
+                fetchCoupons();
+            } else {
+                toast.error(response.message || "Không thể tạm dừng mã giảm giá");
+            }
+        } catch (error) {
+            console.error("Error pausing coupon:", error);
+            toast.error("Đã xảy ra lỗi khi tạm dừng mã giảm giá");
+        }
+    };
+
+    const handleActivate = async (id: string) => {
+        try {
+            const response = await couponService.activateCoupon(id);
+            if (response.success) {
+                toast.success("Kích hoạt mã giảm giá thành công");
+                fetchCoupons();
+            } else {
+                toast.error(response.message || "Không thể kích hoạt mã giảm giá");
+            }
+        } catch (error) {
+            console.error("Error activating coupon:", error);
+            toast.error("Đã xảy ra lỗi khi kích hoạt mã giảm giá");
         }
     };
 
     return (
-        <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Quản lý mã giảm giá</h1>
-                <Button onClick={() => router.push("/admin/coupons/create")}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Thêm mã giảm giá
-                </Button>
-            </div>
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <Card className="border-0 shadow-md overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-2xl font-bold tracking-tight">Quản lý mã giảm giá</CardTitle>
+                            <CardDescription className="text-base mt-1">
+                                Tạo, chỉnh sửa và quản lý các mã giảm giá cho cửa hàng
+                            </CardDescription>
+                        </div>
+                        <Button 
+                            onClick={() => router.push("/admin/coupons/add")}
+                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 transition-colors"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Tạo mã giảm giá
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col md:flex-row gap-4 mb-6">
+                        <div className="flex-1">
+                            <CouponSearch onSearch={handleSearch} />
+                        </div>
+                        <div className="w-full md:w-auto">
+                            <CouponFilter onFilter={handleFilter} />
+                        </div>
+                    </div>
 
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <CouponSearch onSearch={handleSearch} />
-                        {selectedCoupons.length > 0 && (
+                    {selectedCoupons.length > 0 && (
+                        <div className="mb-4 p-3 bg-muted/30 rounded-lg flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                                Đã chọn {selectedCoupons.length} mã giảm giá
+                            </span>
                             <Button
                                 variant="destructive"
+                                size="sm"
                                 onClick={handleDeleteSelected}
+                                disabled={isDeleting}
+                                className="flex items-center gap-2"
                             >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Xóa đã chọn ({selectedCoupons.length})
+                                {isDeleting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Xóa đã chọn"
+                                )}
                             </Button>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     <CouponTable
                         coupons={coupons}
+                        loading={loading}
                         selectedCoupons={selectedCoupons}
                         onSelectCoupon={handleSelectCoupon}
                         onSelectAll={handleSelectAll}
-                        isLoading={isLoading}
+                        onDelete={handleDelete}
+                        onPause={handlePause}
+                        onActivate={handleActivate}
                     />
 
-                    <div className="mt-4">
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                        />
-                    </div>
-                </div>
-            </div>
+                    {totalPages > 1 && (
+                        <div className="mt-6 flex justify-center">
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
