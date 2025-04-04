@@ -8,7 +8,6 @@ import { customerService } from "@/services/customerService";
 import { CustomerTable } from "@/components/admin/customers/list/customerTable";
 import { CustomerSearch } from "@/components/admin/customers/list/customerSearch";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
 type FilterState = {
   status: string;
@@ -51,7 +50,7 @@ export default function CustomerList() {
   };
 
   const handleViewDetails = (id: string) => {
-    router.push(`/admin/customers/${id}`);
+    router.push(`/admin/customers/details/${id}`);
   };
 
   const handleSearch = (query: string) => {
@@ -90,10 +89,6 @@ export default function CustomerList() {
             Quản lý danh sách khách hàng của bạn
           </p>
         </div>
-        <Button onClick={() => router.push("/admin/customers/add")} className="w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm khách hàng
-        </Button>
       </div>
 
       <div className="flex items-center justify-between">

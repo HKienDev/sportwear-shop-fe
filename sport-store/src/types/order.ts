@@ -13,8 +13,9 @@ export interface OrderItem {
 export interface Order {
   _id: string;
   shortId: string;
-  userId: string;
-  user: User;
+  userId?: string;
+  user?: User;
+  phone: string;
   items: OrderItem[];
   total: number;
   totalPrice: number;
@@ -53,6 +54,7 @@ export interface OrderSearchParams {
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  phone?: string;
 }
 
 export interface CreateOrderInput {
@@ -70,6 +72,7 @@ export interface CreateOrderInput {
   };
   paymentMethod: 'cash' | 'banking' | 'momo';
   note?: string;
+  phone: string;
 }
 
 export interface UpdateOrderInput {

@@ -122,8 +122,9 @@ export interface CartItem {
 export interface Order {
     _id: string;
     shortId: string;
-    userId: string;
-    user: User;
+    userId?: string;
+    user?: User;
+    phone: string;
     items: OrderItem[];
     totalAmount: number;
     status: OrderStatus;
@@ -177,6 +178,7 @@ export interface CreateOrderData {
     };
     paymentMethod: Order['paymentMethod'];
     note?: string;
+    phone: string;
 }
 
 export interface UpdateOrderData extends Partial<CreateOrderData> {
