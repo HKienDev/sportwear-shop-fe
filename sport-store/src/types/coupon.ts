@@ -1,13 +1,20 @@
 export interface Coupon {
   _id: string;
   code: string;
-  discountPercentage: number;
+  type: string;
+  value: number;
+  usageLimit: number;
+  userLimit: number;
   startDate: string;
   endDate: string;
-  isActive: boolean;
-  usageLimit: number;
+  status: string;
   usageCount: number;
-  minimumPurchaseAmount?: number;
+  userUsageCount: Record<string, number>;
+  minimumPurchaseAmount: number;
+  createdBy?: string;
+  updatedBy?: string;
   createdAt: string;
   updatedAt: string;
+  isExpired?: boolean;
+  isAvailable?: boolean;
 } 
