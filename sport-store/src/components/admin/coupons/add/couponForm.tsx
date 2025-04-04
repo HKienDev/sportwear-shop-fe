@@ -61,6 +61,16 @@ const formSchema = z.object({
     message: "Phần trăm giảm giá không thể vượt quá 100%",
     path: ["value"],
   }
+).refine(
+  (data) => {
+    const startDate = parseDateFromInput(data.startDate);
+    const now = new Date();
+    return startDate >= now;
+  },
+  {
+    message: "Ngày bắt đầu phải lớn hơn hoặc bằng ngày hiện tại",
+    path: ["startDate"],
+  }
 );
 
 type FormValues = z.infer<typeof formSchema>;
@@ -132,13 +142,13 @@ const CouponForm = () => {
       
       // Format dates to ISO string
       const formattedData = {
-        type: data.type,
+        type: data.type === "%" ? "percentage" : "fixed",
         value: Number(data.value),
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
         minimumPurchaseAmount: data.minimumPurchaseAmount,
-        startDate: parseDateFromInput(data.startDate).toISOString(),
-        endDate: parseDateFromInput(data.endDate).toISOString(),
+        startDate: new Date(parseDateFromInput(data.startDate)).toISOString(),
+        endDate: new Date(parseDateFromInput(data.endDate)).toISOString(),
       };
 
       const response = await couponService.createCoupon(formattedData);

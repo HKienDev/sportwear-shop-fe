@@ -129,21 +129,10 @@ const CouponTable: React.FC<CouponTableProps> = ({
   };
 
   const getDiscountDisplay = (coupon: Coupon) => {
-    if (coupon.type === "%") {
-      return (
-        <div className="flex items-center gap-1">
-          <Percent className="h-4 w-4 text-primary" />
-          <span>{coupon.value}%</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-1">
-          <DollarSign className="h-4 w-4 text-primary" />
-          <span>{coupon.value.toLocaleString()} VNĐ</span>
-        </div>
-      );
+    if (coupon.type === 'percentage') {
+      return `${coupon.value}%`;
     }
+    return `${coupon.value.toLocaleString('vi-VN')} VNĐ`;
   };
 
   const getTimeDisplay = (coupon: Coupon) => {
@@ -296,7 +285,7 @@ const CouponTable: React.FC<CouponTableProps> = ({
                 </TableCell>
                 <TableCell className="font-medium">{coupon.code}</TableCell>
                 <TableCell>
-                  {coupon.type === "%" ? (
+                  {coupon.type === 'percentage' ? (
                     <div className="flex items-center gap-1">
                       <Percent className="h-4 w-4 text-primary" />
                       <span>Phần trăm</span>
