@@ -22,7 +22,7 @@ export default function CouponListPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -33,12 +33,12 @@ export default function CouponListPage() {
                 page: currentPage,
                 limit: 10,
                 search: searchQuery,
-                ...(statusFilter ? { status: statusFilter } : {}),
+                status: statusFilter
             });
 
             if (response.success && response.data) {
                 setCoupons(response.data.coupons);
-                setTotalPages(Math.ceil(response.data.total / 10));
+                setTotalPages(response.data.pagination.totalPages);
             } else {
                 toast.error("Không thể tải danh sách mã giảm giá");
             }
@@ -103,7 +103,7 @@ export default function CouponListPage() {
 
         try {
             setIsDeleting(true);
-            const response = await couponService.deleteManyCoupons(selectedCoupons);
+            const response = await couponService.bulkDeleteCoupons({ couponIds: selectedCoupons });
             if (response.success) {
                 toast.success(`Đã xóa ${selectedCoupons.length} mã giảm giá thành công`);
                 setSelectedCoupons([]);

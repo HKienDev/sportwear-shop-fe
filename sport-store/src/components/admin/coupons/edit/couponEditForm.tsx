@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { couponService } from "@/services/couponService";
 import { Coupon } from "@/types/coupon";
 import { useAuth } from "@/context/authContext";
@@ -32,7 +32,7 @@ import { apiClient } from "@/lib/api";
 import { formatDateForInput, parseDateFromInput } from "@/utils/dateUtils";
 
 const formSchema = z.object({
-  type: z.enum(["%", "VNĐ"], {
+  type: z.enum(["percentage", "fixed"], {
     required_error: "Vui lòng chọn loại giảm giá",
   }),
   value: z.coerce.number().min(0, "Giá trị giảm giá không thể âm"),
@@ -53,7 +53,7 @@ const formSchema = z.object({
   }
 ).refine(
   (data) => {
-    if (data.type === "%" && data.value > 100) {
+    if (data.type === "percentage" && data.value > 100) {
       return false;
     }
     return true;
@@ -80,7 +80,7 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: coupon.type as "%" | "VNĐ",
+      type: coupon.type,
       value: coupon.value,
       usageLimit: coupon.usageLimit,
       userLimit: coupon.userLimit,
@@ -149,17 +149,25 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
         endDate: parseDateFromInput(data.endDate).toISOString(),
       };
 
+      console.log('Submitting form with data:', formattedData);
       const response = await couponService.updateCoupon(formattedData);
+      console.log('Response from server:', response);
       
       if (response.success && response.data) {
         toast.success("Cập nhật mã giảm giá thành công");
         onSuccess(response.data);
+        router.push("/admin/coupons/list");
       } else {
+        console.error('Update failed:', response);
         toast.error(response.message || "Không thể cập nhật mã giảm giá");
       }
     } catch (error) {
       console.error("Error updating coupon:", error);
-      toast.error("Đã xảy ra lỗi khi cập nhật mã giảm giá");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã xảy ra lỗi khi cập nhật mã giảm giá");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -193,8 +201,8 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="%">Phần trăm (%)</SelectItem>
-                      <SelectItem value="VNĐ">Số tiền cố định (VNĐ)</SelectItem>
+                      <SelectItem value="percentage">Phần trăm (%)</SelectItem>
+                      <SelectItem value="fixed">Số tiền cố định (VNĐ)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -215,7 +223,7 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
                     <Input
                       type="number"
                       placeholder={
-                        form.watch("type") === "%"
+                        form.watch("type") === "percentage"
                           ? "Nhập phần trăm giảm giá (0-100)"
                           : "Nhập số tiền giảm giá"
                       }
@@ -223,7 +231,7 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
                     />
                   </FormControl>
                   <FormDescription>
-                    {form.watch("type") === "%"
+                    {form.watch("type") === "percentage"
                       ? "Nhập phần trăm giảm giá (0-100%)"
                       : "Nhập số tiền giảm giá (VNĐ)"}
                   </FormDescription>

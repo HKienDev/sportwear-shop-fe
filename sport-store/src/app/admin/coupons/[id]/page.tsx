@@ -6,6 +6,13 @@ export const metadata: Metadata = {
     description: 'Xem và chỉnh sửa thông tin mã giảm giá'
 };
 
-export default function CouponDetailPage({ params }: { params: { id: string } }) {
-    return <CouponDetailClient id={params.id} />;
+interface PageProps {
+    params: {
+        id: string;
+    };
+}
+
+export default async function CouponDetailPage({ params }: PageProps) {
+    const { id } = await params;
+    return <CouponDetailClient id={id} />;
 } 

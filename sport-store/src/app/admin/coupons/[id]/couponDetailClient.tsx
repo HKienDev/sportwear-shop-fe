@@ -136,20 +136,8 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
     setIsEditing(false);
     toast.success("Cập nhật mã giảm giá thành công");
     
-    // Tải lại dữ liệu từ server để đảm bảo dữ liệu mới nhất
-    const fetchUpdatedCoupon = async () => {
-      try {
-        const response = await couponService.getCouponById(id);
-        if (response.success && response.data) {
-          setCoupon(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching updated coupon:", error);
-        toast.error("Không thể tải thông tin mã giảm giá mới nhất");
-      }
-    };
-    
-    fetchUpdatedCoupon();
+    // Chuyển hướng về trang danh sách mã giảm giá
+    router.push("/admin/coupons/list");
   };
 
   if (loading) {
@@ -266,7 +254,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
                 <div>
                   <CardTitle className="text-2xl font-bold tracking-tight">{coupon.code}</CardTitle>
                   <CardDescription className="text-base mt-1">
-                    Mã giảm giá {coupon.type === "%" ? "theo phần trăm" : "theo số tiền cố định"}
+                    Mã giảm giá {coupon.type === "percentage" ? "theo phần trăm" : "theo số tiền cố định"}
                   </CardDescription>
                 </div>
                 <div className="text-right">
@@ -282,12 +270,12 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
                     <div>
                       <span className="font-medium block text-sm text-muted-foreground">Loại giảm giá</span>
                       <span className="text-base">
-                        {coupon.type === "%" ? "Phần trăm" : "Số tiền cố định"}
+                        {coupon.type === "percentage" ? "Phần trăm" : "Số tiền cố định"}
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                    {coupon.type === "%" ? (
+                    {coupon.type === "percentage" ? (
                       <Percent className="h-5 w-5 text-primary" />
                     ) : (
                       <DollarSign className="h-5 w-5 text-primary" />
@@ -295,7 +283,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
                     <div>
                       <span className="font-medium block text-sm text-muted-foreground">Giá trị</span>
                       <span className="text-base font-medium">
-                        {coupon.type === "%"
+                        {coupon.type === "percentage"
                           ? `${coupon.value}%`
                           : `${coupon.value.toLocaleString()} VNĐ`}
                       </span>
