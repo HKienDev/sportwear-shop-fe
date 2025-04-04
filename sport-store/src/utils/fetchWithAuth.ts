@@ -1,3 +1,5 @@
+import { TOKEN_CONFIG } from '@/config/token';
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
@@ -51,7 +53,7 @@ export const fetchWithAuth = async <T = unknown>(
 ): Promise<ApiResponse<T>> => {
   try {
     // Lấy token từ localStorage
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
 
     if (!token) {
       throw new Error("Vui lòng đăng nhập để tiếp tục");
@@ -92,7 +94,7 @@ export const fetchWithAuth = async <T = unknown>(
         }
 
         // Lưu token mới vào localStorage
-        localStorage.setItem("accessToken", newToken);
+        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newToken);
 
         // Cập nhật token cho các request trong hàng đợi
         failedRequestsQueue.forEach((callback) => callback());

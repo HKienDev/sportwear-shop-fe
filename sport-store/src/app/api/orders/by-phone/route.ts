@@ -16,22 +16,17 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
-    const status = searchParams.get('status');
-    const search = searchParams.get('search');
     const phone = searchParams.get('phone');
 
-    const queryParams = new URLSearchParams({
-      page,
-      limit,
-      ...(status && { status }),
-      ...(search && { search }),
-      ...(phone && { phone })
-    });
+    if (!phone) {
+      return NextResponse.json(
+        { success: false, message: 'Số điện thoại là bắt buộc' },
+        { status: 400 }
+      );
+    }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin?${queryParams}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/orders/by-phone?phone=${phone}`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -41,13 +36,13 @@ export async function GET(request: Request) {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch orders');
+      throw new Error('Failed to fetch orders by phone');
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error('Error fetching orders by phone:', error);
     return NextResponse.json(
       { success: false, message: 'Internal Server Error' },
       { status: 500 }

@@ -62,6 +62,7 @@ export interface OrderQueryParams extends PaginationParams {
     paymentStatus?: Order['paymentStatus'];
     startDate?: string;
     endDate?: string;
+    phone?: string;
 }
 
 export type { User, Product, Order, CartItem }; 

@@ -384,7 +384,10 @@ const apiClientMethods = {
             api.put(`/orders/${id}`, data),
         
         delete: (id: string): Promise<AxiosResponse<ApiResponse>> =>
-            api.delete(`/orders/${id}`)
+            api.delete(`/orders/${id}`),
+        
+        getByPhone: (phone: string): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
+            api.get(`/orders/by-phone`, { params: { phone } })
     },
 
     // Upload
