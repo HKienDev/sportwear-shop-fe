@@ -105,7 +105,7 @@ export function CouponTable({
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900">
-                                    {coupon.discountPercentage}%
+                                    {coupon.type === '%' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')}đ`}
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -125,12 +125,14 @@ export function CouponTable({
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <span
                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        coupon.isActive
+                                        coupon.status === 'Hoạt động'
                                             ? "bg-green-100 text-green-800"
+                                            : coupon.status === 'Tạm Dừng'
+                                            ? "bg-yellow-100 text-yellow-800"
                                             : "bg-red-100 text-red-800"
                                     }`}
                                 >
-                                    {coupon.isActive ? "Đang hoạt động" : "Đã hết hạn"}
+                                    {coupon.status}
                                 </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

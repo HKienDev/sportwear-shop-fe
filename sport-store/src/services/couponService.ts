@@ -3,20 +3,18 @@ import { ApiResponse } from '@/types/api';
 import { Coupon } from '@/types/coupon';
 
 export interface CreateCouponData {
-    code: string;
-    description: string;
-    discountType: 'percentage' | 'fixed';
-    discountValue: number;
-    minPurchase: number;
-    maxDiscount: number;
+    code?: string;
+    type: '%' | 'VNĐ';
+    value: number;
+    usageLimit: number;
+    userLimit: number;
     startDate: string;
     endDate: string;
-    usageLimit: number;
-    isActive: boolean;
+    minimumPurchaseAmount: number;
 }
 
 export interface UpdateCouponData extends Partial<CreateCouponData> {
-    id: string;
+    _id: string;
 }
 
 export interface CouponQueryParams {
@@ -32,7 +30,7 @@ export const couponService = {
     // Lấy danh sách mã giảm giá
     getCoupons: async (params: CouponQueryParams = {}): Promise<ApiResponse<{ coupons: Coupon[]; total: number }>> => {
         try {
-            const response = await apiClient.get('/coupons', { params });
+            const response = await apiClient.get('/coupons/admin', { params });
             return response.data;
         } catch (error) {
             console.error('Get coupons error:', error);
@@ -54,7 +52,7 @@ export const couponService = {
     // Tạo mã giảm giá mới
     createCoupon: async (data: CreateCouponData): Promise<ApiResponse<Coupon>> => {
         try {
-            const response = await apiClient.post('/coupons', data);
+            const response = await apiClient.post('/coupons/admin', data);
             return response.data;
         } catch (error) {
             console.error('Create coupon error:', error);
@@ -65,7 +63,7 @@ export const couponService = {
     // Cập nhật mã giảm giá
     updateCoupon: async (data: UpdateCouponData): Promise<ApiResponse<Coupon>> => {
         try {
-            const response = await apiClient.put(`/coupons/${data.id}`, data);
+            const response = await apiClient.put(`/coupons/admin/${data._id}`, data);
             return response.data;
         } catch (error) {
             console.error('Update coupon error:', error);
@@ -76,7 +74,7 @@ export const couponService = {
     // Xóa mã giảm giá
     deleteCoupon: async (id: string): Promise<ApiResponse<null>> => {
         try {
-            const response = await apiClient.delete(`/coupons/${id}`);
+            const response = await apiClient.delete(`/coupons/admin/${id}`);
             return response.data;
         } catch (error) {
             console.error('Delete coupon error:', error);
@@ -87,10 +85,32 @@ export const couponService = {
     // Xóa nhiều mã giảm giá
     deleteManyCoupons: async (ids: string[]): Promise<ApiResponse<null>> => {
         try {
-            const response = await apiClient.delete('/coupons/bulk', { data: { ids } });
+            const response = await apiClient.delete('/coupons/admin/bulk-delete', { data: { couponIds: ids } });
             return response.data;
         } catch (error) {
             console.error('Delete many coupons error:', error);
+            throw error;
+        }
+    },
+    
+    // Tạm dừng mã giảm giá
+    pauseCoupon: async (id: string): Promise<ApiResponse<Coupon>> => {
+        try {
+            const response = await apiClient.put(`/coupons/admin/${id}/pause`);
+            return response.data;
+        } catch (error) {
+            console.error('Pause coupon error:', error);
+            throw error;
+        }
+    },
+    
+    // Kích hoạt mã giảm giá
+    activateCoupon: async (id: string): Promise<ApiResponse<Coupon>> => {
+        try {
+            const response = await apiClient.put(`/coupons/admin/${id}/activate`);
+            return response.data;
+        } catch (error) {
+            console.error('Activate coupon error:', error);
             throw error;
         }
     }
@@ -103,5 +123,7 @@ export const {
     createCoupon,
     updateCoupon,
     deleteCoupon,
-    deleteManyCoupons
+    deleteManyCoupons,
+    pauseCoupon,
+    activateCoupon
 } = couponService; 

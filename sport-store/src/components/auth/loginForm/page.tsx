@@ -1,20 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { toast } from "react-hot-toast";
-
-const loginSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
   error: string;
@@ -33,7 +21,7 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
       if (!result.success) {
         toast.error(result.message || "Đăng nhập thất bại");
       }
-    } catch (error) {
+    } catch {
       toast.error("Đăng nhập thất bại");
     }
   };

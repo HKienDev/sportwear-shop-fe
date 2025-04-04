@@ -21,25 +21,27 @@ const couponSchema = z.object({
         .min(3, 'Mã giảm giá phải có ít nhất 3 ký tự')
         .max(20, 'Mã giảm giá không được vượt quá 20 ký tự')
         .regex(/^[A-Z0-9_-]+$/, 'Mã giảm giá chỉ được chứa chữ hoa, số, dấu gạch ngang và dấu gạch dưới'),
-    description: z.string()
-        .min(10, 'Mô tả phải có ít nhất 10 ký tự')
-        .max(200, 'Mô tả không được vượt quá 200 ký tự'),
-    discountType: z.enum(['percentage', 'fixed']),
-    discountValue: z.string()
+    type: z.enum(['%', 'VNĐ']),
+    value: z.string()
         .refine((val) => {
             const num = parseFloat(val);
             return !isNaN(num) && num > 0;
         }, 'Giá trị giảm giá phải lớn hơn 0'),
-    minPurchase: z.string()
+    minimumPurchaseAmount: z.string()
         .refine((val) => {
             const num = parseFloat(val);
             return !isNaN(num) && num >= 0;
         }, 'Giá trị tối thiểu phải lớn hơn hoặc bằng 0'),
-    maxDiscount: z.string()
+    usageLimit: z.string()
         .refine((val) => {
-            const num = parseFloat(val);
+            const num = parseInt(val);
             return !isNaN(num) && num > 0;
-        }, 'Giá trị giảm tối đa phải lớn hơn 0'),
+        }, 'Số lần sử dụng phải lớn hơn 0'),
+    userLimit: z.string()
+        .refine((val) => {
+            const num = parseInt(val);
+            return !isNaN(num) && num > 0;
+        }, 'Số lần sử dụng trên mỗi người dùng phải lớn hơn 0'),
     startDate: z.string().refine((val) => {
         const date = new Date(val);
         return !isNaN(date.getTime());
@@ -47,13 +49,7 @@ const couponSchema = z.object({
     endDate: z.string().refine((val) => {
         const date = new Date(val);
         return !isNaN(date.getTime());
-    }, 'Ngày kết thúc không hợp lệ'),
-    usageLimit: z.string()
-        .refine((val) => {
-            const num = parseInt(val);
-            return !isNaN(num) && num > 0;
-        }, 'Số lần sử dụng phải lớn hơn 0'),
-    isActive: z.boolean().default(true)
+    }, 'Ngày kết thúc không hợp lệ')
 }).refine((data) => {
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
@@ -62,14 +58,14 @@ const couponSchema = z.object({
     message: 'Ngày kết thúc phải sau ngày bắt đầu',
     path: ['endDate']
 }).refine((data) => {
-    if (data.discountType === 'percentage') {
-        const value = parseFloat(data.discountValue);
+    if (data.type === '%') {
+        const value = parseFloat(data.value);
         return value <= 100;
     }
     return true;
 }, {
     message: 'Phần trăm giảm giá không được vượt quá 100%',
-    path: ['discountValue']
+    path: ['value']
 });
 
 type CouponFormValues = z.infer<typeof couponSchema>;
@@ -82,15 +78,13 @@ export default function CouponForm() {
         resolver: zodResolver(couponSchema),
         defaultValues: {
             code: '',
-            description: '',
-            discountType: 'percentage',
-            discountValue: '',
-            minPurchase: '0',
-            maxDiscount: '',
+            type: '%',
+            value: '',
+            minimumPurchaseAmount: '0',
+            usageLimit: '1',
+            userLimit: '1',
             startDate: '',
             endDate: '',
-            usageLimit: '1',
-            isActive: true
         }
     });
 
@@ -99,10 +93,10 @@ export default function CouponForm() {
             setIsLoading(true);
             const response = await createCoupon({
                 ...data,
-                discountValue: parseFloat(data.discountValue),
-                minPurchase: parseFloat(data.minPurchase),
-                maxDiscount: parseFloat(data.maxDiscount),
-                usageLimit: parseInt(data.usageLimit)
+                value: parseFloat(data.value),
+                minimumPurchaseAmount: parseFloat(data.minimumPurchaseAmount),
+                usageLimit: parseInt(data.usageLimit),
+                userLimit: parseInt(data.userLimit)
             });
 
             if (response.success) {
@@ -144,7 +138,7 @@ export default function CouponForm() {
 
                             <FormField
                                 control={form.control}
-                                name="discountType"
+                                name="type"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Loại Giảm Giá</FormLabel>
@@ -155,8 +149,8 @@ export default function CouponForm() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="percentage">Phần trăm (%)</SelectItem>
-                                                <SelectItem value="fixed">Số tiền cố định</SelectItem>
+                                                <SelectItem value="%">Phần trăm (%)</SelectItem>
+                                                <SelectItem value="VNĐ">Số tiền cố định</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -166,11 +160,11 @@ export default function CouponForm() {
 
                             <FormField
                                 control={form.control}
-                                name="discountValue"
+                                name="value"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
-                                            {form.watch('discountType') === 'percentage' ? 'Phần Trăm Giảm (%)' : 'Số Tiền Giảm (VNĐ)'}
+                                            {form.watch('type') === '%' ? 'Phần Trăm Giảm (%)' : 'Số Tiền Giảm (VNĐ)'}
                                         </FormLabel>
                                         <FormControl>
                                             <Input type="number" min="0" step="0.01" {...field} />
@@ -182,24 +176,10 @@ export default function CouponForm() {
 
                             <FormField
                                 control={form.control}
-                                name="minPurchase"
+                                name="minimumPurchaseAmount"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Giá Trị Tối Thiểu (VNĐ)</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="0" step="1000" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="maxDiscount"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Giảm Tối Đa (VNĐ)</FormLabel>
                                         <FormControl>
                                             <Input type="number" min="0" step="1000" {...field} />
                                         </FormControl>
@@ -214,6 +194,20 @@ export default function CouponForm() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Số Lần Sử Dụng</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="1" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="userLimit"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Số Lần Sử Dụng Trên Mỗi Người Dùng</FormLabel>
                                         <FormControl>
                                             <Input type="number" min="1" {...field} />
                                         </FormControl>
