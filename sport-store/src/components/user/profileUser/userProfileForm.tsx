@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 
 type User = {
+  customId?: string;
   fullName: string;
   username: string;
   email: string;
@@ -49,6 +50,7 @@ const UserProfileForm = () => {
         const data = await res.json();
         const userObject = data.user || data;
         const userData = {
+          customId: userObject.customId ?? "",
           fullName: userObject.fullName ?? userObject.username ?? "",
           username: userObject.username ?? "",
           email: userObject.email ?? "",
@@ -173,95 +175,96 @@ const UserProfileForm = () => {
   if (!user) return <p className="text-red-500">Không thể tải hồ sơ người dùng.</p>;
 
   return (
-    <div className="border rounded p-4 relative">
-      {/* Nút "Cập Nhật" nổi bật */}
-      <div className="absolute top-4 right-4">
-        <button
-          className={`px-4 py-2 rounded ${
-            isEditing
-              ? "bg-red-500 text-white hover:bg-red-600"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          } transition-colors`}
-          onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
-        >
-          {isEditing ? "Hủy" : "Cập Nhật"}
-        </button>
-        {isEditing && (
-          <button
-            className="ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            onClick={handleSaveWithOtp} // Thay đổi hành động khi nhấn "Lưu"
-          >
-            Lưu
-          </button>
-        )}
-      </div>
-
-      <div className="flex items-center mb-4">
-        <Image
-          src="/Cuoc.png"
-          alt="Profile Picture"
-          width={64}
-          height={64}
-          className="rounded-full object-cover"
-          priority
-        />
-        <div className="ml-4">
-          <h2 className="text-lg font-bold">{user?.fullName || "Chưa có tên"}</h2>
-          <p className="text-gray-600 text-sm">{user?.username || "Chưa có username"}</p>
-          <p className="text-gray-600 text-sm">{user?.email || "Chưa có email"}</p>
-        </div>
-      </div>
-      <hr className="my-4" />
-      <div className="grid grid-cols-2 gap-4">
-        {user &&
-          Object.entries(user).map(([key, value]) => (
-            <div key={key}>
-              <p className="text-gray-600 text-sm">{key.toUpperCase()}</p>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name={key}
-                  value={tempUser?.[key as keyof User] || ""}
-                  onChange={handleChange}
-                  className="border rounded px-2 py-1 w-full"
-                />
-              ) : (
-                <p>{value && typeof value === "string" ? value.trim() : "Chưa có"}</p>
-              )}
-            </div>
-          ))}
-      </div>
-
-      {/* Modal OTP */}
-      {showOtpModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Xác thực OTP</h2>
-            <p className="mb-4">Vui lòng nhập mã OTP đã được gửi đến email của bạn:</p>
-            <input
-              type="text"
-              value={otpInput}
-              onChange={(e) => setOtpInput(e.target.value)}
-              className="border rounded px-2 py-1 w-full mb-4"
-              placeholder="Nhập mã OTP"
-            />
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded mr-2"
-                onClick={() => setShowOtpModal(false)}
-              >
-                Hủy
-              </button>
-              <button
-                className="px-4 py-2 bg-green-500 text-white rounded"
-                onClick={handleVerifyOtp}
-              >
-                Xác thực
-              </button>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold mb-6">Thông tin cá nhân</h2>
+        <div className="flex items-center mb-4">
+          <Image
+            src="/Cuoc.png"
+            alt="Profile Picture"
+            width={64}
+            height={64}
+            className="rounded-full object-cover"
+            priority
+          />
+          <div className="ml-4">
+            <h2 className="text-lg font-bold">{user?.fullName || "Chưa có tên"}</h2>
+            <p className="text-gray-600 text-sm">{user?.username || "Chưa có username"}</p>
+            <p className="text-gray-600 text-sm">{user?.email || "Chưa có email"}</p>
           </div>
         </div>
-      )}
+        <hr className="my-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Mã thành viên</label>
+            <input
+              type="text"
+              value={user?.customId ?? ""}
+              disabled
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
+            <input
+              type="text"
+              name="fullName"
+              value={isEditing ? tempUser?.fullName ?? "" : user?.fullName ?? ""}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+          {user &&
+            Object.entries(user).map(([key, value]) => (
+              <div key={key}>
+                <p className="text-gray-600 text-sm">{key.toUpperCase()}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name={key}
+                    value={tempUser?.[key as keyof User] || ""}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full"
+                  />
+                ) : (
+                  <p>{value && typeof value === "string" ? value.trim() : "Chưa có"}</p>
+                )}
+              </div>
+            ))}
+        </div>
+
+        {/* Modal OTP */}
+        {showOtpModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-4 rounded shadow-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Xác thực OTP</h2>
+              <p className="mb-4">Vui lòng nhập mã OTP đã được gửi đến email của bạn:</p>
+              <input
+                type="text"
+                value={otpInput}
+                onChange={(e) => setOtpInput(e.target.value)}
+                className="border rounded px-2 py-1 w-full mb-4"
+                placeholder="Nhập mã OTP"
+              />
+              <div className="flex justify-end">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded mr-2"
+                  onClick={() => setShowOtpModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="px-4 py-2 bg-green-500 text-white rounded"
+                  onClick={handleVerifyOtp}
+                >
+                  Xác thực
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
