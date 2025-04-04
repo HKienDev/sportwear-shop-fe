@@ -1,24 +1,34 @@
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface CouponSearchProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSearch: (query: string) => void;
 }
 
-export default function CouponSearch({ searchQuery, onSearchChange, onSubmit }: CouponSearchProps) {
+const CouponSearch: React.FC<CouponSearchProps> = ({ onSearch }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, onSearch]);
+
   return (
-    <form onSubmit={onSubmit} className="relative w-full sm:w-96">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo mã hoặc % giảm giá..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-white"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
-    </form>
+    <div className="relative w-full max-w-md">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <Input
+        type="text"
+        placeholder="Tìm kiếm mã giảm giá..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="pl-10 w-full"
+      />
+    </div>
   );
-}
+};
+
+export default CouponSearch;
