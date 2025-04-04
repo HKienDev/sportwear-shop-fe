@@ -53,6 +53,7 @@ export enum PaymentMethod {
 
 export interface User {
     _id: string;
+    customId?: string;
     username?: string;
     email: string;
     password?: string;
