@@ -6,6 +6,7 @@ import type {
     RevenueData,
     DashboardStats
 } from '@/types/dashboard';
+import { TOKEN_CONFIG } from '@/config/token';
 
 const dashboardApi = axios.create({
     baseURL: `${API_URL}/dashboard`,
@@ -15,9 +16,17 @@ const dashboardApi = axios.create({
     }
 });
 
-// Add request interceptor for debugging
+// Add request interceptor for debugging and adding token
 dashboardApi.interceptors.request.use(
     (config) => {
+        // Lấy token từ localStorage
+        const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+        
+        // Thêm token vào header nếu có
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        
         console.log('Dashboard Request config:', {
             url: config.url,
             method: config.method,

@@ -1,4 +1,5 @@
 import { getAuthToken } from './auth';
+import { TOKEN_CONFIG } from '@/config/token';
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -53,7 +54,7 @@ export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => 
       // Kiểm tra nếu token hết hạn
       if (response.status === 401) {
         // Xóa token cũ
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại');
       }
       

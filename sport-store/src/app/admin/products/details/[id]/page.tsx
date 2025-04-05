@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit2 } from "lucide-react";
 import { Product } from "@/types/product";
@@ -8,6 +8,7 @@ import { fetchApi } from "@/utils/api";
 import ProductInfo from "@/components/admin/products/details/ProductInfo";
 import ProductImages from "@/components/admin/products/details/ProductImages";
 import ProductVariants from "@/components/admin/products/details/ProductVariants";
+import { toast } from "react-hot-toast";
 
 type PageProps = {
   params: {
@@ -17,6 +18,7 @@ type PageProps = {
 
 export default function ProductDetailsPage({ params }: PageProps) {
   const router = useRouter();
+  const productId = use(Promise.resolve(params.id));
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,23 +27,41 @@ export default function ProductDetailsPage({ params }: PageProps) {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await fetchApi(`/products/${params.id}`);
+        setError(null);
+        
+        console.log('Fetching product with ID:', productId);
+        const response = await fetchApi(`/products/${productId}`);
+        
+        console.log('API response:', response);
         
         if (!response.success) {
+          // Kiểm tra nếu lỗi là do xác thực
+          if (response.message === 'Vui lòng đăng nhập lại' || response.message === 'Unauthorized') {
+            toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+            router.push('/auth/login');
+            return;
+          }
+          
           throw new Error(response.message || 'Không thể tải thông tin sản phẩm');
         }
 
-        setProduct(response.product);
+        if (!response.data) {
+          throw new Error('Không tìm thấy thông tin sản phẩm');
+        }
+
+        setProduct(response.data);
       } catch (err) {
         console.error('Error fetching product:', err);
-        setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+        const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [productId, router]);
 
   if (loading) {
     return (
@@ -79,7 +99,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
           <h1 className="text-2xl font-bold">Chi tiết sản phẩm</h1>
         </div>
         <button
-          onClick={() => router.push(`/admin/products/edit/${params.id}`)}
+          onClick={() => router.push(`/admin/products/edit/${productId}`)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           <Edit2 className="w-4 h-4" />

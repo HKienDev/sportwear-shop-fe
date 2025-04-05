@@ -10,6 +10,7 @@ import BestSellingProducts from "@/components/admin/dashboard/bestSellingProduct
 import { getStats, getRevenue, getRecentOrders, getBestSellingProducts } from "@/services/dashboardService";
 import type { DashboardStatsResponse, RevenueResponse, RecentOrdersResponse, BestSellingProductsResponse } from "@/services/dashboardService";
 import Link from "next/link";
+import { TOKEN_CONFIG } from "@/config/token";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -30,6 +31,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Kiểm tra token
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      if (!token) {
+        console.log('🔑 Không có token, chuyển hướng về trang login');
+        await router.push("/auth/login");
+        return;
+      }
+
       if (!authLoading && !user) {
         console.log('👤 Không có user, chuyển hướng về trang login');
         await router.push("/auth/login");
@@ -65,21 +74,46 @@ export default function AdminDashboard() {
       setIsLoading(true);
       setError(null);
 
+      // Kiểm tra token trước khi fetch
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      if (!token) {
+        setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        router.push("/auth/login");
+        return;
+      }
+
       console.log('📊 Fetching dashboard data...');
-      const [stats, revenue, recentOrders, bestSellingProducts] = await Promise.all([
-        getStats(),
-        getRevenue(),
-        getRecentOrders(),
-        getBestSellingProducts()
-      ]);
+      
+      // Fetch từng API riêng lẻ để dễ debug
+      try {
+        const stats = await getStats();
+        setData(prev => ({ ...prev, stats }));
+      } catch (err) {
+        console.error("❌ Error fetching stats:", err);
+      }
+
+      try {
+        const revenue = await getRevenue();
+        setData(prev => ({ ...prev, revenue }));
+      } catch (err) {
+        console.error("❌ Error fetching revenue:", err);
+      }
+
+      try {
+        const recentOrders = await getRecentOrders();
+        setData(prev => ({ ...prev, recentOrders }));
+      } catch (err) {
+        console.error("❌ Error fetching recent orders:", err);
+      }
+
+      try {
+        const bestSellingProducts = await getBestSellingProducts();
+        setData(prev => ({ ...prev, bestSellingProducts }));
+      } catch (err) {
+        console.error("❌ Error fetching best selling products:", err);
+      }
 
       console.log('✅ Dashboard data fetched successfully');
-      setData({
-        stats,
-        revenue,
-        recentOrders,
-        bestSellingProducts
-      });
     } catch (err) {
       console.error("❌ Error fetching dashboard data:", err);
       setError("Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.");
@@ -98,99 +132,43 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-gray-600">{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 max-w-md">
+          <p className="font-medium">{error}</p>
         </div>
+        <button 
+          onClick={() => router.push("/auth/login")}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          Đăng nhập lại
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Trang Quản Trị</h1>
-              <p className="text-gray-600 mt-1">Chào mừng, {user?.fullname || 'Admin'}</p>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Cập nhật mỗi 5 phút</span>
-            </div>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Stats stats={data.stats} />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4">Doanh thu</h2>
+          <RevenueChart data={data.revenue} />
         </div>
-
-        {/* Main Content */}
-        <div className="space-y-6">
-          {/* Stats Section */}
-          <div>
-            <Stats data={data.stats} isLoading={isLoading} />
-          </div>
-
-          {/* Revenue Chart */}
-          <div>
-            <RevenueChart 
-              data={data.revenue?.data || []} 
-              isLoading={isLoading} 
-              lastUpdated={data.revenue?.lastUpdated || new Date().toISOString()}
-              months={data.revenue?.months || 6}
-              onPeriodChange={(months) => {
-                // Handle period change
-                console.log('Period changed to', months, 'months');
-              }}
-            />
-          </div>
-
-          {/* Orders and Products */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Đơn Hàng Gần Đây</h2>
-                <Link href="/admin/orders" className="text-sm text-[#4EB09D] hover:text-[#2C7A7B] transition-colors">
-                  Xem tất cả
-                </Link>
-              </div>
-              <RecentOrders 
-                orders={data.recentOrders?.orders || []} 
-                isLoading={isLoading} 
-                pagination={data.recentOrders?.pagination || {
-                  currentPage: 1,
-                  totalPages: 1,
-                  totalOrders: 0,
-                  hasMore: false
-                }}
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Sản Phẩm Bán Chạy</h2>
-                <Link href="/admin/products" className="text-sm text-[#4EB09D] hover:text-[#2C7A7B] transition-colors">
-                  Xem tất cả
-                </Link>
-              </div>
-              <BestSellingProducts 
-                products={data.bestSellingProducts?.products || []} 
-                isLoading={isLoading} 
-                lastUpdated={data.bestSellingProducts?.lastUpdated || new Date().toISOString()}
-                days={data.bestSellingProducts?.days || 30}
-                onPeriodChange={(days) => {
-                  // Handle period change
-                  console.log('Period changed to', days, 'days');
-                }}
-              />
-            </div>
-          </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4">Sản phẩm bán chạy</h2>
+          <BestSellingProducts products={data.bestSellingProducts} />
         </div>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4">Đơn hàng gần đây</h2>
+        <RecentOrders orders={data.recentOrders} />
       </div>
     </div>
   );

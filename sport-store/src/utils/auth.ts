@@ -1,9 +1,10 @@
 import { fetchApi } from './api';
 import { isAdmin as checkAdmin } from './roleUtils';
+import { TOKEN_CONFIG } from '@/config/token';
 
 export const getAuthToken = async (): Promise<string | null> => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     if (!token) {
       console.log('❌ Không tìm thấy token trong localStorage');
       return null;
@@ -16,12 +17,12 @@ export const getAuthToken = async (): Promise<string | null> => {
       
       if (Date.now() >= expirationTime) {
         console.log('❌ Token đã hết hạn');
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         return null;
       }
     } catch (error) {
       console.error('❌ Lỗi khi parse token:', error);
-      localStorage.removeItem('accessToken');
+      localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       return null;
     }
 
@@ -53,10 +54,10 @@ export const verifyToken = async (token: string): Promise<boolean> => {
 export const setAuthToken = (token: string) => {
   try {
     // Lưu vào localStorage
-    localStorage.setItem('accessToken', token);
+    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
     
     // Lưu vào cookie với httpOnly để bảo mật hơn
-    document.cookie = `accessToken=${token}; path=/`;
+    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${token}; path=/`;
     
     console.log('✅ Token đã được lưu thành công');
   } catch (error) {
@@ -67,10 +68,10 @@ export const setAuthToken = (token: string) => {
 export const removeAuthToken = () => {
   try {
     // Xóa khỏi localStorage
-    localStorage.removeItem('accessToken');
+    localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     
     // Xóa khỏi cookie
-    document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
     
     console.log('✅ Token đã được xóa thành công');
   } catch (error) {
@@ -87,7 +88,7 @@ export const isAuthenticated = async () => {
 
 export const getUserRole = () => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     if (!token) return null;
 
     const tokenData = JSON.parse(atob(token.split('.')[1]));

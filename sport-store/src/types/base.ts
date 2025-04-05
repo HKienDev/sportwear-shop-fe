@@ -189,13 +189,17 @@ export interface CreateProductData {
     name: string;
     slug: string;
     description: string;
-    price: number;
-    discountPrice?: number;
+    originalPrice: number;
+    salePrice: number;
     categoryId: string;
-    images: string[];
+    brand: string;
+    mainImage: string;
+    subImages: string[];
+    colors: string[];
+    sizes: string[];
+    tags: string[];
     stock: number;
     isActive: boolean;
-    specifications?: Record<string, string>;
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

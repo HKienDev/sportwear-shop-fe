@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { ERROR_MESSAGES } from '@/config/constants';
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse, AxiosError } from 'axios';
 import type { ApiResponse, PaginatedResponse, ApiResponseData } from '@/types/api';
 
 interface UsePaginatedDataOptions {
@@ -26,14 +26,48 @@ export function usePaginatedData<T extends ApiResponseData>() {
             setError(null);
 
             const response = await fetchFn();
-            if (!response.data.data) {
+            
+            if (!response) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
+            
+            if (!response.data) {
+                throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+            }
+            
+            if (!response.data.data) {
+                if (response.data.success) {
+                    setData([]);
+                    setTotal(0);
+                    return;
+                }
+                throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
+            }
+            
+            if (!response.data.data.items) {
+                setData([]);
+                setTotal(0);
+                return;
+            }
+            
             setData(response.data.data.items);
-            setTotal(response.data.data.total);
+            setTotal(response.data.data.total || 0);
         } catch (error) {
             console.error('Failed to fetch data:', error);
-            const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR;
+            
+            let errorMessage = ERROR_MESSAGES.NETWORK_ERROR;
+            
+            if (error instanceof Error) {
+                errorMessage = ERROR_MESSAGES.NETWORK_ERROR;
+            } else if (typeof error === 'object' && error !== null) {
+                const axiosError = error as AxiosError<ApiResponse<unknown>>;
+                if (axiosError.response && axiosError.response.data) {
+                    errorMessage = ERROR_MESSAGES.NETWORK_ERROR;
+                } else if (axiosError.message) {
+                    errorMessage = ERROR_MESSAGES.NETWORK_ERROR;
+                }
+            }
+            
             setError(errorMessage);
             
             if (showToast) {

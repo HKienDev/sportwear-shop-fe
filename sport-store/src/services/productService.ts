@@ -1,4 +1,5 @@
 import { Product, ProductQueryParams, ProductResponse, SingleProductResponse } from "@/types/product";
+import { fetchApi } from "./api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
