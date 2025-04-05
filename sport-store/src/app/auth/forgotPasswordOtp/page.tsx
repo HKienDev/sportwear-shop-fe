@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 
 export default function ForgotPasswordCombined() {
   const router = useRouter();
@@ -165,61 +166,88 @@ export default function ForgotPasswordCombined() {
 
       console.log('Đang gửi dữ liệu - Email:', email, 'OTP:', otpString);
 
-      // Gửi tất cả dữ liệu trong một request
-      const resetResponse = await fetch('http://localhost:4000/api/auth/verify-forgot-password-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email, 
-          otp: otpString,
-          newPassword
-        })
+      // Gửi request xác thực OTP và đặt lại mật khẩu
+      console.log('Request data:', {
+        email,
+        otp: otpString,
+        newPassword
       });
 
-      console.log('Trạng thái đặt lại mật khẩu:', resetResponse.status);
-      
-      // Log response để debug
-      const resetResponseText = await resetResponse.text();
-      console.log('Phản hồi gốc từ reset-password:', resetResponseText);
-      
-      let resetData;
       try {
-        resetData = JSON.parse(resetResponseText);
-        console.log('Dữ liệu phản hồi đặt lại mật khẩu:', resetData);
-      } catch (e) {
-        console.error('Lỗi khi parse phản hồi reset:', e);
-        if (resetResponse.ok) {
-          // Nếu status ok nhưng không phải JSON, có thể là phản hồi thành công không có body
-          resetData = { success: true };
+        const response = await axios.post('http://localhost:4000/api/auth/reset-password', {
+          email,
+          otp: otpString,
+          newPassword
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Response from server:', response.data);
+
+        if (response.data.success) {
+          // Xóa dữ liệu đã lưu
+          localStorage.removeItem('forgotPasswordEmail');
+          
+          // Chuyển hướng đến trang xác nhận
+          router.push('/auth/forgotPasswordSucces');
         } else {
-          throw new Error('Phản hồi từ server không hợp lệ');
+          console.log('Server response indicates failure:', response.data);
+          setError(response.data.message || 'Không thể đặt lại mật khẩu');
         }
-      }
+      } catch (error) {
+        console.error("Chi tiết lỗi:", error);
+        
+        if (axios.isAxiosError(error)) {
+          console.error('Axios error details:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              data: error.config?.data
+            }
+          });
 
-      if (!resetResponse.ok) {
-        // Xử lý lỗi chi tiết
-        let errorMessage = 'Không thể đặt lại mật khẩu';
-        if (resetData && resetData.message) {
-          errorMessage = resetData.message;
-        } else if (resetResponse.status === 401) {
-          errorMessage = 'Token xác thực không hợp lệ hoặc đã hết hạn';
-        } else if (resetResponse.status === 400) {
-          errorMessage = 'Thiếu thông tin cần thiết';
+          if (error.response?.data?.errors) {
+            console.error('Error array from server:', error.response.data.errors);
+            const errorMessage = error.response.data.errors[0]?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            setError(errorMessage);
+          } else {
+            console.error('Error message from server:', error.response?.data?.message);
+            setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+          }
+        } else {
+          console.error('Non-Axios error:', error);
+          setError('Có lỗi xảy ra. Vui lòng thử lại.');
         }
-        throw new Error(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-
-      // Xóa dữ liệu đã lưu
-      localStorage.removeItem('forgotPasswordEmail');
-      
-      // Chuyển hướng đến trang xác nhận
-      router.push('/auth/forgotPasswordSucces');
     } catch (error) {
       console.error("Chi tiết lỗi:", error);
       
-      if (error instanceof Error) {
-        setError(error.message);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          headers: error.response?.headers
+        });
+
+        if (error.response?.data?.errors) {
+          console.error('Error array from server:', error.response.data.errors);
+          const errorMessage = error.response.data.errors[0]?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+          setError(errorMessage);
+        } else {
+          console.error('Error message from server:', error.response?.data?.message);
+          setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+        }
       } else {
+        console.error('Non-Axios error:', error);
         setError('Có lỗi xảy ra. Vui lòng thử lại.');
       }
     } finally {
@@ -228,25 +256,70 @@ export default function ForgotPasswordCombined() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
+    <div className="min-h-screen relative overflow-hidden bg-gray-50 flex items-center justify-center p-4">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-black/5 skew-x-12 transform origin-top-right"></div>
+        <div className="absolute top-0 left-0 w-1/4 h-screen bg-gradient-to-b from-red-500/5 to-transparent"></div>
+        <div className="absolute bottom-0 right-0 w-1/3 h-32 bg-gradient-to-t from-red-500/5 to-transparent"></div>
+        {/* Animated dots */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-red-600 rounded-full animate-ping" style={{ animationDuration: "3s" }}></div>
+          <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-red-600 rounded-full animate-ping" style={{ animationDuration: "4s", animationDelay: "1s" }}></div>
+          <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-red-600 rounded-full animate-ping" style={{ animationDuration: "5s", animationDelay: "0.5s" }}></div>
+          <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-red-600 rounded-full animate-ping" style={{ animationDuration: "6s", animationDelay: "1.5s" }}></div>
+        </div>
+        {/* Dynamic lines */}
+        <svg className="absolute inset-0 w-full h-full opacity-5" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <line x1="0" y1="0" x2="100" y2="100" stroke="black" strokeWidth="0.5" />
+          <line x1="100" y1="0" x2="0" y2="100" stroke="black" strokeWidth="0.5" />
+          <line x1="50" y1="0" x2="50" y2="100" stroke="black" strokeWidth="0.5" />
+          <line x1="0" y1="50" x2="100" y2="50" stroke="black" strokeWidth="0.5" />
+        </svg>
+      </div>
+
+      {/* Main Container */}
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 md:p-12 border border-gray-200">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Cài lại mật khẩu</h2>
           {email ? (
             <p className="mt-2 text-sm text-gray-600">
-              Chúng tôi đã gửi mã đến <span className="text-blue-600">{email}</span>
+              Chúng tôi đã gửi mã đến <span className="text-red-600">{email}</span>
             </p>
           ) : (
             <p className="mt-2 text-sm text-gray-600">
               Vui lòng nhập mã OTP đã gửi đến email của bạn
             </p>
           )}
+          {/* Animated line */}
+          <div className="flex justify-center mt-4">
+            <div className="w-16 h-1 bg-gradient-to-r from-gray-200 via-red-500 to-gray-200 rounded-full"></div>
+          </div>
         </div>
 
-        {error && <p className="text-center text-red-500">{error}</p>}
-        {successMessage && <p className="text-center text-green-500">{successMessage}</p>}
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border-l-4 border-red-500 text-red-600">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-xl bg-green-50 border-l-4 border-green-500 text-green-600">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>{successMessage}</span>
+            </div>
+          </div>
+        )}
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
           {/* OTP Input Section */}
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Nhập mã xác thực</p>
@@ -261,7 +334,7 @@ export default function ForgotPasswordCombined() {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-10 sm:w-14 h-10 sm:h-14 text-center text-xl sm:text-2xl font-semibold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-10 sm:w-14 h-10 sm:h-14 text-center text-xl sm:text-2xl font-semibold border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600"
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
@@ -270,14 +343,13 @@ export default function ForgotPasswordCombined() {
                 />
               ))}
             </div>
-            
             <div className="text-center text-sm mb-6">
               <span className="text-gray-500">Không nhận được mã? </span>
               <button
                 type="button"
                 onClick={handleResendCode}
                 disabled={isLoading}
-                className="text-blue-600 hover:text-blue-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-red-600 hover:text-red-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Đang gửi...' : 'Ấn để nhận lại mã'}
               </button>
@@ -295,7 +367,7 @@ export default function ForgotPasswordCombined() {
                   name="newPassword"
                   type={showPassword ? 'text' : 'password'}
                   required
-                  className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-600 focus:border-red-600"
                   placeholder="Nhập mật khẩu mới"
                   value={formData.newPassword}
                   onChange={handleInputChange}
@@ -309,7 +381,6 @@ export default function ForgotPasswordCombined() {
                 </button>
               </div>
             </div>
-
             <div className="relative">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Xác Nhận Mật Khẩu</label>
               <div className="relative">
@@ -318,7 +389,7 @@ export default function ForgotPasswordCombined() {
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
-                  className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="block text-black w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-600 focus:border-red-600"
                   placeholder="Xác nhận mật khẩu"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
@@ -337,18 +408,15 @@ export default function ForgotPasswordCombined() {
 
           <button
             type="submit"
-            disabled={isLoading || 
-              otp.some(digit => !digit) || 
-              !formData.newPassword || 
-              !formData.confirmPassword}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || otp.some(digit => !digit) || !formData.newPassword || !formData.confirmPassword}
+            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Đang xử lý...' : 'Cài lại mật khẩu'}
           </button>
         </form>
 
-        <div className="text-center">
-          <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 flex items-center justify-center gap-2">
+        <div className="mt-8 text-center">
+          <Link href="/auth/login" className="font-medium text-red-600 hover:text-red-500 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>

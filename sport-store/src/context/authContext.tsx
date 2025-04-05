@@ -28,7 +28,7 @@ import {
     updateUser as updateUserService,
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
-import { AxiosError } from 'axios';
+// import { AxiosError } from 'axios';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds
@@ -205,16 +205,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Lưu token vào localStorage
                 localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
                 localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
+                console.log("💾 Đã lưu token và user vào localStorage");
 
                 // Cập nhật state
                 setUser(userData);
                 setIsAuthenticated(true);
+                console.log("🔄 Đã cập nhật state user và isAuthenticated");
 
                 // Set token vào header cho tất cả các request
                 api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                console.log("🔑 Đã set token vào header");
 
                 // Đợi một chút để đảm bảo state đã được cập nhật
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 500));
+                console.log("⏳ Đã đợi 500ms để state cập nhật");
 
                 // Chuyển hướng dựa trên role
                 if (userData.role === UserRole.ADMIN) {
