@@ -172,11 +172,6 @@ const LoginPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Bottom info */}
-        <div className="absolute bottom-4 text-center text-gray-400 text-xs">
-          <p>© 2025 Sportify. Tất cả các quyền được bảo lưu.</p>
-        </div>
       </div>
     </GoogleOAuthProvider>
   );

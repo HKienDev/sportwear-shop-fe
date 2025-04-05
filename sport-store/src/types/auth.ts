@@ -4,6 +4,7 @@ export interface AuthUser extends User {
     isActive: boolean;
     isVerified: boolean;
     lastLoginAt?: string;
+    name: string;
 }
 
 export interface LoginRequest {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
 import Chat from "@/components/common/chat/userChat";
 import ProductCard from "@/components/user/productCard/page";
+import { useAuth } from "@/context/authContext";
 
 interface Product {
   _id: string;
@@ -42,16 +43,22 @@ const HomePage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated, checkAuthStatus } = useAuth();
 
   useEffect(() => {
+    console.log("🏠 HomePage - Initial auth state:", { user, isAuthenticated });
+    
     // Kiểm tra role và chuyển hướng nếu là admin
-    const user = localStorage.getItem("user");
     if (user) {
-      const userData = JSON.parse(user);
-      if (userData.role === "admin") {
+      console.log("👤 HomePage - Current user:", user);
+      if (user.role === "admin") {
+        console.log("👑 User là admin, chuyển hướng đến dashboard");
         router.replace("/admin");
         return;
       }
+    } else {
+      console.log("❌ HomePage - No user found, checking auth status");
+      checkAuthStatus();
     }
 
     const fetchData = async () => {
@@ -87,7 +94,7 @@ const HomePage = () => {
     };
 
     fetchData();
-  }, [router]);
+  }, [router, checkAuthStatus]);
 
   if (loading) return <p className="text-center">Đang tải...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;

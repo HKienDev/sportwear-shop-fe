@@ -28,7 +28,7 @@ import {
     updateUser as updateUserService,
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
-import { AxiosError } from 'axios';
+// import { AxiosError } from 'axios';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds

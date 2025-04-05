@@ -4,6 +4,14 @@ import { useAuth } from "@/context/authContext";
 import Link from "next/link";
 import { LogOut, User, ChevronDown, Package, Heart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { getProfile } from "@/services/authService";
+
+interface UserProfile {
+  fullname: string;
+  email: string;
+  membershipLevel?: string;
+  totalSpent?: number;
+}
 
 const getMembershipStyle = (level?: string) => {
   switch (level) {
@@ -56,6 +64,25 @@ const UserMenu = () => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const response = await getProfile();
+          console.log("📊 UserMenu - Fetched profile:", response);
+          if (response?.data?.user) {
+            setUserProfile(response.data.user as UserProfile);
+          }
+        } catch (error) {
+          console.error("❌ UserMenu - Error fetching profile:", error);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +100,10 @@ const UserMenu = () => {
     setIsMenuOpen(false);
   };
 
-  if (!user || user.role !== "user") return null;
+  if (!user || user.role !== "user") {
+    console.log("❌ UserMenu - No user or not a user role:", user);
+    return null;
+  }
 
   const membershipStyle = getMembershipStyle(user.membershipLevel);
 
@@ -83,8 +113,8 @@ const UserMenu = () => {
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg ${membershipStyle.button} ${membershipStyle.text} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 shadow-md hover:shadow-lg`}
       >
-        <span className="font-semibold">
-          {user.fullname || user.name}
+        <span className="font-semibold truncate max-w-[150px]">
+          {userProfile?.fullname || user?.fullname || "User"}
         </span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -97,9 +127,9 @@ const UserMenu = () => {
             <div className={`px-4 py-3 border-b border-gray-100 ${membershipStyle.bg} rounded-t-2xl`}>
               <div className="flex-1">
                 <h3 className={`text-lg font-bold ${membershipStyle.text} truncate`}>
-                  {user.fullname || user.name}
+                  {userProfile?.fullname || user?.fullname || "User"}
                 </h3>
-                <p className="text-sm font-medium text-white/90 truncate">{user.email}</p>
+                <p className="text-sm font-medium text-white/90 truncate">{user?.email}</p>
               </div>
               {/* Membership Level Badge */}
               <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
