@@ -130,14 +130,14 @@ export default function CustomerDetail() {
       setCustomerError(null);
 
       // Lấy thông tin khách hàng
-      const userResponse = await fetchWithAuth(`/users/${params.id}`);
+      const userResponse = await fetchWithAuth(`/admin/users/${params.id}`);
       if (!userResponse.success) {
         throw new Error(userResponse.message || "Không thể tải thông tin khách hàng");
       }
       setCustomer(userResponse.data as Customer);
 
       // Lấy lịch sử đơn hàng
-      const ordersResponse = await fetchWithAuth(`/orders/admin/user/${params.id}`);
+      const ordersResponse = await fetchWithAuth(`/admin/orders?userId=${params.id}`);
       if (!ordersResponse.success) {
         throw new Error(ordersResponse.message || "Không thể tải danh sách đơn hàng");
       }

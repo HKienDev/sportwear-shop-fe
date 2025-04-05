@@ -122,8 +122,9 @@ export interface CartItem {
 export interface Order {
     _id: string;
     shortId: string;
-    userId: string;
-    user: User;
+    userId?: string;
+    user?: User;
+    phone: string;
     items: OrderItem[];
     totalAmount: number;
     status: OrderStatus;
@@ -177,6 +178,7 @@ export interface CreateOrderData {
     };
     paymentMethod: Order['paymentMethod'];
     note?: string;
+    phone: string;
 }
 
 export interface UpdateOrderData extends Partial<CreateOrderData> {
@@ -187,13 +189,17 @@ export interface CreateProductData {
     name: string;
     slug: string;
     description: string;
-    price: number;
-    discountPrice?: number;
+    originalPrice: number;
+    salePrice: number;
     categoryId: string;
-    images: string[];
+    brand: string;
+    mainImage: string;
+    subImages: string[];
+    colors: string[];
+    sizes: string[];
+    tags: string[];
     stock: number;
     isActive: boolean;
-    specifications?: Record<string, string>;
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

@@ -7,7 +7,16 @@ interface ProductImagesProps {
 }
 
 export default function ProductImages({ product }: ProductImagesProps) {
-  const [selectedImage, setSelectedImage] = useState(product.images?.main || '');
+  // Xử lý cả hai trường hợp images là mảng hoặc object
+  const mainImage = Array.isArray(product.images) 
+    ? product.images[0] || '' 
+    : product.images?.main || '';
+  
+  const subImages = Array.isArray(product.images) 
+    ? product.images.slice(1) 
+    : product.images?.sub || [];
+  
+  const [selectedImage, setSelectedImage] = useState(mainImage);
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -35,14 +44,14 @@ export default function ProductImages({ product }: ProductImagesProps) {
         <div className="grid grid-cols-4 gap-2">
           {/* Ảnh chính */}
           <button
-            onClick={() => setSelectedImage(product.images?.main || '')}
+            onClick={() => setSelectedImage(mainImage)}
             className={`relative aspect-square rounded-lg overflow-hidden ${
-              selectedImage === product.images?.main ? 'ring-2 ring-blue-500' : ''
+              selectedImage === mainImage ? 'ring-2 ring-blue-500' : ''
             }`}
           >
-            {product.images?.main ? (
+            {mainImage ? (
               <Image
-                src={product.images.main}
+                src={mainImage}
                 alt="Ảnh chính"
                 fill
                 className="object-cover"
@@ -56,7 +65,7 @@ export default function ProductImages({ product }: ProductImagesProps) {
           </button>
 
           {/* Ảnh phụ */}
-          {product.images?.sub?.map((image, index) => (
+          {subImages.map((image, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(image)}

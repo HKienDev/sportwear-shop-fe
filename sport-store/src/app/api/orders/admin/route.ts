@@ -20,12 +20,14 @@ export async function GET(request: Request) {
     const limit = searchParams.get('limit') || '10';
     const status = searchParams.get('status');
     const search = searchParams.get('search');
+    const phone = searchParams.get('phone');
 
     const queryParams = new URLSearchParams({
       page,
       limit,
       ...(status && { status }),
-      ...(search && { search })
+      ...(search && { search }),
+      ...(phone && { phone })
     });
 
     const response = await fetch(

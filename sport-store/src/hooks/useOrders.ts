@@ -61,10 +61,15 @@ export function useOrders(options: OrderQueryParams = {}) {
                 throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
             }
 
+            if (!data.phone) {
+                throw new Error('Số điện thoại là bắt buộc');
+            }
+
             const orderData: CreateOrderData = {
                 ...data,
                 status: OrderStatus.PENDING,
-                paymentStatus: PaymentStatus.PENDING
+                paymentStatus: PaymentStatus.PENDING,
+                phone: data.phone
             };
 
             const response = await apiClient.orders.create(orderData);
@@ -100,12 +105,26 @@ export function useOrders(options: OrderQueryParams = {}) {
         }
     };
 
+    const fetchOrdersByPhone = async (phone: string) => {
+        try {
+            setIsLoading(true);
+            const response = await apiClient.orders.getByPhone(phone);
+            setOrders(response.data.data || []);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải đơn hàng');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return {
         orders,
         total,
         isLoading,
         error,
         fetchOrders,
+        fetchOrdersByPhone,
         getOrderById,
         createOrder,
         cancelOrder

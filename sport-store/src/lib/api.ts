@@ -353,8 +353,8 @@ const apiClientMethods = {
 
     // Categories
     categories: {
-        getAll: (): Promise<AxiosResponse<ApiResponse<Category[]>>> =>
-            api.get(`/categories`),
+        getAll: (params?: { page?: string; limit?: string; search?: string }): Promise<AxiosResponse<ApiResponse<Category[]>>> =>
+            api.get(`/categories`, { params }),
         
         getById: (id: string): Promise<AxiosResponse<ApiResponse<Category>>> =>
             api.get(`/categories/${id}`),
@@ -384,7 +384,10 @@ const apiClientMethods = {
             api.put(`/orders/${id}`, data),
         
         delete: (id: string): Promise<AxiosResponse<ApiResponse>> =>
-            api.delete(`/orders/${id}`)
+            api.delete(`/orders/${id}`),
+        
+        getByPhone: (phone: string): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
+            api.get(`/orders/by-phone`, { params: { phone } })
     },
 
     // Upload

@@ -22,7 +22,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         
         <div>
           <p className="text-gray-600">SKU:</p>
-          <p className="font-medium">{product.sku}</p>
+          <p className="font-medium">{product.sku || 'Chưa có'}</p>
         </div>
         
         <div>
@@ -75,14 +75,18 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <div className="mt-4">
         <p className="text-gray-600">Tags:</p>
         <div className="flex flex-wrap gap-2 mt-2">
-          {product.tags?.map((tag, index) => (
-            <span 
-              key={index}
-              className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm"
-            >
-              {tag}
-            </span>
-          ))}
+          {product.tags && product.tags.length > 0 ? (
+            product.tags.map((tag, index) => (
+              <span 
+                key={index}
+                className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm"
+              >
+                {tag}
+              </span>
+            ))
+          ) : (
+            <p className="text-gray-500">Không có tags</p>
+          )}
         </div>
       </div>
     </div>
