@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
 
-export async function GET(request: Request) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     // Lấy access token từ cookie
     const cookieStore = await cookies();
@@ -15,29 +18,16 @@ export async function GET(request: Request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
-    const search = searchParams.get('search');
-    const category = searchParams.get('category');
-    const sortBy = searchParams.get('sortBy');
-    const sortOrder = searchParams.get('sortOrder');
-
-    const queryParams = new URLSearchParams({
-      page,
-      limit,
-      ...(search && { search }),
-      ...(category && { category }),
-      ...(sortBy && { sortBy }),
-      ...(sortOrder && { sortOrder })
-    });
+    const sku = params.id;
 
     // Log request URL for debugging
-    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/admin?${queryParams}`);
+    console.log('Deleting product with SKU:', sku);
+    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/${sku}`);
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products/admin?${queryParams}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/products/${sku}`,
       {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
@@ -47,13 +37,13 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch products');
+      throw new Error(errorData.message || 'Failed to delete product');
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error deleting product:', error);
     return NextResponse.json(
       { 
         success: false, 

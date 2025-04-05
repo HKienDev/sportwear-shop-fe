@@ -14,7 +14,7 @@ const GoogleAuthCallback: React.FC = () => {
       router.push('/');
     } else {
       // Nếu không có token, chuyển hướng về trang login hoặc báo lỗi
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [router]);
 

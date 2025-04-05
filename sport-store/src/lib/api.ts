@@ -353,8 +353,8 @@ const apiClientMethods = {
 
     // Categories
     categories: {
-        getAll: (): Promise<AxiosResponse<ApiResponse<Category[]>>> =>
-            api.get(`/categories`),
+        getAll: (params?: { page?: string; limit?: string; search?: string }): Promise<AxiosResponse<ApiResponse<Category[]>>> =>
+            api.get(`/categories`, { params }),
         
         getById: (id: string): Promise<AxiosResponse<ApiResponse<Category>>> =>
             api.get(`/categories/${id}`),

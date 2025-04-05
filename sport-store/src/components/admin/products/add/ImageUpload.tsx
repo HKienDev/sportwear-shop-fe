@@ -1,22 +1,23 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Upload, X, Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { ProductFormData, ProductFormErrors } from "@/types/product";
+import { ProductFormData } from "@/types/product";
 import { toast } from "sonner";
 
 interface ImageUploadProps {
-  data: Pick<ProductFormData, 'mainImage' | 'subImages'>;
-  errors: Pick<ProductFormErrors, 'mainImage' | 'subImages'>;
-  onChange: (field: 'mainImage' | 'subImages', value: any) => void;
+  formData: ProductFormData;
+  onFieldChange: (field: keyof ProductFormData, value: string | string[] | null) => void;
 }
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const CLOUDINARY_CLOUD_NAME = 'dta6mizzm'; // Thay thế bằng cloud name của bạn
+const CLOUDINARY_UPLOAD_PRESET = 'sport-store'; // Thay thế bằng upload preset của bạn
 
 export default function ImageUpload({
-  data,
-  errors,
-  onChange,
+  formData,
+  onFieldChange,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
@@ -27,7 +28,7 @@ export default function ImageUpload({
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('Kích thước file không được vượt quá 2MB');
+      toast.error(`Kích thước file không được vượt quá ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
       return false;
     }
 
@@ -38,17 +39,25 @@ export default function ImageUpload({
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'sport-store');
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', 'sport-store/products');
 
       const response = await fetch(
-        'https://api.cloudinary.com/v1_1/your-cloud-name/image/upload',
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
           method: 'POST',
           body: formData,
         }
       );
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Cloudinary error:', errorData);
+        throw new Error(`Lỗi Cloudinary: ${errorData.error?.message || 'Không xác định'}`);
+      }
+
       const data = await response.json();
+      console.log('Upload successful:', data);
       return data.secure_url;
     } catch (error) {
       console.error('Error uploading to Cloudinary:', error);
@@ -64,9 +73,12 @@ export default function ImageUpload({
 
     try {
       setIsUploading(true);
+      toast.info('Đang tải ảnh lên...');
       const imageUrl = await uploadToCloudinary(file);
-      onChange('mainImage', imageUrl);
-    } catch (error) {
+      onFieldChange('mainImage', imageUrl);
+      toast.success('Tải ảnh lên thành công');
+    } catch (err) {
+      console.error('Lỗi khi tải ảnh lên:', err);
       toast.error('Đã xảy ra lỗi khi tải ảnh lên');
     } finally {
       setIsUploading(false);
@@ -77,21 +89,28 @@ export default function ImageUpload({
     const files = e.target.files;
     if (!files) return;
 
-    if (data.subImages.length + files.length > 5) {
+    if (formData.subImages.length + files.length > 5) {
       toast.error('Không được phép upload quá 5 ảnh phụ');
       return;
     }
 
     try {
       setIsUploading(true);
+      toast.info('Đang tải ảnh lên...');
+      
       const uploadPromises = Array.from(files).map(async (file) => {
         if (!validateFile(file)) return null;
         return uploadToCloudinary(file);
       });
 
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-      onChange('subImages', [...data.subImages, ...uploadedUrls]);
-    } catch (error) {
+      onFieldChange('subImages', [...formData.subImages, ...uploadedUrls]);
+      
+      if (uploadedUrls.length > 0) {
+        toast.success(`Đã tải lên ${uploadedUrls.length} ảnh thành công`);
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải ảnh lên:', err);
       toast.error('Đã xảy ra lỗi khi tải ảnh lên');
     } finally {
       setIsUploading(false);
@@ -99,35 +118,33 @@ export default function ImageUpload({
   };
 
   const handleMainImageRemove = () => {
-    onChange('mainImage', null);
+    onFieldChange('mainImage', null);
+    toast.info('Đã xóa ảnh chính');
   };
 
   const handleSubImageRemove = (index: number) => {
-    const newSubImages = [...data.subImages];
+    const newSubImages = [...formData.subImages];
     newSubImages.splice(index, 1);
-    onChange('subImages', newSubImages);
+    onFieldChange('subImages', newSubImages);
+    toast.info('Đã xóa ảnh phụ');
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-      <div className="space-y-4">
+    <div className="space-y-5">
+      <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <Upload className="w-4 h-4" />
           HÌNH ẢNH CHÍNH
         </Label>
-        <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-          errors.mainImage 
-            ? 'border-red-500 hover:border-red-600' 
-            : 'border-gray-300 hover:border-blue-500'
-        }`}>
+        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-colors border-gray-300 hover:border-blue-500 mt-1.5">
           {isUploading ? (
             <div className="flex flex-col items-center justify-center">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
               <p className="mt-2 text-sm text-gray-500">Đang tải ảnh lên...</p>
             </div>
-          ) : data.mainImage ? (
+          ) : formData.mainImage ? (
             <div className="relative w-48 h-48 mx-auto">
-              <Image src={data.mainImage} alt="Main product" fill className="object-contain rounded-lg" />
+              <Image src={formData.mainImage} alt="Main product" fill className="object-contain rounded-lg" />
               <button
                 onClick={handleMainImageRemove}
                 className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
@@ -136,77 +153,83 @@ export default function ImageUpload({
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
-              <input type="file" accept="image/*" onChange={handleMainImageUpload} className="hidden" id="mainImage" />
-              <label htmlFor="mainImage" className="cursor-pointer">
-                <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <Upload className="w-6 h-6 text-gray-600" />
-                </div>
-                <span className="text-sm font-medium text-blue-600 hover:text-blue-700">Tải lên hình ảnh</span>
-                <p className="text-xs text-gray-500 mt-1">PNG, JPG (Tối đa 2MB)</p>
+            <div className="flex flex-col items-center justify-center">
+              <Upload className="w-10 h-10 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-500">Kéo thả hoặc nhấp để tải ảnh lên</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG hoặc WebP (tối đa 5MB)</p>
+              <label className="mt-3 cursor-pointer">
+                <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-sm">
+                  Chọn ảnh
+                </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleMainImageUpload}
+                />
               </label>
             </div>
           )}
         </div>
-        {errors.mainImage && (
-          <p className="text-sm text-red-500">{errors.mainImage}</p>
-        )}
       </div>
 
-      <div className="space-y-4">
+      <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <Upload className="w-4 h-4" />
           HÌNH ẢNH PHỤ
         </Label>
-        <div className={`border-2 border-dashed rounded-xl p-6 transition-colors ${
-          errors.subImages 
-            ? 'border-red-500 hover:border-red-600' 
-            : 'border-gray-300 hover:border-blue-500'
-        }`}>
-          <input 
-            type="file" 
-            accept="image/*" 
-            multiple 
-            onChange={handleSubImagesUpload} 
-            className="hidden" 
-            id="subImages" 
-            disabled={isUploading || data.subImages.length >= 5}
-          />
-          <label 
-            htmlFor="subImages" 
-            className={`cursor-pointer block text-center mb-4 ${
-              isUploading || data.subImages.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="mx-auto w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-2">
-              <Plus className="w-5 h-5 text-gray-600" />
+        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-colors border-gray-300 hover:border-blue-500 mt-1.5">
+          {isUploading ? (
+            <div className="flex flex-col items-center justify-center">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <p className="mt-2 text-sm text-gray-500">Đang tải ảnh lên...</p>
             </div>
-            <span className="text-sm font-medium text-blue-600 hover:text-blue-700">
-              {isUploading ? 'Đang tải ảnh lên...' : 'Thêm hình ảnh phụ'}
-            </span>
-            <p className="text-xs text-gray-500 mt-1">
-              {data.subImages.length}/5 ảnh
-            </p>
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {data.subImages.map((img, index) => (
-              <div key={index} className="relative group">
-                <div className="aspect-square relative rounded-lg overflow-hidden">
-                  <Image src={img} alt={`Sub ${index + 1}`} fill className="object-cover" />
+          ) : formData.subImages.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {formData.subImages.map((image, index) => (
+                <div key={index} className="relative w-full aspect-square">
+                  <Image src={image} alt={`Sub product ${index + 1}`} fill className="object-contain rounded-lg" />
+                  <button
+                    onClick={() => handleSubImageRemove(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleSubImageRemove(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+              {formData.subImages.length < 5 && (
+                <label className="w-full aspect-square border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
+                  <Plus className="w-8 h-8 text-gray-400" />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleSubImagesUpload}
+                    multiple
+                  />
+                </label>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center">
+              <Upload className="w-10 h-10 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-500">Kéo thả hoặc nhấp để tải ảnh lên</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG hoặc WebP (tối đa 5 ảnh)</p>
+              <label className="mt-3 cursor-pointer">
+                <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-sm">
+                  Chọn ảnh
+                </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleSubImagesUpload}
+                  multiple
+                />
+              </label>
+            </div>
+          )}
         </div>
-        {errors.subImages && (
-          <p className="text-sm text-red-500">{errors.subImages}</p>
-        )}
       </div>
     </div>
   );
