@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { AuthUser } from '@/types/auth';
@@ -28,7 +28,7 @@ import {
     updateUser as updateUserService,
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
-// import { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds
@@ -64,6 +64,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const lastCheckRef = useRef<number>(0);
     const retryCountRef = useRef<number>(0);
     const maxRetries = 3;
+
+    // Khởi tạo state từ localStorage khi component mount
+    useEffect(() => {
+        const initializeAuth = async () => {
+            try {
+                const storedUser = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                
+                if (storedUser && accessToken) {
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(parsedUser);
+                    setIsAuthenticated(true);
+                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                }
+                
+                // Kiểm tra xác thực
+                await checkAuthStatus();
+            } catch (error) {
+                console.error("Error initializing auth:", error);
+                // Nếu có lỗi khi khởi tạo, xóa tất cả dữ liệu auth
+                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                setUser(null);
+                setIsAuthenticated(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeAuth();
+    }, []);
 
     const checkAuthStatus = useCallback(async () => {
         try {
@@ -217,7 +249,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return { success: false, message: "Dữ liệu đăng nhập không hợp lệ" };
             }
 
-            // Lưu tokens
+            // Lưu tokens và user data
             localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
             localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
@@ -248,15 +280,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             message: errorMessages || "Lỗi server"
                         };
                     }
-                    return { 
-                        success: false, 
-                        message: "Lỗi server: " + (error.response.status === 500 ? "Lỗi máy chủ nội bộ" : error.response.statusText)
-                    };
-                } else if (error.request) {
-                    return { 
-                        success: false, 
-                        message: "Không thể kết nối đến server" 
-                    };
                 }
             }
             return { success: false, message: "Đăng nhập thất bại" };
