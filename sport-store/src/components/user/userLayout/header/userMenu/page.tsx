@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import Link from "next/link";
-import { LogOut, User, ChevronDown, Package, Heart } from "lucide-react";
+import { LogOut, User, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { getProfile } from "@/services/authService";
 
@@ -149,14 +149,6 @@ const UserMenu = () => {
               <Link href="/user/profile" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mx-2">
                 <User className="w-5 h-5 mr-3 text-gray-400 flex-shrink-0" />
                 <span className="truncate">Thông tin tài khoản</span>
-              </Link>
-              <Link href="/user/orders" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mx-2">
-                <Package className="w-5 h-5 mr-3 text-gray-400 flex-shrink-0" />
-                <span className="truncate">Đơn hàng của tôi</span>
-              </Link>
-              <Link href="/user/wishlist" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mx-2">
-                <Heart className="w-5 h-5 mr-3 text-gray-400 flex-shrink-0" />
-                <span className="truncate">Sản phẩm yêu thích</span>
               </Link>
               <button
                 onClick={handleLogout}
