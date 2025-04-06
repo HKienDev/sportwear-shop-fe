@@ -1,41 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TOKEN_CONFIG } from '@/config/token';
 
-export async function GET(
+export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: { sku: string } }
 ) {
   try {
     // Lấy token từ header Authorization
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { message: 'Unauthorized' },
         { status: 401 }
       );
     }
     const token = authHeader.substring(7); // Loại bỏ 'Bearer ' prefix
 
-    // Lấy ID từ params
-    const id = context.params.id;
-    if (!id) {
+    // Lấy SKU từ params
+    const sku = context.params.sku;
+    if (!sku) {
       return NextResponse.json(
-        { success: false, message: 'Product ID is required' },
+        { message: 'Product SKU is required' },
         { status: 400 }
       );
     }
 
+    const body = await request.json();
+
     // Log request URL for debugging
-    console.log('Fetching product with ID:', id);
-    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
+    console.log('Updating product status with SKU:', sku);
+    console.log('Request body:', body);
+    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/${sku}/status`);
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/products/${sku}/status`,
       {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(body),
       }
     );
 
@@ -43,7 +47,7 @@ export async function GET(
       const errorData = await response.json();
       console.error('Error response from backend:', errorData);
       return NextResponse.json(
-        { success: false, message: errorData.message || 'Failed to fetch product' },
+        { message: errorData.message || 'Failed to update product status' },
         { status: response.status }
       );
     }
@@ -51,9 +55,9 @@ export async function GET(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error updating product status:', error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : 'Failed to fetch product' },
+      { message: error instanceof Error ? error.message : 'Failed to update product status' },
       { status: 500 }
     );
   }

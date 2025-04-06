@@ -26,6 +26,7 @@ export async function PATCH(
       );
     }
 
+    // Lấy productId từ params
     const productId = params.id;
     const body = await request.json();
     const { isActive } = body;

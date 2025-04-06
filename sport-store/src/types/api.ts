@@ -22,7 +22,7 @@ export type ApiResponseData =
 export interface ApiResponse<T = unknown> {
     success: boolean;
     message?: string;
-    data?: T;
+    data: T;
     error?: string;
 }
 

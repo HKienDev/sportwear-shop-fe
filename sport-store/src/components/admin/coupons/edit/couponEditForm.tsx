@@ -28,7 +28,6 @@ import { couponService } from "@/services/couponService";
 import { Coupon } from "@/types/coupon";
 import { useAuth } from "@/context/authContext";
 import { TOKEN_CONFIG } from "@/config/token";
-import { apiClient } from "@/lib/api";
 import { formatDateForInput, parseDateFromInput } from "@/utils/dateUtils";
 
 const formSchema = z.object({
@@ -97,9 +96,6 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
       const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       
       if (accessToken) {
-        // Thiết lập token cho apiClient
-        apiClient.setAuthToken(accessToken);
-        
         // Kiểm tra trạng thái xác thực
         await checkAuthStatus();
       }
@@ -118,9 +114,6 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
         const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         
         if (accessToken) {
-          // Thiết lập token cho apiClient
-          apiClient.setAuthToken(accessToken);
-          
           // Kiểm tra trạng thái xác thực
           await checkAuthStatus();
           
@@ -131,7 +124,7 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
             return;
           }
         } else {
-          toast.error("Vui lòng đăng nhập để thực hiện thao tác này");
+          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
           router.push("/auth/login");
           return;
         }

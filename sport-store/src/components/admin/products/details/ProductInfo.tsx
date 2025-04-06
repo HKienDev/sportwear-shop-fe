@@ -27,7 +27,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         
         <div>
           <p className="text-gray-600">Danh mục:</p>
-          <p className="font-medium">{product.category || 'Chưa phân loại'}</p>
+          <p className="font-medium">
+            {typeof product.category === 'object' && product.category !== null
+              ? product.category.name
+              : product.category || 'Chưa phân loại'}
+          </p>
         </div>
         
         <div>

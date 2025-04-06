@@ -191,6 +191,7 @@ export interface CreateProductData {
     description: string;
     originalPrice: number;
     salePrice: number;
+    stock: number;
     categoryId: string;
     brand: string;
     mainImage: string;
@@ -198,8 +199,8 @@ export interface CreateProductData {
     colors: string[];
     sizes: string[];
     tags: string[];
-    stock: number;
     isActive: boolean;
+    sku: string;
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

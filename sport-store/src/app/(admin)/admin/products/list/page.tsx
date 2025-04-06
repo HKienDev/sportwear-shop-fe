@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
 import ProductTable from "@/components/admin/products/list/productTable";
 import ProductSearch from "@/components/admin/products/list/productSearch";
 import DeleteButton from "@/components/admin/products/list/deleteButton";
 import ProductPagination from "@/components/admin/products/list/pagination";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
 
 interface Category {
@@ -25,7 +25,7 @@ interface Product {
   originalPrice: number;
   salePrice: number;
   stock: number;
-  category: Category;
+  categoryId: string;
   brand: string;
   mainImage: string;
   subImages: string[];
@@ -48,14 +48,14 @@ interface Product {
 
 export default function ProductListPage() {
   const router = useRouter();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams, setSearchParams] = useState({
-    keyword: "",
+    search: "",
     category: "",
     brand: "",
     minPrice: "",
@@ -74,11 +74,48 @@ export default function ProductListPage() {
     }
   }, [isAuthenticated, router]);
 
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      // Lấy token từ localStorage
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      
+      // Kiểm tra token có tồn tại không
+      if (!token) {
+        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        router.push('/auth/login');
+        return;
+      }
+
+      const response = await fetch('/api/categories', {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể tải danh sách danh mục");
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Categories fetched:', data.data);
+        setCategories(data.data.categories || []);
+      } else {
+        throw new Error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
+      }
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra khi tải danh sách danh mục");
+    }
+  }, [router]);
+
   // Fetch products
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
 
       // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -93,20 +130,26 @@ export default function ProductListPage() {
       // Chuẩn bị query params
       const queryParams = new URLSearchParams({
         page: currentPage.toString(),
-        limit: "10",
+        limit: "5",
         ...searchParams,
       });
 
       console.log("Fetching products with params:", queryParams.toString());
+      console.log("Search param value:", searchParams.search);
+      console.log("Token:", token ? "Token exists" : "No token");
 
+      // Sử dụng API route của Next.js thay vì gọi trực tiếp đến backend
       const response = await fetch(
         `/api/products/admin?${queryParams.toString()}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
         }
       );
+
+      console.log("API response status:", response.status);
 
       if (!response.ok) {
         // Xử lý lỗi Unauthorized
@@ -116,11 +159,52 @@ export default function ProductListPage() {
           return;
         }
         
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Có lỗi xảy ra khi tải danh sách sản phẩm");
+        // Đọc dữ liệu lỗi
+        let errorMessage = "Có lỗi xảy ra khi tải danh sách sản phẩm";
+        let errorDetails = {};
+        
+        try {
+          const text = await response.text();
+          console.error("API error response text:", text);
+          
+          if (text) {
+            try {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorMessage;
+              errorDetails = errorData.details || {};
+            } catch (e) {
+              console.error("Failed to parse error response as JSON:", e);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to read error response:", e);
+        }
+        
+        console.error("API error details:", errorDetails);
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      // Đọc dữ liệu response
+      let data;
+      try {
+        const text = await response.text();
+        console.log("API response text:", text);
+        
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.error("Failed to parse response as JSON:", e);
+            throw new Error("Dữ liệu không hợp lệ từ máy chủ");
+          }
+        } else {
+          throw new Error("Không có dữ liệu từ máy chủ");
+        }
+      } catch (e) {
+        console.error("Failed to read response:", e);
+        throw new Error("Không thể đọc dữ liệu từ máy chủ");
+      }
+
       console.log("Products data:", data);
 
       if (data.success) {
@@ -131,7 +215,6 @@ export default function ProductListPage() {
       }
     } catch (err) {
       console.error("Error fetching products:", err);
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
       toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
     } finally {
       setLoading(false);
@@ -139,20 +222,22 @@ export default function ProductListPage() {
   }, [currentPage, searchParams, router]);
 
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
-  }, [fetchProducts]);
+  }, [fetchCategories, fetchProducts]);
 
   // Handlers
   const handleSearchChange = useCallback((value: string) => {
-    setSearchParams(prev => ({ ...prev, keyword: value }));
+    setSearchParams(prev => ({ ...prev, search: value }));
     setCurrentPage(1);
   }, []);
 
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setCurrentPage(1);
-    toast.loading("Đang tìm kiếm sản phẩm...", { id: "search" });
-  }, []);
+    toast.loading("Đang tìm kiếm sản phẩm...");
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleAddProduct = useCallback(() => {
     toast.success("Chuyển hướng đến trang thêm sản phẩm");
@@ -168,21 +253,28 @@ export default function ProductListPage() {
   }, []);
 
   const handleEditProduct = useCallback((id: string) => {
+    // Tìm sản phẩm theo ID
+    const product = products.find(p => p._id === id);
+    if (!product) {
+      toast.error("Không tìm thấy sản phẩm");
+      return;
+    }
+    
     toast.success("Chuyển hướng đến trang chỉnh sửa sản phẩm");
-    router.push(`/admin/products/edit?id=${id}`);
-  }, [router]);
+    router.push(`/admin/products/edit?sku=${product.sku}`);
+  }, [router, products]);
 
-  const handleDeleteProduct = useCallback(async (id: string) => {
+  const handleDeleteProduct = useCallback(async (sku: string) => {
     try {
-      // Tìm sản phẩm theo ID để lấy SKU
-      const product = products.find(p => p._id === id);
+      // Tìm sản phẩm theo SKU
+      const product = products.find(p => p.sku === sku);
       if (!product) {
         toast.error("Không tìm thấy sản phẩm");
         return;
       }
 
       // Hiển thị toast đang xóa
-      toast.loading(`Đang xóa sản phẩm "${product.name}"...`, { id: "delete" });
+      const toastId = toast.loading(`Đang xóa sản phẩm "${product.name}"...`);
 
       // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -195,7 +287,7 @@ export default function ProductListPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`/api/products/${product.sku}`, {
+      const response = await fetch(`/api/products/sku/${sku}`, {
         method: "DELETE",
         headers
       });
@@ -205,11 +297,17 @@ export default function ProductListPage() {
         throw new Error(errorData.message || "Có lỗi xảy ra khi xóa sản phẩm");
       }
 
-      toast.success(`Đã xóa sản phẩm "${product.name}" thành công`, { id: "delete" });
-      fetchProducts();
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(`Đã xóa sản phẩm "${product.name}" thành công`, { id: toastId });
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi xóa sản phẩm", { id: toastId });
+      }
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm", { id: "delete" });
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm");
     }
   }, [fetchProducts, products]);
 
@@ -226,7 +324,7 @@ export default function ProductListPage() {
         .filter(Boolean);
 
       // Hiển thị toast đang xóa
-      toast.loading(`Đang xóa ${selectedProducts.length} sản phẩm...`, { id: "deleteSelected" });
+      const toastId = toast.loading(`Đang xóa ${selectedProducts.length} sản phẩm: ${selectedProductNames.join(', ')}...`);
 
       // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -245,7 +343,7 @@ export default function ProductListPage() {
       const failedProducts: string[] = [];
 
       for (const id of selectedProducts) {
-        // Tìm sản phẩm theo ID để lấy SKU
+        // Tìm sản phẩm theo ID
         const product = products.find(p => p._id === id);
         if (!product) {
           console.error(`Không tìm thấy sản phẩm ${id}`);
@@ -254,7 +352,7 @@ export default function ProductListPage() {
         }
 
         try {
-          const response = await fetch(`/api/products/${product.sku}`, {
+          const response = await fetch(`/api/products/sku/${product.sku}`, {
             method: "DELETE",
             headers
           });
@@ -265,9 +363,16 @@ export default function ProductListPage() {
             continue;
           }
 
-          successCount++;
+          const data = await response.json();
+          
+          if (data.success) {
+            successCount++;
+          } else {
+            failCount++;
+            failedProducts.push(product.name);
+          }
         } catch (error) {
-          console.error(`Lỗi khi xóa sản phẩm ${product.sku}:`, error);
+          console.error(`Lỗi khi xóa sản phẩm ${product._id}:`, error);
           failCount++;
           failedProducts.push(product.name);
         }
@@ -275,13 +380,13 @@ export default function ProductListPage() {
 
       // Hiển thị thông báo kết quả
       if (successCount > 0) {
-        toast.success(`Đã xóa thành công ${successCount} sản phẩm`, { id: "deleteSelected" });
+        toast.success(`Đã xóa thành công ${successCount} sản phẩm`, { id: toastId });
       }
 
       if (failCount > 0) {
         toast.error(
           `Không thể xóa ${failCount} sản phẩm: ${failedProducts.join(", ")}`,
-          { id: "deleteFailed", duration: 5000 }
+          { duration: 5000 }
         );
       }
 
@@ -289,70 +394,78 @@ export default function ProductListPage() {
       fetchProducts();
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm", { id: "deleteSelected" });
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm");
     }
   }, [selectedProducts, fetchProducts, products]);
 
   const handleToggleStatus = useCallback(async (id: string, isActive: boolean) => {
     try {
-      // Tìm sản phẩm theo ID
       const product = products.find(p => p._id === id);
       if (!product) {
         toast.error("Không tìm thấy sản phẩm");
         return;
       }
 
-      const action = isActive ? 'kích hoạt' : 'vô hiệu hóa';
-      
-      // Hiển thị toast đang cập nhật
-      toast.loading(`Đang ${action} sản phẩm "${product.name}"...`, { id: "toggleStatus" });
+      const toastId = toast.loading("Đang cập nhật trạng thái...");
+      const action = isActive ? "kích hoạt" : "vô hiệu hóa";
 
-      // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Kiểm tra token có tồn tại không
       if (!token) {
-        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", { id: "toggleStatus" });
+        toast.error("Vui lòng đăng nhập lại", { id: toastId });
         router.push('/auth/login');
         return;
       }
-      
-      // Thêm token vào header
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      };
 
-      const response = await fetch(`/api/products/admin/${id}/toggle-status`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ isActive }),
+      // Log để debug
+      console.log('Toggling product status:', {
+        productId: id,
+        productSku: product.sku,
+        currentStatus: product.isActive,
+        newStatus: isActive
       });
 
+      const response = await fetch(
+        `/api/products/sku/${product.sku}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            isActive: isActive
+          }),
+        }
+      );
+
       if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Xử lý lỗi Unauthorized
         if (response.status === 401) {
-          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", { id: "toggleStatus" });
+          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", { id: toastId });
           router.push('/auth/login');
           return;
         }
         
+        // Đọc dữ liệu lỗi
+        const errorData = await response.json();
         throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái");
       }
 
-      toast.success(`Đã ${action} sản phẩm "${product.name}" thành công`, { id: "toggleStatus" });
-      fetchProducts();
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Đã ${action} sản phẩm "${product.name}" thành công`, { id: toastId });
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái", { id: toastId });
+      }
     } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái", { id: "toggleStatus" });
+      console.error("Error toggling product status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
     }
-  }, [fetchProducts, products, router]);
+  }, [products, fetchProducts, router]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    toast.loading(`Đang tải trang ${page}...`, { id: "pagination" });
+    toast.loading(`Đang tải trang ${page}...`);
   }, []);
 
   return (
@@ -370,7 +483,7 @@ export default function ProductListPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 backdrop-blur-sm bg-opacity-95">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
             <ProductSearch
-              searchQuery={searchParams.keyword}
+              searchQuery={searchParams.search}
               onSearchChange={handleSearchChange}
               onSubmit={handleSearchSubmit}
             />
@@ -405,6 +518,7 @@ export default function ProductListPage() {
               onEdit={handleEditProduct}
               onDelete={handleDeleteProduct}
               onToggleStatus={handleToggleStatus}
+              categories={categories}
             />
             <ProductPagination
               currentPage={currentPage}

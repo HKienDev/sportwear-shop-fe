@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
-import { Product, ProductFormData } from "@/types/product";
+import { ProductFormData, Category } from "@/types/product";
 import { fetchApi } from "@/utils/api";
 import BasicInfoForm from "@/components/admin/products/add/BasicInfoForm";
 import DetailInfoForm from "@/components/admin/products/add/DetailInfoForm";
@@ -15,11 +15,11 @@ import { TOKEN_CONFIG } from '@/config/token';
 export default function EditProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const sku = searchParams.get('sku');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [product, setProduct] = useState<Product | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
@@ -36,12 +36,29 @@ export default function EditProductPage() {
     isActive: true,
   });
 
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetchApi('/categories');
+        if (response.success) {
+          console.log('Categories fetched:', response.data);
+          setCategories(response.data.categories || []);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        toast.error('Không thể tải danh sách danh mục');
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   // Fetch product data
   useEffect(() => {
-    if (!id) {
-      setError('Không tìm thấy ID sản phẩm');
-      toast.error('Không tìm thấy ID sản phẩm');
-      router.push('/admin/products/list');
+    if (!sku) {
+      setError('Không tìm thấy SKU sản phẩm');
+      setLoading(false);
       return;
     }
 
@@ -49,7 +66,7 @@ export default function EditProductPage() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Lấy token từ localStorage
         const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         
@@ -60,25 +77,13 @@ export default function EditProductPage() {
           return;
         }
 
-        console.log('Fetching product with ID:', id);
-        const response = await fetchApi(`/products/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        console.log('API response:', response);
-        
+        const response = await fetchApi(`/products/${sku}`);
+
         if (!response.success) {
           throw new Error(response.message || 'Không thể tải thông tin sản phẩm');
         }
 
-        if (!response.data) {
-          throw new Error('Không tìm thấy thông tin sản phẩm');
-        }
-
-        const productData = response.data;
-        setProduct(productData);
+        const productData = response.data.product;
         
         // Chuyển đổi dữ liệu sản phẩm thành form data
         // Xử lý hình ảnh
@@ -104,17 +109,22 @@ export default function EditProductPage() {
         const salePrice = productData.salePrice || productData.discountPrice || originalPrice;
         
         // Xử lý danh mục
-        const categoryId = productData.category || productData.categoryId || "";
+        const categoryId = productData.categoryId || "";
+        console.log('Product categoryId:', categoryId);
         
-        console.log('Processed product data:', {
-          mainImage,
-          subImages,
-          sizes,
-          colors,
-          originalPrice,
-          salePrice,
-          categoryId
-        });
+        // Tìm danh mục tương ứng
+        const categoryResponse = await fetchApi('/categories');
+        if (categoryResponse.success) {
+          const allCategories = categoryResponse.data.categories || [];
+          console.log('All categories:', allCategories);
+          setCategories(allCategories);
+          
+          // Kiểm tra xem categoryId có tồn tại trong danh sách không
+          const categoryExists = allCategories.some((cat: Category) => cat._id === categoryId);
+          if (!categoryExists) {
+            console.warn(`Category with ID ${categoryId} not found in categories list`);
+          }
+        }
         
         setFormData({
           name: productData.name || "",
@@ -142,7 +152,7 @@ export default function EditProductPage() {
     };
 
     fetchProduct();
-  }, [id, router]);
+  }, [sku, router]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,6 +171,9 @@ export default function EditProductPage() {
         return;
       }
       
+      // Hiển thị toast đang cập nhật
+      toast.loading('Đang cập nhật thông tin sản phẩm...', { id: 'updateProduct' });
+      
       // Chuẩn bị dữ liệu sản phẩm
       const productData = {
         name: formData.name,
@@ -169,7 +182,7 @@ export default function EditProductPage() {
         originalPrice: formData.originalPrice,
         salePrice: formData.salePrice,
         stock: formData.stock,
-        category: formData.categoryId,
+        categoryId: formData.categoryId,
         mainImage: formData.mainImage,
         subImages: formData.subImages,
         colors: formData.colors,
@@ -178,9 +191,32 @@ export default function EditProductPage() {
         isActive: formData.isActive
       };
       
-      console.log('Updating product with data:', productData);
+      // Kiểm tra xem categoryId có tồn tại không
+      if (!productData.categoryId) {
+        toast.error('Vui lòng chọn danh mục sản phẩm', { id: 'updateProduct' });
+        setSaving(false);
+        return;
+      }
       
-      const response = await fetchApi(`/products/${id}`, {
+      // Kiểm tra xem categoryId có tồn tại trong danh sách categories không
+      const categoryExists = categories.some(cat => cat._id === productData.categoryId);
+      if (!categoryExists) {
+        console.error('Category not found in categories list:', productData.categoryId);
+        console.log('Available categories:', categories.map(cat => ({ id: cat._id, name: cat.name })));
+        toast.error('Danh mục không tồn tại trong hệ thống', { id: 'updateProduct' });
+        setSaving(false);
+        return;
+      }
+      
+      // Lấy thông tin danh mục để gửi lên API
+      const selectedCategory = categories.find(cat => cat._id === productData.categoryId);
+      if (selectedCategory) {
+        console.log('Selected category:', selectedCategory);
+        // Gửi categoryId dưới dạng categoryId của danh mục thay vì _id
+        productData.categoryId = selectedCategory.categoryId;
+      }
+      
+      const response = await fetchApi(`/products/${sku}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -193,20 +229,19 @@ export default function EditProductPage() {
         throw new Error(response.message || 'Không thể cập nhật sản phẩm');
       }
       
-      toast.success('Cập nhật sản phẩm thành công');
+      toast.success('Cập nhật sản phẩm thành công', { id: 'updateProduct' });
       router.push('/admin/products/list');
     } catch (err) {
       console.error('Error updating product:', err);
       const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      toast.error(errorMessage, { id: 'updateProduct' });
     } finally {
       setSaving(false);
     }
   };
 
   // Handle form field changes
-  const handleFieldChange = (field: keyof ProductFormData, value: any) => {
+  const handleFieldChange = (field: keyof ProductFormData, value: ProductFormData[keyof ProductFormData]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -276,7 +311,6 @@ export default function EditProductPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Left column - Basic Info & Detail Info */}
             <div className="lg:col-span-2 space-y-4">
               <BasicInfoForm 
                 formData={formData}
@@ -286,6 +320,7 @@ export default function EditProductPage() {
               <DetailInfoForm 
                 formData={formData}
                 onFieldChange={handleFieldChange}
+                categories={categories}
               />
               
               <SizeColorForm 
