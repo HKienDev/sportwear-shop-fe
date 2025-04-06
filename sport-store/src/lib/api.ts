@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { API_URL } from '@/config/constants';
 import type { 
     ApiResponse, 
@@ -28,22 +28,28 @@ import type {
     EmptyResponse
 } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
+import { TOKEN_CONFIG } from '@/config/token';
 
-// Khởi tạo apiClient với cấu hình mặc định
-export const apiClient = {
-    ...axios.create({
-        baseURL: API_URL,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        withCredentials: true,
-    }),
-    setAuthToken: (token: string | null) => {
-        if (token) {
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        } else {
-            delete apiClient.defaults.headers.common['Authorization'];
-        }
+// Mở rộng kiểu AxiosInstance để thêm phương thức setAuthToken
+interface CustomAxiosInstance extends AxiosInstance {
+    setAuthToken: (token: string | null) => void;
+}
+
+// Khởi tạo axiosInstance với cấu hình mặc định
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    withCredentials: true,
+}) as CustomAxiosInstance;
+
+// Thêm phương thức setAuthToken vào axiosInstance
+axiosInstance.setAuthToken = (token: string | null) => {
+    if (token) {
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete axiosInstance.defaults.headers.common['Authorization'];
     }
 };
 
@@ -69,7 +75,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     }
 };
 
-// Tạo instance Axios
+// Tạo instance Axios khác nếu cần
 export const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
@@ -99,12 +105,9 @@ const canRefresh = () => {
     if (now - lastRefreshTime < REFRESH_COOLDOWN) {
         return false;
     }
-    if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
-        return false;
-    }
     lastRefreshTime = now;
     refreshAttempts++;
-    return true;
+    return refreshAttempts < MAX_REFRESH_ATTEMPTS;
 };
 
 const resetRefreshAttempts = () => {
@@ -235,7 +238,22 @@ api.interceptors.response.use(
 );
 
 // API methods
-const apiClientMethods = {
+const apiClient = {
+    // Thêm phương thức setAuthToken vào apiClient
+    setAuthToken: (token: string | null) => {
+        if (token) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+            delete api.defaults.headers.common['Authorization'];
+        }
+    },
+    
+    // Thêm các phương thức HTTP trực tiếp vào apiClient
+    get: (url: string, config?: AxiosRequestConfig) => api.get(url, config),
+    post: (url: string, data?: unknown, config?: AxiosRequestConfig) => api.post(url, data, config),
+    put: (url: string, data?: unknown, config?: AxiosRequestConfig) => api.put(url, data, config),
+    delete: (url: string, config?: AxiosRequestConfig) => api.delete(url, config),
+    
     // Auth
     auth: {
         login: async (email: string, password: string) => {
@@ -341,8 +359,36 @@ const apiClientMethods = {
         getById: (id: string): Promise<AxiosResponse<ApiResponse<Product>>> =>
             api.get(`/products/${id}`),
         
-        create: (data: CreateProductData): Promise<AxiosResponse<ApiResponse<Product>>> =>
-            api.post(`/products`, data),
+        create: (data: CreateProductData): Promise<AxiosResponse<ApiResponse<Product>>> => {
+            // Lấy token từ localStorage
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            
+            if (!token) {
+                console.error('No token found in localStorage for product creation');
+                throw new Error('No token found');
+            }
+            
+            console.log('Creating product with token:', token);
+            console.log('Product data being sent:', JSON.stringify(data, null, 2));
+            
+            return api.post(`/products`, data, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                console.log('Product creation response:', response);
+                return response;
+            }).catch(error => {
+                console.error('Product creation error:', error);
+                if (error.response) {
+                    console.error('Error response data:', error.response.data);
+                    console.error('Error response status:', error.response.status);
+                }
+                throw error;
+            });
+        },
         
         update: (id: string, data: UpdateProductData): Promise<AxiosResponse<ApiResponse<Product>>> =>
             api.put(`/products/${id}`, data),
@@ -422,4 +468,5 @@ const apiClientMethods = {
     }
 };
 
-export default apiClientMethods;
+// Export apiClient làm default export
+export default apiClient;

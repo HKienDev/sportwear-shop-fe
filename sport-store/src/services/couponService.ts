@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api';
+import apiClient from '@/lib/api';
 import { ApiResponse } from '@/types/api';
 import { Coupon } from '@/types/coupon';
 import axios from 'axios';
@@ -126,7 +126,7 @@ export const couponService = {
     },
 
     // Tạo mã giảm giá mới
-    createCoupon: async (data: CreateCouponData): Promise<ApiResponse<{ coupon: Coupon }>> => {
+    createCoupon: async (data: CreateCouponData): Promise<ApiResponse<Coupon>> => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -136,6 +136,9 @@ export const couponService = {
             apiClient.setAuthToken(token);
 
             const response = await apiClient.post('/coupons/admin', data);
+            console.log('API response in createCoupon:', response);
+            
+            // API trả về Coupon trực tiếp, không cần wrapper { coupon: Coupon }
             return response.data;
         } catch (error) {
             console.error('Create coupon error:', error);

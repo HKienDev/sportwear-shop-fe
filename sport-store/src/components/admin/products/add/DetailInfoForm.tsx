@@ -14,16 +14,28 @@ interface DetailInfoFormProps {
 export default function DetailInfoForm({ 
   formData, 
   onFieldChange,
-  categories
+  categories = []
 }: DetailInfoFormProps) {
   useEffect(() => {
+    console.log('DetailInfoForm - formData:', formData);
     console.log('DetailInfoForm - categories:', categories);
-  }, [categories]);
+    console.log('DetailInfoForm - current categoryId:', formData.categoryId);
+    if (Array.isArray(categories)) {
+      const foundCategory = categories.find(cat => cat._id === formData.categoryId);
+      console.log('DetailInfoForm - current category:', foundCategory);
+    }
+  }, [categories, formData]);
   
   const handleTagsChange = (value: string) => {
     const tags = value.split(',').map(tag => tag.trim()).filter(Boolean);
     onFieldChange('tags', tags);
   };
+
+  const currentCategory = Array.isArray(categories) ? categories.find(cat => cat._id === formData.categoryId) : null;
+  
+  console.log('Current category in DetailInfoForm:', currentCategory);
+  console.log('Categories in DetailInfoForm:', categories);
+  console.log('CategoryId in DetailInfoForm:', formData.categoryId);
 
   return (
     <div className="space-y-5">
@@ -33,16 +45,18 @@ export default function DetailInfoForm({
           THỂ LOẠI
         </Label>
         <Select 
-          value={formData.categoryId} 
+          value={formData.categoryId || ""}
           onValueChange={(value) => onFieldChange('categoryId', value)}
         >
           <SelectTrigger className="mt-1.5 w-full">
-            <SelectValue placeholder="Chọn danh mục" />
+            <SelectValue>
+              {currentCategory?.name || "Chọn danh mục"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {categories && categories.length > 0 ? (
+            {Array.isArray(categories) && categories.length > 0 ? (
               categories.map((category) => (
-                <SelectItem key={category._id} value={category.categoryId}>
+                <SelectItem key={category._id} value={category._id}>
                   {category.name}
                 </SelectItem>
               ))

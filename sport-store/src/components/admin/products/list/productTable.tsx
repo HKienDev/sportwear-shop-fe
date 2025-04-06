@@ -24,7 +24,7 @@ interface Product {
   originalPrice: number;
   salePrice: number;
   stock: number;
-  category: Category;
+  categoryId: string;
   brand: string;
   mainImage: string;
   subImages: string[];
@@ -50,8 +50,9 @@ interface ProductTableProps {
   selectedProducts: string[];
   onSelectProduct: (id: string) => void;
   onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (sku: string) => void;
   onToggleStatus: (id: string, isActive: boolean) => void;
+  categories: Category[];
 }
 
 export default function ProductTable({ 
@@ -60,8 +61,27 @@ export default function ProductTable({
   onSelectProduct,
   onEdit,
   onDelete,
-  onToggleStatus
+  onToggleStatus,
+  categories
 }: ProductTableProps) {
+  const getCategoryName = (categoryId: string) => {
+    if (!categories || !Array.isArray(categories)) return categoryId || "Chưa phân loại";
+    
+    console.log('Looking for category with ID:', categoryId);
+    console.log('Available categories:', categories.map(cat => ({ id: cat._id, categoryId: cat.categoryId, name: cat.name })));
+    
+    // Tìm danh mục theo categoryId
+    const category = categories.find(cat => cat.categoryId === categoryId);
+    
+    // Nếu không tìm thấy theo categoryId, thử tìm theo _id
+    if (!category) {
+      const categoryById = categories.find(cat => cat._id === categoryId);
+      return categoryById ? categoryById.name : categoryId || "Chưa phân loại";
+    }
+    
+    return category.name;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden relative">
       <div className="overflow-x-auto">
@@ -151,9 +171,11 @@ export default function ProductTable({
                   <td className="p-4">
                     <div className="flex flex-col">
                       <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
-                        {product.salePrice?.toLocaleString() || 0}₫
+                        {product.salePrice === 0 
+                          ? `${product.originalPrice?.toLocaleString() || 0}₫` 
+                          : `${product.salePrice?.toLocaleString() || 0}₫`}
                       </div>
-                      {product.salePrice < product.originalPrice && (
+                      {product.salePrice > 0 && product.salePrice < product.originalPrice && (
                         <div className="text-xs text-gray-500 line-through">
                           {product.originalPrice?.toLocaleString() || 0}₫
                         </div>
@@ -173,16 +195,16 @@ export default function ProductTable({
                   </td>
                   <td className="p-4">
                     <div className="text-sm text-gray-600 truncate">
-                      {product.category?.name || "Chưa phân loại"}
+                      {getCategoryName(product.categoryId)}
                     </div>
                   </td>
                   <td className="p-4">
                     <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      product.isActive
+                      product.isActive && product.originalPrice > 0
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}>
-                      {product.isActive ? "Đang bán" : "Ngừng bán"}
+                      {product.isActive && product.originalPrice > 0 ? "Đang bán" : "Ngừng bán"}
                     </div>
                   </td>
                   <td className="p-4">
@@ -208,7 +230,7 @@ export default function ProductTable({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           className="text-red-600 cursor-pointer"
-                          onClick={() => onDelete(product._id)}
+                          onClick={() => onDelete(product.sku)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Xóa</span>

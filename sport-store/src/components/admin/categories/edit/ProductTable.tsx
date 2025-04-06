@@ -91,7 +91,7 @@ export default function ProductTable({ categoryId }: ProductTableProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => router.push(`/admin/products/${product._id}`)}
+                    onClick={() => router.push(`/admin/products/${product.sku}`)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -99,7 +99,7 @@ export default function ProductTable({ categoryId }: ProductTableProps) {
                     variant="ghost"
                     size="icon"
                     onClick={() =>
-                      router.push(`/admin/products/edit/${product._id}`)
+                      router.push(`/admin/products/edit?sku=${product.sku}`)
                     }
                   >
                     <Edit className="h-4 w-4" />

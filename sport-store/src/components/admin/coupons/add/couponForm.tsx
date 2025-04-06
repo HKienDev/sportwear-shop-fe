@@ -27,7 +27,6 @@ import { toast } from "sonner";
 import { couponService } from "@/services/couponService";
 import { useAuth } from "@/context/authContext";
 import { TOKEN_CONFIG } from "@/config/token";
-import { apiClient } from "@/lib/api";
 import { formatDateForInput, parseDateFromInput } from "@/utils/dateUtils";
 
 const formSchema = z.object({
@@ -100,9 +99,6 @@ const CouponForm = () => {
       const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       
       if (accessToken) {
-        // Thiết lập token cho apiClient
-        apiClient.setAuthToken(accessToken);
-        
         // Kiểm tra trạng thái xác thực
         await checkAuthStatus();
       }
@@ -121,9 +117,6 @@ const CouponForm = () => {
         const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         
         if (accessToken) {
-          // Thiết lập token cho apiClient
-          apiClient.setAuthToken(accessToken);
-          
           // Kiểm tra trạng thái xác thực
           await checkAuthStatus();
           
@@ -134,7 +127,7 @@ const CouponForm = () => {
             return;
           }
         } else {
-          toast.error("Vui lòng đăng nhập để thực hiện thao tác này");
+          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
           router.push("/auth/login");
           return;
         }
@@ -142,7 +135,7 @@ const CouponForm = () => {
       
       // Format dates to ISO string
       const formattedData = {
-        type: data.type === "%" ? "percentage" : "fixed",
+        type: data.type === "%" ? "percentage" : "fixed" as "percentage" | "fixed",
         value: Number(data.value),
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
@@ -153,12 +146,15 @@ const CouponForm = () => {
 
       const response = await couponService.createCoupon(formattedData);
       
+      console.log('Coupon creation response:', response);
+      
       if (response.success && response.data) {
         toast.success("Tạo mã giảm giá thành công", {
-          description: `Mã: ${response.data.code}, Giá trị: ${response.data.value}${response.data.type === '%' ? '%' : ' VNĐ'}`
+          description: `Mã: ${response.data.code}, Giá trị: ${response.data.value}${response.data.type === 'percentage' ? '%' : ' VNĐ'}`
         });
         router.push("/admin/coupons/list");
       } else {
+        console.error('Invalid response structure:', response);
         toast.error(response.message || "Không thể tạo mã giảm giá");
       }
     } catch (error) {

@@ -114,9 +114,11 @@ export function useProducts(options: ProductQueryParams = {}) {
                 
                 // Chuyển đổi dữ liệu categories thành ProductCategory[]
                 const productCategories: ProductCategory[] = categoriesData.map((category: ApiCategory) => {
-                    // Kiểm tra xem category có categoryId không
+                    console.log('Processing category:', category);
+                    
+                    // Đảm bảo categoryId luôn có giá trị
                     const categoryId = category.categoryId || category._id;
-                    console.log('Category:', category, 'Using categoryId:', categoryId);
+                    console.log(`Category ${category.name} has categoryId: ${categoryId}`);
                     
                     return {
                         _id: category._id,
@@ -129,12 +131,6 @@ export function useProducts(options: ProductQueryParams = {}) {
                 
                 // Log để debug
                 console.log('Transformed categories:', productCategories);
-                
-                // Kiểm tra xem có category nào không có categoryId không
-                const categoriesWithoutCategoryId = productCategories.filter(category => !category.categoryId);
-                if (categoriesWithoutCategoryId.length > 0) {
-                    console.warn('Categories without categoryId:', categoriesWithoutCategoryId);
-                }
                 
                 setFormState(prev => ({ 
                     ...prev, 
@@ -239,67 +235,224 @@ export function useProducts(options: ProductQueryParams = {}) {
 
     // Handle form submission
     const handleSubmit = useCallback(async () => {
+        console.log('Starting handleSubmit function...');
+        
         if (!validateForm()) {
+            console.log('Form validation failed:', formState.errors);
+            toast.error('Vui lòng kiểm tra lại thông tin sản phẩm');
             return false;
         }
 
+        console.log('Form validation passed, setting isSubmitting to true');
         setFormState(prev => ({ ...prev, isSubmitting: true }));
 
         try {
+            // Kiểm tra xác thực
+            console.log('Checking authentication status:', isAuthenticated);
+            if (!isAuthenticated) {
+                // Kiểm tra token trong localStorage
+                const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+                
+                if (!token) {
+                    toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                    return false;
+                }
+            }
+
             // Tìm category đã chọn
+            console.log('Finding selected category with categoryId:', formState.data.categoryId);
+            console.log('Available categories:', formState.categories);
+            
+            // Tìm danh mục dựa trên categoryId hoặc _id
             const selectedCategory = formState.categories.find(
-                category => category.categoryId === formState.data.categoryId
+                category => category.categoryId === formState.data.categoryId || category._id === formState.data.categoryId
             );
 
             if (!selectedCategory) {
+                console.error('Selected category not found for ID:', formState.data.categoryId);
+                console.error('Available category IDs:', formState.categories.map(c => ({ 
+                    _id: c._id, 
+                    categoryId: c.categoryId, 
+                    name: c.name 
+                })));
                 toast.error('Không tìm thấy thông tin danh mục');
                 setFormState(prev => ({ ...prev, isSubmitting: false }));
                 return false;
             }
 
+            console.log('Selected category:', selectedCategory);
+
+            // Upload ảnh chính
+            let mainImageUrl = '';
+            if (formState.data.mainImage && typeof formState.data.mainImage !== 'string') {
+                const formData = new FormData();
+                formData.append('file', formState.data.mainImage);
+                
+                console.log('Uploading main image...');
+                try {
+                    const uploadResponse = await apiClient.upload.uploadFile(formState.data.mainImage);
+                    console.log('Main image upload response:', uploadResponse);
+                    
+                    if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
+                        throw new Error('Không thể upload ảnh chính');
+                    }
+                    mainImageUrl = uploadResponse.data.data.url;
+                    console.log('Main image URL:', mainImageUrl);
+                } catch (uploadError) {
+                    console.error('Error uploading main image:', uploadError);
+                    throw new Error('Không thể upload ảnh chính: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
+                }
+            } else if (typeof formState.data.mainImage === 'string') {
+                mainImageUrl = formState.data.mainImage;
+                console.log('Using existing main image URL:', mainImageUrl);
+            } else {
+                console.log('No main image provided');
+            }
+
+            // Upload ảnh phụ
+            const subImageUrls: string[] = [];
+            if (formState.data.subImages.length > 0) {
+                console.log('Uploading sub images, count:', formState.data.subImages.length);
+                for (const image of formState.data.subImages) {
+                    if (image && typeof image !== 'string') {
+                        console.log('Uploading sub image...');
+                        try {
+                            const uploadResponse = await apiClient.upload.uploadFile(image);
+                            console.log('Sub image upload response:', uploadResponse);
+                            
+                            if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
+                                throw new Error('Không thể upload ảnh phụ');
+                            }
+                            subImageUrls.push(uploadResponse.data.data.url);
+                            console.log('Sub image URL added:', uploadResponse.data.data.url);
+                        } catch (uploadError) {
+                            console.error('Error uploading sub image:', uploadError);
+                            throw new Error('Không thể upload ảnh phụ: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
+                        }
+                    } else if (typeof image === 'string') {
+                        subImageUrls.push(image);
+                        console.log('Using existing sub image URL:', image);
+                    }
+                }
+            } else {
+                console.log('No sub images to upload');
+            }
+
+            // Tạo slug từ tên sản phẩm
+            const slug = formState.data.name
+                .toLowerCase()
+                .replace(/[đĐ]/g, 'd')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            
+            console.log('Generated slug:', slug);
+
             // Chuyển đổi ProductFormData thành CreateProductData
             const createProductData: CreateProductData = {
                 name: formState.data.name,
-                slug: formState.data.name.toLowerCase().replace(/\s+/g, '-'),
+                slug: slug,
                 description: formState.data.description,
                 originalPrice: Number(formState.data.originalPrice),
                 salePrice: Number(formState.data.salePrice),
                 stock: Number(formState.data.stock),
                 categoryId: selectedCategory.categoryId,
                 brand: formState.data.brand,
-                mainImage: formState.data.mainImage || '',
-                subImages: formState.data.subImages || [],
+                mainImage: mainImageUrl,
+                subImages: subImageUrls,
                 colors: formState.data.colors || [],
                 sizes: formState.data.sizes || [],
                 tags: formState.data.tags || [],
-                isActive: formState.data.isActive
+                isActive: formState.data.isActive,
+                sku: `${selectedCategory.categoryId}-${Date.now()}`
             };
 
             console.log('Sending product data:', JSON.stringify(createProductData, null, 2));
+            console.log('Selected category:', selectedCategory);
+            console.log('Category ID being sent:', selectedCategory.categoryId);
 
-            const response = await apiClient.products.create(createProductData);
-            console.log('Create product response:', response);
-
-            if (response.data.success) {
-                toast.success('Thêm sản phẩm thành công');
-                // Reset form
-                resetForm();
-                // Refresh products list
-                fetchProducts(() => apiClient.products.getAll(optionsRef.current));
-                return true;
-            } else {
-                console.error('Failed to create product:', response.data);
-                toast.error(response.data.message || 'Có lỗi xảy ra khi thêm sản phẩm');
+            // Kiểm tra dữ liệu trước khi gửi
+            if (!createProductData.name || !createProductData.description || !createProductData.categoryId || !createProductData.mainImage) {
+                console.error('Missing required fields:', {
+                    name: !createProductData.name,
+                    description: !createProductData.description,
+                    categoryId: !createProductData.categoryId,
+                    mainImage: !createProductData.mainImage
+                });
+                toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
                 return false;
             }
-        } catch (error) {
+
+            // Lấy token từ localStorage
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            
+            if (!token) {
+                console.error('No token found in localStorage');
+                toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                setFormState(prev => ({ ...prev, isSubmitting: false }));
+                return false;
+            }
+
+            // Gửi request tạo sản phẩm
+            console.log('Creating product with token:', token);
+            try {
+                const response = await apiClient.products.create(createProductData);
+                console.log('Create product response:', response);
+
+                if (response.data.success) {
+                    console.log('Product created successfully');
+                    toast.success('Thêm sản phẩm thành công');
+                    // Reset form
+                    resetForm();
+                    // Refresh products list
+                    fetchProducts(() => apiClient.products.getAll(optionsRef.current));
+                    return true;
+                } else {
+                    console.error('Failed to create product:', {
+                        response: response.data,
+                        message: response.data.message,
+                        data: response.data.data
+                    });
+                    toast.error(response.data.message || 'Có lỗi xảy ra khi thêm sản phẩm');
+                    return false;
+                }
+            } catch (apiError: unknown) {
+                const error = apiError as { 
+                    response?: { 
+                        data?: { message?: string }, 
+                        status?: number 
+                    },
+                    message?: string 
+                };
+                
+                console.error('API error when creating product:', {
+                    error,
+                    response: error.response?.data,
+                    message: error.message,
+                    status: error.response?.status
+                });
+                
+                let errorMessage = 'Có lỗi xảy ra khi gọi API tạo sản phẩm';
+                
+                if (error.response?.data?.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                toast.error(errorMessage);
+                return false;
+            }
+        } catch (error: unknown) {
             console.error('Error creating product:', error);
-            toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+            const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi thêm sản phẩm';
+            toast.error(errorMessage);
             return false;
         } finally {
+            console.log('Setting isSubmitting to false');
             setFormState(prev => ({ ...prev, isSubmitting: false }));
         }
-    }, [formState, validateForm, fetchProducts, resetForm]);
+    }, [formState, validateForm, resetForm, fetchProducts, isAuthenticated]);
 
     // Get product by ID
     const getProductById = async (id: string) => {
@@ -324,6 +477,9 @@ export function useProducts(options: ProductQueryParams = {}) {
             }
 
             console.log('Creating product with data:', data);
+            
+            // Hiển thị toast đang tạo sản phẩm
+            toast.loading('Đang tạo sản phẩm...', { id: 'createProduct' });
 
             const response = await apiClient.products.create(data);
             console.log('Create product response:', response);
@@ -332,15 +488,15 @@ export function useProducts(options: ProductQueryParams = {}) {
                 throw new Error(response.data.message || ERROR_MESSAGES.PRODUCT_NOT_FOUND);
             }
 
-            toast.success(SUCCESS_MESSAGES.PRODUCT_CREATED);
+            toast.success(SUCCESS_MESSAGES.PRODUCT_CREATED, { id: 'createProduct' });
             await fetchProducts(() => apiClient.products.getAll(optionsRef.current));
             return response.data.data;
         } catch (error) {
             console.error('Failed to create product:', error);
             if (error instanceof Error) {
-                toast.error(error.message);
+                toast.error(error.message, { id: 'createProduct' });
             } else {
-                toast.error(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+                toast.error(ERROR_MESSAGES.PRODUCT_NOT_FOUND, { id: 'createProduct' });
             }
             throw error;
         }

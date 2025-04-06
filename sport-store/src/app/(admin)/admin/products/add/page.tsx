@@ -9,6 +9,7 @@ import SizeColorForm from "@/components/admin/products/add/SizeColorForm";
 import { Loader2, ArrowLeft, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { toast } from "react-hot-toast";
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -30,10 +31,23 @@ export default function AddProductPage() {
   };
 
   const handleProductSubmit = async () => {
-    const success = await handleSubmit();
-    if (success) {
-      // Chuyển hướng đến trang danh sách sản phẩm sau khi tạo thành công
-      router.push('/admin/products/list');
+    console.log('Submitting product form...');
+    console.log('Current form state:', formState);
+    
+    try {
+      const success = await handleSubmit();
+      console.log('Product submission result:', success);
+      
+      if (success) {
+        // Chuyển hướng đến trang danh sách sản phẩm sau khi tạo thành công
+        router.push('/admin/products/list');
+      } else {
+        // Hiển thị thông báo lỗi nếu không thành công
+        toast.error('Không thể tạo sản phẩm. Vui lòng kiểm tra lại thông tin và thử lại.');
+      }
+    } catch (error) {
+      console.error('Error in handleProductSubmit:', error);
+      toast.error('Đã xảy ra lỗi khi tạo sản phẩm: ' + (error instanceof Error ? error.message : 'Lỗi không xác định'));
     }
   };
 

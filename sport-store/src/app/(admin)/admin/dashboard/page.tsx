@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
 import Stats from "@/components/admin/dashboard/stats";
@@ -9,7 +9,6 @@ import RecentOrders from "@/components/admin/dashboard/recentOrders";
 import BestSellingProducts from "@/components/admin/dashboard/bestSellingProducts";
 import { getStats, getRevenue, getRecentOrders, getBestSellingProducts } from "@/services/dashboardService";
 import type { DashboardStatsResponse, RevenueResponse, RecentOrdersResponse, BestSellingProductsResponse } from "@/services/dashboardService";
-import Link from "next/link";
 import { TOKEN_CONFIG } from "@/config/token";
 
 export default function AdminDashboard() {
@@ -29,47 +28,7 @@ export default function AdminDashboard() {
     bestSellingProducts: null
   });
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      // Kiểm tra token
-      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      if (!token) {
-        console.log('🔑 Không có token, chuyển hướng về trang login');
-        await router.push("/auth/login");
-        return;
-      }
-
-      if (!authLoading && !user) {
-        console.log('👤 Không có user, chuyển hướng về trang login');
-        await router.push("/auth/login");
-        return;
-      }
-
-      if (user && user.role !== "admin") {
-        console.log('👤 User không phải admin, chuyển hướng về trang user');
-        await router.push("/user");
-        return;
-      }
-
-      if (user && user.role === "admin") {
-        console.log('👤 User là admin, bắt đầu fetch data');
-        await fetchDashboardData();
-      }
-    };
-
-    void checkAuth();
-
-    // Refresh data every 5 minutes
-    const interval = setInterval(() => {
-      if (user && user.role === "admin") {
-        void fetchDashboardData();
-      }
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [user, authLoading, router]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -120,7 +79,47 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Kiểm tra token
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      if (!token) {
+        console.log('🔑 Không có token, chuyển hướng về trang login');
+        await router.push("/auth/login");
+        return;
+      }
+
+      if (!authLoading && !user) {
+        console.log('👤 Không có user, chuyển hướng về trang login');
+        await router.push("/auth/login");
+        return;
+      }
+
+      if (user && user.role !== "admin") {
+        console.log('👤 User không phải admin, chuyển hướng về trang user');
+        await router.push("/user");
+        return;
+      }
+
+      if (user && user.role === "admin") {
+        console.log('👤 User là admin, bắt đầu fetch data');
+        await fetchDashboardData();
+      }
+    };
+
+    void checkAuth();
+
+    // Refresh data every 5 minutes
+    const interval = setInterval(() => {
+      if (user && user.role === "admin") {
+        void fetchDashboardData();
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user, authLoading, router, fetchDashboardData]);
 
   if (authLoading || isLoading) {
     return (
@@ -151,24 +150,40 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Stats stats={data.stats} />
+        <Stats data={data.stats} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Doanh thu</h2>
-          <RevenueChart data={data.revenue} />
+          <RevenueChart 
+            data={data.revenue?.data || []} 
+            lastUpdated={data.revenue?.lastUpdated || new Date().toISOString()}
+            months={data.revenue?.months || 6}
+          />
         </div>
         
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Sản phẩm bán chạy</h2>
-          <BestSellingProducts products={data.bestSellingProducts} />
+          <BestSellingProducts 
+            products={data.bestSellingProducts?.products || []} 
+            lastUpdated={data.bestSellingProducts?.lastUpdated || new Date().toISOString()}
+            days={data.bestSellingProducts?.days || 30}
+          />
         </div>
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-4">Đơn hàng gần đây</h2>
-        <RecentOrders orders={data.recentOrders} />
+        <RecentOrders 
+          orders={data.recentOrders?.orders || []} 
+          pagination={data.recentOrders?.pagination || {
+            currentPage: 1,
+            totalPages: 1,
+            totalOrders: 0,
+            hasMore: false
+          }}
+        />
       </div>
     </div>
   );

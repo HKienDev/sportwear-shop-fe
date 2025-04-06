@@ -13,8 +13,8 @@ export default function ProductVariants({ product }: ProductVariantsProps) {
       <div className="mb-6">
         <h3 className="text-lg font-medium mb-2">Màu sắc</h3>
         <div className="flex flex-wrap gap-2">
-          {product.color && product.color.length > 0 ? (
-            product.color.map((color, index) => (
+          {product.colors && product.colors.length > 0 ? (
+            product.colors.map((color, index) => (
               <div
                 key={index}
                 className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full"
@@ -36,8 +36,8 @@ export default function ProductVariants({ product }: ProductVariantsProps) {
       <div>
         <h3 className="text-lg font-medium mb-2">Kích thước</h3>
         <div className="flex flex-wrap gap-2">
-          {product.size && product.size.length > 0 ? (
-            product.size.map((size, index) => (
+          {product.sizes && product.sizes.length > 0 ? (
+            product.sizes.map((size, index) => (
               <span
                 key={index}
                 className="px-3 py-1 bg-gray-100 rounded-full text-sm"

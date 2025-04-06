@@ -8,6 +8,7 @@ export interface Product {
   salePrice: number;
   stock: number;
   category: string;
+  categoryId: string;
   isActive: boolean;
   mainImage: string;
   subImages: string[];
@@ -17,7 +18,6 @@ export interface Product {
   tags: string[];
   soldCount: number;
   viewCount: number;
-  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
