@@ -91,6 +91,9 @@ interface OrderItem {
   };
   quantity: number;
   price: number;
+  sku: string;
+  color?: string;
+  size?: string;
 }
 
 interface OrderTableItem {
@@ -106,6 +109,9 @@ interface OrderTableItem {
   };
   quantity: number;
   price: number;
+  sku: string;
+  color?: string;
+  size?: string;
 }
 
 interface OrderDetailsProps {
@@ -207,32 +213,38 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
   // Chuyển đổi items từ Order sang OrderTableItem cho OrderTable
   const orderTableItems: OrderTableItem[] = order.items.map((item) => ({
     product: {
-      _id: item.product._id,
-      name: item.product.name,
-      price: item.product.price,
+      _id: typeof item.product === 'string' ? item.product : item.product._id,
+      name: typeof item.product === 'string' ? '' : item.product.name,
+      price: typeof item.product === 'string' ? 0 : item.product.price,
       images: {
-        main: item.product.images[0] || "",
-        sub: item.product.images.slice(1) || []
+        main: typeof item.product === 'string' ? '' : (item.product.images?.[0] || ""),
+        sub: typeof item.product === 'string' ? [] : (item.product.images?.slice(1) || [])
       },
-      shortId: item.product._id.slice(-6)
+      shortId: typeof item.product === 'string' ? item.product.slice(-6) : item.product._id.slice(-6)
     },
     quantity: item.quantity,
-    price: item.price
+    price: item.price,
+    sku: item.sku,
+    color: item.color,
+    size: item.size
   }));
 
   // Chuyển đổi items từ Order sang OrderItem cho CancelOrder
   const cancelOrderItems: OrderItem[] = order.items.map(item => ({
     product: {
-      _id: item.product._id,
-      name: item.product.name,
-      price: item.product.price,
+      _id: typeof item.product === 'string' ? item.product : item.product._id,
+      name: typeof item.product === 'string' ? '' : item.product.name,
+      price: typeof item.product === 'string' ? 0 : item.product.price,
       images: {
-        main: item.product.images[0] || "",
-        sub: item.product.images.slice(1) || []
+        main: typeof item.product === 'string' ? '' : (item.product.images?.[0] || ""),
+        sub: typeof item.product === 'string' ? [] : (item.product.images?.slice(1) || [])
       }
     },
     quantity: item.quantity,
-    price: item.price
+    price: item.price,
+    sku: item.sku,
+    color: item.color,
+    size: item.size
   }));
 
   // Render nút hành động dựa trên trạng thái hiện tại

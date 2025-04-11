@@ -21,12 +21,6 @@ export default function OrderListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect if not authenticated or not admin
-  if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/admin/login');
-    return null;
-  }
-
   // Fetch orders
   const fetchOrders = useCallback(async () => {
     try {
@@ -39,7 +33,16 @@ export default function OrderListPage() {
       });
 
       const response = await fetch(`/api/orders/admin?${queryParams}`);
-      if (!response.ok) throw new Error("Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      
+      if (response.status === 401) {
+        router.push('/admin/login');
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      }
 
       const data = await response.json();
       
@@ -51,11 +54,13 @@ export default function OrderListPage() {
       setTotalPages(data.data.pagination.totalPages);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
-      toast.error("Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      setOrders([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, searchTerm, statusFilter, router]);
 
   useEffect(() => {
     fetchOrders();
@@ -95,6 +100,12 @@ export default function OrderListPage() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
+
+  // Redirect if not authenticated or not admin
+  if (!isAuthenticated || user?.role !== 'admin') {
+    router.push('/admin/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">

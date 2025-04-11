@@ -33,31 +33,33 @@ interface OrderActionsProps {
 
 interface OrderData {
   items: Array<{
-    product: string;
+    sku: string;
     quantity: number;
-    price: number;
-    size?: string;
     color?: string;
+    size?: string;
   }>;
-  totalPrice: number;
-  paymentMethod: "COD" | "Stripe";
-  phone: string;
-  shippingMethod: {
-    method: string;
-    expectedDate: string;
-    courier: string;
-    trackingId: string;
-    fee: number;
-  };
   shippingAddress: {
     fullName: string;
     phone: string;
-    address: string;
-    city: string;
-    district: string;
-    ward: string;
-    postalCode: string;
+    address: {
+      province: {
+        name: string;
+        code: string;
+      };
+      district: {
+        name: string;
+        code: string;
+      };
+      ward: {
+        name: string;
+        code: string;
+      };
+    };
   };
+  paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
+  shippingMethod: string;
+  couponCode?: string;
+  note?: string;
   userId?: string;
 }
 
@@ -114,29 +116,32 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
       // Tạo đơn hàng
       const orderData: OrderData = {
         items: cartItems.map(item => ({
-          product: item.productId,
+          sku: item.sku,
           quantity: item.quantity,
-          price: item.price,
+          color: item.color,
+          size: item.size
         })),
-        totalPrice: total,
-        paymentMethod: paymentMethod as "COD" | "Stripe",
-        phone: customer.phone,
-        shippingMethod: {
-          method: shippingMethod,
-          expectedDate: "3-5 ngày",
-          courier: "Giao hàng nhanh",
-          trackingId: `TK${Date.now()}`,
-          fee: shippingFee,
-        },
         shippingAddress: {
           fullName: customer.name,
           phone: customer.phone,
-          address: customer.address,
-          city: customer.province.name,
-          district: customer.district.name,
-          ward: customer.ward.name,
-          postalCode: "700000"
-        }
+          address: {
+            province: {
+              name: customer.province.name,
+              code: customer.province.code
+            },
+            district: {
+              name: customer.district.name,
+              code: customer.district.code
+            },
+            ward: {
+              name: customer.ward.name,
+              code: customer.ward.code
+            }
+          }
+        },
+        paymentMethod: paymentMethod as 'cash' | 'banking' | 'momo' | 'stripe',
+        shippingMethod: shippingMethod,
+        note: customer.note
       };
 
       // Thêm userId nếu tìm thấy user
