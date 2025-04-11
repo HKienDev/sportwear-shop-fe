@@ -58,10 +58,32 @@ export default function OrderHistoryPage() {
                   <p className="text-gray-500">
                     {new Date(order.createdAt).toLocaleString("vi-VN")}
                   </p>
+                  <p className="text-gray-600 mt-2">
+                    {order.shippingAddress.fullName} - {order.shippingAddress.phone}
+                  </p>
+                  <p className="text-gray-600">
+                    {order.shippingAddress.address.province.name}, {order.shippingAddress.address.district.name}, {order.shippingAddress.address.ward.name}
+                  </p>
+                  <p className="text-gray-600">
+                    Tổng tiền: {order.totalPrice.toLocaleString()} VNĐ
+                  </p>
+                  <p className="text-gray-600">
+                    Phương thức thanh toán: {order.paymentMethod}
+                  </p>
                 </div>
                 <div>
-                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    {order.status}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {order.status === 'pending' ? 'Chờ xác nhận' :
+                     order.status === 'processing' ? 'Đang xử lý' :
+                     order.status === 'shipped' ? 'Đang giao hàng' :
+                     order.status === 'delivered' ? 'Đã giao hàng' :
+                     'Đã hủy'}
                   </span>
                 </div>
               </div>

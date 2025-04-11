@@ -2,10 +2,13 @@ import type { User, Product } from "./base";
 
 export interface OrderItem {
   _id: string;
-  productId: string;
-  product: Product;
+  product: string | Product;
   quantity: number;
   price: number;
+  name: string;
+  sku: string;
+  color?: string;
+  size?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,20 +18,41 @@ export interface Order {
   shortId: string;
   userId?: string;
   user?: User;
-  phone: string;
   items: OrderItem[];
   total: number;
   totalPrice: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'cash' | 'banking' | 'momo';
+  paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
   shippingAddress: {
     fullName: string;
     phone: string;
-    address: string;
-    city: string;
-    district: string;
-    ward: string;
+    address: {
+      province: {
+        name: string;
+        code: string;
+      };
+      district: {
+        name: string;
+        code: string;
+      };
+      ward: {
+        name: string;
+        code: string;
+      };
+    };
+  };
+  shippingMethod: {
+    method: string;
+    expectedDate: string;
+    courier: string;
+    trackingId: string;
+  };
+  coupon?: {
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    discountAmount: number;
   };
   note?: string;
   createdAt: string;
@@ -59,25 +83,39 @@ export interface OrderSearchParams {
 
 export interface CreateOrderInput {
   items: {
-    productId: string;
+    sku: string;
     quantity: number;
+    color?: string;
+    size?: string;
   }[];
   shippingAddress: {
     fullName: string;
     phone: string;
-    address: string;
-    city: string;
-    district: string;
-    ward: string;
+    address: {
+      province: {
+        name: string;
+        code: string;
+      };
+      district: {
+        name: string;
+        code: string;
+      };
+      ward: {
+        name: string;
+        code: string;
+      };
+    };
   };
-  paymentMethod: 'cash' | 'banking' | 'momo';
+  paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
+  shippingMethod: string;
+  couponCode?: string;
   note?: string;
-  phone: string;
 }
 
 export interface UpdateOrderInput {
   status?: Order['status'];
   paymentStatus?: Order['paymentStatus'];
   shippingAddress?: Order['shippingAddress'];
+  shippingMethod?: Order['shippingMethod'];
   note?: string;
 } 

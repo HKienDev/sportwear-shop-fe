@@ -5,7 +5,7 @@ import { TOKEN_CONFIG } from '@/config/token';
 export async function GET(request: Request) {
   try {
     // Lấy access token từ cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const accessToken = cookieStore.get(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME)?.value;
 
     if (!accessToken) {
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     });
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin?${queryParams}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/orders/admin?${queryParams}`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal Server Error' },
+      { success: false, message: 'Internal server error' },
       { status: 500 }
     );
   }
