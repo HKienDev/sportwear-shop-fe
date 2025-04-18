@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isAuthenticatingRef.current = true;
             console.log("🔍 Checking auth status...");
             
-            // Kiểm tra token trong localStorage
+            // Kiểm tra token trong localStorage và cookies
             const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
 
@@ -130,6 +130,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             let response;
             while (retryCountRef.current < maxRetries) {
                 try {
+                    // Thêm token vào header
+                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                    
                     response = await api.get("/auth/check");
                     console.log("📥 Auth check response:", response);
                     break;
@@ -149,6 +152,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                                 localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
                                 localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
                                 
+                                // Set token mới vào cookie
+                                document.cookie = `token=${newAccessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
+                                document.cookie = `refreshToken=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
+                                
                                 // Cập nhật header
                                 api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
                                 
@@ -162,6 +169,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             }
                         } catch (refreshError) {
                             console.error("❌ Token refresh failed:", refreshError);
+                            // Nếu refresh token thất bại, xóa tất cả token
+                            localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                            localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                            
+                            // Xóa cookies
+                            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                            document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                            
+                            delete api.defaults.headers.common['Authorization'];
+                            setIsAuthenticated(false);
+                            setUser(null);
+                            return;
                         }
                     }
                     
@@ -198,7 +218,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(null);
                 localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
             }
-        } catch (error: unknown) {
+        } catch (error) {
             console.error("❌ Error in auth check:", error);
             setIsAuthenticated(false);
             setUser(null);
@@ -208,6 +228,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (error instanceof AxiosError && error.response?.status === 401) {
                 localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                 localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                
+                // Xóa cookies
+                document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                
                 delete api.defaults.headers.common['Authorization'];
             }
         } finally {
@@ -254,10 +279,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
 
-            // Cập nhật state
+            // Set token vào cookie với các options phù hợp
+            document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
+            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
+
+            // Cập nhật state và headers
             setUser(user);
             setIsAuthenticated(true);
             api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+            // Kiểm tra xác thực ngay sau khi đăng nhập
+            await checkAuthStatus();
 
             return { success: true, message: "Đăng nhập thành công" };
         } catch (error: unknown) {
@@ -305,9 +337,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const logout = async () => {
         try {
             await logoutService();
+            
+            // Xóa tokens từ localStorage
+            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+            localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+            
+            // Xóa tokens từ cookies
+            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+            document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+            
+            // Xóa Authorization header
+            delete api.defaults.headers.common['Authorization'];
+            
+            // Cập nhật state
             setUser(null);
             setIsAuthenticated(false);
             setLoading(false);
+            
             toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
             await handleRedirect(router, null, window.location.pathname);
         } catch (error) {

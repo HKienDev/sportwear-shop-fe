@@ -4,55 +4,36 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Heart } from "lucide-react";
-
-interface Product {
-  _id: string;
-  name: string;
-  category: {
-    _id: string;
-    name: string;
-    description?: string;
-    parentCategory?: string;
-    image?: string;
-    productCount: number;
-  };
-  price: number;
-  discountPrice?: number;
-  description: string;
-  images: {
-    main: string;
-    sub?: string[];
-  };
-  stock?: number;
-}
+import { Product } from "@/types/product";
 
 interface ProductCardProps {
   product: Product;
 }
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | undefined) => {
+  if (amount === undefined || amount === null) return "0đ";
   return amount.toLocaleString("vi-VN") + "đ";
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { _id, name, category, price, discountPrice, description, images, stock } = product;
+  const { _id, name, category, originalPrice, salePrice, description, mainImage, stock } = product;
 
-  // Lấy tên category trực tiếp từ object category
-  const categoryName = category?.name || "Không xác định";
+  // Lấy tên category
+  const categoryName = typeof category === 'object' ? category.name : "Không xác định";
 
   // Xử lý hình ảnh mặc định
-  const imageUrl = images?.main || "/default-image.png";
+  const imageUrl = mainImage || "/default-image.png";
 
   // Tính phần trăm giảm giá
-  const discountPercentage = discountPrice 
-    ? Math.round(((price - discountPrice) / price) * 100)
+  const discountPercentage = salePrice > 0 
+    ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
     : 0;
 
   return (
     <Link href={`/user/products/details/${_id}`} className="block">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 group h-[400px] flex flex-col relative">
         {/* Badge giảm giá */}
-        {discountPrice !== undefined && discountPrice > 0 && (
+        {salePrice > 0 && (
           <div className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
             -{discountPercentage}%
           </div>
@@ -104,18 +85,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Giá và nút mua */}
           <div className="flex justify-between items-center mt-auto">
             <div className="flex items-center">
-              {discountPrice !== undefined && discountPrice > 0 ? (
+              {salePrice > 0 ? (
                 <>
                   <span className="text-base font-bold text-red-500 mr-2">
-                    {formatCurrency(discountPrice)}
+                    {formatCurrency(salePrice)}
                   </span>
                   <span className="text-sm line-through text-gray-400">
-                    {formatCurrency(price)}
+                    {formatCurrency(originalPrice)}
                   </span>
                 </>
               ) : (
                 <span className="text-base font-bold text-gray-800">
-                  {formatCurrency(price)}
+                  {formatCurrency(originalPrice)}
                 </span>
               )}
             </div>

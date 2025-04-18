@@ -34,8 +34,8 @@ export default function EditCategoryPage({ params }: PageProps) {
       try {
         setLoading(true);
         const response = await categoryService.getCategoryById(id);
-        if (response.success) {
-          setCategory(response.data);
+        if (response.success && response.data.category) {
+          setCategory(response.data.category);
         } else {
           toast.error(response.message || "Không tìm thấy danh mục");
           router.push("/admin/categories");
@@ -56,9 +56,9 @@ export default function EditCategoryPage({ params }: PageProps) {
     try {
       setSaving(true);
       const response = await categoryService.updateCategory(id, formData);
-      if (response.success) {
+      if (response.success && response.data.category) {
         toast.success("Cập nhật danh mục thành công");
-        setCategory(response.data);
+        setCategory(response.data.category);
         setIsEditing(false);
       } else {
         throw new Error(response.message || "Có lỗi xảy ra");

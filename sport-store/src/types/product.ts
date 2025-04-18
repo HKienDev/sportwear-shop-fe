@@ -2,32 +2,40 @@ export interface Product {
   _id: string;
   name: string;
   slug: string;
-  description: string;
-  brand: string;
+  sku: string;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+  } | string;
   originalPrice: number;
   salePrice: number;
-  stock: number;
-  category: string;
-  categoryId: string;
-  isActive: boolean;
+  description: string;
   mainImage: string;
-  subImages: string[];
-  colors: string[];
-  sizes: string[];
-  sku: string;
-  tags: string[];
-  soldCount: number;
-  viewCount: number;
-  createdAt: string;
-  updatedAt: string;
-  updatedBy: string;
-  discountPercentage: number;
-  isOutOfStock: boolean;
-  isLowStock: boolean;
-  ratings: {
-    average: number;
-    count: number;
-  };
+  subImages?: string[];
+  stock: number;
+  brand: string;
+  colors?: string[];
+  sizes?: string[];
+  tags?: string[];
+  rating?: number;
+  numReviews?: number;
+  viewCount?: number;
+  soldCount?: number;
+  isActive: boolean;
+  reviews?: Review[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Review {
+  user: string;
+  name: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
 }
 
 export interface ProductQueryParams {

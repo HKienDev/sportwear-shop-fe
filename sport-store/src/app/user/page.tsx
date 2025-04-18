@@ -5,38 +5,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
 import Chat from "@/components/common/chat/userChat";
-import ProductCard from "@/components/user/productCard/page";
+import ProductCard from "@/components/user/products/productCard/page";
 import { useAuth } from "@/context/authContext";
-
-interface Product {
-  _id: string;
-  name: string;
-  category: {
-    _id: string;
-    name: string;
-    description?: string;
-    parentCategory?: string;
-    image?: string;
-    productCount: number;
-  };
-  price: number;
-  discountPrice?: number;
-  description: string;
-  images: {
-    main: string;
-    sub?: string[];
-  };
-  brand: string;
-  stock: number;
-  sku: string;
-  color: string[];
-  size: string[];
-  tags: string[];
-  ratings: {
-    average: number;
-    count: number;
-  };
-}
+import { Product } from "@/types/product";
+import productService from "@/services/productService";
 
 const HomePage = () => {
   const router = useRouter();
@@ -63,27 +35,15 @@ const HomePage = () => {
 
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/products");
-        const data = await response.json();
-
-        console.log("Products Response:", data);
-
-        if (!data.success) {
+        const response = await productService.getAllProducts();
+        if (!response.success) {
           throw new Error("Lỗi khi lấy dữ liệu");
         }
 
-        // Kiểm tra cấu trúc dữ liệu trả về
-        const productsData = data.products;
+        const productsData = response.data.products;
         console.log("Products Data:", productsData);
 
-        // Xử lý dữ liệu sản phẩm
-        let productsArray: Product[] = [];
-        if (Array.isArray(productsData)) {
-          productsArray = productsData as Product[];
-        }
-
-        console.log("Processed Products:", productsArray);
-        setProducts(productsArray);
+        setProducts(productsData);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
         setError("Đã xảy ra lỗi khi tải dữ liệu");
@@ -94,7 +54,7 @@ const HomePage = () => {
     };
 
     fetchData();
-  }, [router, checkAuthStatus]);
+  }, [router, checkAuthStatus, user, isAuthenticated]);
 
   if (loading) return <p className="text-center">Đang tải...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
