@@ -100,139 +100,102 @@ const REFRESH_COOLDOWN = 5000; // 5 giây
 const MAX_REFRESH_ATTEMPTS = 3; // Số lần thử refresh tối đa
 let refreshAttempts = 0;
 
+// Kiểm tra xem có thể refresh token không
 const canRefresh = () => {
     const now = Date.now();
     if (now - lastRefreshTime < REFRESH_COOLDOWN) {
         return false;
     }
-    lastRefreshTime = now;
-    refreshAttempts++;
-    return refreshAttempts < MAX_REFRESH_ATTEMPTS;
+    if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+        return false;
+    }
+    return true;
 };
 
+// Reset số lần thử refresh
 const resetRefreshAttempts = () => {
     refreshAttempts = 0;
+    lastRefreshTime = Date.now();
 };
 
-// Request interceptor
-api.interceptors.request.use(
-    (config) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log('Request:', {
-                url: config.url,
-                method: config.method,
-                headers: config.headers,
-                data: config.data
-            });
-        }
-        return config;
-    },
-    (error) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.error('Request Error:', error);
-        }
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor
+// Thêm interceptor để xử lý refresh token
 api.interceptors.response.use(
-    (response) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log('Response:', {
-                status: response.status,
-                data: response.data,
-                headers: response.headers
-            });
-        }
-        return response;
-    },
+    (response) => response,
     async (error: AxiosError) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.error('Response Error:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-        }
-
         const originalRequest = error.config;
-
-        if (!originalRequest) {
-            return Promise.reject(error);
-        }
-
-        // Xử lý lỗi mạng
-        if (!error.response) {
-            console.error('Network Error:', error.message);
-            return Promise.reject(error);
-        }
-
-        // Xử lý lỗi 401
-        if (error.response.status === 401) {
-            // Nếu đang refresh token, đưa request vào hàng đợi
+        
+        // Nếu lỗi 401 và chưa thử refresh
+        if (error.response?.status === 401 && !originalRequest?._retry) {
             if (isRefreshing) {
+                // Nếu đang refresh, thêm request vào queue
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
-                }).catch((err: unknown) => {
-                    failedQueue = [];
-                    isRefreshing = false;
-                    throw err instanceof Error ? err : new Error('Unknown error occurred');
                 });
             }
-
-            // Kiểm tra rate limit và số lần thử refresh
-            if (!canRefresh()) {
-                console.warn('Refresh token limit exceeded, redirecting to login...');
-                // Xóa cookies và localStorage
-                document.cookie.split(';').forEach(cookie => {
-                    const [name] = cookie.split('=');
-                    document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-                });
-                localStorage.removeItem('user');
-                window.location.replace('/auth/login');
-                throw new Error('Refresh token limit exceeded');
-            }
-
+            
+            originalRequest._retry = true;
             isRefreshing = true;
-
+            
             try {
-                const response = await api.post('/auth/refresh-token');
-                isRefreshing = false;
-                resetRefreshAttempts();
-
+                // Kiểm tra xem có thể refresh không
+                if (!canRefresh()) {
+                    throw new Error('Too many refresh attempts');
+                }
+                
+                refreshAttempts++;
+                
+                // Lấy refresh token từ localStorage
+                const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                if (!refreshToken) {
+                    throw new Error('No refresh token');
+                }
+                
+                // Gọi API refresh token
+                const response = await api.post('/auth/refresh-token', { refreshToken });
+                
                 if (response.data.success) {
-                    // Xử lý các request đang chờ
-                    failedQueue.forEach((prom) => {
-                        try {
-                            prom.resolve(api(originalRequest));
-                        } catch (err) {
-                            prom.reject(err instanceof Error ? err : new Error('Unknown error occurred'));
-                        }
-                    });
-                    failedQueue = [];
+                    const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+                    
+                    // Lưu token mới
+                    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+                    localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
+                    
+                    // Cập nhật header
+                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                    
+                    // Reset số lần thử
+                    resetRefreshAttempts();
+                    
+                    // Thử lại request ban đầu
                     return api(originalRequest);
                 }
             } catch (refreshError) {
-                isRefreshing = false;
-                failedQueue = [];
-                // Xóa cookies và localStorage khi refresh token thất bại
-                document.cookie.split(';').forEach(cookie => {
-                    const [name] = cookie.split('=');
-                    document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                console.error('Refresh token error:', refreshError);
+                
+                // Xóa token
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                
+                // Xóa cookies
+                document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
+                
+                // Xóa header
+                delete api.defaults.headers.common['Authorization'];
+                
+                // Reject tất cả request trong queue
+                failedQueue.forEach(({ reject }) => {
+                    reject(refreshError);
                 });
-                localStorage.removeItem('user');
-                window.location.replace('/auth/login');
+                failedQueue = [];
+                
                 throw refreshError;
+            } finally {
+                isRefreshing = false;
             }
         }
-
-        // Xử lý lỗi 429 (Too Many Requests)
-        if (error.response.status === 429) {
-            console.warn('Rate limit exceeded, please try again later');
-            throw new Error('Rate limit exceeded');
-        }
-
+        
         return Promise.reject(error);
     }
 );
@@ -328,7 +291,7 @@ const apiClient = {
         },
         check: async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                 if (!token) {
                     throw new Error('No token found');
                 }

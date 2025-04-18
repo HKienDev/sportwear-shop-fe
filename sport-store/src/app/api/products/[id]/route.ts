@@ -1,59 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TOKEN_CONFIG } from '@/config/token';
 
 export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
-    // Lấy token từ header Authorization
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    const token = authHeader.substring(7); // Loại bỏ 'Bearer ' prefix
-
-    // Lấy ID từ params
+    // Đảm bảo params.id được xử lý đúng cách
     const id = context.params.id;
+    
     if (!id) {
       return NextResponse.json(
-        { success: false, message: 'Product ID is required' },
+        { success: false, message: 'ID sản phẩm không hợp lệ' },
         { status: 400 }
       );
     }
+    
+    // Use SKU instead of ID for the API endpoint
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`;
+    const token = request.cookies.get('token')?.value;
+    
+    // Add timeout to prevent infinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    // Log request URL for debugging
-    console.log('Fetching product with ID:', id);
-    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
+    // Gửi token nếu có, nếu không thì gửi request không có token
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
-      {
+    // Thử gọi API không có token trước
+    let response = await fetch(apiUrl, {
+      signal: controller.signal
+    });
+
+    // Nếu lỗi 401 và có token, thử lại với token
+    if (response.status === 401 && token) {
+      response = await fetch(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-      }
-    );
+        signal: controller.signal
+      });
+    }
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Error response from backend:', errorData);
+      
       return NextResponse.json(
-        { success: false, message: errorData.message || 'Failed to fetch product' },
+        { 
+          success: false, 
+          message: errorData.message || 'Không thể tải thông tin sản phẩm' 
+        },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    
+    // Return the exact same format as the backend
+    return NextResponse.json({
+      success: true,
+      message: "Product retrieved successfully",
+      data: {
+        product: data.data.product
+      }
+    });
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : 'Failed to fetch product' },
+      { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Không thể tải thông tin sản phẩm' 
+      },
       { status: 500 }
     );
   }

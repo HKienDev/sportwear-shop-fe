@@ -35,7 +35,11 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
         const response = await couponService.getCouponById(id);
         
         if (response.success && response.data) {
-          setCoupon(response.data);
+          if ('coupon' in response.data) {
+            setCoupon(response.data.coupon);
+          } else {
+            setCoupon(response.data as Coupon);
+          }
         } else {
           toast.error(response.message || "Không thể tải thông tin mã giảm giá");
           router.push("/admin/coupons/list");
@@ -43,7 +47,6 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
       } catch (error) {
         console.error("Error fetching coupon:", error);
         
-        // Xử lý lỗi chi tiết hơn
         let errorMessage = "Đã xảy ra lỗi khi tải thông tin mã giảm giá";
         
         if (error instanceof Error) {
@@ -98,7 +101,11 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
       
       if (response.success && response.data) {
         toast.success("Tạm dừng mã giảm giá thành công");
-        setCoupon(response.data);
+        if ('coupon' in response.data) {
+          setCoupon(response.data.coupon);
+        } else {
+          setCoupon(response.data as Coupon);
+        }
       } else {
         toast.error(response.message || "Không thể tạm dừng mã giảm giá");
       }
@@ -119,7 +126,11 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
       
       if (response.success && response.data) {
         toast.success("Kích hoạt mã giảm giá thành công");
-        setCoupon(response.data);
+        if ('coupon' in response.data) {
+          setCoupon(response.data.coupon);
+        } else {
+          setCoupon(response.data as Coupon);
+        }
       } else {
         toast.error(response.message || "Không thể kích hoạt mã giảm giá");
       }
@@ -136,7 +147,6 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
     setIsEditing(false);
     toast.success("Cập nhật mã giảm giá thành công");
     
-    // Chuyển hướng về trang danh sách mã giảm giá
     router.push("/admin/coupons/list");
   };
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(req: Request) {
     try {
@@ -79,4 +80,33 @@ export async function POST(req: Request) {
             { status: 500 }
         );
     }
+}
+
+export async function GET() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API Error:', errorData);
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to fetch products' },
+        { status: response.status }
+      );
+    }
+
+    const products = await response.json();
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch products' },
+      { status: 500 }
+    );
+  }
 } 
