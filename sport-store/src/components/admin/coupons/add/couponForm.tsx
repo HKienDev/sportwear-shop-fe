@@ -60,16 +60,6 @@ const formSchema = z.object({
     message: "Phần trăm giảm giá không thể vượt quá 100%",
     path: ["value"],
   }
-).refine(
-  (data) => {
-    const startDate = parseDateFromInput(data.startDate);
-    const now = new Date();
-    return startDate >= now;
-  },
-  {
-    message: "Ngày bắt đầu phải lớn hơn hoặc bằng ngày hiện tại",
-    path: ["startDate"],
-  }
 );
 
 type FormValues = z.infer<typeof formSchema>;

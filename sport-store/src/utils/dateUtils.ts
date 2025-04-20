@@ -1,4 +1,4 @@
-import { format, formatDistanceToNow, parse } from "date-fns";
+import { format, parse } from "date-fns";
 import { vi } from "date-fns/locale";
 
 /**
@@ -8,8 +8,31 @@ import { vi } from "date-fns/locale";
  */
 export const formatDate = (date: string | Date) => {
   try {
-    return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: vi });
-  } catch {
+    let dateObj: Date;
+    
+    if (typeof date === "string") {
+      // Kiểm tra nếu chuỗi có định dạng "dd/MM/yyyy HH:mm:ss"
+      if (date.includes("/")) {
+        // Parse chuỗi theo định dạng Việt Nam
+        dateObj = parse(date, "dd/MM/yyyy HH:mm:ss", new Date(), { locale: vi });
+      } else {
+        // Nếu là ISO string
+        dateObj = new Date(date);
+      }
+      
+      // Kiểm tra nếu date không hợp lệ
+      if (isNaN(dateObj.getTime())) {
+        console.error("Invalid date string:", date);
+        return "Invalid date";
+      }
+    } else {
+      dateObj = date;
+    }
+    
+    // Format cho hiển thị
+    return format(dateObj, "dd/MM/yyyy HH:mm", { locale: vi });
+  } catch (error) {
+    console.error("Error formatting date:", error);
     return "Invalid date";
   }
 };
@@ -64,13 +87,19 @@ export const formatDateForInput = (date: string | Date) => {
     let dateObj: Date;
     
     if (typeof date === "string") {
-      // Kiểm tra nếu chuỗi có định dạng "HH:mm:ss dd/MM/yyyy"
+      // Kiểm tra nếu chuỗi có định dạng "dd/MM/yyyy HH:mm:ss"
       if (date.includes("/")) {
         // Parse chuỗi theo định dạng Việt Nam
-        dateObj = parse(date, "HH:mm:ss dd/MM/yyyy", new Date(), { locale: vi });
+        dateObj = parse(date, "dd/MM/yyyy HH:mm:ss", new Date(), { locale: vi });
       } else {
         // Nếu là ISO string
         dateObj = new Date(date);
+      }
+      
+      // Kiểm tra nếu date không hợp lệ
+      if (isNaN(dateObj.getTime())) {
+        console.error("Invalid date string:", date);
+        return "";
       }
     } else {
       dateObj = date;
@@ -79,6 +108,7 @@ export const formatDateForInput = (date: string | Date) => {
     // Format cho input datetime-local
     return format(dateObj, "yyyy-MM-dd'T'HH:mm");
   } catch (error) {
+    console.error("Error formatting date for input:", error);
     return "";
   }
 };
@@ -89,6 +119,7 @@ export const parseDateFromInput = (dateString: string) => {
     const date = new Date(dateString);
     return date;
   } catch (error) {
+    console.error("Error parsing date from input:", error);
     return new Date();
   }
 };
@@ -143,13 +174,19 @@ export const formatDateForAPI = (date: string | Date) => {
     let dateObj: Date;
     
     if (typeof date === "string") {
-      // Kiểm tra nếu chuỗi có định dạng "HH:mm:ss dd/MM/yyyy"
+      // Kiểm tra nếu chuỗi có định dạng "dd/MM/yyyy HH:mm:ss"
       if (date.includes("/")) {
         // Parse chuỗi theo định dạng Việt Nam
-        dateObj = parse(date, "HH:mm:ss dd/MM/yyyy", new Date(), { locale: vi });
+        dateObj = parse(date, "dd/MM/yyyy HH:mm:ss", new Date(), { locale: vi });
       } else {
         // Nếu là ISO string
         dateObj = new Date(date);
+      }
+      
+      // Kiểm tra nếu date không hợp lệ
+      if (isNaN(dateObj.getTime())) {
+        console.error("Invalid date string:", date);
+        return "";
       }
     } else {
       dateObj = date;
@@ -158,6 +195,7 @@ export const formatDateForAPI = (date: string | Date) => {
     // Format cho API response
     return format(dateObj, "HH:mm:ss dd/MM/yyyy", { locale: vi });
   } catch (error) {
+    console.error("Error formatting date for API:", error);
     return "";
   }
 }; 

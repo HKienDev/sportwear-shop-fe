@@ -7,7 +7,7 @@ import { Coupon } from "@/types/coupon";
 import { formatDate, getTimeRemaining } from "@/utils/dateUtils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Power, Trash2, Edit, Eye, Percent, DollarSign, Calendar, Clock } from "lucide-react";
+import { Power, Trash2, Eye, Percent, DollarSign, Calendar, Clock } from "lucide-react";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -311,15 +311,6 @@ const CouponTable: React.FC<CouponTableProps> = ({
                     >
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">Xem chi tiết</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
-                      className="h-8 w-8 hover:bg-muted"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Chỉnh sửa</span>
                     </Button>
                     {(isStatus(coupon.status, "Hoạt động") || isStatus(coupon.status, "Tạm Dừng")) && (
                       <Button
