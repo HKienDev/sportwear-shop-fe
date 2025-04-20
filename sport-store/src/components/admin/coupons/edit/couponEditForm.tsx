@@ -37,14 +37,18 @@ const formSchema = z.object({
   value: z.coerce.number().min(0, "Giá trị giảm giá không thể âm"),
   usageLimit: z.coerce.number().min(1, "Giới hạn sử dụng phải lớn hơn 0"),
   userLimit: z.coerce.number().min(1, "Giới hạn sử dụng trên mỗi user phải lớn hơn 0"),
-  startDate: z.string().min(1, "Vui lòng chọn ngày bắt đầu"),
-  endDate: z.string().min(1, "Vui lòng chọn ngày kết thúc"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   minimumPurchaseAmount: z.coerce.number().min(0, "Số tiền tối thiểu không thể âm").default(0),
 }).refine(
   (data) => {
-    const startDate = parseDateFromInput(data.startDate);
-    const endDate = parseDateFromInput(data.endDate);
-    return endDate > startDate;
+    // Chỉ kiểm tra nếu cả hai ngày đều được nhập
+    if (data.startDate && data.endDate) {
+      const startDate = parseDateFromInput(data.startDate);
+      const endDate = parseDateFromInput(data.endDate);
+      return endDate > startDate;
+    }
+    return true;
   },
   {
     message: "Ngày kết thúc phải lớn hơn ngày bắt đầu",
@@ -138,8 +142,9 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
         minimumPurchaseAmount: data.minimumPurchaseAmount,
-        startDate: parseDateFromInput(data.startDate).toISOString(),
-        endDate: parseDateFromInput(data.endDate).toISOString(),
+        // Chỉ cập nhật ngày nếu được nhập
+        ...(data.startDate && { startDate: parseDateFromInput(data.startDate).toISOString() }),
+        ...(data.endDate && { endDate: parseDateFromInput(data.endDate).toISOString() }),
       };
 
       console.log('Submitting form with data:', formattedData);

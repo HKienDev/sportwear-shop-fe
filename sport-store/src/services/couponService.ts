@@ -41,6 +41,21 @@ export interface BulkDeleteCouponsData {
     couponIds: string[];
 }
 
+export interface ApplyCouponData {
+    code: string;
+    amount: number;
+}
+
+export interface ValidateCouponData {
+    code: string;
+    amount: number;
+}
+
+export interface UseCouponData {
+    code: string;
+    orderId: string;
+}
+
 export const couponService = {
     // Lấy danh sách mã giảm giá
     getCoupons: async (params: CouponQueryParams = {}): Promise<ApiResponse<{ coupons: Coupon[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>> => {
@@ -342,6 +357,136 @@ export const couponService = {
             
             throw error;
         }
+    },
+
+    // Áp dụng coupon
+    applyCoupon: async (data: ApplyCouponData): Promise<ApiResponse<{ discount: number }>> => {
+        try {
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            if (!token) {
+                throw new Error('Vui lòng đăng nhập để tiếp tục');
+            }
+
+            apiClient.setAuthToken(token);
+
+            const response = await apiClient.post('/coupons/apply', data);
+            return response.data;
+        } catch (error) {
+            console.error('Apply coupon error:', error);
+            
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                } else if (error.response?.status === 400) {
+                    throw new Error(error.response.data.message || 'Mã giảm giá không hợp lệ');
+                } else if (error.response?.status === 404) {
+                    throw new Error('Không tìm thấy mã giảm giá');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Lỗi server khi áp dụng mã giảm giá');
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                }
+            }
+            
+            throw error;
+        }
+    },
+
+    // Lấy coupon theo mã
+    getCouponByCode: async (code: string): Promise<ApiResponse<Coupon>> => {
+        try {
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            if (!token) {
+                throw new Error('Vui lòng đăng nhập để tiếp tục');
+            }
+
+            apiClient.setAuthToken(token);
+
+            const response = await apiClient.get(`/coupons/code/${code}`);
+            return response.data;
+        } catch (error) {
+            console.error('Get coupon by code error:', error);
+            
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                } else if (error.response?.status === 404) {
+                    throw new Error('Không tìm thấy mã giảm giá');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Lỗi server khi lấy thông tin mã giảm giá');
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                }
+            }
+            
+            throw error;
+        }
+    },
+
+    // Kiểm tra mã coupon
+    validateCoupon: async (data: ValidateCouponData): Promise<ApiResponse<{ isValid: boolean; message: string }>> => {
+        try {
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            if (!token) {
+                throw new Error('Vui lòng đăng nhập để tiếp tục');
+            }
+
+            apiClient.setAuthToken(token);
+
+            const response = await apiClient.post('/coupons/validate', data);
+            return response.data;
+        } catch (error) {
+            console.error('Validate coupon error:', error);
+            
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                } else if (error.response?.status === 400) {
+                    throw new Error(error.response.data.message || 'Mã giảm giá không hợp lệ');
+                } else if (error.response?.status === 404) {
+                    throw new Error('Không tìm thấy mã giảm giá');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Lỗi server khi kiểm tra mã giảm giá');
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                }
+            }
+            
+            throw error;
+        }
+    },
+
+    // Sử dụng coupon
+    useCoupon: async (data: UseCouponData): Promise<ApiResponse<null>> => {
+        try {
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            if (!token) {
+                throw new Error('Vui lòng đăng nhập để tiếp tục');
+            }
+
+            apiClient.setAuthToken(token);
+
+            const response = await apiClient.post('/coupons/use', data);
+            return response.data;
+        } catch (error) {
+            console.error('Use coupon error:', error);
+            
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+                } else if (error.response?.status === 400) {
+                    throw new Error(error.response.data.message || 'Không thể sử dụng mã giảm giá');
+                } else if (error.response?.status === 404) {
+                    throw new Error('Không tìm thấy mã giảm giá hoặc đơn hàng');
+                } else if (error.response?.status === 500) {
+                    throw new Error('Lỗi server khi sử dụng mã giảm giá');
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                }
+            }
+            
+            throw error;
+        }
     }
 };
 
@@ -354,5 +499,9 @@ export const {
     deleteCoupon,
     bulkDeleteCoupons,
     pauseCoupon,
-    activateCoupon
+    activateCoupon,
+    applyCoupon,
+    getCouponByCode,
+    validateCoupon,
+    useCoupon
 } = couponService; 
