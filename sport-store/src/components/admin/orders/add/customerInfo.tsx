@@ -148,8 +148,8 @@ export default function CustomerInfo() {
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">
         <Input
           label="TÊN NGƯỜI NHẬN" 
-          value={customer.name} 
-          onChange={(val) => updateCustomer("name", val)} 
+          value={customer.fullName} 
+          onChange={(val) => updateCustomer("fullName", val)} 
           placeholder="Nhập tên người nhận" 
         />
         
@@ -188,8 +188,8 @@ export default function CustomerInfo() {
 
         <Input 
           label="SỐ NHÀ, TÊN ĐƯỜNG" 
-          value={customer.address} 
-          onChange={(val) => updateCustomer("address", val)}
+          value={customer.street} 
+          onChange={(val) => updateCustomer("street", val)}
           placeholder="Nhập số nhà, tên đường" 
         />
       </div>

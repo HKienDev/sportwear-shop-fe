@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URL } from './constants';
+import { TOKEN_CONFIG } from './token';
 
 // Tạo instance axios
 const axiosInstance = axios.create({
@@ -17,14 +18,11 @@ const axiosInstance = axios.create({
 // Thêm interceptor để thêm token vào header
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Lấy token từ cookie
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('accessToken='))
-      ?.split('=')[1];
+    // Lấy token từ localStorage
+    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${token}`;
     }
 
     return config;

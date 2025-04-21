@@ -19,32 +19,70 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-let isRefreshing = false; // Biến cờ để kiểm soát việc làm mới token
-let failedRequestsQueue: Array<() => void> = []; // Hàng đợi các request thất bại do token hết hạn
+// Hàng đợi các request bị lỗi 401
+let failedRequestsQueue: (() => void)[] = [];
+let isRefreshing = false;
+
+// Timeout cho mỗi request (30 giây)
+const REQUEST_TIMEOUT = 30000;
+
+// Lấy token từ cookie
+function getTokenFromCookie(): string | null {
+  return document.cookie
+    .split('; ')
+    .find(row => row.startsWith(`${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=`))
+    ?.split('=')[1] || null;
+}
+
+// Lấy token từ localStorage
+function getTokenFromStorage(): string | null {
+  return localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+}
+
+// Cập nhật token vào cả cookie và localStorage
+function updateToken(token: string): void {
+  localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
+  document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${token}; path=/; max-age=86400; SameSite=Lax; Secure`;
+}
+
+// Xóa token khỏi cả cookie và localStorage
+function removeToken(): void {
+  localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+  document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
 
 async function refreshToken(): Promise<string | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+    const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+    if (!refreshToken) {
+      throw new Error("Không tìm thấy refresh token");
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
       method: "POST",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ refreshToken }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+      throw new Error(data.message || "Không thể làm mới token");
     }
 
-    const data = await response.json();
-    if (data.accessToken) {
-      return data.accessToken;
+    if (data.success && data.data?.accessToken) {
+      updateToken(data.data.accessToken);
+      return data.data.accessToken;
     }
+
+    throw new Error("Token không hợp lệ");
   } catch (error) {
-    console.error("Token refresh failed:", error);
+    console.error("Lỗi khi làm mới token:", error);
+    removeToken();
+    return null;
   }
-  return null;
 }
 
 export const fetchWithAuth = async <T = unknown>(
@@ -52,63 +90,120 @@ export const fetchWithAuth = async <T = unknown>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
   try {
-    // Lấy token từ localStorage
-    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-
+    // Kiểm tra token từ cookie trước
+    let token = getTokenFromCookie();
+    
+    // Nếu không có token trong cookie, kiểm tra localStorage
     if (!token) {
-      throw new Error("Vui lòng đăng nhập để tiếp tục");
+      token = getTokenFromStorage();
+      // Nếu có token trong localStorage, cập nhật vào cookie
+      if (token) {
+        updateToken(token);
+      } else {
+        throw new Error("Vui lòng đăng nhập để tiếp tục");
+      }
     }
 
-    // Tạo headers mặc định
-    const defaultHeaders = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
+    // Tạo AbortController cho timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-    // Merge headers mặc định với headers tùy chọn
+    // Thiết lập headers mặc định
     const headers = {
-      ...defaultHeaders,
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      [TOKEN_CONFIG.ACCESS_TOKEN.HEADER_KEY]: `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${token}`,
       ...options.headers,
     };
 
-    // Gọi API với token
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    // Thêm base URL vào endpoint
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    const fullUrl = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
+
+    // Gọi API với timeout
+    const response = await fetch(fullUrl, {
       ...options,
       headers,
-      credentials: "include",
+      signal: controller.signal,
+      credentials: 'include',
     });
 
-    // Đọc response body
-    const responseData = await response.json().catch(() => null);
+    clearTimeout(timeout);
 
-    // Xử lý các trường hợp lỗi
+    // Kiểm tra content-type
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error("Invalid content-type:", contentType, "for URL:", fullUrl);
+      throw new Error("Server trả về dữ liệu không hợp lệ");
+    }
+
+    let responseData: ApiResponse<T>;
+    try {
+      responseData = await response.json();
+    } catch (error) {
+      console.error("Lỗi khi parse JSON:", error);
+      throw new Error("Không thể đọc dữ liệu từ server");
+    }
+
+    // Xử lý lỗi 401 (Unauthorized)
     if (response.status === 401) {
       if (!isRefreshing) {
         isRefreshing = true;
+        try {
+          const newToken = await refreshToken();
+          if (!newToken) {
+            throw new Error("Phiên đăng nhập đã hết hạn");
+          }
 
-        // Thử refresh token
-        const newToken = await refreshToken();
-        if (!newToken) {
-          throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+          // Thêm token mới vào header
+          headers[TOKEN_CONFIG.ACCESS_TOKEN.HEADER_KEY] = `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${newToken}`;
+
+          // Thực hiện lại request với token mới
+          const retryResponse = await fetch(fullUrl, {
+            ...options,
+            headers,
+            credentials: 'include',
+          });
+
+          // Kiểm tra content-type của response retry
+          const retryContentType = retryResponse.headers.get("content-type");
+          if (!retryContentType || !retryContentType.includes("application/json")) {
+            console.error("Invalid content-type for retry:", retryContentType, "for URL:", fullUrl);
+            throw new Error("Server trả về dữ liệu không hợp lệ");
+          }
+
+          let retryData: ApiResponse<T>;
+          try {
+            retryData = await retryResponse.json();
+          } catch (error) {
+            console.error("Lỗi khi parse JSON từ retry:", error);
+            throw new Error("Không thể đọc dữ liệu từ server");
+          }
+
+          if (!retryResponse.ok) {
+            throw new Error(retryData.message || "Không thể kết nối đến server");
+          }
+
+          // Xử lý các request đang chờ
+          failedRequestsQueue.forEach((callback) => callback());
+          failedRequestsQueue = [];
+          isRefreshing = false;
+
+          return retryData;
+        } catch (error) {
+          isRefreshing = false;
+          if (error instanceof Error && error.message.includes("Phiên đăng nhập đã hết hạn")) {
+            window.dispatchEvent(new CustomEvent('logout'));
+          }
+          throw error;
         }
-
-        // Lưu token mới vào localStorage
-        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newToken);
-
-        // Cập nhật token cho các request trong hàng đợi
-        failedRequestsQueue.forEach((callback) => callback());
-        failedRequestsQueue = [];
-        isRefreshing = false;
-
-        // Gọi lại API với token mới
-        return fetchWithAuth<T>(endpoint, options);
       } else {
-        // Nếu đang làm mới token, thêm request vào hàng đợi
+        // Nếu đang refresh token, thêm request vào hàng đợi
         return new Promise((resolve, reject) => {
           failedRequestsQueue.push(async () => {
             try {
-              resolve(await fetchWithAuth<T>(endpoint, options));
+              const retryResponse = await fetchWithAuth<T>(endpoint, options);
+              resolve(retryResponse);
             } catch (error) {
               reject(error);
             }
@@ -124,11 +219,12 @@ export const fetchWithAuth = async <T = unknown>(
     return responseData;
   } catch (error) {
     if (error instanceof Error) {
-      // Nếu lỗi liên quan đến xác thực, dispatch event logout
-      if (error.message.includes("Phiên đăng nhập đã hết hạn")) {
+      // Xử lý các loại lỗi cụ thể
+      if (error.message.includes("Phiên đăng nhập đã hết hạn") || 
+          error.message.includes("Không tìm thấy refresh token")) {
         window.dispatchEvent(new CustomEvent('logout'));
       }
-      throw new Error(error.message);
+      throw error;
     }
     throw new Error("Có lỗi xảy ra khi gọi API");
   }

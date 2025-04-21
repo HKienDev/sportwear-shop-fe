@@ -8,9 +8,9 @@ export interface Location {
 }
 
 export interface CustomerInfo {
-  name: string;
+  fullName: string;
   phone: string;
-  address: string;
+  street: string;
   province: Location | null;
   district: Location | null;
   ward: Location | null;
@@ -21,13 +21,13 @@ type CustomerValue = string | Location | null;
 interface CustomerContextType {
   customer: CustomerInfo;
   updateCustomer: (field: keyof CustomerInfo, value: CustomerValue) => void;
-  resetCustomer: () => void; // Thêm hàm resetCustomer
+  resetCustomer: () => void;
 }
 
 const initialCustomerState: CustomerInfo = {
-  name: "",
+  fullName: "",
   phone: "",
-  address: "",
+  street: "",
   province: null,
   district: null,
   ward: null,
@@ -55,9 +55,8 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Hàm resetCustomer
   const resetCustomer = useCallback(() => {
-    setCustomer(initialCustomerState); // Reset về trạng thái ban đầu
+    setCustomer(initialCustomerState);
   }, []);
 
   return (

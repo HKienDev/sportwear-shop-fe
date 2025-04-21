@@ -1,29 +1,26 @@
 export const TOKEN_CONFIG = {
     ACCESS_TOKEN: {
-        COOKIE_NAME: 'accessToken',
-        STORAGE_KEY: 'token',
+        COOKIE_NAME: 'access_token',
+        STORAGE_KEY: 'access_token',
         HEADER_KEY: 'Authorization',
         PREFIX: 'Bearer',
         EXPIRY: 7 * 24 * 60 * 60, // 7 days in seconds
-    } as const,
-    
+    },
     REFRESH_TOKEN: {
-        COOKIE_NAME: 'refreshToken',
-        STORAGE_KEY: 'refreshToken',
+        COOKIE_NAME: 'refresh_token',
+        STORAGE_KEY: 'refresh_token',
         EXPIRY: 30 * 24 * 60 * 60, // 30 days in seconds
-    } as const,
-    
+    },
     USER: {
         COOKIE_NAME: 'user',
         STORAGE_KEY: 'user',
-    } as const,
-    
+    },
     COOKIE_OPTIONS: {
         PATH: '/',
         SECURE: process.env.NODE_ENV === 'production',
-        SAME_SITE: 'lax',
+        SAME_SITE: 'lax' as const,
         HTTP_ONLY: true,
-    } as const,
+    },
 } as const;
 
 export const getAuthHeader = (token: string): { Authorization: string } => ({

@@ -9,6 +9,7 @@ import Pagination from "@/components/admin/orders/list/pagination";
 import { getStatusColor } from "@/components/admin/orders/list/orderStatusBadge";
 import { Order } from "@/types/order";
 import { toast } from "react-hot-toast";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 export default function OrderListPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function OrderListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -32,26 +34,25 @@ export default function OrderListPage() {
         ...(statusFilter && { status: statusFilter }),
       });
 
-      const response = await fetch(`/api/orders/admin?${queryParams}`);
-      
-      if (response.status === 401) {
-        router.push('/admin/login');
-        return;
+      const response = await fetchWithAuth<{
+        orders: Order[];
+        pagination: {
+          totalPages: number;
+          currentPage: number;
+          totalItems: number;
+        };
+      }>(`/orders/admin?${queryParams}`);
+
+      if (!response.success) {
+        throw new Error(response.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      if (!response.data) {
+        throw new Error("Không nhận được dữ liệu từ server");
       }
 
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
-      }
-
-      setOrders(data.data.orders);
-      setTotalPages(data.data.pagination.totalPages);
+      setOrders(response.data.orders);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách đơn hàng");
@@ -60,11 +61,49 @@ export default function OrderListPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, searchTerm, statusFilter, router]);
+  }, [currentPage, searchTerm, statusFilter]);
+
+  // Delete orders
+  const handleDeleteOrders = useCallback(async () => {
+    if (selectedOrders.length === 0) {
+      toast.error("Vui lòng chọn đơn hàng cần xóa");
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedOrders.length} đơn hàng đã chọn?`)) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      const response = await fetchWithAuth<{ success: boolean; message: string }>("/orders/bulk-delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderIds: selectedOrders }),
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || "Có lỗi xảy ra khi xóa đơn hàng");
+      }
+
+      toast.success("Xóa đơn hàng thành công");
+      setSelectedOrders([]);
+      fetchOrders();
+    } catch (error) {
+      console.error("Lỗi khi xóa đơn hàng:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa đơn hàng");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [selectedOrders, fetchOrders]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (isAuthenticated && user?.role === 'admin') {
+      fetchOrders();
+    }
+  }, [fetchOrders, isAuthenticated, user?.role]);
 
   // Handlers
   const handleSearchChange = useCallback((value: string) => {
@@ -126,6 +165,39 @@ export default function OrderListPage() {
           onStatusFilterChange={handleStatusFilterChange}
           onAddOrder={handleAddOrder}
         />
+
+        {/* Bulk Actions */}
+        {selectedOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Đã chọn <span className="font-medium">{selectedOrders.length}</span> đơn hàng
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleDeleteOrders}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang xóa...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Xóa đã chọn
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         {isLoading ? (

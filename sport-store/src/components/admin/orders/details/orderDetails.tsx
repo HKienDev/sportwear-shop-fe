@@ -147,14 +147,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}/status`, {
+        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/${orderId}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ 
             status: newStatus,
-            updatedBy: order.user
+            note: `Cập nhật trạng thái đơn hàng từ ${currentStatus} sang ${newStatus}`
           }),
         });
 
@@ -181,14 +181,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${id}/status`, {
+        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/${id}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ 
             status: newStatus,
-            updatedBy: order.user
+            note: `Hủy đơn hàng từ trạng thái ${currentStatus}`
           }),
         });
 

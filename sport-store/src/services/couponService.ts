@@ -61,7 +61,7 @@ export const couponService = {
     getCoupons: async (params: CouponQueryParams = {}): Promise<ApiResponse<{ coupons: Coupon[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>> => {
         try {
             // Kiểm tra token
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             if (!token) {
                 throw new Error('Vui lòng đăng nhập để tiếp tục');
             }
@@ -110,7 +110,7 @@ export const couponService = {
     // Lấy thông tin mã giảm giá theo ID
     getCouponById: async (id: string): Promise<ApiResponse<Coupon>> => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             if (!token) {
                 throw new Error('Vui lòng đăng nhập để tiếp tục');
             }
@@ -143,7 +143,7 @@ export const couponService = {
     // Tạo mã giảm giá mới
     createCoupon: async (data: CreateCouponData): Promise<ApiResponse<Coupon>> => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             if (!token) {
                 throw new Error('Vui lòng đăng nhập để tiếp tục');
             }
