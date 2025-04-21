@@ -60,7 +60,7 @@ const OrderListTable = React.memo(
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">
                       {order.shippingAddress
-                        ? `${order.shippingAddress.address.province.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.ward.name}`
+                        ? `${order.shippingAddress.address.province.name}`
                         : "Không có dữ liệu"}
                     </div>
                   </td>
@@ -77,11 +77,17 @@ const OrderListTable = React.memo(
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)} text-white`}>
-                      {order.status === "pending" && "Chờ xác nhận"}
-                      {order.status === "processing" && "Đã xác nhận"}
-                      {order.status === "shipped" && "Đang vận chuyển"}
-                      {order.status === "delivered" && "Đã giao hàng"}
-                      {order.status === "cancelled" && "Đã hủy"}
+                      {(() => {
+                        switch(order.status) {
+                          case "pending": return "Chờ xác nhận";
+                          case "processing": return "Đã xác nhận";
+                          case "confirmed": return "Đã xác nhận";
+                          case "shipped": return "Đang vận chuyển";
+                          case "delivered": return "Đã giao hàng";
+                          case "cancelled": return "Đã hủy";
+                          default: return "Không xác định";
+                        }
+                      })()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

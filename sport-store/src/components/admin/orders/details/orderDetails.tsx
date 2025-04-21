@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import CancelOrder from "./cancelOrder";
 
 // Định nghĩa trạng thái đơn hàng
-export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
 // Mô tả chi tiết từng trạng thái
 export const orderStatusInfo = {
@@ -22,14 +22,14 @@ export const orderStatusInfo = {
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     icon: Clock,
-    nextStatus: "processing" as OrderStatus,
+    nextStatus: "confirmed" as OrderStatus,
     buttonText: "Xác Nhận Đơn Hàng",
     buttonColor: "bg-blue-500 hover:bg-blue-600",
     description: "Đơn hàng đang chờ xác nhận từ nhân viên bán hàng",
     date: "13/03/2025",
     time: "22:07"
   },
-  processing: {
+  confirmed: {
     color: "text-blue-500",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
@@ -121,13 +121,13 @@ interface OrderDetailsProps {
 }
 
 export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDetailsProps) {
-  const [currentStatus, setCurrentStatus] = useState<Order["status"]>(order.status);
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus>(order.status as OrderStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Hàm để lấy lại thông tin đơn hàng mới nhất
   const refreshOrderDetails = useCallback(async () => {
     try {
-      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}`);
+      const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${orderId}`);
       
       if (response.success && response.data?.status) {
         setCurrentStatus(response.data.status);
@@ -143,11 +143,11 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
   }, [refreshOrderDetails]);
 
   // Hàm xử lý cập nhật trạng thái đơn hàng
-  const handleUpdateStatus = (newStatus: Order["status"]) => {
+  const handleUpdateStatus = (newStatus: OrderStatus) => {
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/${orderId}/status`, {
+        const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${orderId}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -181,7 +181,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/${id}/status`, {
+        const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${id}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -196,9 +196,9 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           throw new Error(response.message || "Không thể cập nhật trạng thái đơn hàng");
         }
 
-        setCurrentStatus(newStatus as Order["status"]);
+        setCurrentStatus(newStatus as OrderStatus);
         toast.success("Cập nhật trạng thái đơn hàng thành công");
-        onStatusUpdate?.(id, newStatus as Order["status"]);
+        onStatusUpdate?.(id, newStatus as OrderStatus);
       } catch (error) {
         console.error("Lỗi cập nhật trạng thái:", error);
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái");
@@ -255,14 +255,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       case "pending":
         return (
           <Button
-            onClick={() => handleUpdateStatus("processing")}
+            onClick={() => handleUpdateStatus("confirmed")}
             disabled={isDisabled}
             className="bg-blue-500 hover:bg-blue-600"
           >
             {isDisabled ? "Đang xử lý..." : "Xác nhận đơn hàng"}
           </Button>
         );
-      case "processing":
+      case "confirmed":
         return (
           <Button
             onClick={() => handleUpdateStatus("shipped")}
@@ -291,7 +291,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         orderId={orderId}
-        customerId={order.user._id || "Không có dữ liệu"}
+        shortId={order.shortId}
+        customerId={order.user?._id || "Không có dữ liệu"}
         lastUpdated={new Date(order.createdAt).toLocaleString("vi-VN")}
         status={currentStatus}
         paymentStatus={order.status === "delivered" ? "Đã thanh toán" : "Chưa thanh toán"}
@@ -299,8 +300,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       <DeliveryTracking
         status={currentStatus}
         onChangeStatus={(status: string) => {
-          if (status === "pending" || status === "processing" || status === "shipped" || status === "delivered" || status === "cancelled") {
-            handleUpdateStatus(status as Order["status"]);
+          if (status === "pending" || status === "confirmed" || status === "shipped" || status === "delivered" || status === "cancelled") {
+            handleUpdateStatus(status as OrderStatus);
           }
         }}
         isLoading={isUpdating}
@@ -308,17 +309,15 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
       <div className="grid grid-cols-2 gap-6">
         <ShippingAddress
           name={order.shippingAddress?.fullName || "Không có dữ liệu"}
-          address={order.shippingAddress?.address || "Không có dữ liệu"}
+          address={`${order.shippingAddress?.address.ward.name}, ${order.shippingAddress?.address.district.name}, ${order.shippingAddress?.address.province.name}`}
           phone={order.shippingAddress?.phone || "Không có dữ liệu"}
-          city={order.shippingAddress?.city || "Không có dữ liệu"}
-          district={order.shippingAddress?.district || "Không có dữ liệu"}
-          ward={order.shippingAddress?.ward || "Không có dữ liệu"}
         />
         <ShippingMethod
           method={order.paymentMethod === "cash" ? "Thanh toán khi nhận hàng" : "Thanh toán online"}
           expectedDate="Dự kiến giao hàng: 15/03/2025 - 17/03/2025"
           courier="Viettel Post"
           trackingId={orderId}
+          shortId={order.shortId}
         />
       </div>
       <OrderTable
