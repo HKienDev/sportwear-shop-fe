@@ -1,322 +1,336 @@
-// app/thanh-toan/page.jsx
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import { Inter } from 'next/font/google';
+import { ShoppingBag, Truck, CreditCard, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 
-const inter = Inter({ subsets: ['latin'] });
+export default function Checkout() {
+  const [couponCode, setCouponCode] = useState('');
+  const [showCouponOptions, setShowCouponOptions] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState('standard');
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [expandedSection, setExpandedSection] = useState<string | null>('items');
 
-export default function CheckoutPage() {
-  // Trạng thái cho các lựa chọn
-  const [deliveryMethod, setDeliveryMethod] = useState('tiet-kiem');
-  const [paymentMethod, setPaymentMethod] = useState('khi-nhan-hang');
-  const [discountCode, setDiscountCode] = useState('');
-  const [showDiscountOptions, setShowDiscountOptions] = useState(false);
-  
-  // Dữ liệu sản phẩm
-  const products = [
-    {
-      id: 1,
-      name: 'Adidas Predator Freak FG',
-      image: '/shoes.png',
-      size: 'UK 36',
-      price: 1000000,
-      originalPrice: 1500000,
-    },
-    {
-      id: 2,
-      name: 'Adidas Predator Freak FG',
-      image: '/shoes.png',
-      size: 'UK 36',
-      price: 1000000,
-      originalPrice: 1500000,
-    },
-    {
-      id: 3,
-      name: 'Adidas Predator Freak FG',
-      image: '/shoes.png',
-      size: 'UK 36',
-      price: 2000000,
-      originalPrice: 1500000,
-    },
-    {
-      id: 4,
-      name: 'Adidas Predator Freak FG',
-      image: '/shoes.png',
-      size: 'UK 36',
-      price: 2000000,
-      originalPrice: 1500000,
-    },
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  const cartItems = [
+    { id: 1, name: 'Adidas Predator Freak FG', size: 'UK 36', color: 'green/black', price: 1000000, originalPrice: 1500000, image: '/products/predator-green.png' },
+    { id: 2, name: 'Adidas Predator Freak FG', size: 'UK 36', color: 'white/red', price: 1000000, originalPrice: 1500000, image: '/products/predator-white.png' },
+    { id: 3, name: 'Adidas Predator Freak FG', size: 'UK 36', color: 'blue/orange', price: 2000000, originalPrice: 2000000, image: '/products/predator-blue.png' },
+    { id: 4, name: 'Adidas Predator Freak FG', size: 'UK 36', color: 'green/white', price: 2000000, originalPrice: 2000000, image: '/products/predator-neon.png' },
   ];
-  
-  // Thông tin đơn hàng
-  const orderInfo = {
-    subtotal: 7000000,
-    shippingFee: 30000,
-    discount: 1000000,
-    promotions: 0,
-    total: 6030000,
-    savings: 1000000,
-  };
-  
-  // Thông tin người nhận
-  const recipientInfo = {
-    name: 'Hoàng Tiến Trung Kiên',
-    phone: '0362195258',
-    address: 'Số 94 (Cổng khác số 2006), Đường Phú Mỹ, Mỹ Đình 2, Nam Từ Liêm, Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội',
+
+  const popularCoupons = [
+    { code: 'WELCOME10', discount: '10%', description: 'Giảm 10% cho đơn hàng đầu tiên' },
+    { code: 'SPORT15', discount: '15%', description: 'Giảm 15% cho sản phẩm thể thao' },
+    { code: 'FREESHIP', discount: 'Miễn phí', description: 'Miễn phí vận chuyển' },
+  ];
+
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const shipping = deliveryMethod === 'standard' ? 30000 : 60000;
+  const discount = 1000000;
+  const total = subtotal + shipping - discount;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN').format(price) + ' ₫';
   };
 
-  // Định dạng tiền tệ
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount);
+  const handleSubmitCoupon = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Handle coupon validation
+    console.log('Applying coupon:', couponCode);
   };
 
   return (
-    <>
-        <div className={`${inter.className} max-w-screen-xl mx-auto px-4 py-8`}>
-        <h1 className="text-2xl font-bold mb-6">THANH TOÁN</h1>
+    <div className="bg-gray-50 min-h-screen">
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">THANH TOÁN</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Cột trái - Phương thức và sản phẩm */}
-            <div className="lg:col-span-2 space-y-6">
-            {/* Hình thức giao hàng */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">HÌNH THỨC GIAO HÀNG</h2>
-                
-                {/* Giao hàng tiết kiệm */}
-                <div className="mb-4">
-                <label className="flex items-center p-4 rounded-lg bg-blue-50 cursor-pointer">
-                    <input
-                    type="radio"
-                    name="deliveryMethod"
-                    checked={deliveryMethod === 'tiet-kiem'}
-                    onChange={() => setDeliveryMethod('tiet-kiem')}
-                    className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-2 flex items-center">
-                    <span className="inline-block mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                    </span>
-                    <span className="font-medium">GIAO HÀNG TIẾT KIỆM</span>
-                    </span>
-                </label>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Order Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Delivery Method */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div 
+                className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50"
+                onClick={() => toggleSection('delivery')}
+              >
+                <div className="flex items-center space-x-3">
+                  <Truck className="w-6 h-6 text-red-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">HÌNH THỨC GIAO HÀNG</h2>
                 </div>
-                
-                {/* Giao hàng hỏa tốc */}
-                <div>
-                <label className="flex items-center p-4 rounded-lg border border-gray-200 cursor-pointer">
-                    <input
-                    type="radio"
-                    name="deliveryMethod"
-                    checked={deliveryMethod === 'hoa-toc'}
-                    onChange={() => setDeliveryMethod('hoa-toc')}
-                    className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-2 flex items-center">
-                    <span className="inline-block mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                    </span>
-                    <span className="font-medium">GIAO HÀNG HỎA TỐC</span>
-                    </span>
-                </label>
-                </div>
-                
-                {/* Thông tin giao hàng */}
-                <div className="mt-6">
-                <div className="text-green-600 font-medium mb-2">
-                    Giao hàng vào lúc: Thứ 7, 18/01/2025
-                </div>
-                <div className="flex justify-between items-center">
-                    <div className="font-medium">GIAO HÀNG TIẾT KIỆM: 30.000 Vnđ</div>
-                    <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Được giao bởi Viettel Post
+                {expandedSection === 'delivery' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </div>
+              
+              {expandedSection === 'delivery' && (
+                <div className="p-6 border-t border-gray-200">
+                  <div className="space-y-4">
+                    <label className="flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        value="standard"
+                        checked={deliveryMethod === 'standard'}
+                        onChange={() => setDeliveryMethod('standard')}
+                        className="h-5 w-5 text-red-600"
+                      />
+                      <div className="ml-4 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-900">GIAO HÀNG TIẾT KIỆM</span>
+                          <span className="ml-auto text-gray-700">{formatPrice(30000)}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">Giao hàng trong 3-5 ngày làm việc</p>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        value="express"
+                        checked={deliveryMethod === 'express'}
+                        onChange={() => setDeliveryMethod('express')}
+                        className="h-5 w-5 text-red-600"
+                      />
+                      <div className="ml-4 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-900">GIAO HÀNG HỎA TỐC</span>
+                          <span className="ml-auto text-gray-700">{formatPrice(60000)}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">Giao hàng trong 24 giờ</p>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  <div className="mt-6 bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center">
+                      <Clock className="h-5 w-5 text-green-600" />
+                      <p className="ml-2 text-sm text-green-800">
+                        Giao hàng vào lúc: <span className="font-semibold">Thứ 7, 18/01/2025</span>
+                      </p>
                     </div>
-                </div>
-                </div>
-                
-                {/* Danh sách sản phẩm */}
-                <div className="mt-6 space-y-4">
-                {products.map(product => (
-                    <div key={product.id} className="flex items-start space-x-4 py-3 border-t border-gray-200">
-                    <div className="w-16 h-16 relative flex-shrink-0 border border-gray-200 rounded-md overflow-hidden">
-                        <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-contain"
-                        />
+                    <div className="mt-2 text-sm text-green-800">
+                      Được giao bởi Viettel Post
                     </div>
-                    <div className="flex-1">
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Items */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div 
+                className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50"
+                onClick={() => toggleSection('items')}
+              >
+                <div className="flex items-center space-x-3">
+                  <ShoppingBag className="w-6 h-6 text-red-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">CHI TIẾT ĐƠN HÀNG</h2>
+                </div>
+                {expandedSection === 'items' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </div>
+              
+              {expandedSection === 'items' && (
+                <div className="divide-y divide-gray-200">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="p-6 flex items-center">
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-100">
+                        <div className="h-full w-full bg-gray-200 rounded-md"></div>
+                      </div>
+                      <div className="ml-6 flex-1">
                         <div className="flex justify-between">
-                        <div>
-                            <h3 className="font-medium">{product.name}</h3>
-                            <p className="text-sm text-gray-500">Size: {product.size}</p>
+                          <h3 className="text-base font-medium text-gray-900">{item.name}</h3>
+                          <div className="text-right">
+                            <p className="text-base font-medium text-red-600">{formatPrice(item.price)}</p>
+                            {item.originalPrice > item.price && (
+                              <p className="text-sm text-gray-500 line-through">{formatPrice(item.originalPrice)}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                            <div className="text-red-500 font-medium">{formatCurrency(product.price)} Vnđ</div>
-                            <div className="text-sm text-gray-500 line-through">{formatCurrency(product.originalPrice)} Vnđ</div>
-                        </div>
-                        </div>
+                        <p className="mt-1 text-sm text-gray-500">Size: {item.size}</p>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Payment Method */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div 
+                className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50"
+                onClick={() => toggleSection('payment')}
+              >
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-6 h-6 text-red-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">PHƯƠNG THỨC THANH TOÁN</h2>
+                </div>
+                {expandedSection === 'payment' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </div>
+              
+              {expandedSection === 'payment' && (
+                <div className="p-6 space-y-4">
+                  <label className="flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={() => setPaymentMethod('cod')}
+                      className="h-5 w-5 text-red-600"
+                    />
+                    <div className="ml-4">
+                      <span className="font-medium text-gray-900">THANH TOÁN KHI NHẬN HÀNG</span>
                     </div>
-                ))}
-                </div>
-            </div>
-            
-            {/* Phương thức thanh toán */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">PHƯƠNG THỨC THANH TOÁN</h2>
-                
-                {/* Thanh toán khi nhận hàng */}
-                <div className="mb-4">
-                <label className="flex items-center p-4 rounded-lg bg-blue-50 cursor-pointer">
+                  </label>
+                  
+                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer">
                     <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === 'khi-nhan-hang'}
-                    onChange={() => setPaymentMethod('khi-nhan-hang')}
-                    className="w-5 h-5 text-blue-600"
+                      type="radio"
+                      name="paymentMethod"
+                      value="momo"
+                      checked={paymentMethod === 'momo'}
+                      onChange={() => setPaymentMethod('momo')}
+                      className="h-5 w-5 text-red-600"
                     />
-                    <span className="ml-2 flex items-center">
-                    <span className="inline-block mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </span>
-                    <span className="font-medium">THANH TOÁN KHI NHẬN HÀNG</span>
-                    </span>
-                </label>
-                </div>
-                
-                {/* MoMo */}
-                <div>
-                <label className="flex items-center p-4 rounded-lg border border-gray-200 cursor-pointer">
+                    <div className="ml-4 flex items-center">
+                      <span className="font-medium text-gray-900">MOMO</span>
+                      <div className="h-8 w-8 ml-2 bg-pink-600 rounded-md"></div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer">
                     <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === 'momo'}
-                    onChange={() => setPaymentMethod('momo')}
-                    className="w-5 h-5 text-blue-600"
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={paymentMethod === 'card'}
+                      onChange={() => setPaymentMethod('card')}
+                      className="h-5 w-5 text-red-600"
                     />
-                    <span className="ml-2 flex items-center">
-                    <span className="inline-block mr-2">
-                        <div className="w-6 h-6 bg-pink-600 rounded-md flex items-center justify-center text-white text-xs font-bold">MoMo</div>
-                    </span>
-                    <span className="font-medium">MOMO</span>
-                    </span>
-                </label>
+                    <div className="ml-4">
+                      <span className="font-medium text-gray-900">THẺ TÍN DỤNG/GHI NỢ</span>
+                    </div>
+                  </label>
                 </div>
+              )}
             </div>
-            </div>
-            
-            {/* Cột phải - Thông tin đơn hàng */}
-            <div className="lg:col-span-1 space-y-6">
-            {/* Thông tin giao tới */}
+          </div>
+
+          {/* Right Column - Summary */}
+          <div className="space-y-6">
+            {/* Delivery Information */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">GIAO TỚI</h2>
-                
-                <div className="border-b border-gray-200 pb-4 mb-4">
-                <div className="flex justify-between">
-                    <div className="font-medium">{recipientInfo.name}</div>
-                    <div>{recipientInfo.phone}</div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">GIAO TỚI</h2>
+              <div className="border-b border-gray-200 pb-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-base font-medium text-gray-900">Hoàng Tiến Trung Kiên</h3>
+                  <span className="text-gray-600">0362195258</span>
                 </div>
-                </div>
-                
-                <div className="flex items-start">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <p className="text-sm">{recipientInfo.address}</p>
-                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  Số 94 (Công khác số 2006), Đường Phú Mỹ, Mỹ Đình 2, Nam Từ Liêm,
+                  Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội
+                </p>
+              </div>
+              
+              <button className="mt-4 text-sm font-medium text-red-600 hover:text-red-700">
+                Thay đổi địa chỉ
+              </button>
             </div>
-            
-            {/* Mã giảm giá */}
+
+            {/* Coupon */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">MÃ GIẢM GIÁ</h2>
-                
-                <div className="space-y-3">
-                <div className="flex space-x-2">
-                    <input
-                    type="text"
-                    placeholder="Nhập mã giảm giá (Chỉ áp dụng 1 lần)"
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value)}
-                    />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
-                    ÁP DỤNG
-                    </button>
-                </div>
-                
-                <button 
-                    className="w-full flex items-center justify-between bg-red-500 text-white px-4 py-3 rounded-md"
-                    onClick={() => setShowDiscountOptions(!showDiscountOptions)}
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">MÃ GIẢM GIÁ</h2>
+              <form onSubmit={handleSubmitCoupon} className="flex">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Nhập mã giảm giá (Chỉ áp dụng 1 lần)"
+                  className="flex-1 min-w-0 border border-gray-300 rounded-l-md p-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-medium rounded-r-md hover:bg-red-700"
                 >
-                    <span>HOẶC CHỌN MÃ GIẢM GIÁ SẴN CÓ</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showDiscountOptions ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                  ÁP DỤNG
                 </button>
+              </form>
+              
+              <button 
+                className="mt-4 w-full py-3 bg-gray-100 rounded-md text-gray-800 font-medium flex items-center justify-center"
+                onClick={() => setShowCouponOptions(!showCouponOptions)}
+              >
+                <span>HOẶC CHỌN MÃ GIẢM GIÁ SẴN CÓ</span>
+                {showCouponOptions ? <ChevronUp className="ml-2 h-5 w-5" /> : <ChevronDown className="ml-2 h-5 w-5" />}
+              </button>
+              
+              {showCouponOptions && (
+                <div className="mt-4 space-y-3">
+                  {popularCoupons.map((coupon) => (
+                    <div 
+                      key={coupon.code}
+                      className="border border-gray-200 rounded-md p-3 hover:border-red-300 cursor-pointer"
+                      onClick={() => setCouponCode(coupon.code)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-900">{coupon.code}</span>
+                        <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
+                          {coupon.discount}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">{coupon.description}</p>
+                    </div>
+                  ))}
                 </div>
+              )}
             </div>
-            
-            {/* Đơn hàng */}
+
+            {/* Order Summary */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">ĐƠN HÀNG</h2>
-                
-                <div className="space-y-3">
-                <div className="flex justify-between">
-                    <span>Tổng tiền hàng</span>
-                    <span className="font-medium">{formatCurrency(orderInfo.subtotal)} Vnđ</span>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">ĐƠN HÀNG</h2>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tổng tiền hàng</span>
+                  <span className="font-medium">{formatPrice(subtotal)}</span>
                 </div>
                 
-                <div className="flex justify-between">
-                    <span>Tiền phí vận chuyển</span>
-                    <span>{formatCurrency(orderInfo.shippingFee)} Vnđ</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tiền phí vận chuyển</span>
+                  <span className="font-medium">{formatPrice(shipping)}</span>
                 </div>
                 
-                <div className="flex justify-between">
-                    <span>Giảm giá trực tiếp</span>
-                    <span className="text-green-500">-{formatCurrency(orderInfo.discount)} Vnđ</span>
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Giảm giá trực tiếp</span>
+                  <span className="font-medium">-{formatPrice(discount)}</span>
                 </div>
                 
-                <div className="flex justify-between">
-                    <span>Mã khuyến mại của cửa hàng</span>
-                    <span>{formatCurrency(orderInfo.promotions)} Vnđ</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Mã khuyến mại của cửa hàng</span>
+                  <span className="font-medium">{formatPrice(0)}</span>
                 </div>
                 
                 <div className="pt-3 border-t border-gray-200">
-                    <div className="flex justify-between mb-1">
-                    <span className="font-medium">Tổng tiền thanh toán</span>
-                    <span className="text-xl text-red-600 font-bold">{formatCurrency(orderInfo.total)}0 Vnđ</span>
+                  <div className="flex justify-between">
+                    <span className="text-base font-medium text-gray-900">Tổng tiền thanh toán</span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-red-600">{formatPrice(total)}</span>
+                      <p className="text-sm text-green-600 mt-1">Tiết kiệm {formatPrice(discount)}</p>
                     </div>
-                    
-                    <div className="text-right text-green-500 text-sm">
-                    Tiết kiệm {formatCurrency(orderInfo.savings)} Vnđ
-                    </div>
-                    
-                    <div className="text-right text-sm text-gray-500">
-                    (Đã bao gồm thuế VAT nếu có)
-                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">(Đã bao gồm thuế VAT nếu có)</p>
                 </div>
-                
-                <button className="w-full bg-black text-white font-medium py-3 rounded-md uppercase">
-                    Thanh toán
-                </button>
-                </div>
+              </div>
+              
+              <button className="mt-6 w-full py-4 bg-red-600 text-white font-bold rounded-md hover:bg-red-700 transition">
+                THANH TOÁN
+              </button>
             </div>
-            </div>
+          </div>
         </div>
-        </div>
-    </>
+      </main>
+    </div>
   );
 }
