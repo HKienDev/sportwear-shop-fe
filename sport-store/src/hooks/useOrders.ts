@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/useToast';
 import apiClient from '@/lib/api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
 import type { Order, OrderQueryParams } from '@/types/api';
@@ -13,6 +13,7 @@ export function useOrders(options: OrderQueryParams = {}) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { isAuthenticated, user } = useAuth();
+    const { toast } = useToast();
 
     const fetchOrders = useCallback(async () => {
         try {
@@ -27,11 +28,15 @@ export function useOrders(options: OrderQueryParams = {}) {
         } catch (error) {
             console.error('Error fetching orders:', error);
             setError(ERROR_MESSAGES.NETWORK_ERROR);
-            toast.error(ERROR_MESSAGES.NETWORK_ERROR);
+            toast({
+                title: "Lỗi",
+                description: ERROR_MESSAGES.NETWORK_ERROR,
+                variant: "destructive"
+            });
         } finally {
             setIsLoading(false);
         }
-    }, [options]);
+    }, [options, toast]);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -50,7 +55,11 @@ export function useOrders(options: OrderQueryParams = {}) {
             return response.data.data;
         } catch (error) {
             console.error('Failed to fetch order:', error);
-            toast.error(ERROR_MESSAGES.NETWORK_ERROR);
+            toast({
+                title: "Lỗi",
+                description: ERROR_MESSAGES.NETWORK_ERROR,
+                variant: "destructive"
+            });
             throw error;
         }
     };
@@ -76,11 +85,19 @@ export function useOrders(options: OrderQueryParams = {}) {
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
-            toast.success(SUCCESS_MESSAGES.ORDER_CREATED);
+            toast({
+                title: "Thành công",
+                description: SUCCESS_MESSAGES.ORDER_CREATED,
+                variant: "default"
+            });
             return response.data.data;
         } catch (error) {
             console.error('Failed to create order:', error);
-            toast.error(ERROR_MESSAGES.ORDER_CREATE_ERROR);
+            toast({
+                title: "Lỗi",
+                description: ERROR_MESSAGES.ORDER_CREATE_ERROR,
+                variant: "destructive"
+            });
             throw error;
         }
     };
@@ -96,11 +113,19 @@ export function useOrders(options: OrderQueryParams = {}) {
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
-            toast.success(SUCCESS_MESSAGES.ORDER_CANCELLED);
+            toast({
+                title: "Thành công",
+                description: SUCCESS_MESSAGES.ORDER_CANCELLED,
+                variant: "default"
+            });
             fetchOrders();
         } catch (error) {
             console.error('Failed to cancel order:', error);
-            toast.error(ERROR_MESSAGES.ORDER_CANCEL_ERROR);
+            toast({
+                title: "Lỗi",
+                description: ERROR_MESSAGES.ORDER_CANCEL_ERROR,
+                variant: "destructive"
+            });
             throw error;
         }
     };
@@ -118,6 +143,30 @@ export function useOrders(options: OrderQueryParams = {}) {
         }
     };
 
+    const updateOrder = async (id: string, data: UpdateOrderData) => {
+        try {
+            const response = await apiClient.orders.update(id, data);
+            if (!response.data.data) {
+                throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+            }
+            toast({
+                title: "Thành công",
+                description: SUCCESS_MESSAGES.ORDER_UPDATED,
+                variant: "default"
+            });
+            fetchOrders();
+            return response.data.data;
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast({
+                title: "Lỗi",
+                description: ERROR_MESSAGES.ORDER_UPDATE_ERROR,
+                variant: "destructive"
+            });
+            throw error;
+        }
+    };
+
     return {
         orders,
         total,
@@ -127,6 +176,7 @@ export function useOrders(options: OrderQueryParams = {}) {
         fetchOrdersByPhone,
         getOrderById,
         createOrder,
-        cancelOrder
+        cancelOrder,
+        updateOrder
     };
 } 

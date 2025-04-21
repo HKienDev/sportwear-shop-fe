@@ -65,38 +65,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const retryCountRef = useRef<number>(0);
     const maxRetries = 3;
 
-    // Khởi tạo state từ localStorage khi component mount
-    useEffect(() => {
-        const initializeAuth = async () => {
-            try {
-                const storedUser = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                
-                if (storedUser && accessToken) {
-                    const parsedUser = JSON.parse(storedUser);
-                    setUser(parsedUser);
-                    setIsAuthenticated(true);
-                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-                }
-                
-                // Kiểm tra xác thực
-                await checkAuthStatus();
-            } catch (error) {
-                console.error("Error initializing auth:", error);
-                // Nếu có lỗi khi khởi tạo, xóa tất cả dữ liệu auth
-                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
-                setUser(null);
-                setIsAuthenticated(false);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        initializeAuth();
-    }, []);
-
     const checkAuthStatus = useCallback(async () => {
         try {
             // Kiểm tra xem có đang xác thực không
@@ -148,13 +116,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             if (refreshResponse.data.success) {
                                 const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
                                 
-                                // Lưu cả 2 token mới
+                                // Cập nhật token mới
                                 localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
                                 localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
-                                
-                                // Set token mới vào cookie
-                                document.cookie = `token=${newAccessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
-                                document.cookie = `refreshToken=${newRefreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
+                                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
                                 
                                 // Cập nhật header
                                 api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
@@ -163,83 +128,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                                 setUser(userData);
                                 setIsAuthenticated(true);
                                 
-                                // Thử lại request ban đầu
-                                response = await api.get("/auth/check");
+                                // Reset retry count
+                                retryCountRef.current = 0;
                                 break;
                             }
                         } catch (refreshError) {
-                            console.error("❌ Token refresh failed:", refreshError);
-                            // Nếu refresh token thất bại, xóa tất cả token
-                            localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                            localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
-                            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                            
-                            // Xóa cookies
-                            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
-                            document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
-                            
-                            delete api.defaults.headers.common['Authorization'];
-                            setIsAuthenticated(false);
-                            setUser(null);
-                            return;
+                            console.error("❌ Error refreshing token:", refreshError);
+                            retryCountRef.current++;
                         }
+                    } else {
+                        retryCountRef.current++;
                     }
-                    
-                    retryCountRef.current++;
-                    if (retryCountRef.current === maxRetries) {
-                        throw error;
-                    }
-                    console.log(`🔄 Retrying auth check (${retryCountRef.current}/${maxRetries})...`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCountRef.current));
                 }
             }
 
-            if (response?.data.success) {
-                const userData = response.data.data;
-                
-                // Kiểm tra dữ liệu user có tồn tại
-                if (!userData) {
-                    console.log("❌ No user data in response");
-                    throw new Error("No user data");
-                }
-
-                // Cập nhật state
-                setUser(userData);
-                setIsAuthenticated(true);
-
-                // Lưu vào localStorage
-                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
-
-                // Reset retry count on success
-                retryCountRef.current = 0;
-            } else {
-                console.log("❌ Auth check failed");
+            // Nếu đã thử hết số lần retry mà vẫn thất bại
+            if (retryCountRef.current >= maxRetries) {
+                console.log("❌ Max retries reached, logging out");
                 setIsAuthenticated(false);
                 setUser(null);
                 localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-            }
-        } catch (error) {
-            console.error("❌ Error in auth check:", error);
-            setIsAuthenticated(false);
-            setUser(null);
-            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-
-            // Nếu lỗi 401, xóa token
-            if (error instanceof AxiosError && error.response?.status === 401) {
                 localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                 localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
-                
-                // Xóa cookies
-                document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
-                document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
-                
                 delete api.defaults.headers.common['Authorization'];
             }
+
+            // Cập nhật thời gian check cuối
+            lastCheckRef.current = Date.now();
         } finally {
             isAuthenticatingRef.current = false;
-            lastCheckRef.current = Date.now();
         }
     }, []);
+
+    // Khởi tạo state từ localStorage khi component mount
+    useEffect(() => {
+        const initializeAuth = async () => {
+            try {
+                const storedUser = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                
+                if (storedUser && accessToken) {
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(parsedUser);
+                    setIsAuthenticated(true);
+                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                }
+                
+                // Kiểm tra xác thực
+                await checkAuthStatus();
+            } catch (error) {
+                console.error("Error initializing auth:", error);
+                // Nếu có lỗi khi khởi tạo, xóa tất cả dữ liệu auth
+                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                setUser(null);
+                setIsAuthenticated(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeAuth();
+    }, [checkAuthStatus]);
 
     const login = async (email: string, password: string) => {
         try {
@@ -280,13 +231,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
 
             // Set token vào cookie với các options phù hợp
-            document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
-            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
+            document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
+            document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
+            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax; Secure`;
 
             // Cập nhật state và headers
             setUser(user);
             setIsAuthenticated(true);
-            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            api.defaults.headers.common['Authorization'] = `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${accessToken}`;
 
             // Kiểm tra xác thực ngay sau khi đăng nhập
             await checkAuthStatus();

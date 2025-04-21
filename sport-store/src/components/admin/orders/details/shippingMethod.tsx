@@ -7,6 +7,7 @@ interface ShippingMethodProps {
   expectedDate: string;
   courier: string;
   trackingId: string;
+  shortId: string;
   shippingMethod?: string;
 }
 
@@ -15,6 +16,7 @@ export default function ShippingMethod({
   expectedDate,
   courier,
   trackingId,
+  shortId,
   shippingMethod
 }: ShippingMethodProps) {
   return (
@@ -37,7 +39,7 @@ export default function ShippingMethod({
           <p className="text-gray-600">Đơn vị vận chuyển: {courier}</p>
         </div>
         <div>
-          <p className="text-gray-600">Mã vận đơn: {trackingId}</p>
+          <p className="text-gray-600">Mã vận đơn: {shortId}</p>
         </div>
       </div>
     </div>

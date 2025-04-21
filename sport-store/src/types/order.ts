@@ -21,7 +21,7 @@ export interface Order {
   items: OrderItem[];
   total: number;
   totalPrice: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed';
   paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
   shippingAddress: {

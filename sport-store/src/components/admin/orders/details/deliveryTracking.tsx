@@ -25,7 +25,7 @@ export default function DeliveryTracking({
     switch (status) {
       case "pending":
         return "Chờ xác nhận";
-      case "processing":
+      case "confirmed":
         return "Đơn hàng đã được xác nhận và đang chuẩn bị hàng";
       case "shipped":
         return "Đơn hàng đang được vận chuyển";
@@ -42,7 +42,7 @@ export default function DeliveryTracking({
     switch (status) {
       case "pending":
         return <Clock className="w-6 h-6" />;
-      case "processing":
+      case "confirmed":
         return <Package className="w-6 h-6" />;
       case "shipped":
         return <Truck className="w-6 h-6" />;
@@ -58,8 +58,8 @@ export default function DeliveryTracking({
   const getNextStatus = (currentStatus: string) => {
     switch (currentStatus) {
       case "pending":
-        return "processing";
-      case "processing":
+        return "confirmed";
+      case "confirmed":
         return "shipped";
       case "shipped":
         return "delivered";
@@ -68,7 +68,7 @@ export default function DeliveryTracking({
       case "cancelled":
         return null;
       default:
-        return "processing";
+        return "confirmed";
     }
   };
 
@@ -95,7 +95,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                ["pending", "processing", "shipped", "delivered", "cancelled"].includes(currentStatus)
+                ["pending", "confirmed", "shipped", "delivered", "cancelled"].includes(currentStatus)
                   ? "bg-blue-500"
                   : "bg-gray-300"
               }`}
@@ -108,7 +108,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                ["processing", "shipped", "delivered", "cancelled"].includes(currentStatus)
+                ["confirmed", "shipped", "delivered", "cancelled"].includes(currentStatus)
                   ? "bg-blue-500"
                   : "bg-gray-300"
               }`}

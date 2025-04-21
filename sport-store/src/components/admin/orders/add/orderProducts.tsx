@@ -4,6 +4,7 @@ import { useState, ChangeEvent } from "react";
 import { useCart } from "@/context/cartContext";
 import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import { usePaymentMethod } from "@/context/paymentMethodContext";
+import { usePromo } from "@/context/promoContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { CartItem } from "@/types/cart";
-import { TOKEN_CONFIG } from '@/config/token';
 import { toast } from "sonner";
-import axios from "axios";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 interface Product {
   _id: string;
@@ -49,18 +49,34 @@ interface Product {
   isLowStock: boolean;
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
 interface Coupon {
+  _id: string;
   code: string;
   type: string;
   value: number;
-  discountAmount: number;
   minimumPurchaseAmount: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  usageCount: number;
+  usageLimit: number;
+}
+
+interface CouponWithDiscount extends Coupon {
+  discountAmount: number;
 }
 
 export default function OrderProducts() {
   const { items: cartItems, addItem, removeItem } = useCart();
   const { paymentMethod, setPaymentMethod } = usePaymentMethod();
   const { shippingMethod, setShippingMethod } = useShippingMethod();
+  const { promoDetails, setPromoDetails } = usePromo();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -70,50 +86,33 @@ export default function OrderProducts() {
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [promoCode, setPromoCode] = useState("");
-  const [promoDetails, setPromoDetails] = useState<Coupon | null>(null);
 
   const fetchProduct = async (productId: string) => {
     try {
-      // Lấy token từ localStorage
-      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Tìm kiếm sản phẩm bằng SKU
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${productId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error("Không tìm thấy sản phẩm");
+      if (!productId) {
+        throw new Error('Vui lòng nhập mã sản phẩm');
       }
-      const data = await response.json();
-      console.log("API Response:", data);
+
+      console.log("🔍 [fetchProduct] Tìm sản phẩm với SKU:", productId);
+      const response = await fetchWithAuth<{ product: Product }>(`/products/${productId}`);
+      console.log("🔍 [fetchProduct] Kết quả:", response);
       
-      // Kiểm tra cấu trúc dữ liệu trả về
-      if (data.success === false) {
-        throw new Error(data.message || "Không tìm thấy sản phẩm");
+      if (!response.success || !response.data?.product) {
+        throw new Error(response.message || 'Không thể tìm thấy sản phẩm');
       }
-      
-      // Nếu dữ liệu trả về có cấu trúc khác
-      if (data.product) {
-        return data.product;
-      } else if (data.data && data.data.product) {
-        return data.data.product;
-      } else if (data.data) {
-        return data.data;
-      } else {
-        return data;
-      }
+
+      return response.data.product;
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin sản phẩm:", error);
-      throw error;
+      console.error('❌ [fetchProduct] Lỗi:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('Không thể tìm thấy sản phẩm');
     }
   };
 
   const handleProductIdChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const newProductId = e.target.value;
+    const newProductId = e.target.value.trim();
     setSearchTerm(newProductId);
     setSize("");
     setColor("");
@@ -124,16 +123,16 @@ export default function OrderProducts() {
 
     if (newProductId) {
       try {
-        const productData = await fetchProduct(newProductId);
-        console.log("Product Data:", productData);
-        setSelectedProduct(productData);
-        setAvailableSizes(productData.sizes || []);
-        setAvailableColors(productData.colors || []);
+        const product = await fetchProduct(newProductId);
+        setSelectedProduct(product);
+        setAvailableSizes(product.sizes);
+        setAvailableColors(product.colors);
+        setError("");
       } catch (error) {
-        console.error("Error in handleProductIdChange:", error);
-        const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy thông tin sản phẩm";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        setError(error instanceof Error ? error.message : 'Không thể tìm thấy sản phẩm');
+        setSelectedProduct(null);
+        setAvailableSizes([]);
+        setAvailableColors([]);
       }
     }
   };
@@ -158,6 +157,7 @@ export default function OrderProducts() {
 
     const cartItem: CartItem = {
       productId: product._id,
+      sku: product.sku,
       name: product.name,
       price: product.salePrice || product.originalPrice,
       quantity: quantity,
@@ -201,114 +201,59 @@ export default function OrderProducts() {
   const total = calculateTotal();
 
   const handleApplyPromoCode = async () => {
-    if (!promoCode.trim()) {
+    if (!promoCode) {
       toast.error("Vui lòng nhập mã giảm giá");
       return;
     }
 
     try {
-      // Tính tổng tiền sản phẩm (chưa bao gồm phí vận chuyển)
-      const productSubtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-      
-      if (productSubtotal === 0) {
-        toast.error("Vui lòng thêm sản phẩm vào giỏ hàng trước khi áp dụng mã giảm giá");
-        return;
+      const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+      const response = await fetchWithAuth<ApiResponse<Coupon>>(`/coupons/code/${promoCode}`);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Không thể áp dụng mã giảm giá");
       }
 
-      // Gọi API để kiểm tra mã giảm giá
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/coupons/code/${promoCode}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY)}`,
-          },
-        }
-      );
+      // Đảm bảo TypeScript hiểu rằng response.data là một Coupon
+      const couponData = response.data as unknown as Coupon;
 
-      if (response.data.success) {
-        const coupon = response.data.data;
-        
-        // Kiểm tra điều kiện áp dụng mã giảm giá
-        if (coupon.status !== "active") {
-          toast.error("Mã giảm giá không còn hoạt động");
-          return;
-        }
-
-        // Kiểm tra thời hạn sử dụng
-        const now = new Date();
-        const startDate = new Date(coupon.startDate);
-        const endDate = new Date(coupon.endDate);
-        
-        // Chuyển đổi ngày tháng sang định dạng Việt Nam (DD/MM/YYYY HH:mm)
-        const formatDateVN = (isoDate: Date) => {
-          const vnTime = new Date(isoDate.getTime() + 7 * 60 * 60 * 1000);
-          const day = vnTime.getUTCDate().toString().padStart(2, '0');
-          const month = (vnTime.getUTCMonth() + 1).toString().padStart(2, '0');
-          const year = vnTime.getUTCFullYear();
-          const hours = vnTime.getUTCHours().toString().padStart(2, '0');
-          const minutes = vnTime.getUTCMinutes().toString().padStart(2, '0');
-          return `${day}/${month}/${year} ${hours}:${minutes}`;
-        };
-        
-        if (now < startDate) {
-          toast.error(`Mã giảm giá sẽ có hiệu lực từ ${formatDateVN(startDate)}`);
-          return;
-        }
-        
-        if (now > endDate) {
-          toast.error(`Mã giảm giá đã hết hạn từ ${formatDateVN(endDate)}`);
-          return;
-        }
-
-        // Kiểm tra số lần sử dụng
-        if (coupon.usageCount >= coupon.usageLimit) {
-          toast.error("Mã giảm giá đã hết lượt sử dụng");
-          return;
-        }
-
-        // Kiểm tra giá trị đơn hàng tối thiểu (chỉ tính theo giá sản phẩm, chưa bao gồm phí vận chuyển)
-        if (productSubtotal < coupon.minimumPurchaseAmount) {
-          const remainingAmount = coupon.minimumPurchaseAmount - productSubtotal;
-          toast.error(
-            `Đơn hàng chưa đạt giá trị tối thiểu. Bạn cần mua thêm ${remainingAmount.toLocaleString('vi-VN')}đ để sử dụng mã giảm giá này (tối thiểu ${coupon.minimumPurchaseAmount.toLocaleString('vi-VN')}đ)`
-          );
-          return;
-        }
-
-        // Tính toán giá trị giảm giá (chỉ áp dụng cho giá sản phẩm, không áp dụng cho phí vận chuyển)
-        let discountAmount = 0;
-        if (coupon.type === "percentage") {
-          discountAmount = (productSubtotal * coupon.value) / 100;
-        } else if (coupon.type === "fixed") {
-          discountAmount = coupon.value;
-        }
-
-        // Cập nhật state với thông tin mã giảm giá
-        setPromoDetails({
-          code: coupon.code,
-          type: coupon.type,
-          value: coupon.value,
-          discountAmount,
-          minimumPurchaseAmount: coupon.minimumPurchaseAmount
-        });
-
-        toast.success(
-          `Áp dụng mã giảm giá thành công! ${coupon.type === 'percentage' ? `Giảm ${coupon.value}%` : `Giảm ${coupon.value.toLocaleString('vi-VN')}đ`}`
-        );
+      // Kiểm tra điều kiện áp dụng
+      if (subtotal < couponData.minimumPurchaseAmount) {
+        throw new Error(`Đơn hàng phải có giá trị tối thiểu ${couponData.minimumPurchaseAmount.toLocaleString('vi-VN')}đ để sử dụng mã này`);
       }
+
+      // Tính số tiền giảm giá
+      let discountAmount = 0;
+      if (couponData.type === 'percentage') {
+        discountAmount = (subtotal * couponData.value) / 100;
+      } else if (couponData.type === 'fixed') {
+        discountAmount = couponData.value;
+      }
+
+      // Cập nhật thông tin giảm giá
+      const couponWithDiscount: CouponWithDiscount = {
+        _id: couponData._id,
+        code: couponData.code,
+        type: couponData.type,
+        value: couponData.value,
+        minimumPurchaseAmount: couponData.minimumPurchaseAmount,
+        startDate: couponData.startDate,
+        endDate: couponData.endDate,
+        status: couponData.status,
+        usageCount: couponData.usageCount,
+        usageLimit: couponData.usageLimit,
+        discountAmount
+      };
+
+      setPromoDetails(couponWithDiscount);
+      toast.success("Áp dụng mã giảm giá thành công");
     } catch (error) {
-      console.error("Error applying promo code:", error);
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          toast.error("Mã giảm giá không tồn tại");
-        } else if (error.response?.status === 500) {
-          toast.error("Lỗi hệ thống, vui lòng thử lại sau");
-        } else {
-          const errorMessage = error.response?.data?.message || "Không thể áp dụng mã giảm giá";
-          toast.error(errorMessage);
-        }
+      console.error('❌ [handleApplyPromoCode] Lỗi:', error);
+      setPromoDetails(null);
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
-        toast.error("Không thể áp dụng mã giảm giá, vui lòng thử lại");
+        toast.error("Không thể áp dụng mã giảm giá");
       }
     }
   };
@@ -358,11 +303,15 @@ export default function OrderProducts() {
                   <SelectValue placeholder="Chọn kích thước" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableSizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
+                  {availableSizes && availableSizes.length > 0 ? (
+                    availableSizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-gray-500">Không có kích thước</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -373,11 +322,15 @@ export default function OrderProducts() {
                   <SelectValue placeholder="Chọn màu sắc" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableColors.map((color) => (
-                    <SelectItem key={color} value={color}>
-                      {color}
-                    </SelectItem>
-                  ))}
+                  {availableColors && availableColors.length > 0 ? (
+                    availableColors.map((color) => (
+                      <SelectItem key={color} value={color}>
+                        {color}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-gray-500">Không có màu sắc</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -496,13 +449,13 @@ export default function OrderProducts() {
                 Đã áp dụng mã giảm giá: {promoDetails.code}
               </p>
               <p className="text-sm text-green-600">
-                Giảm giá: {promoDetails.type === 'percentage' ? `${promoDetails.value}%` : `${promoDetails.value.toLocaleString()}đ`}
+                Giảm giá: {promoDetails?.type === 'percentage' ? `${promoDetails?.value}%` : `${promoDetails?.value?.toLocaleString()}đ`}
               </p>
               <p className="text-sm text-green-600">
-                Số tiền giảm: {promoDetails.discountAmount.toLocaleString()}đ
+                Số tiền giảm: {promoDetails?.discountAmount?.toLocaleString()}đ
               </p>
               <p className="text-sm text-green-600">
-                Giá trị đơn hàng tối thiểu: {promoDetails.minimumPurchaseAmount.toLocaleString()}đ
+                Giá trị đơn hàng tối thiểu: {promoDetails?.minimumPurchaseAmount?.toLocaleString()}đ
               </p>
             </div>
           )}
@@ -512,7 +465,7 @@ export default function OrderProducts() {
         <div className="bg-gray-50 p-4 rounded-lg space-y-2">
           <div className="flex justify-between text-sm">
             <span>Tạm tính:</span>
-            <span>{cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString("vi-VN")}đ</span>
+            <span>{cartItems && cartItems.length > 0 ? cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString("vi-VN") : "0"}đ</span>
           </div>
           <div className="flex justify-between text-sm">
             <span>Phí vận chuyển ({shippingMethod === ShippingMethod.EXPRESS ? "Nhanh" : shippingMethod === ShippingMethod.SAME_DAY ? "Trong ngày" : "Thường"}):</span>

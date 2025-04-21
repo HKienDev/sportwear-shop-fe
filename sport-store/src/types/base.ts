@@ -51,6 +51,12 @@ export enum PaymentMethod {
     MOMO = "momo"
 }
 
+export enum ShippingMethod {
+    STANDARD = "standard",
+    EXPRESS = "express",
+    SAME_DAY = "same_day"
+}
+
 export interface User {
     _id: string;
     customId?: string;
@@ -205,4 +211,52 @@ export interface CreateProductData {
 
 export interface UpdateProductData extends Partial<CreateProductData> {
     id: string;
+}
+
+export interface CustomerInfo {
+    name: string;
+    phone: string;
+    province: {
+        name: string;
+        code: string;
+    };
+    district: {
+        name: string;
+        code: string;
+    };
+    ward: {
+        name: string;
+        code: string;
+    };
+    note?: string;
+}
+
+export interface OrderData {
+    items: {
+        sku: string;
+        quantity: number;
+        color: string;
+        size: string;
+    }[];
+    shippingAddress: {
+        fullName: string;
+        phone: string;
+        address: {
+            province: {
+                name: string;
+                code: string;
+            };
+            district: {
+                name: string;
+                code: string;
+            };
+            ward: {
+                name: string;
+                code: string;
+            };
+        };
+    };
+    paymentMethod: PaymentMethod;
+    shippingMethod: ShippingMethod;
+    note?: string;
 } 

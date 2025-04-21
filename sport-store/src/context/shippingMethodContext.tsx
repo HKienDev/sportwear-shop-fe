@@ -3,9 +3,9 @@
 import { createContext, useState, useContext } from "react";
 
 export enum ShippingMethod {
-  STANDARD = "STANDARD",
-  EXPRESS = "EXPRESS",
-  SAME_DAY = "SAME_DAY"
+  STANDARD = "standard",
+  EXPRESS = "express",
+  SAME_DAY = "same_day"
 }
 
 interface ShippingMethodContextType {

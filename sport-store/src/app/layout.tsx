@@ -6,6 +6,7 @@ import { CartProvider } from "@/context/cartContext";
 import { CustomerProvider } from "@/context/customerContext";
 import { PaymentMethodProvider } from "@/context/paymentMethodContext";
 import { ShippingMethodProvider } from "@/context/shippingMethodContext";
+import { PromoProvider } from "@/context/promoContext";
 import { Toaster } from "@/components/ui/toast";
 
 const montserrat = Montserrat({ 
@@ -32,8 +33,10 @@ export default function RootLayout({
             <CustomerProvider>
               <PaymentMethodProvider>
                 <ShippingMethodProvider>
-                  {children}
-                  <Toaster />
+                  <PromoProvider>
+                    {children}
+                    <Toaster />
+                  </PromoProvider>
                 </ShippingMethodProvider>
               </PaymentMethodProvider>
             </CustomerProvider>
