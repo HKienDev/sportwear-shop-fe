@@ -1,153 +1,95 @@
-"use client";
-
-import { formatCurrency } from '@/lib/utils';
-import Link from 'next/link';
+import { PieChart, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
-import type { BestSellingProduct } from '@/types/dashboard';
+
+interface Product {
+  id: number;
+  name: string;
+  productCode: string;
+  sales: string;
+  trend: 'up' | 'down';
+}
 
 interface BestSellingProductsProps {
-  products: BestSellingProduct[];
-  lastUpdated: string;
-  days: number;
-  isLoading?: boolean;
-  onPeriodChange?: (days: number) => void;
+  products: Product[];
+  formatCurrency: (value: number) => string;
 }
 
-export default function BestSellingProducts({ 
-  products = [], 
-  lastUpdated,
-  days,
-  isLoading = false,
-  onPeriodChange
-}: BestSellingProductsProps) {
-  if (isLoading && !products.length) {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-4">
-        {[...Array(5)].map((_, index) => (
-          <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg animate-pulse">
-            <div className="h-12 w-12 bg-gray-200 rounded-lg"></div>
-            <div className="flex-1">
-              <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 w-24 bg-gray-200 rounded"></div>
-            </div>
-            <div className="h-8 w-20 bg-gray-200 rounded"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!products.length) {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-gray-100 flex flex-col items-center justify-center py-8 text-gray-500">
-        <svg className="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-        <p className="text-sm">Không có sản phẩm bán chạy</p>
-      </div>
-    );
-  }
-
+export function BestSellingProducts({ products, formatCurrency }: BestSellingProductsProps) {
   return (
-    <div className="bg-white rounded-xl p-6 border border-gray-100 space-y-4">
-      {/* Header with Period Selector */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
-            Cập nhật: {new Date(lastUpdated).toLocaleString('vi-VN')}
-          </span>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden relative">
+      <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+              <PieChart className="text-red-600" size={20} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Sản Phẩm Bán Chạy</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-medium text-gray-500">Tháng 04/2025</span>
+            <button className="text-sm text-red-600 font-medium hover:text-red-800 transition-colors">
+              Xem tất cả
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-          <button
-            onClick={() => onPeriodChange?.(7)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              days === 7
-                ? 'bg-[#4EB09D] text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            7 ngày
-          </button>
-          <button
-            onClick={() => onPeriodChange?.(30)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              days === 30
-                ? 'bg-[#4EB09D] text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            30 ngày
-          </button>
-          <button
-            onClick={() => onPeriodChange?.(90)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              days === 90
-                ? 'bg-[#4EB09D] text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            90 ngày
-          </button>
+        
+        <div className="space-y-5">
+          {products.map((product, index) => (
+            <div key={index} className="flex justify-between items-center p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+              <div className="flex items-center">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-4 flex items-center justify-center">
+                    <Image 
+                      src="/api/placeholder/64/64" 
+                      alt={product.name} 
+                      width={64} 
+                      height={64}
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    {index + 1}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{product.name}</h3>
+                  <div className="flex items-center mt-1">
+                    <span className="text-xs text-gray-500 mr-3">Mã: {product.productCode}</span>
+                    <div className={`flex items-center text-xs ${product.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                      {product.trend === 'up' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                      <span className="ml-1">{product.trend === 'up' ? '+12%' : '-8%'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="px-3 py-1 bg-red-50 rounded-full text-red-600 text-sm font-medium">
+                  {product.sales} lượt bán
+                </div>
+                <button className="text-gray-400 hover:text-red-600 transition-colors mt-2">
+                  <ExternalLink size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-medium text-gray-900">Thống Kê Sản Phẩm</h3>
+              <p className="text-sm text-gray-500 mt-1">Tổng doanh số tuần này</p>
+            </div>
+            <p className="text-xl font-bold text-red-600">{formatCurrency(152000000)}</p>
+          </div>
+          <div className="mt-4 flex justify-center">
+            <button className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+              Xem báo cáo chi tiết
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Products List */}
-      {products.map((product, index) => (
-        <Link
-          key={product._id}
-          href={`/admin/products/${product._id}`}
-          className="block group"
-        >
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-            <div className="flex-shrink-0">
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
-                {product.image ? (
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {product.name}
-                </p>
-                <span className="text-xs font-medium text-[#4EB09D]">
-                  #{index + 1}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-500">
-                  {product.category}
-                </span>
-                <span className="text-xs text-gray-300">•</span>
-                <span className="text-xs text-gray-500">
-                  Đã bán {product.totalSales}
-                </span>
-                <span className="text-xs text-gray-300">•</span>
-                <span className="text-xs text-gray-500">
-                  {formatCurrency(product.totalRevenue)}
-                </span>
-              </div>
-            </div>
-            <div className="flex-shrink-0">
-              <p className="text-sm font-medium text-[#4EB09D]">
-                {formatCurrency(product.averagePrice)}
-              </p>
-            </div>
-          </div>
-        </Link>
-      ))}
     </div>
   );
-}
+} 
