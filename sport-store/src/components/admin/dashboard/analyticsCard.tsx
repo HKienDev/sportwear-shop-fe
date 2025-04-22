@@ -1,4 +1,4 @@
-import { FileText, DollarSign, Users, Package, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface AnalyticsCardProps {
   title: string;

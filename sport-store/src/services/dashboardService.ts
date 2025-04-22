@@ -4,7 +4,8 @@ import type {
     BestSellingProduct,
     RecentOrder,
     RevenueData,
-    DashboardStats
+    DashboardStats,
+    OrderStats
 } from '@/types/dashboard';
 import { TOKEN_CONFIG } from '@/config/token';
 
@@ -101,7 +102,6 @@ export interface DashboardStatsResponse {
     totalRevenue: number;
     totalCustomers: number;
     totalProducts: number;
-    lastUpdated: string;
 }
 
 export const getStats = async (): Promise<DashboardStatsResponse> => {
@@ -134,6 +134,60 @@ export const getBestSellingProducts = async (limit: number = 5, days: number = 3
         return response.data;
     } catch (error) {
         console.error('Error fetching best selling products:', error);
+        throw error;
+    }
+};
+
+export interface RevenueStatsResponse {
+    _id: string;
+    total: number;
+    count: number;
+}
+
+export const getRevenueStats = async (period: 'day' | 'week' | 'month' = 'day'): Promise<RevenueStatsResponse[]> => {
+    try {
+        const response = await dashboardApi.get('/revenue', {
+            params: { period }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching revenue stats:', error);
+        throw error;
+    }
+};
+
+export interface TopProductResponse {
+    _id: string;
+    name: string;
+    totalSold: number;
+    totalRevenue: number;
+    image: string;
+}
+
+export const getTopProducts = async (limit: number = 10): Promise<TopProductResponse[]> => {
+    try {
+        const response = await dashboardApi.get('/top-products', {
+            params: { limit }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        throw error;
+    }
+};
+
+export interface OrderStatsResponse {
+    _id: string;
+    count: number;
+    totalAmount: number;
+}
+
+export const getOrderStats = async (): Promise<OrderStatsResponse[]> => {
+    try {
+        const response = await dashboardApi.get('/order-stats');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching order stats:', error);
         throw error;
     }
 }; 
