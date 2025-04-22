@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-import { MessageCircle, X, Send, ChevronDown, User, Clock } from "lucide-react";
+import { MessageCircle, X, Send, Clock } from "lucide-react";
 
 const socket = io("http://localhost:4000");
 
@@ -10,28 +10,73 @@ export default function UserChat() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<{ sender: string; text: string; time?: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [isTyping] = useState(false);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Xác định danh tính khi kết nối
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      
+      // Lấy thông tin người dùng từ localStorage hoặc context
+      const userId = localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 9);
+      const userName = localStorage.getItem("userName") || "User";
+      
+      // Xác định danh tính với server
+      socket.emit("identifyUser", { userId, userName, isAdmin: false });
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("connect_error");
+    };
+  }, []);
+
   useEffect(() => {
     socket.on("receiveMessage", (msg) => {
-      // Add timestamp to incoming messages
-      const now = new Date();
-      const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
+      const messageExists = messages.some(
+        (m) => m.text === msg.text && m.sender === msg.senderName
+      );
       
-      setMessages((prev) => [...prev, {...msg, time}]);
-      
-      // Show new message alert if chat is closed
-      if (!isOpen) {
-        setNewMessageAlert(true);
+      if (!messageExists) {
+        // Format timestamp
+        const messageTime = msg.timestamp 
+          ? new Date(msg.timestamp).toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })
+          : new Date().toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+        
+        setMessages((prev) => [...prev, {
+          sender: msg.senderName,
+          text: msg.text,
+          time: messageTime
+        }]);
+        
+        // Show new message alert if chat is closed
+        if (!isOpen) {
+          setNewMessageAlert(true);
+        }
       }
     });
 
     return () => {
       socket.off("receiveMessage");
     };
-  }, [isOpen]);
+  }, [isOpen, messages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -45,12 +90,28 @@ export default function UserChat() {
   const sendMessage = () => {
     if (!message.trim()) return;
     
-    // Add timestamp to sent messages
+    // Format timestamp
     const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const time = now.toLocaleTimeString('vi-VN', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
     
-    socket.emit("sendMessage", { text: message });
-    setMessages((prev) => [...prev, { sender: "User", text: message, time }]);
+    // Get user info from localStorage
+    const userId = localStorage.getItem("userId");
+    const userName = localStorage.getItem("userName") || "User";
+    
+    socket.emit("sendMessage", { 
+      text: message,
+      userId,
+      userName
+    });
+    
+    setMessages((prev) => [...prev, { 
+      sender: "User", 
+      text: message, 
+      time 
+    }]);
     setMessage("");
   };
 
@@ -97,106 +158,70 @@ export default function UserChat() {
           {/* Chat header */}
           <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                <User size={16} className="text-blue-600" />
-              </div>
               <div>
-                <h3 className="font-medium">Hỗ trợ trực tuyến</h3>
-                <p className="text-xs text-blue-100 flex items-center">
-                  <span className="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                  Trực tuyến
-                </p>
+                <h3 className="font-medium">Chat với Admin</h3>
               </div>
             </div>
-            <button 
-              onClick={toggleChat}
-              className="p-1 rounded-full hover:bg-blue-700 transition-colors"
-            >
-              <ChevronDown size={20} />
+            <button onClick={toggleChat} className="text-blue-100 hover:text-white">
+              <X size={20} />
             </button>
           </div>
 
-          {/* Welcome message */}
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <p className="text-sm text-gray-600">
-              Xin chào! Bạn cần hỗ trợ gì? Nhân viên của chúng tôi sẽ phản hồi trong thời gian sớm nhất.
-            </p>
-          </div>
-
-          {/* Messages container */}
-          <div className="h-64 overflow-y-auto p-4 bg-gray-50">
+          {/* Chat messages */}
+          <div className="h-80 overflow-y-auto p-4 bg-gray-50">
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                <p>Bắt đầu cuộc trò chuyện...</p>
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <MessageCircle size={40} className="mb-2" />
+                <p>Chưa có tin nhắn nào</p>
+                <p className="text-sm">Hãy bắt đầu cuộc trò chuyện!</p>
               </div>
             ) : (
               messages.map((msg, index) => (
-                <div 
-                  key={index} 
-                  className={`mb-3 flex ${msg.sender === "User" ? "justify-end" : "justify-start"}`}
+                <div
+                  key={index}
+                  className={`flex mb-3 ${msg.sender === "User" ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="max-w-3/4">
-                    <div 
-                      className={`px-4 py-2 rounded-2xl text-sm inline-block ${
-                        msg.sender === "User" 
-                          ? "bg-blue-600 text-white rounded-br-none" 
-                          : "bg-gray-200 text-gray-800 rounded-bl-none"
+                  <div className={`max-w-[80%] ${msg.sender === "User" ? "order-1" : "order-2"}`}>
+                    <div
+                      className={`p-2.5 rounded-lg ${
+                        msg.sender === "User"
+                          ? "bg-blue-600 text-white rounded-tr-none"
+                          : "bg-white text-gray-800 rounded-tl-none border border-gray-200"
                       }`}
                     >
                       {msg.text}
                     </div>
-                    <div 
-                      className={`flex items-center text-xs text-gray-500 mt-1 ${
-                        msg.sender === "User" ? "justify-end" : "justify-start"
-                      }`}
-                    >
+                    <div className={`text-xs text-gray-500 mt-0.5 flex items-center ${msg.sender === "User" ? "justify-end" : "justify-start"}`}>
                       <Clock size={12} className="mr-1" />
-                      {msg.time || "Vừa xong"}
+                      {msg.time || ""}
                     </div>
                   </div>
                 </div>
               ))
             )}
-            {isTyping && (
-              <div className="flex items-center text-gray-500 text-sm mb-3">
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
-                  <User size={12} className="text-gray-500" />
-                </div>
-                <div className="bg-gray-200 px-3 py-2 rounded-xl rounded-bl-none inline-block">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area */}
-          <div className="p-3 bg-white border-t border-gray-200">
-            <div className="flex items-center bg-gray-50 rounded-full px-3 py-1 border border-gray-200">
+          {/* Chat input */}
+          <div className="p-3 border-t border-gray-200 bg-white">
+            <div className="flex items-center bg-gray-50 rounded-lg px-3 py-2">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Nhập tin nhắn..."
-                className="flex-1 bg-transparent py-2 px-2 outline-none text-sm"
+                className="flex-1 px-2 py-1.5 bg-transparent focus:outline-none"
               />
-              <button 
+              <button
                 onClick={sendMessage}
                 disabled={!message.trim()}
-                className={`p-2 rounded-full ${
-                  message.trim() ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300"
-                } transition-colors`}
+                className={`p-1.5 rounded-full ${
+                  message.trim() ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-300"
+                } transition ml-2`}
               >
-                <Send size={16} className="text-white" />
+                <Send size={18} className="text-white" />
               </button>
-            </div>
-            <div className="text-xs text-gray-400 text-center mt-2">
-              Support by VJU Sport
             </div>
           </div>
         </div>
