@@ -1,17 +1,17 @@
 import React from "react";
 import Link from "next/link";
 import { Order } from "@/types/order";
+import OrderStatusBadge from "./orderStatusBadge";
 
 interface OrderListTableProps {
   orders: Order[];
   selectedOrders: string[];
   onToggleSelectAll: () => void;
   onToggleSelectOrder: (id: string) => void;
-  getStatusColor: (status: string) => string;
 }
 
 const OrderListTable = React.memo(
-  ({ orders, selectedOrders, onToggleSelectAll, onToggleSelectOrder, getStatusColor }: OrderListTableProps) => {
+  ({ orders, selectedOrders, onToggleSelectAll, onToggleSelectOrder }: OrderListTableProps) => {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
@@ -76,19 +76,7 @@ const OrderListTable = React.memo(
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)} text-white`}>
-                      {(() => {
-                        switch(order.status) {
-                          case "pending": return "Chờ xác nhận";
-                          case "processing": return "Đã xác nhận";
-                          case "confirmed": return "Đã xác nhận";
-                          case "shipped": return "Đang vận chuyển";
-                          case "delivered": return "Đã giao hàng";
-                          case "cancelled": return "Đã hủy";
-                          default: return "Không xác định";
-                        }
-                      })()}
-                    </span>
+                    <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(order.createdAt).toLocaleString("vi-VN")}
