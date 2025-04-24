@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
 import { TOKEN_CONFIG } from '@/config/token';
+import { API_URL, ENDPOINTS } from '@/config/api';
 
 interface RevenueData {
   date: string;
@@ -81,22 +82,22 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
 
       // Gọi các API riêng lẻ và kết hợp dữ liệu
       const [statsRes, revenueRes, bestSellingRes, recentOrdersRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, {
+        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.STATS}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/revenue?period=${timeRange}&limit=${timeRange === 'day' ? 7 : timeRange === 'month' ? 12 : 5}`, {
+        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.REVENUE}?period=${timeRange}&limit=${timeRange === 'day' ? 7 : timeRange === 'month' ? 12 : 5}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/best-selling-products`, {
+        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.BEST_SELLING}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/recent-orders`, {
+        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.RECENT_ORDERS}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },

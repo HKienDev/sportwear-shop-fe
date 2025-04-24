@@ -3,12 +3,22 @@ import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
-    // Lấy access token từ cookies
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get(process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'accessToken')?.value;
+    // Lấy access token từ header Authorization
+    const authHeader = request.headers.get('Authorization');
+    let accessToken = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.substring(7);
+    }
+    
+    // Nếu không có token trong header, thử lấy từ cookies
+    if (!accessToken) {
+      const cookieStore = await cookies();
+      accessToken = cookieStore.get(process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'accessToken')?.value;
+    }
 
     if (!accessToken) {
-      console.error('No access token found in cookies');
+      console.error('No access token found in headers or cookies');
       return NextResponse.json(
         { success: false, message: 'Unauthorized - No token provided' },
         { status: 401 }
@@ -75,7 +85,7 @@ export async function GET(request: Request) {
     if (!response.ok) {
       // Thử đọc response body
       let errorMessage = `Backend error: ${response.status}`;
-      let errorData: { message?: string } = {};
+      let errorData: { success?: boolean; message?: string; errors?: Record<string, unknown> } = {};
       
       try {
         const text = await response.text();
@@ -96,6 +106,20 @@ export async function GET(request: Request) {
       }
       
       console.error('Backend error response:', errorData);
+      
+      // Nếu backend trả về lỗi 404 (Not Found), trả về thông báo lỗi phù hợp
+      if (response.status === 404) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: errorMessage || 'Không tìm thấy sản phẩm',
+            details: errorData
+          },
+          { status: 404 }
+        );
+      }
+      
+      // Trả về lỗi với status code từ backend
       return NextResponse.json(
         { 
           success: false, 
@@ -221,7 +245,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       // Thử đọc response body
       let errorMessage = `Backend error: ${response.status}`;
-      let errorData: { message?: string } = {};
+      let errorData: { success?: boolean; message?: string; errors?: Record<string, unknown> } = {};
       
       try {
         const text = await response.text();
@@ -241,6 +265,20 @@ export async function POST(request: Request) {
       }
       
       console.error('Backend error response:', errorData);
+      
+      // Nếu backend trả về lỗi 404 (Not Found), trả về thông báo lỗi phù hợp
+      if (response.status === 404) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: errorMessage || 'Không tìm thấy sản phẩm',
+            details: errorData
+          },
+          { status: 404 }
+        );
+      }
+      
+      // Trả về lỗi với status code từ backend
       return NextResponse.json(
         { 
           success: false, 

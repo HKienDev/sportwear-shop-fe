@@ -1,15 +1,15 @@
 import { API_URL as CONFIG_API_URL } from '@/config/api';
+import { ProductResponse, ProductsResponse } from '@/types/product';
 
 // Sử dụng API_URL từ config
 const API_URL = CONFIG_API_URL;
 
 /**
  * Lấy danh sách tất cả sản phẩm
- * @returns Promise với danh sách sản phẩm
  */
-export const getAllProducts = async () => {
+export const getAllProducts = async (page = 1, limit = 10): Promise<ProductsResponse> => {
   try {
-    const response = await fetch(`${API_URL}/products`, {
+    const response = await fetch(`${API_URL}/products?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -28,13 +28,57 @@ export const getAllProducts = async () => {
 };
 
 /**
- * Xóa một sản phẩm theo ID
- * @param productId ID của sản phẩm cần xóa
- * @returns Promise với kết quả xóa sản phẩm
+ * Lấy chi tiết sản phẩm theo SKU
  */
-export const deleteProduct = async (productId: string): Promise<void> => {
+export const getProductBySku = async (sku: string): Promise<ProductResponse> => {
   try {
-    const response = await fetch(`${API_URL}/products/${productId}`, {
+    const response = await fetch(`${API_URL}/products/sku/${sku}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch product');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    throw error;
+  }
+};
+
+/**
+ * Lấy sản phẩm theo danh mục
+ */
+export const getProductsByCategory = async (categoryId: string, page = 1, limit = 10): Promise<ProductsResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/products/category/${categoryId}?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch products by category');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    throw error;
+  }
+};
+
+/**
+ * Xóa một sản phẩm theo SKU
+ */
+export const deleteProduct = async (sku: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/products/${sku}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -46,10 +90,7 @@ export const deleteProduct = async (productId: string): Promise<void> => {
       throw new Error('Failed to delete product');
     }
 
-    // Emit sự kiện xóa sản phẩm
     window.dispatchEvent(new Event('productDeleted'));
-    
-    return;
   } catch (error) {
     console.error('Error deleting product:', error);
     throw error;
@@ -57,31 +98,79 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 };
 
 /**
- * Xóa nhiều sản phẩm cùng lúc
- * @param productIds Mảng các ID sản phẩm cần xóa
- * @returns Promise với kết quả xóa sản phẩm
+ * Cập nhật sản phẩm
  */
-export const bulkDeleteProducts = async (productIds: string[]): Promise<void> => {
+export const updateProduct = async (sku: string, formData: FormData): Promise<ProductResponse> => {
   try {
-    const response = await fetch(`${API_URL}/products/bulk-delete`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_URL}/products/${sku}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update product');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cập nhật trạng thái sản phẩm
+ */
+export const updateProductStatus = async (sku: string, status: 'active' | 'inactive'): Promise<ProductResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/products/${sku}/status`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
       },
-      body: JSON.stringify({ productIds }),
+      body: JSON.stringify({ status }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete products');
+      throw new Error('Failed to update product status');
     }
 
-    // Emit sự kiện xóa sản phẩm
-    window.dispatchEvent(new Event('productDeleted'));
-    
-    return;
+    return await response.json();
   } catch (error) {
-    console.error('Error deleting products:', error);
+    console.error('Error updating product status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cập nhật trạng thái size
+ */
+export const updateSizeStatus = async (
+  sku: string, 
+  size: string, 
+  status: 'active' | 'inactive'
+): Promise<ProductResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/products/${sku}/size-status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: JSON.stringify({ size, status }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update size status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating size status:', error);
     throw error;
   }
 }; 

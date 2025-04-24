@@ -17,7 +17,7 @@ const formatCurrency = (amount: number | undefined) => {
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { _id, name, categoryId, originalPrice, salePrice, description, mainImage, stock } = product;
+  const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku } = product;
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : 0;
 
   return (
-    <Link href={`/user/products/details/${_id}`} className="block">
+    <Link href={`/user/products/details/${sku}`} className="block">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 group h-[400px] flex flex-col relative">
         {/* Badge giảm giá */}
         {salePrice > 0 && (
