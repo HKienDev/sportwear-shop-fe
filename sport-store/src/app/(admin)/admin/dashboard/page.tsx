@@ -7,13 +7,33 @@ import BestSellingProducts from '@/components/admin/dashboard/bestSellingProduct
 import { ActiveDeliveries } from '@/components/admin/dashboard/activeDeliveries';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState<TimeRange>('day');
-  const { dashboardData, isLoading, error } = useDashboard(timeRange);
+  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const { dashboardData, isLoading, error, refresh } = useDashboard(timeRange);
+
+  useEffect(() => {
+    // Lắng nghe sự kiện xóa đơn hàng
+    const handleOrderDeleted = () => {
+      refresh();
+    };
+
+    // Lắng nghe sự kiện xóa sản phẩm
+    const handleProductDeleted = () => {
+      refresh();
+    };
+
+    window.addEventListener('orderDeleted', handleOrderDeleted);
+    window.addEventListener('productDeleted', handleProductDeleted);
+
+    return () => {
+      window.removeEventListener('orderDeleted', handleOrderDeleted);
+      window.removeEventListener('productDeleted', handleProductDeleted);
+    };
+  }, [refresh]);
 
   if (isLoading) {
     return <div>Loading...</div>;

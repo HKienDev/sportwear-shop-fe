@@ -1,289 +1,63 @@
-import { Product, ProductQueryParams, SingleProductResponse, ProductsResponse } from "@/types/product";
+import { API_URL as CONFIG_API_URL } from '@/config/api';
 
-const API_URL = "http://localhost:4000/api";
+// Sử dụng API_URL từ config
+const API_URL = CONFIG_API_URL;
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+/**
+ * Xóa một sản phẩm theo ID
+ * @param productId ID của sản phẩm cần xóa
+ * @returns Promise với kết quả xóa sản phẩm
+ */
+export const deleteProduct = async (productId: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/products/${productId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    });
 
-interface ProductsApiResponse {
-  products: Product[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-class ProductService {
-  async getAllProducts(params?: ProductQueryParams): Promise<ProductsResponse> {
-    try {
-      const queryString = new URLSearchParams();
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined) {
-            queryString.append(key, value.toString());
-          }
-        });
-      }
-
-      const url = `${API_URL}/products${queryString.toString() ? `?${queryString.toString()}` : ''}`;
-      console.log("API URL:", url);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Failed to delete product');
     }
+
+    // Emit sự kiện xóa sản phẩm
+    window.dispatchEvent(new Event('productDeleted'));
+    
+    return;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
   }
+};
 
-  async getProductBySku(sku: string): Promise<SingleProductResponse> {
-    try {
-      const url = `${API_URL}/products/${sku}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-      });
+/**
+ * Xóa nhiều sản phẩm cùng lúc
+ * @param productIds Mảng các ID sản phẩm cần xóa
+ * @returns Promise với kết quả xóa sản phẩm
+ */
+export const bulkDeleteProducts = async (productIds: string[]): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/products/bulk-delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: JSON.stringify({ productIds }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching product by SKU:", error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Failed to delete products');
     }
+
+    // Emit sự kiện xóa sản phẩm
+    window.dispatchEvent(new Event('productDeleted'));
+    
+    return;
+  } catch (error) {
+    console.error('Error deleting products:', error);
+    throw error;
   }
-
-  async getProductsByCategory(categoryId: string, params?: ProductQueryParams): Promise<ProductsResponse> {
-    try {
-      const queryString = new URLSearchParams();
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined) {
-            queryString.append(key, value.toString());
-          }
-        });
-      }
-
-      const url = `${API_URL}/products/category/${categoryId}${queryString.toString() ? `?${queryString.toString()}` : ''}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching products by category:", error);
-      throw error;
-    }
-  }
-
-  async searchProducts(keyword: string, params?: ProductQueryParams): Promise<ProductsResponse> {
-    try {
-      const queryString = new URLSearchParams({ keyword });
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined) {
-            queryString.append(key, value.toString());
-          }
-        });
-      }
-
-      const url = `${API_URL}/products/search${queryString.toString() ? `?${queryString.toString()}` : ''}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error searching products:", error);
-      throw error;
-    }
-  }
-
-  async createProduct(productData: Partial<Product>): Promise<SingleProductResponse> {
-    try {
-      const response = await fetch(`${API_URL}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error creating product:", error);
-      throw error;
-    }
-  }
-
-  async updateProduct(id: string, productData: Partial<Product>): Promise<SingleProductResponse> {
-    try {
-      const response = await fetch(`${API_URL}/products/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error updating product:", error);
-      throw error;
-    }
-  }
-
-  async deleteProduct(id: string): Promise<SingleProductResponse> {
-    try {
-      const response = await fetch(`${API_URL}/products/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      throw error;
-    }
-  }
-
-  async updateProductStatus(id: string, isActive: boolean): Promise<SingleProductResponse> {
-    try {
-      const response = await fetch(`${API_URL}/products/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error updating product status:", error);
-      throw error;
-    }
-  }
-
-  async updateSizeStatus(id: string, size: string, isActive: boolean): Promise<SingleProductResponse> {
-    try {
-      const response = await fetch(`${API_URL}/products/${id}/size-status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ size, isActive }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error updating size status:", error);
-      throw error;
-    }
-  }
-
-  async getAdminProducts(params?: ProductQueryParams): Promise<ProductsResponse> {
-    try {
-      const queryString = new URLSearchParams();
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined) {
-            queryString.append(key, value.toString());
-          }
-        });
-      }
-
-      const url = `${API_URL}/admin/products${queryString.toString() ? `?${queryString.toString()}` : ''}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching admin products:", error);
-      throw error;
-    }
-  }
-}
-
-const productService = new ProductService();
-export default productService; 
+}; 
