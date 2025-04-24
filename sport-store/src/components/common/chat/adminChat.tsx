@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { 
   Send, Trash2, Search, User, Users, MessageSquare, Bell, MoreHorizontal, Smile, Paperclip, Palette
@@ -23,6 +23,7 @@ interface Message {
   senderId?: string;
   senderName?: string;
   timestamp?: string;
+  messageId?: string;
 }
 
 interface ServerMessage {
@@ -30,33 +31,18 @@ interface ServerMessage {
   senderName?: string;
   text: string;
   timestamp?: string;
+  messageId?: string;
 }
 
 // Định nghĩa interface cho thông tin người dùng
 interface UserInfo {
+  _id: string;
   id: string;
   name: string;
   email: string;
+  fullName?: string;
+  tempId?: string;
 }
-
-// Tạo hook để quản lý thông tin người dùng
-const useUserInfo = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
-  useEffect(() => {
-    // Lấy thông tin người dùng từ localStorage
-    const storedUserInfo = localStorage.getItem("userInfo");
-    if (storedUserInfo) {
-      try {
-        setUserInfo(JSON.parse(storedUserInfo));
-      } catch (error) {
-        console.error("Error parsing user info:", error);
-      }
-    }
-  }, []);
-
-  return { userInfo, setUserInfo };
-};
 
 // Tạo hook để quản lý kết nối socket
 const useSocketConnection = () => {
@@ -131,6 +117,7 @@ export default function AdminChat() {
   const [view, setView] = useState("all"); // 'all', 'online', 'unread'
   const [theme, setTheme] = useState("blue"); // 'blue', 'purple', 'green'
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [users, setUsers] = useState<UserInfo[]>([]);
   
   // Sử dụng hook useSocketConnection
   const { socket, isConnected } = useSocketConnection();
@@ -139,6 +126,67 @@ export default function AdminChat() {
   useEffect(() => {
     localStorage.setItem("adminLoggedIn", "true");
   }, []);
+
+  // Lấy danh sách người dùng từ API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Raw API response:", data);
+          
+          // Kiểm tra cấu trúc dữ liệu và chuyển đổi thành mảng nếu cần
+          let usersArray = [];
+          
+          if (Array.isArray(data)) {
+            usersArray = data;
+          } else if (data && typeof data === 'object') {
+            // Nếu data là một object, kiểm tra xem có thuộc tính nào chứa mảng không
+            for (const key in data) {
+              if (Array.isArray(data[key])) {
+                usersArray = data[key];
+                break;
+              }
+            }
+          }
+          
+          console.log("Processed users array:", usersArray);
+          setUsers(usersArray);
+        } else {
+          console.error("Failed to fetch users:", response.statusText);
+          setUsers([]);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setUsers([]);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Hàm để lấy thông tin người dùng từ danh sách users
+  const getUserInfo = useCallback((userId: string) => {
+    // Kiểm tra xem users có phải là mảng không
+    if (!Array.isArray(users)) {
+      console.error("Users is not an array:", users);
+      return null;
+    }
+    
+    console.log("Looking for user with ID:", userId);
+    console.log("Available users:", users);
+    
+    // Tìm người dùng trong danh sách users
+    const user = users.find(u => {
+      const matchById = u.id === userId || u._id === userId;
+      const matchByTempId = userId.startsWith('temp_') && u.tempId === userId;
+      return matchById || matchByTempId;
+    });
+    
+    console.log("Found user:", user);
+    return user;
+  }, [users]);
 
   // Load dữ liệu từ localStorage khi component được mount
   useEffect(() => {
@@ -192,19 +240,18 @@ export default function AdminChat() {
       if (selectedUser?.id) {
         // Chuyển đổi định dạng tin nhắn từ BE sang định dạng FE
         const formattedHistory = history.map((msg: ServerMessage) => {
-          // Lấy thông tin người dùng từ localStorage nếu có
+          // Lấy thông tin người dùng từ danh sách users
           let senderName = msg.senderName;
+          let senderId = msg.senderId;
+          
           if (msg.senderId !== 'admin') {
-            const userInfoStr = localStorage.getItem("userInfo");
-            if (userInfoStr) {
-              try {
-                const userInfo = JSON.parse(userInfoStr);
-                if (userInfo.id === msg.senderId) {
-                  senderName = userInfo.name;
-                }
-              } catch (error) {
-                console.error("Error parsing user info:", error);
-              }
+            const userInfo = getUserInfo(msg.senderId);
+            if (userInfo) {
+              senderName = userInfo.fullName || userInfo.name || "Unknown User";
+              senderId = userInfo._id || userInfo.id || msg.senderId;
+              console.log("Updated sender info:", { senderName, senderId });
+            } else {
+              console.log("User not found in users array, using default values");
             }
           }
           
@@ -215,7 +262,7 @@ export default function AdminChat() {
               hour: '2-digit', 
               minute: '2-digit' 
             }) : undefined,
-            senderId: msg.senderId,
+            senderId: senderId,
             senderName: senderName,
             timestamp: msg.timestamp
           };
@@ -231,7 +278,7 @@ export default function AdminChat() {
     return () => {
       socket.off("messageHistory");
     };
-  }, [selectedUser, socket]);
+  }, [selectedUser, socket, users, getUserInfo]);
 
   // Nhận tin nhắn từ user
   useEffect(() => {
@@ -240,25 +287,38 @@ export default function AdminChat() {
     socket.on("receiveMessage", (msg) => {
       console.log("Received message:", msg);
       
-      // Lấy thông tin người dùng từ localStorage nếu có
+      // Kiểm tra xem tin nhắn có phải do admin gửi không
+      if (msg.senderId === 'admin') {
+        // Nếu là tin nhắn do admin gửi, kiểm tra xem đã tồn tại trong state chưa
+        const adminMessageExists = messages[msg.recipientId]?.some(
+          (m) => m.messageId === msg.messageId
+        );
+        
+        if (adminMessageExists) {
+          console.log("Admin message already exists, skipping");
+          return;
+        }
+      }
+      
+      // Lấy thông tin người dùng từ danh sách users
       let senderName = msg.senderName;
+      let senderId = msg.senderId;
+      
       if (msg.senderId !== 'admin') {
-        const userInfoStr = localStorage.getItem("userInfo");
-        if (userInfoStr) {
-          try {
-            const userInfo = JSON.parse(userInfoStr);
-            if (userInfo.id === msg.senderId) {
-              senderName = userInfo.name;
-            }
-          } catch (error) {
-            console.error("Error parsing user info:", error);
-          }
+        const userInfo = getUserInfo(msg.senderId);
+        if (userInfo) {
+          senderName = userInfo.fullName || userInfo.name || "Unknown User";
+          senderId = userInfo._id || userInfo.id || msg.senderId;
+          console.log("Updated sender info:", { senderName, senderId });
+        } else {
+          console.log("User not found in users array, using default values");
         }
       }
       
       // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
       const messageExists = messages[msg.senderId]?.some(
-        (m) => m.text === msg.text && m.sender === senderName
+        (m) => m.text === msg.text && m.sender === senderName && 
+        Math.abs(new Date(m.timestamp || '').getTime() - new Date(msg.timestamp || '').getTime()) < 1000
       );
       
       if (!messageExists) {
@@ -279,7 +339,7 @@ export default function AdminChat() {
         if (!userExists) {
           // Thêm người dùng mới vào danh sách cuộc trò chuyện
           const newUser = {
-            id: msg.senderId,
+            id: senderId,
             name: senderName || "Unknown",
             lastMessage: msg.text,
             online: true,
@@ -312,9 +372,10 @@ export default function AdminChat() {
             sender: senderName || "User", 
             text: msg.text, 
             time: messageTime,
-            senderId: msg.senderId,
+            senderId: senderId,
             senderName: senderName,
-            timestamp: msg.timestamp
+            timestamp: msg.timestamp,
+            messageId: msg.messageId // Thêm messageId để có thể kiểm tra trùng lặp
           });
           return newMessages;
         });
@@ -324,7 +385,7 @@ export default function AdminChat() {
     return () => {
       socket.off("receiveMessage");
     };
-  }, [selectedUser, conversations, messages, socket]);
+  }, [selectedUser, conversations, messages, socket, users, getUserInfo]);
 
   // Lắng nghe sự kiện đăng xuất của user
   useEffect(() => {
@@ -364,10 +425,14 @@ export default function AdminChat() {
       minute: '2-digit' 
     });
 
+    // Tạo một ID duy nhất cho tin nhắn để tránh trùng lặp
+    const messageId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Gửi tin nhắn qua socket
     socket.emit("sendMessage", { 
       text: message, 
-      recipientId: selectedUser.id 
+      recipientId: selectedUser.id,
+      messageId: messageId // Thêm messageId để server có thể kiểm tra trùng lặp
     });
 
     // Lưu tin nhắn vào lịch sử ngay lập tức
@@ -376,14 +441,25 @@ export default function AdminChat() {
       if (!newMessages[selectedUser.id]) {
         newMessages[selectedUser.id] = [];
       }
-      newMessages[selectedUser.id].push({ 
-        sender: "Admin", 
-        text: message, 
-        time,
-        senderId: 'admin',
-        senderName: 'Admin',
-        timestamp: now.toISOString()
-      });
+      
+      // Kiểm tra xem tin nhắn đã tồn tại chưa
+      const messageExists = newMessages[selectedUser.id].some(
+        (m) => m.text === message && m.sender === "Admin" && 
+        Math.abs(new Date(m.timestamp || '').getTime() - now.getTime()) < 1000
+      );
+      
+      if (!messageExists) {
+        newMessages[selectedUser.id].push({ 
+          sender: "Admin", 
+          text: message, 
+          time,
+          senderId: 'admin',
+          senderName: 'Admin',
+          timestamp: now.toISOString(),
+          messageId: messageId // Thêm messageId để có thể kiểm tra trùng lặp
+        });
+      }
+      
       return newMessages;
     });
 
