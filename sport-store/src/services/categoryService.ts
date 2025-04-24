@@ -1,5 +1,8 @@
-import { Category, CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryQueryParams } from '../types/category';
+import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryQueryParams } from '../types/category';
 import axiosInstance from '../config/axios';
+import { API_URL as CONFIG_API_URL } from '@/config/api';
+
+const API_URL = CONFIG_API_URL;
 
 const categoryService = {
   // Lấy tất cả danh mục
@@ -62,6 +65,55 @@ const categoryService = {
     } catch (error) {
       throw error;
     }
+  }
+};
+
+/**
+ * Lấy danh sách tất cả categories
+ * @returns Promise với danh sách categories
+ */
+export const getAllCategories = async () => {
+  try {
+    const response = await fetch(`${API_URL}/categories`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch categories');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    throw error;
+  }
+};
+
+/**
+ * Lấy thông tin category theo ID
+ * @param categoryId ID của category cần lấy
+ * @returns Promise với thông tin category
+ */
+export const getCategoryById = async (categoryId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/categories/${categoryId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch category');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    throw error;
   }
 };
 

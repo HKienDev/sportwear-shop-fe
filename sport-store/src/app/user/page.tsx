@@ -8,7 +8,7 @@ import Chat from "@/components/common/chat/userChat";
 import ProductCard from "@/components/user/products/productCard/page";
 import { useAuth } from "@/context/authContext";
 import { Product } from "@/types/product";
-import productService from "@/services/productService";
+import { getAllProducts } from "@/services/productService";
 
 const HomePage = () => {
   const router = useRouter();
@@ -35,7 +35,7 @@ const HomePage = () => {
 
     const fetchData = async () => {
       try {
-        const response = await productService.getAllProducts();
+        const response = await getAllProducts();
         if (!response.success) {
           throw new Error("Lỗi khi lấy dữ liệu");
         }
