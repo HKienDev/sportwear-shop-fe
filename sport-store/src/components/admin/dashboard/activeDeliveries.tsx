@@ -1,4 +1,4 @@
-import { Clock, ChevronRight, ArrowRight } from 'lucide-react';
+import { Clock, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface RecentOrder {
@@ -192,27 +192,21 @@ export function ActiveDeliveries({ deliveries }: ActiveDeliveriesProps) {
                 </div>
               </div>
               
-              <div className="mt-4 flex justify-end">
-                <button 
+              <div className="mt-4 flex justify-between items-center">
+                <div className="flex items-center text-sm text-gray-500">
+                  <Clock size={14} className="mr-1" />
+                  <span>ETA: {delivery.eta}</span>
+                </div>
+                <button
                   onClick={() => handleViewDetails(delivery.id)}
-                  className="text-red-600 text-sm font-medium flex items-center hover:text-red-800 transition-colors"
+                  className="flex items-center text-sm text-gray-600 hover:text-black transition-colors"
                 >
-                  Chi tiết
+                  <span>Xem chi tiết</span>
                   <ChevronRight size={16} className="ml-1" />
                 </button>
               </div>
             </div>
           ))}
-        </div>
-        
-        <div className="mt-6 text-center">
-          <button 
-            onClick={() => router.push('/admin/orders/list')}
-            className="text-white font-medium px-4 py-2 bg-black rounded-lg hover:bg-gray-800 transition-colors flex items-center mx-auto"
-          >
-            Xem tất cả đơn hàng
-            <ArrowRight size={16} className="ml-2" />
-          </button>
         </div>
       </div>
     </div>

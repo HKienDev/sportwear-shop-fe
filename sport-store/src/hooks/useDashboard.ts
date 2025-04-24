@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
 import { TOKEN_CONFIG } from '@/config/token';
 
@@ -30,6 +30,7 @@ interface DashboardData {
     category: string;
     totalSales: number;
     image: string;
+    sku: string;
   }>;
   recentOrders: {
     orders: Array<{
@@ -60,99 +61,99 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        if (!isAuthenticated) {
-          setError('User not authenticated');
-          return;
-        }
-
-        // Lấy token từ localStorage
-        const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-        
-        if (!accessToken) {
-          setError('No access token found');
-          return;
-        }
-
-        // Gọi các API riêng lẻ và kết hợp dữ liệu
-        const [statsRes, revenueRes, bestSellingRes, recentOrdersRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/revenue?period=${timeRange}&limit=${timeRange === 'day' ? 7 : timeRange === 'month' ? 12 : 5}`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/best-selling-products`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/recent-orders`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          }),
-        ]);
-
-        // Kiểm tra response
-        if (!statsRes.ok || !revenueRes.ok || !bestSellingRes.ok || !recentOrdersRes.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-
-        // Parse response data
-        const [statsData, revenueData, bestSellingData, recentOrdersData] = await Promise.all([
-          statsRes.json(),
-          revenueRes.json(),
-          bestSellingRes.json(),
-          recentOrdersRes.json(),
-        ]);
-
-        // Kiểm tra và trích xuất dữ liệu từ response
-        const stats = statsData.success ? statsData.data : {
-          totalOrders: 0,
-          totalRevenue: 0,
-          totalCustomers: 0,
-          totalProducts: 0,
-          growth: {
-            orders: 0,
-            revenue: 0,
-            customers: 0,
-            products: 0
-          }
-        };
-
-        const revenue = revenueData.success ? revenueData.data.revenue : [];
-        const bestSelling = bestSellingData.success ? bestSellingData.data.products : [];
-        const recentOrders = recentOrdersData.success ? recentOrdersData.data : { orders: [] };
-
-        // Xử lý dữ liệu doanh thu theo khoảng thời gian
-        const processedRevenue = processRevenueData(revenue, timeRange);
-
-        setDashboardData({
-          stats,
-          revenue: processedRevenue,
-          bestSellingProducts: bestSelling,
-          recentOrders,
-        });
-      } catch (err) {
-        console.error('Dashboard data fetch error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setIsLoading(false);
+      if (!isAuthenticated) {
+        setError('User not authenticated');
+        return;
       }
-    };
 
+      // Lấy token từ localStorage
+      const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      
+      if (!accessToken) {
+        setError('No access token found');
+        return;
+      }
+
+      // Gọi các API riêng lẻ và kết hợp dữ liệu
+      const [statsRes, revenueRes, bestSellingRes, recentOrdersRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/revenue?period=${timeRange}&limit=${timeRange === 'day' ? 7 : timeRange === 'month' ? 12 : 5}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/best-selling-products`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/recent-orders`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }),
+      ]);
+
+      // Kiểm tra response
+      if (!statsRes.ok || !revenueRes.ok || !bestSellingRes.ok || !recentOrdersRes.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      // Parse response data
+      const [statsData, revenueData, bestSellingData, recentOrdersData] = await Promise.all([
+        statsRes.json(),
+        revenueRes.json(),
+        bestSellingRes.json(),
+        recentOrdersRes.json(),
+      ]);
+
+      // Kiểm tra và trích xuất dữ liệu từ response
+      const stats = statsData.success ? statsData.data : {
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalCustomers: 0,
+        totalProducts: 0,
+        growth: {
+          orders: 0,
+          revenue: 0,
+          customers: 0,
+          products: 0
+        }
+      };
+
+      const revenue = revenueData.success ? revenueData.data.revenue : [];
+      const bestSelling = bestSellingData.success ? bestSellingData.data.products : [];
+      const recentOrders = recentOrdersData.success ? recentOrdersData.data : { orders: [] };
+
+      // Xử lý dữ liệu doanh thu theo khoảng thời gian
+      const processedRevenue = processRevenueData(revenue, timeRange);
+
+      setDashboardData({
+        stats,
+        revenue: processedRevenue,
+        bestSellingProducts: bestSelling,
+        recentOrders,
+      });
+    } catch (error) {
+      console.error('Dashboard data fetch error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [timeRange, isAuthenticated]);
+
+  useEffect(() => {
     fetchDashboardData();
-  }, [isAuthenticated, timeRange]);
+  }, [fetchDashboardData]);
 
   const processRevenueData = (data: RevenueData[], period: TimeRange) => {
     if (!data || !Array.isArray(data)) return [];
@@ -228,5 +229,10 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
     return filteredData;
   };
 
-  return { dashboardData, isLoading, error };
+  return {
+    dashboardData,
+    isLoading,
+    error,
+    refresh: fetchDashboardData
+  };
 }; 

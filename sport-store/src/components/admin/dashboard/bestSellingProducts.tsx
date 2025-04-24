@@ -1,96 +1,121 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDashboard } from "@/hooks/useDashboard";
-import Image from "next/image";
-import { Skeleton } from "@/components/ui/skeleton";
-
-interface BestSellingProduct {
-  _id: string;
-  name: string;
-  category: string;
-  totalSales: number;
-  image: string;
-}
+import { PieChart, ArrowUp } from 'lucide-react';
+import Image from 'next/image';
+import { useDashboard } from '@/hooks/useDashboard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BestSellingProducts() {
   const { dashboardData, isLoading, error } = useDashboard();
 
   if (isLoading || !dashboardData) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sản phẩm bán chạy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
+      <div className="bg-white rounded-xl shadow-md overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+                <PieChart className="text-red-600" size={20} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Sản Phẩm Bán Chạy</h2>
+            </div>
+          </div>
+          <div className="space-y-5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between items-center p-4 rounded-lg border border-gray-100">
+                <div className="flex items-center">
+                  <Skeleton className="w-16 h-16 rounded-lg mr-4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-3 w-[150px]" />
+                  </div>
                 </div>
+                <Skeleton className="h-6 w-[100px]" />
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sản phẩm bán chạy</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+                <PieChart className="text-red-600" size={20} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Sản Phẩm Bán Chạy</h2>
+            </div>
+          </div>
           <p className="text-red-500">Có lỗi xảy ra: {error}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
-  const bestSellingProducts = Array.isArray(dashboardData.bestSelling) 
-    ? dashboardData.bestSelling 
+  const bestSellingProducts = Array.isArray(dashboardData.bestSellingProducts) 
+    ? dashboardData.bestSellingProducts 
     : [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sản phẩm bán chạy</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {bestSellingProducts.length > 0 ? (
-          <div className="space-y-4">
-            {bestSellingProducts.map((product: BestSellingProduct) => (
-              <div key={product._id} className="flex items-center space-x-4">
-                <div className="relative h-12 w-12">
-                  {product.image ? (
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-xs">No img</span>
-                    </div>
-                  )}
+    <div className="bg-white rounded-xl shadow-md overflow-hidden relative">
+      <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+              <PieChart className="text-red-600" size={20} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Sản Phẩm Bán Chạy</h2>
+          </div>
+        </div>
+        
+        <div className="space-y-5">
+          {bestSellingProducts.map((product, index) => (
+            <div key={product._id} className="flex justify-between items-center p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+              <div className="flex items-center">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-4 flex items-center justify-center">
+                    {product.image ? (
+                      <Image 
+                        src={product.image} 
+                        alt={product.name} 
+                        width={64} 
+                        height={64}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">No img</span>
+                    )}
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    {index + 1}
+                  </div>
                 </div>
                 <div>
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {product.totalSales} đơn hàng
-                  </p>
+                  <h3 className="font-medium text-gray-900">{product.name}</h3>
+                  <div className="flex items-center mt-1">
+                    <span className="text-xs text-gray-500 mr-3">Mã: {product.sku}</span>
+                    <div className="flex items-center text-xs text-green-500">
+                      <ArrowUp size={12} />
+                      <span className="ml-1">+{product.totalSales}%</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-muted-foreground">Không có dữ liệu sản phẩm bán chạy</p>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex flex-col items-end">
+                <div className="px-3 py-1 bg-red-50 rounded-full text-red-600 text-sm font-medium">
+                  {product.totalSales} lượt bán
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 } 
