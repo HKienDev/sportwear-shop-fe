@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/types/product";
+import { getCategoryById } from "@/services/categoryService";
 
 interface ProductCardProps {
   product: Product;
@@ -16,10 +17,30 @@ const formatCurrency = (amount: number | undefined) => {
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { _id, name, category, originalPrice, salePrice, description, mainImage, stock } = product;
+  const { _id, name, categoryId, originalPrice, salePrice, description, mainImage, stock } = product;
+  const [categoryName, setCategoryName] = useState<string>("Đang tải...");
 
-  // Lấy tên category
-  const categoryName = typeof category === 'object' ? category.name : "Không xác định";
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        if (categoryId) {
+          const response = await getCategoryById(categoryId);
+          if (response.success) {
+            setCategoryName(response.data.name);
+          } else {
+            setCategoryName("Không xác định");
+          }
+        } else {
+          setCategoryName("Không xác định");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin category:", error);
+        setCategoryName("Không xác định");
+      }
+    };
+
+    fetchCategory();
+  }, [categoryId]);
 
   // Xử lý hình ảnh mặc định
   const imageUrl = mainImage || "/default-image.png";

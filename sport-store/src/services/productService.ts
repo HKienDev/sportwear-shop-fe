@@ -4,6 +4,30 @@ import { API_URL as CONFIG_API_URL } from '@/config/api';
 const API_URL = CONFIG_API_URL;
 
 /**
+ * Lấy danh sách tất cả sản phẩm
+ * @returns Promise với danh sách sản phẩm
+ */
+export const getAllProducts = async () => {
+  try {
+    const response = await fetch(`${API_URL}/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch products');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+/**
  * Xóa một sản phẩm theo ID
  * @param productId ID của sản phẩm cần xóa
  * @returns Promise với kết quả xóa sản phẩm

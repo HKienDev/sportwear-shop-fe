@@ -3,11 +3,7 @@ export interface Product {
   name: string;
   slug: string;
   sku: string;
-  category: {
-    _id: string;
-    name: string;
-    slug: string;
-  } | string;
+  categoryId: string;
   originalPrice: number;
   salePrice: number;
   description: string;
