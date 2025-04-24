@@ -7,9 +7,27 @@ import BestSellingProducts from '@/components/admin/dashboard/bestSellingProduct
 import { ActiveDeliveries } from '@/components/admin/dashboard/activeDeliveries';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+
+type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
-  const { dashboardData, isLoading, error } = useDashboard();
+  const [timeRange, setTimeRange] = useState<TimeRange>('day');
+  const { dashboardData, isLoading, error } = useDashboard(timeRange);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!dashboardData) {
+    return <div>No data available</div>;
+  }
+
+  const { stats, revenue, recentOrders } = dashboardData;
 
   // Format currency function
   const formatCurrency = (value: number): string => {
@@ -19,14 +37,6 @@ export default function Dashboard() {
       maximumFractionDigits: 0
     }).format(value);
   };
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-6">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
@@ -45,61 +55,50 @@ export default function Dashboard() {
         
         {/* Analytics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-            </>
-          ) : (
-            <>
-              <AnalyticsCard 
-                title="Tổng đơn hàng" 
-                value={dashboardData?.stats?.totalOrders.toLocaleString() || '0'} 
-                percentage={11.2} 
-                isPositive={true}
-                compareText="So với tháng trước"
-                icon={<FileText className="text-indigo-600" size={22} />}
-                gradient="from-indigo-50 to-white"
-              />
-              <AnalyticsCard 
-                title="Tổng doanh thu" 
-                value={formatCurrency(dashboardData?.stats?.totalRevenue || 0)} 
-                percentage={5.2} 
-                isPositive={true} 
-                compareText="So với tháng trước"
-                icon={<DollarSign className="text-emerald-600" size={22} />}
-                highlighted={true}
-                gradient="from-emerald-50 to-white"
-              />
-              <AnalyticsCard 
-                title="Tổng khách hàng" 
-                value={dashboardData?.stats?.totalCustomers.toLocaleString() || '0'} 
-                percentage={11.2} 
-                isPositive={true}
-                compareText="So với tháng trước"
-                icon={<Users className="text-amber-600" size={22} />}
-                gradient="from-amber-50 to-white"
-              />
-              <AnalyticsCard 
-                title="Tổng sản phẩm" 
-                value={dashboardData?.stats?.totalProducts.toLocaleString() || '0'} 
-                percentage={-2.5} 
-                isPositive={false}
-                compareText="So với tháng trước"
-                icon={<Package className="text-rose-600" size={22} />}
-                gradient="from-rose-50 to-white"
-              />
-            </>
-          )}
+          <AnalyticsCard
+            title="Tổng Đơn Hàng"
+            value={stats.totalOrders}
+            icon={<FileText className="h-6 w-6 text-blue-500" />}
+            percentage={stats.growth.orders}
+            isPositive={stats.growth.orders >= 0}
+            compareText="So với tháng trước"
+          />
+          <AnalyticsCard
+            title="Tổng Doanh Thu"
+            value={formatCurrency(stats.totalRevenue)}
+            icon={<DollarSign className="h-6 w-6 text-green-500" />}
+            percentage={stats.growth.revenue}
+            isPositive={stats.growth.revenue >= 0}
+            compareText="So với tháng trước"
+          />
+          <AnalyticsCard
+            title="Tổng Khách Hàng"
+            value={stats.totalCustomers}
+            icon={<Users className="h-6 w-6 text-purple-500" />}
+            percentage={stats.growth.customers}
+            isPositive={stats.growth.customers >= 0}
+            compareText="So với tháng trước"
+          />
+          <AnalyticsCard
+            title="Tổng Sản Phẩm"
+            value={stats.totalProducts}
+            icon={<Package className="h-6 w-6 text-orange-500" />}
+            percentage={stats.growth.products}
+            isPositive={stats.growth.products >= 0}
+            compareText="So với tháng trước"
+          />
         </div>
         
         {/* Chart Section */}
         {isLoading ? (
           <Skeleton className="h-96 mb-8" />
         ) : (
-          <RevenueChart chartData={dashboardData?.revenue} formatCurrency={formatCurrency} />
+          <RevenueChart 
+            chartData={revenue} 
+            formatCurrency={formatCurrency}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+          />
         )}
         
         {/* Orders and Products Section */}
@@ -112,7 +111,7 @@ export default function Dashboard() {
           ) : (
             <>
               <BestSellingProducts />
-              <ActiveDeliveries deliveries={dashboardData?.recentOrders} />
+              <ActiveDeliveries deliveries={recentOrders?.orders || []} />
             </>
           )}
         </div>
