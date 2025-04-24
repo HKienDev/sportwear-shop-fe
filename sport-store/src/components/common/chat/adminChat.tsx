@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
+
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { 
   Send, Trash2, Search, User, Users, MessageSquare, Bell, MoreHorizontal, Smile, Paperclip, Palette
 } from "lucide-react";
-
-const socket = io("http://localhost:4000");
 
 // Khai báo kiểu dữ liệu cho Conversation
 interface Conversation {
@@ -21,7 +20,107 @@ interface Message {
   sender: string;
   text: string;
   time?: string;
+  senderId?: string;
+  senderName?: string;
+  timestamp?: string;
 }
+
+interface ServerMessage {
+  senderId: string;
+  senderName?: string;
+  text: string;
+  timestamp?: string;
+}
+
+// Định nghĩa interface cho thông tin người dùng
+interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Tạo hook để quản lý thông tin người dùng
+const useUserInfo = () => {
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  useEffect(() => {
+    // Lấy thông tin người dùng từ localStorage
+    const storedUserInfo = localStorage.getItem("userInfo");
+    if (storedUserInfo) {
+      try {
+        setUserInfo(JSON.parse(storedUserInfo));
+      } catch (error) {
+        console.error("Error parsing user info:", error);
+      }
+    }
+  }, []);
+
+  return { userInfo, setUserInfo };
+};
+
+// Tạo hook để quản lý kết nối socket
+const useSocketConnection = () => {
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
+  const reconnectInterval = 3000; // 3 giây
+
+  useEffect(() => {
+    const connectSocket = () => {
+      if (socketRef.current?.connected) return;
+
+      const socket = io("http://localhost:4000", {
+        reconnection: true,
+        reconnectionAttempts: maxReconnectAttempts,
+        reconnectionDelay: reconnectInterval,
+        timeout: 10000,
+      });
+
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+        setIsConnected(true);
+        reconnectAttempts.current = 0;
+        
+        // Xác định danh tính admin
+        socket.emit("identifyUser", { isAdmin: true, userName: "Admin" });
+        console.log("Sent identifyUser event for admin");
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected");
+        setIsConnected(false);
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+        setIsConnected(false);
+        
+        // Thử kết nối lại nếu chưa vượt quá số lần thử
+        if (reconnectAttempts.current < maxReconnectAttempts) {
+          reconnectAttempts.current++;
+          setTimeout(connectSocket, reconnectInterval);
+        }
+      });
+
+      socketRef.current = socket;
+    };
+
+    // Kiểm tra xem đã đăng nhập chưa
+    const isLoggedIn = localStorage.getItem("adminLoggedIn") === "true";
+    if (isLoggedIn) {
+      connectSocket();
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  return { socket: socketRef.current, isConnected };
+};
 
 export default function AdminChat() {
   const [message, setMessage] = useState("");
@@ -32,43 +131,35 @@ export default function AdminChat() {
   const [view, setView] = useState("all"); // 'all', 'online', 'unread'
   const [theme, setTheme] = useState("blue"); // 'blue', 'purple', 'green'
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  
+  // Sử dụng hook useSocketConnection
+  const { socket, isConnected } = useSocketConnection();
 
-  // Kiểm tra kết nối socket
+  // Lưu trạng thái đăng nhập khi component mount
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-      
-      // Xác định danh tính admin
-      socket.emit("identifyUser", { isAdmin: true, userName: "Admin" });
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("connect_error");
-    };
+    localStorage.setItem("adminLoggedIn", "true");
   }, []);
 
   // Load dữ liệu từ localStorage khi component được mount
   useEffect(() => {
-    const savedConversations = localStorage.getItem("conversations");
-    const savedMessages = localStorage.getItem("messages");
-    const savedTheme = localStorage.getItem("theme");
+    const savedConversations = localStorage.getItem("adminConversations");
+    const savedMessages = localStorage.getItem("adminMessages");
+    const savedTheme = localStorage.getItem("adminTheme");
 
     if (savedConversations) {
-      setConversations(JSON.parse(savedConversations));
+      try {
+        setConversations(JSON.parse(savedConversations));
+      } catch (error) {
+        console.error("Error parsing conversations:", error);
+      }
     }
 
     if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (error) {
+        console.error("Error parsing messages:", error);
+      }
     }
 
     if (savedTheme) {
@@ -78,18 +169,96 @@ export default function AdminChat() {
 
   // Lưu dữ liệu vào localStorage khi conversations, messages hoặc theme thay đổi
   useEffect(() => {
-    localStorage.setItem("conversations", JSON.stringify(conversations));
-    localStorage.setItem("messages", JSON.stringify(messages));
-    localStorage.setItem("theme", theme);
+    localStorage.setItem("adminConversations", JSON.stringify(conversations));
+    localStorage.setItem("adminMessages", JSON.stringify(messages));
+    localStorage.setItem("adminTheme", theme);
   }, [conversations, messages, theme]);
 
+  // Yêu cầu lịch sử tin nhắn khi chọn user và socket đã kết nối
   useEffect(() => {
+    if (selectedUser && socket && isConnected) {
+      socket.emit("requestMessageHistory", { userId: selectedUser.id });
+      console.log(`Requested message history for user ${selectedUser.id}`);
+    }
+  }, [selectedUser, socket, isConnected]);
+
+  // Nhận lịch sử tin nhắn từ BE
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("messageHistory", (history: ServerMessage[]) => {
+      console.log("Received message history:", history);
+      
+      if (selectedUser?.id) {
+        // Chuyển đổi định dạng tin nhắn từ BE sang định dạng FE
+        const formattedHistory = history.map((msg: ServerMessage) => {
+          // Lấy thông tin người dùng từ localStorage nếu có
+          let senderName = msg.senderName;
+          if (msg.senderId !== 'admin') {
+            const userInfoStr = localStorage.getItem("userInfo");
+            if (userInfoStr) {
+              try {
+                const userInfo = JSON.parse(userInfoStr);
+                if (userInfo.id === msg.senderId) {
+                  senderName = userInfo.name;
+                }
+              } catch (error) {
+                console.error("Error parsing user info:", error);
+              }
+            }
+          }
+          
+          return {
+            sender: senderName || (msg.senderId === 'admin' ? 'Admin' : 'User'),
+            text: msg.text,
+            time: msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }) : undefined,
+            senderId: msg.senderId,
+            senderName: senderName,
+            timestamp: msg.timestamp
+          };
+        });
+        
+        setMessages((prev) => ({
+          ...prev,
+          [selectedUser.id]: formattedHistory,
+        }));
+      }
+    });
+
+    return () => {
+      socket.off("messageHistory");
+    };
+  }, [selectedUser, socket]);
+
+  // Nhận tin nhắn từ user
+  useEffect(() => {
+    if (!socket) return;
+
     socket.on("receiveMessage", (msg) => {
       console.log("Received message:", msg);
       
+      // Lấy thông tin người dùng từ localStorage nếu có
+      let senderName = msg.senderName;
+      if (msg.senderId !== 'admin') {
+        const userInfoStr = localStorage.getItem("userInfo");
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            if (userInfo.id === msg.senderId) {
+              senderName = userInfo.name;
+            }
+          } catch (error) {
+            console.error("Error parsing user info:", error);
+          }
+        }
+      }
+      
       // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
       const messageExists = messages[msg.senderId]?.some(
-        (m) => m.text === msg.text && m.sender === msg.senderName
+        (m) => m.text === msg.text && m.sender === senderName
       );
       
       if (!messageExists) {
@@ -111,7 +280,7 @@ export default function AdminChat() {
           // Thêm người dùng mới vào danh sách cuộc trò chuyện
           const newUser = {
             id: msg.senderId,
-            name: msg.senderName || "Unknown",
+            name: senderName || "Unknown",
             lastMessage: msg.text,
             online: true,
             unread: 1,
@@ -140,9 +309,12 @@ export default function AdminChat() {
             newMessages[msg.senderId] = [];
           }
           newMessages[msg.senderId].push({ 
-            sender: msg.senderName || "User", 
+            sender: senderName || "User", 
             text: msg.text, 
-            time: messageTime 
+            time: messageTime,
+            senderId: msg.senderId,
+            senderName: senderName,
+            timestamp: msg.timestamp
           });
           return newMessages;
         });
@@ -152,10 +324,38 @@ export default function AdminChat() {
     return () => {
       socket.off("receiveMessage");
     };
-  }, [selectedUser, conversations, messages]);
+  }, [selectedUser, conversations, messages, socket]);
+
+  // Lắng nghe sự kiện đăng xuất của user
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("userLogout", (userId: string) => {
+      console.log(`User ${userId} logged out`);
+      
+      // Xóa tin nhắn của user đã đăng xuất
+      setMessages((prev) => {
+        const newMessages = { ...prev };
+        delete newMessages[userId];
+        return newMessages;
+      });
+      
+      // Xóa user khỏi danh sách cuộc trò chuyện
+      setConversations((prev) => prev.filter((conv) => conv.id !== userId));
+      
+      // Nếu user đang được chọn, bỏ chọn
+      if (selectedUser?.id === userId) {
+        setSelectedUser(null);
+      }
+    });
+
+    return () => {
+      socket.off("userLogout");
+    };
+  }, [socket, selectedUser]);
 
   const sendMessage = () => {
-    if (!message.trim() || !selectedUser) return;
+    if (!message.trim() || !selectedUser || !socket || !isConnected) return;
 
     // Format timestamp
     const now = new Date();
@@ -179,7 +379,10 @@ export default function AdminChat() {
       newMessages[selectedUser.id].push({ 
         sender: "Admin", 
         text: message, 
-        time 
+        time,
+        senderId: 'admin',
+        senderName: 'Admin',
+        timestamp: now.toISOString()
       });
       return newMessages;
     });
@@ -194,7 +397,7 @@ export default function AdminChat() {
     setMessage("");
   };
 
-  // Thêm hàm để xóa tin nhắn
+  // Xóa cuộc trò chuyện
   const deleteConversation = (userId: string) => {
     setConversations((prev) => prev.filter((conv) => conv.id !== userId));
     setMessages((prev) => {
@@ -207,23 +410,25 @@ export default function AdminChat() {
     }
   };
 
+  // Lọc danh sách cuộc trò chuyện
   const filteredConversations = conversations.filter((conv) => {
     if (!conv || typeof conv.name !== "string") return false;
-    
+
     // Filter by search
-    const matchesSearch = conv.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesSearch =
+      conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+
     // Filter by view type
     if (view === "online" && !conv.online) return false;
     if (view === "unread" && conv.unread === 0) return false;
-    
+
     return matchesSearch;
   });
 
-  // Calculate some stats
+  // Tính toán số liệu thống kê
   const totalUnread = conversations.reduce((sum, conv) => sum + conv.unread, 0);
-  const onlineUsers = conversations.filter(conv => conv.online).length;
+  const onlineUsers = conversations.filter((conv) => conv.online).length;
 
   // Theme color configuration
   const themeColors = {
@@ -286,6 +491,12 @@ export default function AdminChat() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Connection status */}
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+            </div>
+            
             {/* Theme selector dropdown */}
             <div className="relative">
               <button 
@@ -561,9 +772,9 @@ export default function AdminChat() {
                   </div>
                   <button
                     onClick={sendMessage}
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || !isConnected}
                     className={`p-3 rounded-xl ${
-                      message.trim() ? `${colors.primary} hover:opacity-90` : "bg-gray-200 cursor-not-allowed"
+                      message.trim() && isConnected ? `${colors.primary} hover:opacity-90` : "bg-gray-200 cursor-not-allowed"
                     } transition duration-150 shadow-md`}
                   >
                     <Send size={18} className="text-white" />

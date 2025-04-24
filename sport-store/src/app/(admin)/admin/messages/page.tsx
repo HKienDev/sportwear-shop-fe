@@ -1,9 +1,9 @@
-import Chat from "@/components/common/chat/adminChat";
+import AdminChat from "@/components/common/chat/adminChat";
 
 export default function Page() {
   return (
-    <div>
-      <Chat />
+    <div className="h-screen">
+      <AdminChat />
     </div>
   );
 }

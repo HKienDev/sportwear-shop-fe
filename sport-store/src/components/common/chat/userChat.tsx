@@ -24,6 +24,14 @@ export default function UserChat() {
       
       // Xác định danh tính với server
       socket.emit("identifyUser", { userId, userName, isAdmin: false });
+      console.log("Sent identifyUser event for user:", { userId, userName });
+    });
+
+    socket.on("identified", (data) => {
+      console.log("Identification response:", data);
+      if (data.status === 'success' && data.role === 'user') {
+        console.log("User successfully identified with socket ID:", data.socketId);
+      }
     });
 
     socket.on("disconnect", () => {
@@ -36,6 +44,7 @@ export default function UserChat() {
 
     return () => {
       socket.off("connect");
+      socket.off("identified");
       socket.off("disconnect");
       socket.off("connect_error");
     };
