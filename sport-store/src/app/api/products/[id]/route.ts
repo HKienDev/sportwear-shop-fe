@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     // Đảm bảo params.id được xử lý đúng cách
-    const id = params.id;
+    const id = params?.id;
     
     if (!id) {
       return NextResponse.json(
@@ -26,8 +26,8 @@ export async function GET(
     // Kiểm tra xem id có phải là SKU không (bắt đầu bằng VJUSPORTPRODUCT-)
     const isSku = id.startsWith('VJUSPORTPRODUCT-');
     const apiUrl = isSku 
-      ? `${API_URL}/products/sku/${id}`
-      : `${API_URL}/products/${id}`;
+      ? `${API_URL}/api/products/sku/${id}`
+      : `${API_URL}/api/products/${id}`;
     
     console.log(`URL: ${apiUrl}`);
     
@@ -50,66 +50,23 @@ export async function GET(
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Dữ liệu trả về không hợp lệ',
-          error: 'Response không phải là JSON'
+          message: 'Lỗi định dạng dữ liệu từ server' 
         },
         { status: 500 }
       );
     }
-    
-    // Lấy dữ liệu từ response
+
     const data = await response.json();
     console.log('Dữ liệu từ BE:', data);
-    
-    // Kiểm tra lỗi 401
-    if (response.status === 401) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Không có quyền truy cập. Vui lòng đăng nhập để xem thông tin sản phẩm.',
-          error: data
-        },
-        { status: 401 }
-      );
-    }
-    
-    // Kiểm tra lỗi 404
-    if (response.status === 404) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Không tìm thấy sản phẩm với ID này',
-          error: data
-        },
-        { status: 404 }
-      );
-    }
-    
-    // Kiểm tra cấu trúc dữ liệu
-    if (!data || !data.success || !data.data || !data.data.product) {
-      console.error('Cấu trúc dữ liệu không hợp lệ:', data);
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Dữ liệu sản phẩm không hợp lệ',
-          error: 'Invalid data structure'
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Trả về dữ liệu với cấu trúc chuẩn
-    return NextResponse.json({
-      success: true,
-      data: data.data.product
-    });
+
+    // Trả về response từ BE
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Lỗi khi gọi API BE:', error);
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Không thể tải thông tin sản phẩm',
-        error: error instanceof Error ? error.message : 'Đã xảy ra lỗi'
+        message: 'Lỗi server' 
       },
       { status: 500 }
     );
