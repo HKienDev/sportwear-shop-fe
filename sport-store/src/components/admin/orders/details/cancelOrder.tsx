@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Order } from "@/types/order";
+import { Order, OrderStatus } from "@/types/order";
 
 interface OrderItem {
   product: {
@@ -95,7 +95,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
           productId: item.product._id,
           quantity: item.quantity
         })),
-        status: "cancelled",
+        status: OrderStatus.CANCELLED,
         updatedBy: userData._id,
         reason: "Hủy bởi admin",
         restoreStock: true // Thêm flag để server biết cần hoàn lại stock
@@ -117,7 +117,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
       
       // Cập nhật trạng thái đơn hàng
       if (onStatusUpdate) {
-        onStatusUpdate(orderId, "cancelled");
+        onStatusUpdate(orderId, OrderStatus.CANCELLED);
       }
 
       // Đóng dialog
@@ -141,37 +141,37 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   };
 
   // Kiểm tra xem đơn hàng có thể hủy không
-  if (status === "cancelled" || status === "delivered") {
+  if (status === OrderStatus.CANCELLED || status === OrderStatus.DELIVERED) {
     return null;
   }
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button 
-          variant="destructive" 
-          disabled={isLoading || isRefreshing || isDisabled}
-          className="bg-red-500 hover:bg-red-600"
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={isDisabled || isLoading || isRefreshing}
+          className="w-full"
         >
-          {isLoading ? "Đang xử lý..." : "Hủy đơn hàng"}
+          {isLoading ? "Đang hủy..." : "Hủy đơn hàng"}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
           <AlertDialogDescription>
-            Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể
-            hoàn tác và số lượng sản phẩm sẽ được hoàn lại vào kho.
+            Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này sẽ:
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>Hoàn lại số lượng sản phẩm vào kho</li>
+              <li>Không thể hoàn tác sau khi hủy</li>
+            </ul>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Không</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={handleCancelOrder}
-            className="bg-red-500 hover:bg-red-600"
-            disabled={isLoading || isRefreshing || isDisabled}
-          >
-            {isLoading ? "Đang xử lý..." : "Có, hủy đơn hàng"}
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={handleCancelOrder} className="bg-red-600 hover:bg-red-700">
+            Xác nhận hủy
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,28 +1,11 @@
 import apiClient from "@/lib/api";
 import { Customer } from "@/types/customer";
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-interface CustomerResponse {
-  customers: Customer[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 export const customerService = {
   // Lấy danh sách khách hàng
   getCustomers: async (page: number = 1, limit: number = 10) => {
     try {
-      const response = await apiClient.get<Customer[]>(
-        `/admin/users?page=${page}&limit=${limit}`
-      );
-      // Chuyển đổi response thành định dạng CustomerResponse
+      const response = await apiClient.get(`/admin/users?page=${page}&limit=${limit}`);
       return {
         success: true,
         message: "Lấy danh sách khách hàng thành công",
@@ -43,9 +26,7 @@ export const customerService = {
   // Lấy thông tin chi tiết khách hàng
   getCustomerById: async (id: string) => {
     try {
-      const response = await apiClient.get<Customer>(
-        `/admin/users/${id}`
-      );
+      const response = await apiClient.get(`/admin/users/${id}`);
       return {
         success: true,
         message: "Lấy thông tin khách hàng thành công",
@@ -60,10 +41,7 @@ export const customerService = {
   // Tạo khách hàng mới
   createCustomer: async (customerData: Partial<Customer>) => {
     try {
-      const response = await apiClient.post<Customer>(
-        "/admin/users",
-        customerData
-      );
+      const response = await apiClient.post("/admin/users", customerData);
       return {
         success: true,
         message: "Tạo khách hàng thành công",
@@ -78,10 +56,7 @@ export const customerService = {
   // Cập nhật thông tin khách hàng
   updateCustomer: async (id: string, customerData: Partial<Customer>) => {
     try {
-      const response = await apiClient.put<Customer>(
-        `/admin/users/${id}`,
-        customerData
-      );
+      const response = await apiClient.put(`/admin/users/${id}`, customerData);
       return {
         success: true,
         message: "Cập nhật thông tin khách hàng thành công",
@@ -96,9 +71,7 @@ export const customerService = {
   // Xóa khách hàng
   deleteCustomer: async (id: string) => {
     try {
-      const response = await apiClient.delete<Customer>(
-        `/admin/users/${id}`
-      );
+      const response = await apiClient.delete(`/admin/users/${id}`);
       return {
         success: true,
         message: "Xóa khách hàng thành công",
@@ -113,10 +86,7 @@ export const customerService = {
   // Xóa nhiều khách hàng
   deleteManyCustomers: async (ids: string[]) => {
     try {
-      const response = await apiClient.delete<Customer[]>(
-        "/admin/users/bulk",
-        { data: { ids } }
-      );
+      const response = await apiClient.delete("/admin/users/bulk", { data: { ids } });
       return {
         success: true,
         message: "Xóa nhiều khách hàng thành công",
@@ -131,9 +101,7 @@ export const customerService = {
   // Tìm kiếm khách hàng
   searchCustomers: async (query: string, page: number = 1, limit: number = 10) => {
     try {
-      const response = await apiClient.get<Customer[]>(
-        `/admin/users/search?q=${query}&page=${page}&limit=${limit}`
-      );
+      const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
       return {
         success: true,
         message: "Tìm kiếm khách hàng thành công",
@@ -149,5 +117,5 @@ export const customerService = {
       console.error("Error searching customers:", error);
       throw error;
     }
-  },
+  }
 }; 

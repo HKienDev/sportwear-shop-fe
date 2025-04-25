@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from '../productCard/page';
 import { Product } from '@/types/product';
-import productService from '@/services/productService';
+import * as productService from '@/services/productService';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);

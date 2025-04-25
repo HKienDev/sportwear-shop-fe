@@ -36,7 +36,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
         
         if (response.success && response.data) {
           if ('coupon' in response.data) {
-            setCoupon(response.data.coupon);
+            setCoupon(response.data.coupon as Coupon);
           } else {
             setCoupon(response.data as Coupon);
           }
@@ -102,7 +102,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
       if (response.success && response.data) {
         toast.success("Tạm dừng mã giảm giá thành công");
         if ('coupon' in response.data) {
-          setCoupon(response.data.coupon);
+          setCoupon(response.data.coupon as Coupon);
         } else {
           setCoupon(response.data as Coupon);
         }
@@ -127,7 +127,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
       if (response.success && response.data) {
         toast.success("Kích hoạt mã giảm giá thành công");
         if ('coupon' in response.data) {
-          setCoupon(response.data.coupon);
+          setCoupon(response.data.coupon as Coupon);
         } else {
           setCoupon(response.data as Coupon);
         }
@@ -171,14 +171,12 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Hoạt động":
+      case "active":
         return <Badge variant="success">Hoạt động</Badge>;
-      case "Tạm Dừng":
+      case "inactive":
         return <Badge variant="destructive">Tạm dừng</Badge>;
-      case "Hết hạn":
+      case "expired":
         return <Badge variant="secondary">Hết hạn</Badge>;
-      case "Sắp diễn ra":
-        return <Badge variant="outline">Sắp diễn ra</Badge>;
       default:
         return <Badge variant="default">{status}</Badge>;
     }
@@ -217,7 +215,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
             )}
             Xóa
           </Button>
-          {coupon.status === "Hoạt động" && (
+          {coupon.status === "active" && (
             <Button
               variant="outline"
               onClick={handlePause}
@@ -232,7 +230,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
               Tạm dừng
             </Button>
           )}
-          {coupon.status === "Tạm Dừng" && (
+          {coupon.status === "inactive" && (
             <Button
               variant="outline"
               onClick={handleActivate}
@@ -354,7 +352,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
                   </div>
                 </div>
 
-                {coupon.status === "Sắp diễn ra" && (
+                {new Date(coupon.startDate) > new Date() && (
                   <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-100">
                     <div className="flex items-center gap-2 text-blue-700">
                       <Clock className="h-5 w-5" />
@@ -363,7 +361,7 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
                   </div>
                 )}
 
-                {coupon.status === "Hết hạn" && (
+                {coupon.status === "expired" && (
                   <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-100">
                     <div className="flex items-center gap-2 text-gray-700">
                       <Clock className="h-5 w-5" />

@@ -1,22 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Order } from "@/types/order";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Package, Clock, CheckCircle2, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
+import { Order } from "@/types/base";
 
 interface OrderListProps {
   orders: Order[];

@@ -28,19 +28,17 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div>
           <p className="text-gray-600">Danh mục:</p>
           <p className="font-medium">
-            {typeof product.category === 'object' && product.category !== null
-              ? product.category.name
-              : product.category || 'Chưa phân loại'}
+            {product.categoryId || 'Chưa phân loại'}
           </p>
         </div>
         
         <div>
           <p className="text-gray-600">Giá:</p>
           <p className="font-medium">
-            {product.discountPrice ? (
-              <span className="text-red-600">{product.discountPrice.toLocaleString()}đ</span>
+            {product.salePrice < product.originalPrice ? (
+              <span className="text-red-600">{product.salePrice.toLocaleString()}đ</span>
             ) : (
-              <span>{product.price.toLocaleString()}đ</span>
+              <span>{product.originalPrice.toLocaleString()}đ</span>
             )}
           </p>
         </div>

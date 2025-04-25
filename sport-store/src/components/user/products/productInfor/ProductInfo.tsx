@@ -18,7 +18,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   const discountPercentage = calculateDiscountPercentage(product.originalPrice, product.salePrice);
-  const categoryDisplay = getCategoryDisplay(product.category);
+  const categoryDisplay = getCategoryDisplay(product.categoryId);
   const brandDisplay = getBrandDisplay(product.brand);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CategoryForm from "@/components/admin/categories/edit/CategoryForm";
 import CategoryInfo from "@/components/admin/categories/edit/CategoryInfo";

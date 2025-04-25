@@ -18,7 +18,7 @@ export const useLogin = () => {
     try {
       setLoading(true);
       setError(null);
-      await login(data);
+      await login(data.email, data.password);
       toast({
         title: SUCCESS_MESSAGES.LOGIN_SUCCESS,
         description: "Chào mừng bạn quay trở lại!",

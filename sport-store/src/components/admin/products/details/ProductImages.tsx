@@ -7,14 +7,9 @@ interface ProductImagesProps {
 }
 
 export default function ProductImages({ product }: ProductImagesProps) {
-  // Xử lý cả hai trường hợp images là mảng hoặc object
-  const mainImage = Array.isArray(product.images) 
-    ? product.images[0] || '' 
-    : product.images?.main || '';
-  
-  const subImages = Array.isArray(product.images) 
-    ? product.images.slice(1) 
-    : product.images?.sub || [];
+  // Sử dụng mainImage và subImages từ product
+  const mainImage = product.mainImage || '';
+  const subImages = product.subImages || [];
   
   const [selectedImage, setSelectedImage] = useState(mainImage);
 
@@ -30,57 +25,54 @@ export default function ProductImages({ product }: ProductImagesProps) {
               src={selectedImage}
               alt={product.name}
               fill
-              className="object-cover rounded-lg"
-              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain"
             />
           ) : (
-            <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-              <p className="text-gray-400">Không có ảnh</p>
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+              Không có hình ảnh
             </div>
           )}
         </div>
-
-        {/* Thumbnail ảnh phụ */}
-        <div className="grid grid-cols-4 gap-2">
-          {/* Ảnh chính */}
-          <button
-            onClick={() => setSelectedImage(mainImage)}
-            className={`relative aspect-square rounded-lg overflow-hidden ${
-              selectedImage === mainImage ? 'ring-2 ring-blue-500' : ''
+        
+        {/* Danh sách ảnh phụ */}
+        <div className="grid grid-cols-2 gap-2">
+          {/* Hiển thị ảnh chính trong danh sách ảnh phụ */}
+          <div 
+            className={`relative aspect-square cursor-pointer border-2 ${
+              selectedImage === mainImage ? 'border-blue-500' : 'border-gray-200'
             }`}
+            onClick={() => setSelectedImage(mainImage)}
           >
             {mainImage ? (
               <Image
                 src={mainImage}
-                alt="Ảnh chính"
+                alt={`${product.name} - Ảnh chính`}
                 fill
-                className="object-cover"
-                sizes="25vw"
+                className="object-contain"
               />
             ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                <p className="text-gray-400 text-xs">Ảnh chính</p>
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs">
+                Không có ảnh
               </div>
             )}
-          </button>
-
-          {/* Ảnh phụ */}
+          </div>
+          
+          {/* Hiển thị các ảnh phụ */}
           {subImages.map((image, index) => (
-            <button
+            <div 
               key={index}
-              onClick={() => setSelectedImage(image)}
-              className={`relative aspect-square rounded-lg overflow-hidden ${
-                selectedImage === image ? 'ring-2 ring-blue-500' : ''
+              className={`relative aspect-square cursor-pointer border-2 ${
+                selectedImage === image ? 'border-blue-500' : 'border-gray-200'
               }`}
+              onClick={() => setSelectedImage(image)}
             >
               <Image
                 src={image}
-                alt={`Ảnh phụ ${index + 1}`}
+                alt={`${product.name} - Ảnh ${index + 2}`}
                 fill
-                className="object-cover"
-                sizes="25vw"
+                className="object-contain"
               />
-            </button>
+            </div>
           ))}
         </div>
       </div>

@@ -69,7 +69,7 @@ export default function CouponListPage() {
         setCurrentPage(1);
     };
 
-    const handleFilter = (status: string | null) => {
+    const handleFilter = (status: string | undefined) => {
         setStatusFilter(status);
         setCurrentPage(1);
     };

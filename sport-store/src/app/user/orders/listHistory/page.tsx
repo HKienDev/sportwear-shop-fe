@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Order } from "@/types/order";
+import { Order, OrderStatus } from "@/types/order";
 
 interface ApiResponse {
   success: boolean;
@@ -59,13 +59,13 @@ export default function OrderHistoryPage() {
                     {new Date(order.createdAt).toLocaleString("vi-VN")}
                   </p>
                   <p className="text-gray-600 mt-2">
-                    {order.shippingAddress.fullName} - {order.shippingAddress.phone}
+                    {order.user?.fullname || "Không có dữ liệu"} - {order.phone}
                   </p>
                   <p className="text-gray-600">
-                    {order.shippingAddress.address.province.name}, {order.shippingAddress.address.district.name}, {order.shippingAddress.address.ward.name}
+                    {order.shippingAddress.street}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
                   </p>
                   <p className="text-gray-600">
-                    Tổng tiền: {order.totalPrice.toLocaleString()} VNĐ
+                    Tổng tiền: {order.totalAmount.toLocaleString()} VNĐ
                   </p>
                   <p className="text-gray-600">
                     Phương thức thanh toán: {order.paymentMethod}
@@ -73,16 +73,16 @@ export default function OrderHistoryPage() {
                 </div>
                 <div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                    order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    order.status === OrderStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                    order.status === OrderStatus.CONFIRMED ? 'bg-blue-100 text-blue-800' :
+                    order.status === OrderStatus.SHIPPED ? 'bg-purple-100 text-purple-800' :
+                    order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-800' :
                     'bg-red-100 text-red-800'
                   }`}>
-                    {order.status === 'pending' ? 'Chờ xác nhận' :
-                     order.status === 'processing' ? 'Đang xử lý' :
-                     order.status === 'shipped' ? 'Đang giao hàng' :
-                     order.status === 'delivered' ? 'Đã giao hàng' :
+                    {order.status === OrderStatus.PENDING ? 'Chờ xác nhận' :
+                     order.status === OrderStatus.CONFIRMED ? 'Đã xác nhận' :
+                     order.status === OrderStatus.SHIPPED ? 'Đang giao hàng' :
+                     order.status === OrderStatus.DELIVERED ? 'Đã giao hàng' :
                      'Đã hủy'}
                   </span>
                 </div>

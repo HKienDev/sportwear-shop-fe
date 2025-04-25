@@ -1,193 +1,78 @@
-import { API_URL } from '@/config/constants';
-import axios from 'axios';
-import type { 
-    BestSellingProduct,
-    RecentOrder,
-    RevenueData,
-    DashboardStats,
-    OrderStats
-} from '@/types/dashboard';
-import { TOKEN_CONFIG } from '@/config/token';
+import apiClient from "@/lib/api";
 
-const dashboardApi = axios.create({
-    baseURL: `${API_URL}/dashboard`,
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
-
-// Add request interceptor for debugging and adding token
-dashboardApi.interceptors.request.use(
-    (config) => {
-        // Lấy token từ localStorage
-        const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-        
-        // Thêm token vào header nếu có
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        
-        console.log('Dashboard Request config:', {
-            url: config.url,
-            method: config.method,
-            headers: config.headers,
-            data: config.data
-        });
-        return config;
-    },
-    (error) => {
-        console.error('Dashboard Request error:', error);
-        return Promise.reject(error);
-    }
-);
-
-// Add response interceptor for debugging
-dashboardApi.interceptors.response.use(
-    (response) => {
-        console.log('Dashboard Response:', {
-            status: response.status,
-            data: response.data,
-            headers: response.headers
-        });
-        return response;
-    },
-    (error) => {
-        console.error('Dashboard Response error:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message
-        });
-        return Promise.reject(error);
-    }
-);
-
-export interface RecentOrdersResponse {
-    orders: RecentOrder[];
-    pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalOrders: number;
-        hasMore: boolean;
-    };
-}
-
-export const getRecentOrders = async (page: number = 1, limit: number = 5): Promise<RecentOrdersResponse> => {
+export const dashboardService = {
+  // Lấy thống kê tổng quan
+  getDashboardStats: async () => {
     try {
-        const response = await dashboardApi.get('/recent-orders', {
-            params: { page, limit }
-        });
-        return response.data;
+      const response = await apiClient.get("/admin/dashboard/stats");
+      return {
+        success: true,
+        message: "Lấy thống kê tổng quan thành công",
+        data: response.data
+      };
     } catch (error) {
-        console.error('Error fetching recent orders:', error);
-        throw error;
+      console.error("Error fetching dashboard stats:", error);
+      throw error;
     }
-};
+  },
 
-export interface RevenueResponse {
-    data: RevenueData[];
-    lastUpdated: string;
-    months: number;
-}
-
-export interface BestSellingProductsResponse {
-    products: BestSellingProduct[];
-    lastUpdated: string;
-    limit: number;
-    days: number;
-}
-
-export interface DashboardStatsResponse {
-    totalOrders: number;
-    totalRevenue: number;
-    totalCustomers: number;
-    totalProducts: number;
-}
-
-export const getStats = async (): Promise<DashboardStatsResponse> => {
+  // Lấy thống kê doanh thu theo thời gian
+  getRevenueStats: async (period: "day" | "week" | "month" | "year") => {
     try {
-        const response = await dashboardApi.get('/stats');
-        return response.data;
+      const response = await apiClient.get(`/admin/dashboard/revenue?period=${period}`);
+      return {
+        success: true,
+        message: "Lấy thống kê doanh thu thành công",
+        data: response.data
+      };
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        throw error;
+      console.error("Error fetching revenue stats:", error);
+      throw error;
     }
-};
+  },
 
-export const getRevenue = async (months: number = 6): Promise<RevenueResponse> => {
+  // Lấy thống kê đơn hàng theo trạng thái
+  getOrderStats: async () => {
     try {
-        const response = await dashboardApi.get('/revenue', {
-            params: { months }
-        });
-        return response.data;
+      const response = await apiClient.get("/admin/dashboard/orders");
+      return {
+        success: true,
+        message: "Lấy thống kê đơn hàng thành công",
+        data: response.data
+      };
     } catch (error) {
-        console.error('Error fetching revenue data:', error);
-        throw error;
+      console.error("Error fetching order stats:", error);
+      throw error;
     }
-};
+  },
 
-export const getBestSellingProducts = async (limit: number = 5, days: number = 30): Promise<BestSellingProductsResponse> => {
+  // Lấy thống kê sản phẩm bán chạy
+  getTopProducts: async (limit: number = 5) => {
     try {
-        const response = await dashboardApi.get('/best-selling-products', {
-            params: { limit, days }
-        });
-        return response.data;
+      const response = await apiClient.get(`/admin/dashboard/top-products?limit=${limit}`);
+      return {
+        success: true,
+        message: "Lấy thống kê sản phẩm bán chạy thành công",
+        data: response.data
+      };
     } catch (error) {
-        console.error('Error fetching best selling products:', error);
-        throw error;
+      console.error("Error fetching top products:", error);
+      throw error;
     }
-};
+  },
 
-export interface RevenueStatsResponse {
-    _id: string;
-    total: number;
-    count: number;
-}
-
-export const getRevenueStats = async (period: 'day' | 'week' | 'month' = 'day'): Promise<RevenueStatsResponse[]> => {
+  // Lấy thống kê khách hàng mới
+  getNewCustomers: async (limit: number = 5) => {
     try {
-        const response = await dashboardApi.get('/revenue', {
-            params: { period }
-        });
-        return response.data;
+      const response = await apiClient.get(`/admin/dashboard/new-customers?limit=${limit}`);
+      return {
+        success: true,
+        message: "Lấy thống kê khách hàng mới thành công",
+        data: response.data
+      };
     } catch (error) {
-        console.error('Error fetching revenue stats:', error);
-        throw error;
+      console.error("Error fetching new customers:", error);
+      throw error;
     }
-};
-
-export interface TopProductResponse {
-    _id: string;
-    name: string;
-    totalSold: number;
-    totalRevenue: number;
-    image: string;
-}
-
-export const getTopProducts = async (limit: number = 10): Promise<TopProductResponse[]> => {
-    try {
-        const response = await dashboardApi.get('/top-products', {
-            params: { limit }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching top products:', error);
-        throw error;
-    }
-};
-
-export interface OrderStatsResponse {
-    _id: string;
-    count: number;
-    totalAmount: number;
-}
-
-export const getOrderStats = async (): Promise<OrderStatsResponse[]> => {
-    try {
-        const response = await dashboardApi.get('/order-stats');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching order stats:', error);
-        throw error;
-    }
+  }
 }; 

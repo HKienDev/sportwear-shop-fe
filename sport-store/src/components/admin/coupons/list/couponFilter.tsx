@@ -8,21 +8,21 @@ import {
 } from "@/components/ui/select";
 
 interface CouponFilterProps {
-  onFilter: (status: string | null) => void;
+  onFilter: (status: string | undefined) => void;
 }
 
 const CouponFilter: React.FC<CouponFilterProps> = ({ onFilter }) => {
   return (
     <div className="w-full max-w-xs">
-      <Select onValueChange={(value) => onFilter(value === "all" ? null : value)}>
+      <Select onValueChange={(value) => onFilter(value === "all" ? undefined : value)}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Lọc theo trạng thái" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tất cả</SelectItem>
-          <SelectItem value="Hoạt động">Hoạt động</SelectItem>
-          <SelectItem value="Tạm Dừng">Tạm dừng</SelectItem>
-          <SelectItem value="Hết hạn">Hết hạn</SelectItem>
+          <SelectItem value="active">Hoạt động</SelectItem>
+          <SelectItem value="inactive">Tạm dừng</SelectItem>
+          <SelectItem value="expired">Hết hạn</SelectItem>
         </SelectContent>
       </Select>
     </div>

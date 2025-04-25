@@ -1,6 +1,22 @@
 import type { AuthResponseData } from '@/types/auth';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { User } from 'next-auth';
+
+// Mở rộng kiểu User để thêm các thuộc tính cần thiết
+interface CustomUser extends User {
+  role?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}
+
+// Mở rộng kiểu JWT để thêm các thuộc tính cần thiết
+interface CustomJWT {
+  role?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  [key: string]: any;
+}
 
 export const setAuthData = (data: AuthResponseData) => {
     localStorage.setItem('accessToken', data.accessToken);
@@ -37,7 +53,7 @@ export const authOptions: NextAuthOptions = {
               role: data.data.role,
               accessToken: data.data.accessToken,
               refreshToken: data.data.refreshToken,
-            };
+            } as CustomUser;
           }
 
           return null;
@@ -51,17 +67,19 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
+        const customUser = user as CustomUser;
+        token.role = customUser.role;
+        token.accessToken = customUser.accessToken;
+        token.refreshToken = customUser.refreshToken;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.role = token.role;
-        session.user.accessToken = token.accessToken;
-        session.user.refreshToken = token.refreshToken;
+        const customToken = token as CustomJWT;
+        session.user.role = customToken.role as string;
+        session.user.accessToken = customToken.accessToken as string;
+        session.user.refreshToken = customToken.refreshToken as string;
       }
       return session;
     }

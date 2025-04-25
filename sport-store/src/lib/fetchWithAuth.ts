@@ -1,12 +1,14 @@
 import apiClient from './api';
 import type { ApiResponse } from '@/types/api';
+import type { AuthCheckResponse } from '@/types/auth';
 
 export const fetchWithAuth = async <T>(
     url: string,
     _options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
     try {
-        const authResponse = await apiClient.auth.checkAuth();
+        // Kiểm tra xác thực bằng cách gọi API verify-token thay vì checkAuth
+        const authResponse = await apiClient.auth.verifyToken();
         if (!authResponse.data.success) {
             throw new Error('Auth check failed');
         }

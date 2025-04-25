@@ -3,27 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/authContext";
-import { ERROR_MESSAGES } from "@/config/constants";
 
 const GoogleLoginButton: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const { loginWithGoogle } = useAuth();
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleGoogleLogin = async (response: any) => {
-    try {
-      await loginWithGoogle(response.credential);
-      router.push("/");
-    } catch (error) {
-      console.error("Google login error:", error);
-      // Xử lý lỗi đăng nhập Google
-    }
-  };
 
   if (!mounted) {
     return null;

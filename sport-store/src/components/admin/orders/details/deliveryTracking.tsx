@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
+import { OrderStatus } from "@/types/base";
 
 interface DeliveryTrackingProps {
-  status: string;
-  onChangeStatus: (status: string) => void;
+  status: OrderStatus;
+  onChangeStatus: (status: OrderStatus) => void;
   isLoading: boolean;
 }
 
@@ -14,61 +15,60 @@ export default function DeliveryTracking({
   onChangeStatus,
   isLoading,
 }: DeliveryTrackingProps) {
-  const [currentStatus, setCurrentStatus] = useState(status);
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus>(status);
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: OrderStatus) => {
     setCurrentStatus(newStatus);
     await onChangeStatus(newStatus);
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: OrderStatus) => {
     switch (status) {
-      case "pending":
+      case OrderStatus.PENDING:
         return "Chờ xác nhận";
-      case "confirmed":
+      case OrderStatus.CONFIRMED:
         return "Đơn hàng đã được xác nhận và đang chuẩn bị hàng";
-      case "shipped":
+      case OrderStatus.SHIPPED:
         return "Đơn hàng đang được vận chuyển";
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return "Đơn hàng đã được giao thành công";
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return "Đơn hàng đã bị hủy";
       default:
         return "Chờ xác nhận";
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
-      case "pending":
+      case OrderStatus.PENDING:
         return <Clock className="w-6 h-6" />;
-      case "confirmed":
+      case OrderStatus.CONFIRMED:
         return <Package className="w-6 h-6" />;
-      case "shipped":
+      case OrderStatus.SHIPPED:
         return <Truck className="w-6 h-6" />;
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return <Home className="w-6 h-6" />;
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return <Clock className="w-6 h-6" />;
       default:
         return <Clock className="w-6 h-6" />;
     }
   };
 
-  const getNextStatus = (currentStatus: string) => {
+  const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
     switch (currentStatus) {
-      case "pending":
-        return "confirmed";
-      case "confirmed":
-        return "shipped";
-      case "shipped":
-        return "delivered";
-      case "delivered":
-        return null;
-      case "cancelled":
+      case OrderStatus.PENDING:
+        return OrderStatus.CONFIRMED;
+      case OrderStatus.CONFIRMED:
+        return OrderStatus.SHIPPED;
+      case OrderStatus.SHIPPED:
+        return OrderStatus.DELIVERED;
+      case OrderStatus.DELIVERED:
+      case OrderStatus.CANCELLED:
         return null;
       default:
-        return "confirmed";
+        return OrderStatus.CONFIRMED;
     }
   };
 
@@ -95,7 +95,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                ["pending", "confirmed", "shipped", "delivered", "cancelled"].includes(currentStatus)
+                [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
                   ? "bg-blue-500"
                   : "bg-gray-300"
               }`}
@@ -108,7 +108,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                ["confirmed", "shipped", "delivered", "cancelled"].includes(currentStatus)
+                [OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
                   ? "bg-blue-500"
                   : "bg-gray-300"
               }`}
@@ -121,7 +121,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                ["shipped", "delivered", "cancelled"].includes(currentStatus)
+                [OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
                   ? "bg-blue-500"
                   : "bg-gray-300"
               }`}
@@ -134,7 +134,7 @@ export default function DeliveryTracking({
           <div className="flex flex-col items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                currentStatus === "delivered" ? "bg-blue-500" : "bg-gray-300"
+                currentStatus === OrderStatus.DELIVERED ? "bg-blue-500" : "bg-gray-300"
               }`}
             >
               <Home className="w-6 h-6 text-white" />

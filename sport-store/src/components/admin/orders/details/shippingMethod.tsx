@@ -6,16 +6,14 @@ interface ShippingMethodProps {
   method: string;
   expectedDate: string;
   courier: string;
-  trackingId: string;
   shortId: string;
-  shippingMethod?: string;
+  shippingMethod: string;
 }
 
 export default function ShippingMethod({
   method,
   expectedDate,
   courier,
-  trackingId,
   shortId,
   shippingMethod
 }: ShippingMethodProps) {
