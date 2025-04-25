@@ -26,8 +26,8 @@ export async function GET(
     // Kiểm tra xem id có phải là SKU không (bắt đầu bằng VJUSPORTPRODUCT-)
     const isSku = id.startsWith('VJUSPORTPRODUCT-');
     const apiUrl = isSku 
-      ? `${API_URL}/api/products/sku/${id}`
-      : `${API_URL}/api/products/${id}`;
+      ? `${API_URL}/products/sku/${id}`
+      : `${API_URL}/products/${id}`;
     
     console.log(`URL: ${apiUrl}`);
     
