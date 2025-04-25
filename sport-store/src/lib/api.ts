@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '@/config/constants';
 import type { 
     ApiResponse, 
@@ -33,6 +33,11 @@ import { TOKEN_CONFIG } from '@/config/token';
 // Mở rộng kiểu AxiosInstance để thêm phương thức setAuthToken
 interface CustomAxiosInstance extends AxiosInstance {
     setAuthToken: (token: string | null) => void;
+}
+
+// Mở rộng kiểu InternalAxiosRequestConfig để thêm thuộc tính _retry
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+    _retry?: boolean;
 }
 
 // Khởi tạo axiosInstance với cấu hình mặc định
@@ -122,10 +127,10 @@ const resetRefreshAttempts = () => {
 api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config as CustomAxiosRequestConfig | undefined;
         
         // Nếu lỗi 401 và chưa thử refresh
-        if (error.response?.status === 401 && !originalRequest?._retry) {
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
             if (isRefreshing) {
                 // Nếu đang refresh, thêm request vào queue
                 return new Promise((resolve, reject) => {
@@ -167,10 +172,12 @@ api.interceptors.response.use(
                     resetRefreshAttempts();
                     
                     // Thử lại request ban đầu
-                    return api(originalRequest);
+                    if (originalRequest) {
+                        return api(originalRequest);
+                    }
                 }
             } catch (refreshError) {
-                console.error('Refresh token error:', refreshError);
+                console.error('Refresh token error:', refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
                 
                 // Xóa token
                 localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -186,7 +193,7 @@ api.interceptors.response.use(
                 
                 // Reject tất cả request trong queue
                 failedQueue.forEach(({ reject }) => {
-                    reject(refreshError);
+                    reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
                 });
                 failedQueue = [];
                 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import axios from "axios";
+import { Coupon } from "@/models/coupon";
 
 export async function GET(request: Request) {
     try {
@@ -34,11 +35,11 @@ export async function GET(request: Request) {
         );
 
         return NextResponse.json(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error fetching coupons:", error);
         return NextResponse.json(
-            { message: error.response?.data?.message || "Internal Server Error" },
-            { status: error.response?.status || 500 }
+            { success: false, message: "Failed to fetch coupons" },
+            { status: 500 }
         );
     }
 } 

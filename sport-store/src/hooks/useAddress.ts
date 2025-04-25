@@ -14,6 +14,30 @@ interface UseAddressReturn {
   error: string | null;
 }
 
+// Định nghĩa các interface cho dữ liệu API
+interface ProvinceApiData {
+  code: number;
+  name: string;
+}
+
+interface DistrictApiData {
+  code: number;
+  name: string;
+}
+
+interface WardApiData {
+  code: number;
+  name: string;
+}
+
+interface ProvinceDetailApiData {
+  districts: DistrictApiData[];
+}
+
+interface DistrictDetailApiData {
+  wards: WardApiData[];
+}
+
 const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn => {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
@@ -28,7 +52,7 @@ const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn =
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         
-        const formattedProvinces = Array.isArray(data) ? data.map((p: any) => ({
+        const formattedProvinces = Array.isArray(data) ? data.map((p: ProvinceApiData) => ({
           code: p.code.toString(),
           name: p.name
         })) : [];
@@ -59,10 +83,10 @@ const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn =
 
         const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceData.code}?depth=2`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
+        const data = await res.json() as ProvinceDetailApiData;
         
         const districtsData = data && Array.isArray(data.districts) 
-          ? data.districts.map((d: any) => ({
+          ? data.districts.map((d: DistrictApiData) => ({
               code: d.code.toString(),
               name: d.name
             }))
@@ -91,10 +115,10 @@ const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn =
 
         const res = await fetch(`https://provinces.open-api.vn/api/d/${districtData.code}?depth=2`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
+        const data = await res.json() as DistrictDetailApiData;
         
         const wardsData = data && Array.isArray(data.wards)
-          ? data.wards.map((w: any) => ({
+          ? data.wards.map((w: WardApiData) => ({
               code: w.code.toString(),
               name: w.name
             }))

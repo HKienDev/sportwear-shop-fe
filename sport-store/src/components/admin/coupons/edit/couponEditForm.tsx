@@ -142,9 +142,9 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
         minimumPurchaseAmount: data.minimumPurchaseAmount,
-        // Chỉ cập nhật ngày nếu được nhập
-        ...(data.startDate && { startDate: parseDateFromInput(data.startDate).toISOString() }),
-        ...(data.endDate && { endDate: parseDateFromInput(data.endDate).toISOString() }),
+        // Đảm bảo startDate và endDate luôn là string
+        startDate: data.startDate ? parseDateFromInput(data.startDate).toISOString() : coupon.startDate,
+        endDate: data.endDate ? parseDateFromInput(data.endDate).toISOString() : coupon.endDate,
       };
 
       console.log('Submitting form with data:', formattedData);

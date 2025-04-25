@@ -18,7 +18,7 @@ export async function GET() {
 
     const response = await fetch(`${API_URL}/dashboard/stats`, {
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${session.user.accessToken}`,
       },
     });
 

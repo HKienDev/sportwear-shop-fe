@@ -1,5 +1,4 @@
 interface OrderHeaderProps {
-  orderId: string;
   shortId: string;
   customerId: string;
   lastUpdated: string;
@@ -8,7 +7,6 @@ interface OrderHeaderProps {
 }
 
 export default function OrderHeader({
-  orderId,
   shortId,
   customerId,
   lastUpdated,

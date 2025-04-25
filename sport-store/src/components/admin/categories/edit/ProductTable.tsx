@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import productService from "@/services/productService";
+import * as productService from "@/services/productService";
 
 interface ProductTableProps {
   categoryId: string;
@@ -79,7 +79,7 @@ export default function ProductTable({ categoryId }: ProductTableProps) {
           {products.map((product) => (
             <TableRow key={product._id}>
               <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{formatCurrency(product.price)}</TableCell>
+              <TableCell>{formatCurrency(product.salePrice)}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
                 <Badge variant={product.isActive ? "success" : "destructive"}>

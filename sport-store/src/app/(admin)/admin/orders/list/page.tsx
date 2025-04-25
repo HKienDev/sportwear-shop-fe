@@ -6,8 +6,7 @@ import { useAuth } from "@/context/authContext";
 import OrderListFilters from "@/components/admin/orders/list/orderListFilters";
 import OrderListTable from "@/components/admin/orders/list/orderListTable";
 import Pagination from "@/components/admin/orders/list/pagination";
-import { getStatusColor } from "@/components/admin/orders/list/orderStatusBadge";
-import { Order } from "@/types/order";
+import { Order } from "@/types/base";
 import { toast } from "react-hot-toast";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
@@ -211,7 +210,6 @@ export default function OrderListPage() {
               selectedOrders={selectedOrders}
               onToggleSelectAll={handleToggleSelectAll}
               onToggleSelectOrder={handleToggleSelectOrder}
-              getStatusColor={getStatusColor}
             />
             <Pagination
               currentPage={currentPage}

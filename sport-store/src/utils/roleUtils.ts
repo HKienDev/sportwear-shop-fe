@@ -1,7 +1,7 @@
 import type { AuthUser } from '@/types/auth';
 import type { AppRouter } from '@/types/router';
 import { checkAuth } from '@/services/authService';
-import { ApiResponse } from '@/types/base';
+import type { ApiResponse } from '@/types/api';
 
 /**
  * Kiểm tra xem user có phải là admin không

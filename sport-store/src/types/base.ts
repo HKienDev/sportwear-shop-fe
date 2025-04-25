@@ -33,7 +33,7 @@ export enum AuthStatus {
 
 export enum OrderStatus {
     PENDING = "pending",
-    PROCESSING = "processing",
+    CONFIRMED = "confirmed",
     SHIPPED = "shipped",
     DELIVERED = "delivered",
     CANCELLED = "cancelled"
@@ -132,7 +132,8 @@ export interface Order {
     user?: User;
     phone: string;
     items: OrderItem[];
-    totalAmount: number;
+    totalPrice: number;
+    totalAmount?: number;
     status: OrderStatus;
     paymentStatus: PaymentStatus;
     paymentMethod: PaymentMethod;

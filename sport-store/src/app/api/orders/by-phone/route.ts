@@ -5,7 +5,7 @@ import { TOKEN_CONFIG } from '@/config/token';
 export async function GET(request: Request) {
   try {
     // Lấy access token từ cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const accessToken = cookieStore.get(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME)?.value;
 
     if (!accessToken) {
@@ -30,14 +30,9 @@ export async function GET(request: Request) {
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
+        },
       }
     );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch orders by phone');
-    }
 
     const data = await response.json();
     return NextResponse.json(data);

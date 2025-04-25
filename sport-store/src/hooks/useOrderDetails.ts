@@ -1,8 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
+import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api';
-import { ERROR_MESSAGES } from "@/config/constants";
-import type { Order } from "@/types/order";
+import type { Order } from '@/types/base';
 
 export const useOrderDetails = (orderId: string) => {
   const [order, setOrder] = useState<Order | null>(null);
@@ -15,24 +13,26 @@ export const useOrderDetails = (orderId: string) => {
       setError(null);
       const response = await apiClient.orders.getById(orderId);
       
-      if (!response.data.success || !response.data.data) {
-        throw new Error(response.data.message || ERROR_MESSAGES.ORDER_NOT_FOUND);
+      // Đảm bảo dữ liệu trả về có đầy đủ các trường bắt buộc
+      const orderData = response.data.data;
+      if (!orderData.items?.length || !orderData.totalPrice) {
+        throw new Error('Dữ liệu đơn hàng không hợp lệ');
       }
-
-      setOrder(response.data.data);
+      
+      setOrder(orderData);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      setError(errorMessage);
-      toast.error(errorMessage);
-      console.error('Error fetching order details:', err);
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải thông tin đơn hàng');
+      setOrder(null);
     } finally {
       setLoading(false);
     }
   }, [orderId]);
 
   useEffect(() => {
-    fetchOrderDetails();
-  }, [fetchOrderDetails]);
+    if (orderId) {
+      fetchOrderDetails();
+    }
+  }, [fetchOrderDetails, orderId]);
 
   return { order, loading, error, refreshOrder: fetchOrderDetails };
 };

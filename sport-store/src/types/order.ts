@@ -1,4 +1,6 @@
-import type { User, Product } from "./base";
+import type { User, Product, OrderStatus, PaymentStatus, PaymentMethod } from "./base";
+
+export { OrderStatus, PaymentStatus, PaymentMethod } from "./base";
 
 export interface OrderItem {
   _id: string;
@@ -9,8 +11,8 @@ export interface OrderItem {
   sku: string;
   color?: string;
   size?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Order {
@@ -19,28 +21,18 @@ export interface Order {
   userId?: string;
   user?: User;
   items: OrderItem[];
-  total: number;
-  totalPrice: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
+  phone: string;
+  totalAmount: number;
+  totalPrice?: number;
+  shippingFee: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
   shippingAddress: {
-    fullName: string;
-    phone: string;
-    address: {
-      province: {
-        name: string;
-        code: string;
-      };
-      district: {
-        name: string;
-        code: string;
-      };
-      ward: {
-        name: string;
-        code: string;
-      };
-    };
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
   };
   shippingMethod: {
     method: string;
@@ -55,8 +47,8 @@ export interface Order {
     discountAmount: number;
   };
   note?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface OrderResponse {

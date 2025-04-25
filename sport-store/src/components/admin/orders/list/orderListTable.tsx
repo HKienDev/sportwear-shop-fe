@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Order } from "@/types/order";
+import { Order } from "@/types/base";
 import OrderStatusBadge from "./orderStatusBadge";
 
 interface OrderListTableProps {
@@ -55,17 +55,17 @@ const OrderListTable = React.memo(
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{order.shippingAddress?.fullName || "Không có dữ liệu"}</div>
+                    <div className="text-sm font-medium text-gray-900">{order.user?.fullname || "Không có dữ liệu"}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">
                       {order.shippingAddress
-                        ? `${order.shippingAddress.address.province.name}`
+                        ? `${order.shippingAddress.street}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`
                         : "Không có dữ liệu"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{order.totalPrice.toLocaleString()} Vnđ</div>
+                    <div className="text-sm font-medium text-gray-900">{order.items.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString()} Vnđ</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm">
