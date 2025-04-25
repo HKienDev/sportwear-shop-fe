@@ -71,13 +71,13 @@ export default function ProductDetail() {
         }
         
         // Kiểm tra cấu trúc dữ liệu
-        if (!result.success || !result.data) {
+        if (!result.success || !result.data || !result.data.product) {
           console.error('Cấu trúc dữ liệu không hợp lệ:', result);
           throw new Error('Dữ liệu sản phẩm không hợp lệ');
         }
         
         // Cập nhật state với dữ liệu sản phẩm
-        setProduct(result.data);
+        setProduct(result.data.product);
         setLoading(false);
       } catch (error) {
         console.error('Lỗi khi tải thông tin sản phẩm:', error);
