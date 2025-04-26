@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -6,42 +8,57 @@ interface PaginationProps {
 
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   return (
-    <div className="mt-4 flex items-center justify-between">
-      <div className="flex space-x-1">
-        {/* Nút quay về trang trước */}
+    <div className="flex flex-wrap justify-between items-center">
+      <div className="text-sm text-slate-600 mb-2 sm:mb-0">
+        Trang <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
+      </div>
+      <div className="flex gap-1">
         <button
-          className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:opacity-50"
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
+          className={`p-2 rounded-lg flex items-center justify-center ${
+            currentPage === 1
+              ? "text-slate-300 cursor-not-allowed bg-slate-50"
+              : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
+          }`}
         >
-          {'<'}
+          <ChevronLeft size={16} />
         </button>
-
-        {/* Hiển thị số trang */}
-        {[...Array(totalPages)].map((_, index) => {
-          const pageNumber = index + 1;
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          let pageToShow;
+          if (totalPages <= 5) {
+            pageToShow = i + 1;
+          } else if (currentPage <= 3) {
+            pageToShow = i + 1;
+          } else if (currentPage >= totalPages - 2) {
+            pageToShow = totalPages - 4 + i;
+          } else {
+            pageToShow = currentPage - 2 + i;
+          }
           return (
             <button
-              key={pageNumber}
-              className={`px-3 py-1 border rounded-md ${
-                currentPage === pageNumber 
-                  ? "bg-blue-500 text-white" 
-                  : "hover:bg-gray-100"
+              key={pageToShow}
+              onClick={() => onPageChange(pageToShow)}
+              className={`w-10 h-10 rounded-lg text-center ${
+                currentPage === pageToShow
+                  ? "bg-teal-500 text-white font-medium"
+                  : "text-slate-600 hover:bg-teal-50 bg-white border border-slate-200"
               }`}
-              onClick={() => onPageChange(pageNumber)}
             >
-              {pageNumber}
+              {pageToShow}
             </button>
           );
         })}
-
-        {/* Nút đến trang sau */}
         <button
-          className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:opacity-50"
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
+          className={`p-2 rounded-lg flex items-center justify-center ${
+            currentPage === totalPages
+              ? "text-slate-300 cursor-not-allowed bg-slate-50"
+              : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
+          }`}
         >
-          {'>'}
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>
