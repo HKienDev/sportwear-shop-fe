@@ -2,6 +2,7 @@ import { CartState } from '@/types/cart';
 import CartList from './CartList';
 import CartSummary from './CartSummary';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface CartProps {
   cart: CartState;
@@ -12,6 +13,20 @@ interface CartProps {
 
 export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) {
   const router = useRouter();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  const handleToggleSelect = (itemId: string) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const handleRemoveSelected = () => {
+    selectedItems.forEach(id => onRemoveItem(id));
+    setSelectedItems([]);
+  };
 
   if (cart.loading) {
     return (
@@ -68,14 +83,28 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium">Sản phẩm ({cart.items.length})</h2>
+            {selectedItems.length > 0 && (
+              <button
+                onClick={handleRemoveSelected}
+                className="text-sm text-red-600 hover:text-red-800 font-medium"
+              >
+                Xóa đã chọn ({selectedItems.length})
+              </button>
+            )}
+          </div>
           <CartList
             items={cart.items}
+            selectedItems={selectedItems}
             onUpdateQuantity={onUpdateQuantity}
             onRemoveItem={onRemoveItem}
+            onToggleSelect={handleToggleSelect}
           />
         </div>
         <div>
           <CartSummary 
+            items={cart.items}
             totalQuantity={cart.totalQuantity}
             cartTotal={cart.cartTotal}
             onCheckout={onCheckout}
