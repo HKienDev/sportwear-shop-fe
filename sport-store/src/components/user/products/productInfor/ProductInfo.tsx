@@ -3,8 +3,9 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/types/product";
 import { formatCurrency, calculateDiscountPercentage, getCategoryDisplay, getBrandDisplay } from '@/utils/format';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/authContext';
+import { useProductActions } from '@/hooks/useProductActions';
 
 interface ProductInfoProps {
   product: Product;
@@ -13,9 +14,11 @@ interface ProductInfoProps {
 export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  
+  const { addToCart, buyNow, toggleFavorite, isLoading } = useProductActions(product._id);
 
   const discountPercentage = calculateDiscountPercentage(product.originalPrice, product.salePrice);
   const categoryDisplay = getCategoryDisplay(product.categoryId);
@@ -25,77 +28,51 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
     setQuantity(Number(e.target.value));
   };
 
+  const handleColorSelect = (color: string): void => {
+    setSelectedColor(color);
+  };
+
+  const handleSizeSelect = (size: string): void => {
+    setSelectedSize(size);
+  };
+
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-      router.push('/auth/login');
+    if (!selectedColor || !selectedSize) {
+      toast.error("Vui lòng chọn màu sắc và kích thước");
       return;
     }
 
-    try {
-      setIsAddingToCart(true);
-      
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId: product._id,
-          quantity
-        }),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
-      }
-      
-      toast.success('Đã thêm sản phẩm vào giỏ hàng');
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error(error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng');
-    } finally {
-      setIsAddingToCart(false);
+    const cartData = {
+      sku: product.sku,
+      color: selectedColor,
+      size: selectedSize,
+      quantity
+    };
+
+    const result = await addToCart(cartData);
+    if (result.success) {
+      // Có thể thêm animation hoặc feedback khác ở đây
     }
   };
 
-  const handleToggleFavorite = async () => {
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích');
-      router.push('/auth/login');
+  const handleBuyNow = async () => {
+    if (!selectedColor || !selectedSize) {
+      toast.error("Vui lòng chọn màu sắc và kích thước");
       return;
     }
 
-    try {
-      setIsTogglingFavorite(true);
-      
-      const response = await fetch('/api/favorites/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId: product._id
-        }),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Không thể thêm sản phẩm vào danh sách yêu thích');
-      }
-      
-      toast.success('Đã thêm sản phẩm vào danh sách yêu thích');
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error(error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào danh sách yêu thích');
-    } finally {
-      setIsTogglingFavorite(false);
-    }
+    const cartData = {
+      sku: product.sku,
+      color: selectedColor,
+      size: selectedSize,
+      quantity
+    };
+
+    await buyNow(cartData);
+  };
+
+  const handleToggleFavorite = async () => {
+    await toggleFavorite();
   };
 
   return (
@@ -152,7 +129,12 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             {product.colors.map((color: string) => (
               <button
                 key={color}
-                className="px-4 py-2 border border-gray-300 rounded-full hover:border-purple-500 hover:text-purple-600"
+                onClick={() => handleColorSelect(color)}
+                className={`px-4 py-2 border rounded-full transition-colors
+                  ${selectedColor === color 
+                    ? 'border-red-600 bg-red-50 text-red-600' 
+                    : 'border-gray-300 hover:border-gray-400 text-gray-900'
+                  }`}
               >
                 {color}
               </button>
@@ -169,7 +151,12 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             {product.sizes.map((size: string) => (
               <button
                 key={size}
-                className="px-4 py-2 border border-gray-300 rounded-full hover:border-purple-500 hover:text-purple-600"
+                onClick={() => handleSizeSelect(size)}
+                className={`px-4 py-2 border rounded-full transition-colors
+                  ${selectedSize === size 
+                    ? 'border-red-600 bg-red-50 text-red-600' 
+                    : 'border-gray-300 hover:border-gray-400 text-gray-900'
+                  }`}
               >
                 {size}
               </button>
@@ -195,7 +182,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
               value={quantity}
               onChange={handleQuantityChange}
               className="border rounded p-2"
-              disabled={isAddingToCart}
+              disabled={isLoading}
             >
               {[...Array(10)].map((_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -212,30 +199,41 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
         {isAuthenticated ? (
           <>
             <button
-              className={`flex items-center justify-center px-6 py-3 rounded-lg transition-colors ${
-                product.stock > 0
-                  ? "bg-purple-600 text-white hover:bg-purple-700"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              disabled={product.stock === 0 || isAddingToCart}
-              onClick={handleAddToCart}
+              className={`flex-1 py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors flex items-center justify-center gap-2
+                ${(!selectedSize || !selectedColor || product.stock === 0 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!selectedSize || !selectedColor || product.stock === 0 || isLoading}
+              onClick={handleBuyNow}
             >
-              {isAddingToCart ? (
+              {isLoading ? (
                 <span className="animate-spin mr-2">⌛</span>
               ) : (
                 <ShoppingCart className="h-5 w-5 mr-2" />
               )}
-              {isAddingToCart ? "Đang thêm..." : "Thêm vào giỏ hàng"}
+              {product.stock === 0 ? 'Hết hàng' : 'Mua Ngay'}
             </button>
             <button 
-              className={`p-3 rounded-full border border-gray-300 hover:bg-gray-100`}
-              onClick={handleToggleFavorite}
-              disabled={isTogglingFavorite}
+              className={`flex-1 py-3 px-6 border border-red-600 text-red-600 hover:bg-red-50 font-medium rounded-md transition-colors flex items-center justify-center gap-2
+                ${(!selectedSize || !selectedColor || product.stock === 0 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!selectedSize || !selectedColor || product.stock === 0 || isLoading}
+              onClick={handleAddToCart}
             >
-              {isTogglingFavorite ? (
+              {isLoading ? (
+                <span className="animate-spin mr-2">⌛</span>
+              ) : (
+                <Heart className="h-5 w-5 mr-2" />
+              )}
+              {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+            </button>
+            <button
+              className={`p-3 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors
+                ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleToggleFavorite}
+              disabled={isLoading}
+            >
+              {isLoading ? (
                 <span className="animate-spin">⌛</span>
               ) : (
-                <Heart className={`h-6 w-6`} />
+                <Heart className="h-6 w-6" />
               )}
             </button>
           </>
@@ -243,7 +241,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
           <div className="text-center w-full">
             <p className="text-gray-600 mb-2">Để mua hàng hoặc thêm vào yêu thích, vui lòng đăng nhập</p>
             <button
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
               onClick={() => router.push('/auth/login')}
             >
               Đăng nhập

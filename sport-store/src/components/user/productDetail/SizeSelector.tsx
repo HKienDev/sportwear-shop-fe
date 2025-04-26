@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SizeSelectorProps {
   sizes: string[];
@@ -7,6 +7,13 @@ interface SizeSelectorProps {
 
 const SizeSelector: React.FC<SizeSelectorProps> = ({ sizes, onSizeSelect }) => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Tự động chọn size đầu tiên khi component được mount
+    if (sizes.length > 0 && !selectedSize) {
+      handleSizeSelect(sizes[0]);
+    }
+  }, [sizes]);
 
   const handleSizeSelect = (size: string): void => {
     setSelectedSize(size);

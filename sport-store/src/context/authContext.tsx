@@ -2,7 +2,8 @@
 
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TOKEN_CONFIG } from '@/config/token';
+import { TOKEN_CONFIG, getToken, setToken, clearTokens } from '@/config/token';
+import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
 import { handleRedirect } from '@/utils/navigationUtils';
 import { api } from '@/lib/api';
@@ -62,129 +63,216 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     const isAuthenticatingRef = useRef(false);
     const lastCheckRef = useRef<number>(0);
-    const retryCountRef = useRef<number>(0);
-    const maxRetries = 3;
+    const isInitializedRef = useRef(false);
 
-    const checkAuthStatus = useCallback(async () => {
+    // Debug effect để theo dõi thay đổi trạng thái
+    useEffect(() => {
+        console.log("🔄 Auth state changed:", {
+            user,
+            isAuthenticated,
+            loading,
+            hasUser: !!user,
+            userRole: user?.role
+        });
+    }, [user, isAuthenticated, loading]);
+
+    const updateAuthState = useCallback((userData: AuthUser | null, isAuth: boolean) => {
+        console.log("🔄 Updating auth state:", {
+            userData,
+            isAuth,
+            currentUser: user,
+            currentAuth: isAuthenticated
+        });
+        
+        setUser(userData);
+        setIsAuthenticated(isAuth);
+        setLoading(false);
+        
+        if (userData) {
+            setUserData(userData);
+        }
+    }, [user, isAuthenticated]);
+
+    const checkAuthStatus = useCallback(async (): Promise<void> => {
         try {
-            // Kiểm tra xem có đang xác thực không
-            if (isAuthenticatingRef.current) {
-                console.log("⏳ Đang có request xác thực đang chạy, đợi kết quả");
-                return;
-            }
-
-            // Kiểm tra thời gian từ lần check cuối
             const now = Date.now();
-            if (now - lastCheckRef.current < 5000) { // 5 giây
-                console.log("⏳ Đợi ít nhất 5 giây giữa các lần check");
+            if (lastCheckRef.current && now - lastCheckRef.current < 5000) {
                 return;
             }
 
-            isAuthenticatingRef.current = true;
-            console.log("🔍 Checking auth status...");
-            
-            // Kiểm tra token trong localStorage và cookies
-            const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-            const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+            const accessToken = getToken('access');
+            const refreshToken = getToken('refresh');
+            const storedUser = getUserData();
 
-            if (!accessToken) {
-                console.log("❌ No access token found");
-                setIsAuthenticated(false);
-                setUser(null);
+            console.log("🔍 Checking auth status:", { 
+                hasAccessToken: !!accessToken, 
+                hasRefreshToken: !!refreshToken,
+                hasStoredUser: !!storedUser,
+                storedUserData: storedUser
+            });
+
+            if (!accessToken && !refreshToken) {
+                console.log("❌ No tokens found - clearing auth state");
+                updateAuthState(null, false);
+                clearUserData();
                 return;
             }
 
-            // Gọi API kiểm tra xác thực với retry mechanism
-            let response;
-            while (retryCountRef.current < maxRetries) {
+            // Nếu có access token, verify nó
+            if (accessToken) {
                 try {
-                    // Thêm token vào header
                     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-                    
-                    response = await api.get("/auth/check");
-                    console.log("📥 Auth check response:", response);
-                    break;
-                } catch (error: unknown) {
-                    console.error("❌ Error in auth check:", error);
-                    
-                    // Nếu lỗi 401 và có refresh token, thử refresh
-                    if (error instanceof AxiosError && error.response?.status === 401 && refreshToken) {
-                        try {
-                            console.log("🔄 Attempting to refresh token...");
-                            const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
-                            
-                            if (refreshResponse.data.success) {
-                                const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
-                                
-                                // Cập nhật token mới
-                                localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
-                                localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
-                                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(userData));
-                                
-                                // Cập nhật header
-                                api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-                                
-                                // Cập nhật state
-                                setUser(userData);
-                                setIsAuthenticated(true);
-                                
-                                // Reset retry count
-                                retryCountRef.current = 0;
-                                break;
+                    const response = await api.get("/auth/check");
+                    if (response.data.success) {
+                        // Kiểm tra xem response.data.user có tồn tại không
+                        if (response.data.user) {
+                            console.log("✅ Access token is valid - updating user:", response.data.user);
+                            updateAuthState(response.data.user, true);
+                            lastCheckRef.current = now;
+                            return;
+                        } else {
+                            console.warn("⚠️ Access token is valid but user data is missing");
+                            // Nếu có storedUser, sử dụng nó
+                            if (storedUser) {
+                                console.log("ℹ️ Using stored user data instead");
+                                updateAuthState(storedUser, true);
+                                lastCheckRef.current = now;
+                                return;
                             }
-                        } catch (refreshError) {
-                            console.error("❌ Error refreshing token:", refreshError);
-                            retryCountRef.current++;
+                            // Nếu không có storedUser, xóa token và chuyển sang refresh
+                            console.log("❌ No user data available - clearing access token");
+                            delete api.defaults.headers.common['Authorization'];
+                            localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                         }
-                    } else {
-                        retryCountRef.current++;
                     }
+                } catch (error: unknown) {
+                    console.error("❌ Error verifying access token:", error);
+                    delete api.defaults.headers.common['Authorization'];
                 }
             }
 
-            // Nếu đã thử hết số lần retry mà vẫn thất bại
-            if (retryCountRef.current >= maxRetries) {
-                console.log("❌ Max retries reached, logging out");
-                setIsAuthenticated(false);
-                setUser(null);
-                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
-                delete api.defaults.headers.common['Authorization'];
+            // Nếu có refresh token, thử refresh
+            if (refreshToken) {
+                try {
+                    console.log("🔄 Attempting to refresh token...");
+                    const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
+                    
+                    if (refreshResponse.data.success) {
+                        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
+                        
+                        // Kiểm tra xem userData có tồn tại không
+                        if (userData) {
+                            console.log("✅ Token refresh successful - updating state:", userData);
+                            
+                            // Lưu token mới
+                            setToken(newAccessToken, 'access');
+                            setToken(newRefreshToken, 'refresh');
+                            
+                            // Cập nhật header cho API calls
+                            api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+                            
+                            // Cập nhật state
+                            updateAuthState(userData, true);
+                            lastCheckRef.current = now;
+                            return;
+                        } else {
+                            console.warn("⚠️ Token refresh successful but user data is missing");
+                            // Nếu có storedUser, sử dụng nó
+                            if (storedUser) {
+                                console.log("ℹ️ Using stored user data instead");
+                                updateAuthState(storedUser, true);
+                                lastCheckRef.current = now;
+                                return;
+                            }
+                            // Nếu không có storedUser, xóa token
+                            console.log("❌ No user data available - clearing tokens");
+                            clearTokens();
+                            clearUserData();
+                        }
+                    }
+                } catch (refreshError) {
+                    console.error("❌ Error refreshing token:", refreshError);
+                    delete api.defaults.headers.common['Authorization'];
+                    clearTokens();
+                    clearUserData();
+                }
             }
 
-            // Cập nhật thời gian check cuối
-            lastCheckRef.current = Date.now();
-        } finally {
-            isAuthenticatingRef.current = false;
+            // Nếu không thể verify hoặc refresh, logout
+            console.log("❌ Authentication failed - clearing state");
+            updateAuthState(null, false);
+            clearTokens();
+            clearUserData();
+        } catch (error) {
+            console.error("Error checking auth status:", error);
+            updateAuthState(null, false);
+            clearTokens();
+            clearUserData();
         }
-    }, []);
+    }, [updateAuthState]);
 
     // Khởi tạo state từ localStorage khi component mount
     useEffect(() => {
         const initializeAuth = async () => {
+            // Kiểm tra nếu đã khởi tạo rồi thì không khởi tạo lại
+            if (isInitializedRef.current) {
+                return;
+            }
+            
             try {
-                const storedUser = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                console.log("🚀 Initializing auth...");
                 
-                if (storedUser && accessToken) {
-                    const parsedUser = JSON.parse(storedUser);
-                    setUser(parsedUser);
+                // Kiểm tra token từ localStorage và cookies
+                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                const storedUser = getUserData();
+                
+                const getCookie = (name: string) => {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) return parts.pop()?.split(';').shift();
+                    return null;
+                };
+                
+                const cookieAccessToken = getCookie(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
+                const cookieRefreshToken = getCookie(TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME);
+                
+                // Ưu tiên sử dụng token từ localStorage
+                const finalAccessToken = accessToken || cookieAccessToken;
+                
+                if (finalAccessToken) {
+                    api.defaults.headers.common['Authorization'] = `Bearer ${finalAccessToken}`;
+                }
+
+                // Nếu có user data, set state
+                if (storedUser) {
+                    setUser(storedUser);
                     setIsAuthenticated(true);
-                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                }
+
+                // Chỉ gọi checkAuthStatus nếu có token hoặc user data
+                if (finalAccessToken || storedUser) {
+                    await checkAuthStatus();
+                } else {
+                    // Nếu không có token và user data, set loading = false và kết thúc
+                    setLoading(false);
                 }
                 
-                // Kiểm tra xác thực
-                await checkAuthStatus();
+                // Đồng bộ token giữa localStorage và cookies nếu cần
+                if (!accessToken && cookieAccessToken) {
+                    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, cookieAccessToken);
+                }
+                if (!localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY) && cookieRefreshToken) {
+                    localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, cookieRefreshToken);
+                }
+                
+                // Đánh dấu đã khởi tạo
+                isInitializedRef.current = true;
             } catch (error) {
                 console.error("Error initializing auth:", error);
-                // Nếu có lỗi khi khởi tạo, xóa tất cả dữ liệu auth
-                localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+                clearTokens();
+                clearUserData();
                 setUser(null);
                 setIsAuthenticated(false);
-            } finally {
                 setLoading(false);
             }
         };
@@ -225,51 +313,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return { success: false, message: "Dữ liệu đăng nhập không hợp lệ" };
             }
 
-            // Lưu tokens và user data
-            localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
-            localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
-            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+            // Lưu token
+            setToken(accessToken, 'access');
+            setToken(refreshToken, 'refresh');
 
-            // Set token vào cookie với các options phù hợp
-            document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
-            document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; max-age=604800; SameSite=Lax; Secure`;
-            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax; Secure`;
+            // Cập nhật state và storage
+            console.log("✅ Updating auth state after login:", user);
+            updateAuthState(user, true);
 
-            // Cập nhật state và headers
-            setUser(user);
-            setIsAuthenticated(true);
-            api.defaults.headers.common['Authorization'] = `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${accessToken}`;
+            // Cập nhật header cho các request tiếp theo
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-            // Kiểm tra xác thực ngay sau khi đăng nhập
-            await checkAuthStatus();
-
-            return { success: true, message: "Đăng nhập thành công" };
-        } catch (error: unknown) {
+            console.log("✅ Đăng nhập thành công:", { user, isAuthenticated: true });
+            return { success: true, message: SUCCESS_MESSAGES.LOGIN_SUCCESS };
+        } catch (error) {
             console.error("❌ Lỗi đăng nhập:", error);
-            if (error instanceof AxiosError) {
-                if (error.response) {
-                    const errorData = error.response.data;
-                    // Kiểm tra nếu có message từ server
-                    if (errorData && typeof errorData === 'object' && 'message' in errorData) {
-                        return { 
-                            success: false, 
-                            message: errorData.message || "Lỗi server"
-                        };
-                    }
-                    // Kiểm tra nếu có errors array
-                    if (errorData && typeof errorData === 'object' && 'errors' in errorData && Array.isArray(errorData.errors)) {
-                        const errorMessages = errorData.errors.map((err: { message?: string }) => err.message || JSON.stringify(err)).join(', ');
-                        return {
-                            success: false,
-                            message: errorMessages || "Lỗi server"
-                        };
-                    }
-                }
-            }
-            return { success: false, message: "Đăng nhập thất bại" };
+            setLoading(false);
+            isAuthenticatingRef.current = false;
+            return { 
+                success: false, 
+                message: error instanceof AxiosError 
+                    ? error.response?.data?.message || "Đăng nhập thất bại" 
+                    : "Đăng nhập thất bại" 
+            };
         } finally {
             isAuthenticatingRef.current = false;
-            setLoading(false);
         }
     };
 

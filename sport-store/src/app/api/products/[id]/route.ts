@@ -9,25 +9,19 @@ export async function GET(
 ) {
   try {
     // Đảm bảo params.id được xử lý đúng cách
-    const id = params?.id;
+    const id = await Promise.resolve(params.id);
     
     if (!id) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Thiếu mã sản phẩm (ID)' 
-        },
+        { error: 'Product ID is required' },
         { status: 400 }
       );
     }
 
     console.log(`Đang gọi API BE với ID: ${id}`);
     
-    // Kiểm tra xem id có phải là SKU không (bắt đầu bằng VJUSPORTPRODUCT-)
-    const isSku = id.startsWith('VJUSPORTPRODUCT-');
-    const apiUrl = isSku 
-      ? `${API_URL}/products/sku/${id}`
-      : `${API_URL}/products/${id}`;
+    // Tạo URL API với SKU
+    const apiUrl = `${API_URL}/products/sku/${id}`;
     
     console.log(`URL: ${apiUrl}`);
     
@@ -36,12 +30,12 @@ export async function GET(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
       }
     });
     
     // Log response để debug
     console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
     
     // Kiểm tra nếu response không phải là JSON
     const contentType = response.headers.get('content-type');
@@ -55,19 +49,17 @@ export async function GET(
         { status: 500 }
       );
     }
-
+    
+    // Parse JSON response
     const data = await response.json();
-    console.log('Dữ liệu từ BE:', data);
-
+    console.log('Dữ liệu từ BE:', JSON.stringify(data, null, 2));
+    
     // Trả về response từ BE
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Lỗi khi gọi API BE:', error);
+    console.error('Error fetching product:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Lỗi server' 
-      },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import Breadcrumb from '@/components/user/productDetail/Breadcrumb';
 import ProductGallery from '@/components/user/productDetail/ProductGallery';
 import ProductRating from '@/components/user/productDetail/ProductRating';
@@ -12,6 +13,8 @@ import QuantitySelector from '@/components/user/productDetail/QuantitySelector';
 import ProductActions from '@/components/user/productDetail/ProductActions';
 import ProductBenefits from '@/components/user/productDetail/ProductBenefits';
 import ProductDescription from '@/components/user/productDetail/ProductDescription';
+import { checkAuth } from '@/services/authService';
+import apiClient from '@/lib/api';
 
 interface Product {
   _id: string;
@@ -41,6 +44,8 @@ interface Product {
 
 export default function ProductDetail() {
   const params = useParams();
+  const router = useRouter();
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
@@ -54,11 +59,16 @@ export default function ProductDetail() {
         setError(null);
         
         console.log('Đang gọi API với ID:', params.id);
-        const response = await fetch(`/api/products/${params.id}`);
+        const response = await fetch(`/api/products/${params.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
         
         // Log response để debug
         console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
         
         const result = await response.json();
         console.log('Dữ liệu nhận được:', result);
@@ -91,6 +101,10 @@ export default function ProductDetail() {
     }
   }, [params.id]);
 
+  const handleColorSelect = (color: string): void => {
+    setSelectedColor(color);
+  };
+
   const handleSizeSelect = (size: string): void => {
     setSelectedSize(size);
   };
@@ -99,14 +113,86 @@ export default function ProductDetail() {
     setQuantity(newQuantity);
   };
 
-  const handleBuyNow = () => {
-    // Xử lý logic mua ngay
-    console.log('Mua ngay', { size: selectedSize, quantity });
+  const handleAddToCart = async () => {
+    if (!product || !selectedColor || !selectedSize) {
+      toast.error("Vui lòng chọn màu sắc và kích thước");
+      return;
+    }
+
+    try {
+      // Kiểm tra đăng nhập
+      const authResponse = await checkAuth();
+      if (!authResponse.success || !authResponse.data?.user) {
+        toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+        router.push('/auth/login');
+        return;
+      }
+
+      // Thêm vào giỏ hàng
+      const response = await apiClient.cart.addToCart({
+        sku: product.sku,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity
+      });
+      
+      if (response.data.success) {
+        toast.success("Đã thêm vào giỏ hàng");
+      } else {
+        toast.error(response.data.message || "Không thể thêm vào giỏ hàng");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      // Kiểm tra nếu lỗi là do token không hợp lệ
+      if (error instanceof Error && error.message.includes("No token found")) {
+        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        router.push('/auth/login');
+        return;
+      }
+      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
+    }
   };
 
-  const handleAddToCart = () => {
-    // Xử lý logic thêm vào giỏ hàng
-    console.log('Thêm vào giỏ', { size: selectedSize, quantity });
+  const handleBuyNow = async () => {
+    if (!product || !selectedColor || !selectedSize) {
+      toast.error("Vui lòng chọn màu sắc và kích thước");
+      return;
+    }
+
+    try {
+      // Kiểm tra đăng nhập
+      const authResponse = await checkAuth();
+      if (!authResponse.success || !authResponse.data?.user) {
+        toast.error("Vui lòng đăng nhập để mua hàng");
+        router.push('/auth/login');
+        return;
+      }
+
+      // Thêm vào giỏ hàng
+      const response = await apiClient.cart.addToCart({
+        sku: product.sku,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity
+      });
+      
+      if (response.data.success) {
+        toast.success("Đã thêm sản phẩm vào giỏ hàng!");
+        // Chuyển hướng đến trang giỏ hàng
+        router.push('/user/cart');
+      } else {
+        toast.error(response.data.message || "Có lỗi xảy ra khi thêm vào giỏ hàng!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      // Kiểm tra nếu lỗi là do token không hợp lệ
+      if (error instanceof Error && error.message.includes("No token found")) {
+        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        router.push('/auth/login');
+        return;
+      }
+      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+    }
   };
 
   if (loading) {
@@ -161,6 +247,7 @@ export default function ProductDetail() {
 
           <ColorSelector 
             colors={product.colors} 
+            onColorSelect={handleColorSelect}
           />
           
           <SizeSelector 
@@ -174,7 +261,7 @@ export default function ProductDetail() {
           />
 
           <ProductActions 
-            isSizeSelected={!!selectedSize}
+            isSizeSelected={!!selectedSize && !!selectedColor}
             onBuyNow={handleBuyNow}
             onAddToCart={handleAddToCart}
             isOutOfStock={product.isOutOfStock}

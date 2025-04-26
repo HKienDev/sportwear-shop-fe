@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/types/product";
 import { getCategoryById } from "@/services/categoryService";
+import { addToCart } from "@/services/cartService";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   product: Product;
@@ -17,7 +19,7 @@ const formatCurrency = (amount: number | undefined) => {
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku } = product;
+  const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku, colors, sizes } = product;
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
 
   useEffect(() => {
@@ -41,6 +43,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     fetchCategory();
   }, [categoryId]);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn việc chuyển hướng
+    
+    if (stock === 0) {
+      toast.error("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    try {
+      // Lấy giá trị mặc định
+      const defaultColor = colors && colors.length > 0 ? colors[0] : "";
+      const defaultSize = sizes && sizes.length > 0 ? sizes[0] : "";
+      
+      const cartData = {
+        sku,
+        color: defaultColor,
+        size: defaultSize,
+        quantity: 1
+      };
+
+      const response = await addToCart(cartData);
+      
+      if (response.success) {
+        toast.success("Đã thêm sản phẩm vào giỏ hàng!");
+      } else {
+        toast.error(response.message || "Có lỗi xảy ra khi thêm vào giỏ hàng!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+    }
+  };
 
   // Xử lý hình ảnh mặc định
   const imageUrl = mainImage || "/default-image.png";
@@ -122,6 +157,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               )}
             </div>
             <button 
+              onClick={handleAddToCart}
               className={`flex items-center justify-center p-2 rounded-full transition-all duration-300 ${
                 stock === 0 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 

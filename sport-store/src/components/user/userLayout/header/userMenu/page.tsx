@@ -1,165 +1,191 @@
 "use client";
 
 import { useAuth } from "@/context/authContext";
-import Link from "next/link";
-import { LogOut, User, ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { getProfile } from "@/services/authService";
-
-interface UserProfile {
-  fullname: string;
-  email: string;
-  membershipLevel?: string;
-  totalSpent?: number;
-}
-
-const getMembershipStyle = (level?: string) => {
-  switch (level) {
-    case "Hạng Kim Cương":
-      return {
-        bg: "bg-gradient-to-r from-blue-500 to-purple-500",
-        text: "text-white",
-        hover: "hover:from-blue-600 hover:to-purple-600",
-        button: "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-      };
-    case "Hạng Bạch Kim":
-      return {
-        bg: "bg-gradient-to-r from-[#4EB09D] to-[#3A8F7F]",
-        text: "text-white",
-        hover: "hover:from-[#3A8F7F] hover:to-[#2A6F5F]",
-        button: "bg-gradient-to-r from-[#4EB09D] to-[#3A8F7F] hover:from-[#3A8F7F] hover:to-[#2A6F5F]"
-      };
-    case "Hạng Vàng":
-      return {
-        bg: "bg-gradient-to-r from-[#FFBE00] to-[#E5A800]",
-        text: "text-white",
-        hover: "hover:from-[#E5A800] hover:to-[#CC9200]",
-        button: "bg-gradient-to-r from-[#FFBE00] to-[#E5A800] hover:from-[#E5A800] hover:to-[#CC9200]"
-      };
-    case "Hạng Bạc":
-      return {
-        bg: "bg-gradient-to-r from-[#797979] to-[#5C5C5C]",
-        text: "text-white",
-        hover: "hover:from-[#5C5C5C] hover:to-[#3F3F3F]",
-        button: "bg-gradient-to-r from-[#797979] to-[#5C5C5C] hover:from-[#5C5C5C] hover:to-[#3F3F3F]"
-      };
-    case "Hạng Sắt":
-      return {
-        bg: "bg-gradient-to-r from-[#9C7F7F] to-[#7F6262]",
-        text: "text-white",
-        hover: "hover:from-[#7F6262] hover:to-[#624545]",
-        button: "bg-gradient-to-r from-[#9C7F7F] to-[#7F6262] hover:from-[#7F6262] hover:to-[#624545]"
-      };
-    default:
-      return {
-        bg: "bg-gradient-to-r from-[#9C7F7F] to-[#7F6262]",
-        text: "text-white",
-        hover: "hover:from-[#7F6262] hover:to-[#624545]",
-        button: "bg-gradient-to-r from-[#9C7F7F] to-[#7F6262] hover:from-[#7F6262] hover:to-[#624545]"
-      };
-  }
-};
+import { useRouter } from "next/navigation";
+import { LogOut, User, ShoppingBag, Heart, Settings, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
+import Image from "next/image";
+import { formatCurrency } from "@/utils/format";
 
 const UserMenu = () => {
-  const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated, checkAuthStatus } = useAuth();
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (user) {
-        try {
-          const response = await getProfile();
-          console.log("📊 UserMenu - Fetched profile:", response);
-          if (response?.data?.user) {
-            setUserProfile(response.data.user as UserProfile);
-          }
-        } catch (error) {
-          console.error("❌ UserMenu - Error fetching profile:", error);
-        }
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        await checkAuthStatus();
+      } catch (error) {
+        console.error("❌ Error checking auth status:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchProfile();
-  }, [user]);
+    initializeAuth();
+  }, [checkAuthStatus]);
 
+  // Xử lý click outside để đóng menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
+        setIsOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    setIsMenuOpen(false);
-  };
+  // Log để debug
+  console.log("🔍 UserMenu - Auth state:", {
+    user,
+    isAuthenticated,
+    isLoading,
+    hasUser: !!user,
+    userRole: user?.role
+  });
 
-  if (!user || user.role !== "user") {
-    console.log("❌ UserMenu - No user or not a user role:", user);
+  // Không hiển thị gì khi đang loading
+  if (isLoading) {
     return null;
   }
 
-  const membershipStyle = getMembershipStyle(user.membershipLevel);
+  // Nếu không có user hoặc chưa xác thực, không hiển thị menu
+  if (!user || !isAuthenticated) {
+    console.log("❌ UserMenu - No user or not authenticated");
+    return null;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Đăng xuất thành công");
+      router.push("/");
+    } catch (error) {
+      console.error("❌ Error logging out:", error);
+      toast.error("Có lỗi xảy ra khi đăng xuất");
+    }
+  };
+
+  const menuItems = [
+    {
+      label: "Tài khoản của tôi",
+      icon: <User className="w-4 h-4" />,
+      href: "/user/profile",
+    },
+    {
+      label: "Đơn hàng của tôi",
+      icon: <ShoppingBag className="w-4 h-4" />,
+      href: "/user/orders",
+    },
+    {
+      label: "Danh sách yêu thích",
+      icon: <Heart className="w-4 h-4" />,
+      href: "/user/wishlist",
+    },
+    {
+      label: "Cài đặt",
+      icon: <Settings className="w-4 h-4" />,
+      href: "/user/settings",
+    },
+  ];
 
   return (
     <div className="relative" ref={menuRef}>
       <button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg ${membershipStyle.button} ${membershipStyle.text} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 shadow-md hover:shadow-lg`}
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-3 px-3 py-2 rounded-full hover:bg-gray-100 transition-all duration-300 focus:outline-none"
       >
-        <span className="font-semibold truncate max-w-[150px]">
-          {userProfile?.fullname || user?.fullname || "User"}
-        </span>
-        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center space-x-2">
+          {user?.avatar ? (
+            <Image
+              src={user.avatar}
+              alt={user.fullname || "User"}
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
+                {user?.fullname?.charAt(0) || user?.email?.charAt(0) || "U"}
+              </span>
+            </div>
+          )}
+          <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} />
+        </div>
       </button>
 
-      {isMenuOpen && (
-        <>
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-200 ease-in-out animate-fadeIn">
-            {/* User Info Section */}
-            <div className={`px-4 py-3 border-b border-gray-100 ${membershipStyle.bg} rounded-t-2xl`}>
-              <div className="flex-1">
-                <h3 className={`text-lg font-bold ${membershipStyle.text} truncate`}>
-                  {userProfile?.fullname || user?.fullname || "User"}
-                </h3>
-                <p className="text-sm font-medium text-white/90 truncate">{user?.email}</p>
-              </div>
-              {/* Membership Level Badge */}
-              <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div className={`px-3 py-1 rounded-full text-sm font-bold bg-white/20 backdrop-blur-sm ${membershipStyle.text} flex-shrink-0`}>
-                  {user.membershipLevel || "Hạng Sắt"}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg py-2 z-50 border border-gray-100 transform transition-all duration-300 ease-out">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              {user?.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.fullname || "User"}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                  <span className="text-lg font-medium text-white">
+                    {user?.fullname?.charAt(0) || user?.email?.charAt(0) || "U"}
+                  </span>
                 </div>
-                {user.totalSpent && (
-                  <div className="text-sm font-semibold text-white/90 flex-shrink-0">
-                    Đã chi: {user.totalSpent.toLocaleString('vi-VN')}đ
-                  </div>
-                )}
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">{user?.fullname}</p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
             </div>
-
-            {/* Menu Items */}
-            <div className="py-2">
-              <Link href="/user/profile" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mx-2">
-                <User className="w-5 h-5 mr-3 text-gray-400 flex-shrink-0" />
-                <span className="truncate">Thông tin tài khoản</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors rounded-lg mx-2"
-              >
-                <LogOut className="w-5 h-5 mr-3 text-red-400 flex-shrink-0" />
-                <span className="truncate">Đăng xuất</span>
-              </button>
+            <div className="mt-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Cấp thành viên:</span>
+                <span className="font-medium text-purple-600">{user?.membershipLevel}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Tổng chi tiêu:</span>
+                <span className="font-medium text-green-600">{formatCurrency(user?.totalSpent || 0)}</span>
+              </div>
             </div>
           </div>
-        </>
+
+          <div className="py-1">
+            {menuItems.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  router.push(item.href);
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors duration-200"
+              >
+                <span className="text-gray-400">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="border-t border-gray-100 py-1">
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors duration-200"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,16 +1,46 @@
 "use client";
 
 import { useCart } from "@/context/cartContext";
+import { useAuth } from "@/context/authContext";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const ShoppingCartButton = () => {
   const { items } = useCart();
+  const { isAuthenticated, checkAuthStatus } = useAuth();
+  const router = useRouter();
   const itemCount = items.length;
+
+  const handleCartClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated) {
+      // Kiểm tra xác thực trước khi chuyển hướng
+      try {
+        await checkAuthStatus();
+        
+        if (!isAuthenticated) {
+          toast.error("Vui lòng đăng nhập để xem giỏ hàng");
+          router.push('/auth/login');
+          return;
+        }
+      } catch (error) {
+        console.error("❌ Error checking auth status:", error);
+        toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
+        return;
+      }
+    }
+    
+    // Nếu đã xác thực, chuyển hướng đến giỏ hàng
+    router.push('/user/cart');
+  };
 
   return (
     <Link
       href="/user/cart"
+      onClick={handleCartClick}
       className="group relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300"
     >
       {/* Icon giỏ hàng với hiệu ứng hover */}

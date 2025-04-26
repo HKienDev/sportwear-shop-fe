@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ColorSelectorProps {
   colors: string[];
@@ -7,6 +7,13 @@ interface ColorSelectorProps {
 
 const ColorSelector: React.FC<ColorSelectorProps> = ({ colors, onColorSelect }) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Tự động chọn màu đầu tiên khi component được mount
+    if (colors.length > 0 && !selectedColor) {
+      handleColorSelect(colors[0]);
+    }
+  }, [colors]);
 
   const handleColorSelect = (color: string): void => {
     setSelectedColor(color);

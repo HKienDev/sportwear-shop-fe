@@ -3,21 +3,87 @@
 import { useAuth } from "@/context/authContext";
 import { usePathname, useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 const AuthButtons = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated, checkAuthStatus } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname.startsWith("/auth");
+  const [isChecking, setIsChecking] = useState(true);
 
-  if (isAuthPage || user) return null;
+  // Kiểm tra trạng thái xác thực khi component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        setIsChecking(true);
+        await checkAuthStatus();
+      } catch (error) {
+        console.error("❌ Error checking auth status:", error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+    checkAuth();
+  }, [checkAuthStatus]);
 
-  const handleLogin = () => {
-    router.push('/auth/login');
+  console.log("🔍 AuthButtons - Auth state:", { 
+    user, 
+    isAuthenticated, 
+    isAuthPage,
+    hasUser: !!user,
+    userRole: user?.role,
+    isChecking
+  });
+
+  // Không hiển thị gì khi đang kiểm tra
+  if (isChecking) {
+    return null;
+  }
+
+  // Không hiển thị nút khi đã đăng nhập hoặc đang ở trang auth
+  if (isAuthPage || isAuthenticated) {
+    console.log("🔒 AuthButtons - Hiding buttons:", { isAuthPage, isAuthenticated });
+    return null;
+  }
+
+  const handleLogin = async () => {
+    try {
+      // Kiểm tra xác thực trước khi chuyển hướng
+      await checkAuthStatus();
+      
+      // Nếu đã xác thực, không cần chuyển hướng
+      if (isAuthenticated) {
+        toast.success("Bạn đã đăng nhập thành công");
+        return;
+      }
+      
+      // Nếu chưa xác thực, chuyển hướng đến trang đăng nhập
+      router.push('/auth/login');
+    } catch (error) {
+      console.error("❌ Error checking auth status:", error);
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
+    }
   };
 
-  const handleRegister = () => {
-    router.push('/auth/register');
+  const handleRegister = async () => {
+    try {
+      // Kiểm tra xác thực trước khi chuyển hướng
+      await checkAuthStatus();
+      
+      // Nếu đã xác thực, không cần chuyển hướng
+      if (isAuthenticated) {
+        toast.success("Bạn đã đăng nhập thành công");
+        return;
+      }
+      
+      // Nếu chưa xác thực, chuyển hướng đến trang đăng ký
+      router.push('/auth/register');
+    } catch (error) {
+      console.error("❌ Error checking auth status:", error);
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
+    }
   };
 
   return (
