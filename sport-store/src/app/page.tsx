@@ -2,12 +2,12 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/authContext';
 import { UserRole } from '@/types/base';
+import { useAuthState } from '@/hooks/useAuthState';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthState();
 
   useEffect(() => {
     const checkAuthAndRedirect = async () => {

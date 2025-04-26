@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productId, quantity = 1 } = body;
+    const { sku, color, size, quantity = 1 } = body;
     
     // Lấy token từ cookie của request
     const token = request.cookies.get('token')?.value;
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         'Accept': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ productId, quantity })
+      body: JSON.stringify({ sku, color, size, quantity })
     });
     
     if (!response.ok) {
