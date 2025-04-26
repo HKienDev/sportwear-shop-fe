@@ -23,11 +23,8 @@ export async function GET(
 
     console.log(`Đang gọi API BE với ID: ${id}`);
     
-    // Kiểm tra xem id có phải là SKU không (bắt đầu bằng VJUSPORTPRODUCT-)
-    const isSku = id.startsWith('VJUSPORTPRODUCT-');
-    const apiUrl = isSku 
-      ? `${API_URL}/products/sku/${id}`
-      : `${API_URL}/products/${id}`;
+    // Tạo URL API với SKU
+    const apiUrl = `${API_URL}/products/sku/${id}`;
     
     console.log(`URL: ${apiUrl}`);
     
