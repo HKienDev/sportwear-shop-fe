@@ -1,12 +1,9 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
-import ProductTable from "@/components/admin/products/list/productTable";
-import ProductSearch from "@/components/admin/products/list/productSearch";
-import DeleteButton from "@/components/admin/products/list/deleteButton";
-import ProductPagination from "@/components/admin/products/list/pagination";
+import ProductListTable from "@/components/admin/products/list/productListTable";
+import ProductListFilters from "@/components/admin/products/list/productListFilters";
 import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
 
@@ -51,18 +48,8 @@ export default function ProductListPage() {
   const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchParams, setSearchParams] = useState({
-    search: "",
-    category: "",
-    brand: "",
-    minPrice: "",
-    maxPrice: "",
-    sortBy: "createdAt",
-    sortOrder: "desc",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   // Kiểm tra xác thực khi component mount
@@ -77,31 +64,23 @@ export default function ProductListPage() {
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
-      // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Kiểm tra token có tồn tại không
       if (!token) {
         toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
         router.push('/auth/login');
         return;
       }
-
       const response = await fetch('/api/categories', {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
       });
-
       if (!response.ok) {
         throw new Error("Không thể tải danh sách danh mục");
       }
-
       const data = await response.json();
-      
       if (data.success) {
-        console.log('Categories fetched:', data.data);
         setCategories(data.data.categories || []);
       } else {
         throw new Error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
@@ -115,30 +94,16 @@ export default function ProductListPage() {
   // Fetch products
   const fetchProducts = useCallback(async () => {
     try {
-      setLoading(true);
-
-      // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Kiểm tra token có tồn tại không
       if (!token) {
         toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
         router.push('/auth/login');
         return;
       }
-
-      // Chuẩn bị query params
       const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "5",
-        ...searchParams,
+        search: searchTerm,
+        category: categoryFilter,
       });
-
-      console.log("Fetching products with params:", queryParams.toString());
-      console.log("Search param value:", searchParams.search);
-      console.log("Token:", token ? "Token exists" : "No token");
-
-      // Sử dụng API route của Next.js thay vì gọi trực tiếp đến backend
       const response = await fetch(
         `/api/products/admin?${queryParams.toString()}`,
         {
@@ -148,78 +113,25 @@ export default function ProductListPage() {
           },
         }
       );
-
-      console.log("API response status:", response.status);
-
       if (!response.ok) {
-        // Xử lý lỗi Unauthorized
         if (response.status === 401) {
           toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
           router.push('/auth/login');
           return;
         }
-        
-        // Đọc dữ liệu lỗi
-        let errorMessage = "Có lỗi xảy ra khi tải danh sách sản phẩm";
-        let errorDetails = {};
-        
-        try {
-          const text = await response.text();
-          console.error("API error response text:", text);
-          
-          if (text) {
-            try {
-              const errorData = JSON.parse(text);
-              errorMessage = errorData.message || errorMessage;
-              errorDetails = errorData.details || {};
-            } catch (e) {
-              console.error("Failed to parse error response as JSON:", e);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to read error response:", e);
-        }
-        
-        console.error("API error details:", errorDetails);
-        throw new Error(errorMessage);
+        throw new Error("Có lỗi xảy ra khi tải danh sách sản phẩm");
       }
-
-      // Đọc dữ liệu response
-      let data;
-      try {
-        const text = await response.text();
-        console.log("API response text:", text);
-        
-        if (text) {
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            console.error("Failed to parse response as JSON:", e);
-            throw new Error("Dữ liệu không hợp lệ từ máy chủ");
-          }
-        } else {
-          throw new Error("Không có dữ liệu từ máy chủ");
-        }
-      } catch (e) {
-        console.error("Failed to read response:", e);
-        throw new Error("Không thể đọc dữ liệu từ máy chủ");
-      }
-
-      console.log("Products data:", data);
-
+      const data = await response.json();
       if (data.success) {
         setProducts(data.data.products);
-        setTotalPages(data.data.pagination.totalPages);
       } else {
         throw new Error(data.message || "Có lỗi xảy ra khi tải danh sách sản phẩm");
       }
     } catch (err) {
       console.error("Error fetching products:", err);
       toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
-    } finally {
-      setLoading(false);
     }
-  }, [currentPage, searchParams, router]);
+  }, [searchTerm, categoryFilter, router]);
 
   useEffect(() => {
     fetchCategories();
@@ -228,77 +140,66 @@ export default function ProductListPage() {
 
   // Handlers
   const handleSearchChange = useCallback((value: string) => {
-    setSearchParams(prev => ({ ...prev, search: value }));
-    setCurrentPage(1);
+    setSearchTerm(value);
   }, []);
 
-  const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    toast.loading("Đang tìm kiếm sản phẩm...");
-    fetchProducts();
-  }, [fetchProducts]);
+  const handleCategoryFilterChange = useCallback((value: string) => {
+    setCategoryFilter(value);
+  }, []);
 
   const handleAddProduct = useCallback(() => {
     toast.success("Chuyển hướng đến trang thêm sản phẩm");
     router.push("/admin/products/add");
   }, [router]);
 
-  const handleSelectProduct = useCallback((id: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(id) 
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedProducts(prev =>
+      prev.length === products.length ? [] : products.map(p => p._id)
+    );
+  }, [products]);
+
+  const handleToggleSelectProduct = useCallback((id: string) => {
+    setSelectedProducts(prev =>
+      prev.includes(id)
         ? prev.filter(productId => productId !== id)
         : [...prev, id]
     );
   }, []);
 
   const handleEditProduct = useCallback((id: string) => {
-    // Tìm sản phẩm theo ID
     const product = products.find(p => p._id === id);
     if (!product) {
       toast.error("Không tìm thấy sản phẩm");
       return;
     }
-    
     toast.success("Chuyển hướng đến trang chỉnh sửa sản phẩm");
     router.push(`/admin/products/edit?sku=${product.sku}`);
   }, [router, products]);
 
   const handleDeleteProduct = useCallback(async (sku: string) => {
     try {
-      // Tìm sản phẩm theo SKU
       const product = products.find(p => p.sku === sku);
       if (!product) {
         toast.error("Không tìm thấy sản phẩm");
         return;
       }
-
-      // Hiển thị toast đang xóa
       const toastId = toast.loading(`Đang xóa sản phẩm "${product.name}"...`);
-
-      // Lấy token từ localStorage
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Thêm token vào header nếu có
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
       const response = await fetch(`/api/products/sku/${sku}`, {
         method: "DELETE",
         headers
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Có lỗi xảy ra khi xóa sản phẩm");
       }
-
       const data = await response.json();
-      
       if (data.success) {
         toast.success(`Đã xóa sản phẩm "${product.name}" thành công`, { id: toastId });
         fetchProducts();
@@ -311,93 +212,6 @@ export default function ProductListPage() {
     }
   }, [fetchProducts, products]);
 
-  const handleDeleteSelected = useCallback(async () => {
-    try {
-      if (selectedProducts.length === 0) {
-        toast.error("Vui lòng chọn ít nhất một sản phẩm để xóa");
-        return;
-      }
-
-      // Lấy danh sách tên sản phẩm đã chọn
-      const selectedProductNames = selectedProducts
-        .map(id => products.find(p => p._id === id)?.name)
-        .filter(Boolean);
-
-      // Hiển thị toast đang xóa
-      const toastId = toast.loading(`Đang xóa ${selectedProducts.length} sản phẩm: ${selectedProductNames.join(', ')}...`);
-
-      // Lấy token từ localStorage
-      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      // Thêm token vào header nếu có
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      // Xóa từng sản phẩm một
-      let successCount = 0;
-      let failCount = 0;
-      const failedProducts: string[] = [];
-
-      for (const id of selectedProducts) {
-        // Tìm sản phẩm theo ID
-        const product = products.find(p => p._id === id);
-        if (!product) {
-          console.error(`Không tìm thấy sản phẩm ${id}`);
-          failCount++;
-          continue;
-        }
-
-        try {
-          const response = await fetch(`/api/products/sku/${product.sku}`, {
-            method: "DELETE",
-            headers
-          });
-
-          if (!response.ok) {
-            failCount++;
-            failedProducts.push(product.name);
-            continue;
-          }
-
-          const data = await response.json();
-          
-          if (data.success) {
-            successCount++;
-          } else {
-            failCount++;
-            failedProducts.push(product.name);
-          }
-        } catch (error) {
-          console.error(`Lỗi khi xóa sản phẩm ${product._id}:`, error);
-          failCount++;
-          failedProducts.push(product.name);
-        }
-      }
-
-      // Hiển thị thông báo kết quả
-      if (successCount > 0) {
-        toast.success(`Đã xóa thành công ${successCount} sản phẩm`, { id: toastId });
-      }
-
-      if (failCount > 0) {
-        toast.error(
-          `Không thể xóa ${failCount} sản phẩm: ${failedProducts.join(", ")}`,
-          { duration: 5000 }
-        );
-      }
-
-      setSelectedProducts([]);
-      fetchProducts();
-    } catch (error) {
-      console.error("Lỗi khi xóa sản phẩm:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm");
-    }
-  }, [selectedProducts, fetchProducts, products]);
-
   const handleToggleStatus = useCallback(async (id: string, isActive: boolean) => {
     try {
       const product = products.find(p => p._id === id);
@@ -405,128 +219,170 @@ export default function ProductListPage() {
         toast.error("Không tìm thấy sản phẩm");
         return;
       }
-
-      const toastId = toast.loading("Đang cập nhật trạng thái...");
-      const action = isActive ? "kích hoạt" : "vô hiệu hóa";
-
+      const toastId = toast.loading(`Đang ${isActive ? 'kích hoạt' : 'ngừng bán'} sản phẩm "${product.name}"...`);
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      if (!token) {
-        toast.error("Vui lòng đăng nhập lại", { id: toastId });
-        router.push('/auth/login');
-        return;
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-
-      // Log để debug
-      console.log('Toggling product status:', {
-        productId: id,
-        productSku: product.sku,
-        currentStatus: product.isActive,
-        newStatus: isActive
+      const response = await fetch(`/api/products/sku/${product.sku}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ isActive })
       });
-
-      const response = await fetch(
-        `/api/products/sku/${product.sku}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            isActive: isActive
-          }),
-        }
-      );
-
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", { id: toastId });
-          router.push('/auth/login');
-          return;
-        }
-        
-        // Đọc dữ liệu lỗi
         const errorData = await response.json();
-        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
       }
-
       const data = await response.json();
       if (data.success) {
-        toast.success(`Đã ${action} sản phẩm "${product.name}" thành công`, { id: toastId });
+        toast.success(`Đã ${isActive ? 'kích hoạt' : 'ngừng bán'} sản phẩm "${product.name}" thành công`, { id: toastId });
         fetchProducts();
       } else {
-        toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái", { id: toastId });
+        toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm", { id: toastId });
       }
     } catch (error) {
-      console.error("Error toggling product status:", error);
-      toast.error("Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
+      console.error("Lỗi khi cập nhật trạng thái sản phẩm:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
     }
-  }, [products, fetchProducts, router]);
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    toast.loading(`Đang tải trang ${page}...`);
-  }, []);
+  }, [fetchProducts, products]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-[#4EB09D] to-[#2C7A6C] p-6">
-            <h1 className="text-2xl font-bold text-white">Quản lý sản phẩm</h1>
-            <p className="text-white/80 mt-1">Xem và quản lý tất cả sản phẩm trong hệ thống</p>
-          </div>
-        </div>
-
-        {/* Search and Actions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 backdrop-blur-sm bg-opacity-95">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-            <ProductSearch
-              searchQuery={searchParams.search}
-              onSearchChange={handleSearchChange}
-              onSubmit={handleSearchSubmit}
-            />
-            <div className="flex items-center gap-4">
-              {selectedProducts.length > 0 && (
-                <DeleteButton
-                  selectedCount={selectedProducts.length}
-                  onDelete={handleDeleteSelected}
-                />
-              )}
-              <button
-                onClick={handleAddProduct}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-[#4EB09D] to-[#2C7A6C] hover:from-[#2C7A6C] hover:to-[#1A4A3F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4EB09D] transition-all duration-200"
-              >
-                Thêm sản phẩm
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/40 to-indigo-50/40">
+      {/* Glass Morphism Wrapper */}
+      <div className="mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl">
+        {/* Header with 3D-like Effect */}
+        <div className="mb-8 relative">
+          <div className="absolute inset-0 bg-indigo-600 opacity-5 rounded-2xl transform -rotate-1"></div>
+          <div className="absolute inset-0 bg-emerald-600 opacity-5 rounded-2xl transform rotate-1"></div>
+          <div className="bg-white backdrop-blur-sm bg-opacity-80 rounded-2xl shadow-lg border border-indigo-100/60 overflow-hidden relative z-10">
+            <div className="bg-gradient-to-r from-indigo-600 to-emerald-600 p-6 sm:p-8">
+              <h1 className="text-3xl font-bold text-white tracking-tight relative">
+                Quản lý sản phẩm
+                <span className="absolute -top-1 left-0 w-full h-full bg-white opacity-10 transform skew-x-12 translate-x-32"></span>
+              </h1>
+              <p className="text-indigo-50 mt-2 max-w-2xl text-opacity-90">Xem và quản lý tất cả sản phẩm trong hệ thống</p>
             </div>
           </div>
         </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4EB09D] mx-auto"></div>
+        {/* Filters and Actions */}
+        <div className="mb-6">
+          <ProductListFilters
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={handleCategoryFilterChange}
+            onAddProduct={handleAddProduct}
+            categories={categories}
+          />
+        </div>
+
+        {/* Bulk Actions - With Animation */}
+        {selectedProducts.length > 0 && (
+          <div 
+            className="mb-6 relative overflow-hidden" 
+            style={{
+              animation: "slideInFromTop 0.3s ease-out forwards"
+            }}
+          >
+            <div className="absolute inset-0 bg-rose-500 opacity-5 rounded-xl transform rotate-1"></div>
+            <div className="absolute inset-0 bg-rose-500 opacity-5 rounded-xl transform -rotate-1"></div>
+            <div className="bg-white backdrop-blur-sm rounded-xl shadow-lg border border-rose-100 p-4 relative z-10">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm flex items-center">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-100 text-rose-600 font-semibold mr-3">
+                    {selectedProducts.length}
+                  </span>
+                  <span className="text-slate-700">sản phẩm đã được chọn</span>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setSelectedProducts([])}
+                    className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 flex items-center text-sm"
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Bỏ chọn
+                  </button>
+                  <button
+                    onClick={() => {}}
+                    disabled={true}
+                    className="group px-4 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg hover:from-rose-600 hover:to-rose-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30"
+                  >
+                    Xóa đã chọn
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            <ProductTable
-              products={products}
-              selectedProducts={selectedProducts}
-              onSelectProduct={handleSelectProduct}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
-              onToggleStatus={handleToggleStatus}
-              categories={categories}
-            />
-            <ProductPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </>
         )}
+
+        {/* Table Container with Glass Effect */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-indigo-500 opacity-5 rounded-2xl transform rotate-1"></div>
+          <div className="absolute inset-0 bg-emerald-500 opacity-5 rounded-2xl transform -rotate-1"></div>
+          <div className="bg-white backdrop-blur-sm bg-opacity-80 rounded-2xl shadow-lg border border-indigo-100/60 overflow-hidden relative z-10">
+            {products.length === 0 ? (
+              <div className="p-12 flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-24 relative">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-300 to-emerald-300 opacity-20 animate-pulse"></div>
+                  <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                    <svg
+                      className="w-12 h-12 text-indigo-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="mt-6 text-lg font-medium text-slate-800">Không tìm thấy sản phẩm</h3>
+                <p className="mt-2 text-slate-500 max-w-sm">
+                  Hiện không có sản phẩm nào phù hợp với điều kiện tìm kiếm của bạn.
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCategoryFilter("");
+                  }}
+                  className="mt-6 px-5 py-2.5 bg-gradient-to-r from-indigo-50 to-emerald-50 text-indigo-600 rounded-lg hover:from-indigo-100 hover:to-emerald-100 transition-all duration-200 font-medium"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto relative">
+                {/* Table Scroll Shadow Effect */}
+                <div className="absolute pointer-events-none inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10"></div>
+                <div className="absolute pointer-events-none inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10"></div>
+                {/* Enhanced Table */}
+                <div className="min-w-full">
+                  <ProductListTable
+                    products={products}
+                    selectedProducts={selectedProducts}
+                    onToggleSelectAll={handleToggleSelectAll}
+                    onToggleSelectProduct={handleToggleSelectProduct}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
+                    onToggleStatus={handleToggleStatus}
+                    categories={categories}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

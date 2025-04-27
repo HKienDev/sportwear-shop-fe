@@ -203,9 +203,12 @@ const OrderListPage = React.memo(
             </div>
           </div>
 
+          {/* Divider above pagination for separation */}
+          <div className="w-full h-4 border-t border-slate-100 mb-2" />
+
           {/* Pagination */}
           {orders.length > 0 && (
-            <div className="flex flex-wrap justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center bg-white border border-slate-200 rounded-xl shadow-sm px-4 py-3">
               <div className="text-sm text-slate-600 mb-2 sm:mb-0">
                 Trang <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
               </div>
