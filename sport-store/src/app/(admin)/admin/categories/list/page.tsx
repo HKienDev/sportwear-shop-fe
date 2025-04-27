@@ -75,16 +75,20 @@ export default function CategoryListPage() {
         throw new Error(response.message || "Có lỗi xảy ra khi xóa danh mục");
       }
 
+      // Cập nhật state categories ngay lập tức
+      setCategories(prevCategories => 
+        prevCategories.filter(category => !selectedCategories.includes(category._id))
+      );
+      
       toast.success("Xóa danh mục thành công");
       setSelectedCategories([]);
-      fetchCategories();
     } catch (error) {
       console.error("Lỗi khi xóa danh mục:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa danh mục");
     } finally {
       setIsDeleting(false);
     }
-  }, [selectedCategories, fetchCategories]);
+  }, [selectedCategories]);
 
   useEffect(() => {
     if (isAuthenticated && user?.role === 'admin') {

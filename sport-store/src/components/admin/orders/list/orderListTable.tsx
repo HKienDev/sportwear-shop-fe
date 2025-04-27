@@ -140,7 +140,14 @@ const OrderListPage = React.memo(
                           </Link>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-800">{order.user?.fullname || "Không có dữ liệu"}</div>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {order.shippingAddress?.fullName || "Không có dữ liệu"}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {order.shippingAddress?.phone || ""}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-slate-600 max-w-xs truncate">

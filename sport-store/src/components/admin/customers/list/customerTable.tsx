@@ -5,6 +5,7 @@ import { Customer } from '@/types/customer';
 import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { customerService } from '@/services/customerService';
+import { Button } from '@/components/ui/button';
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -16,6 +17,7 @@ interface CustomerTableProps {
 declare module '@/types/customer' {
   interface Customer {
     totalOrders?: number;
+    deliveredOrders?: number;
   }
 }
 
@@ -182,12 +184,13 @@ export function CustomerTable({
                         />
                       </td>
                       <td className="px-6 py-4 font-medium">
-                        <button 
-                          onClick={() => onViewDetails(customer._id)}
-                          className="text-teal-600 hover:text-teal-800 hover:underline focus:outline-none"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
                         >
-                          {customer.customId || customer._id.slice(-6)}
-                        </button>
+                          {`VJUSPORTUSER-${customer._id.slice(0, 8)}`}
+                        </Button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -234,7 +237,7 @@ export function CustomerTable({
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <ShoppingBag size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600">{customer.totalOrders || 0}</span>
+                          <span className="text-sm font-medium text-gray-600">{customer.deliveredOrders || 0}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -257,7 +260,7 @@ export function CustomerTable({
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => onViewDetails(customer._id)}
+                            onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
                             className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors"
                           >
                             <Eye size={18} />

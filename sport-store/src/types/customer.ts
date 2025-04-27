@@ -1,7 +1,24 @@
 import type { User, Gender, UserRole, MembershipLevel, AuthStatus } from './base';
 
-export interface Customer extends User {
+export interface Customer {
+  _id: string;
+  fullname: string;
+  avatar: string;
+  phone: string;
+  address: {
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+  };
+  totalOrders?: number;
+  totalSpent?: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   isActive: boolean;
+  role?: string;
+  email?: string;
+  deliveredOrders?: number;
 }
 
 export interface CustomerResponse {

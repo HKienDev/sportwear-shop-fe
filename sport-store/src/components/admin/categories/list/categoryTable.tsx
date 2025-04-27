@@ -2,8 +2,7 @@
 import React from "react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Edit, Power, Loader2, Trash, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Edit, Power, Trash, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +19,7 @@ import { toast } from "sonner";
 import categoryService from "@/services/categoryService";
 import { CategoryQueryParams } from "@/types/category";
 import CategoryStatusBadge from "./categoryStatusBadge";
+import Image from "next/image";
 
 interface CategoryTableProps {
   categories: Category[];
@@ -45,10 +45,15 @@ const CategoryTable = React.memo(
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
-    const [loadingId, setLoadingId] = useState<string | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+    const [localCategories, setLocalCategories] = useState<Category[]>([]);
     const totalPages = useMemo(() => Math.ceil(total / limit), [total, limit]);
+
+    // Cập nhật localCategories khi categories thay đổi
+    useEffect(() => {
+      setLocalCategories(categories);
+    }, [categories]);
 
     const fetchCategories = useCallback(async () => {
       try {
@@ -79,26 +84,57 @@ const CategoryTable = React.memo(
     }, [fetchCategories]);
 
     const handleEdit = (categoryId: string) => {
-      router.push(`/admin/categories/edit/${categoryId}`);
+      const category = localCategories.find(cat => cat._id === categoryId);
+      if (category) {
+        router.push(`/admin/categories/edit/${category.categoryId}`);
+      }
     };
 
     const handleToggleStatus = async (categoryId: string, currentStatus: boolean) => {
       try {
-        setLoadingId(categoryId);
+        // Cập nhật trạng thái ngay lập tức trong UI
+        setLocalCategories(prevCategories => 
+          prevCategories.map(category => {
+            if (category._id === categoryId) {
+              return { ...category, isActive: !currentStatus };
+            }
+            return category;
+          })
+        );
+        
+        // Gọi API để cập nhật trạng thái
         const response = await categoryService.updateCategory(categoryId, {
           isActive: !currentStatus,
         });
+        
         if (response.success) {
           toast.success(`Đã ${!currentStatus ? "Kích hoạt" : "Tạm dừng"} danh mục`);
+          // Cập nhật lại danh sách từ server
           fetchCategories();
         } else {
-          throw new Error(response.message || "Có lỗi xảy ra");
+          // Nếu API thất bại, hoàn tác lại trạng thái
+          setLocalCategories(prevCategories => 
+            prevCategories.map(category => {
+              if (category._id === categoryId) {
+                return { ...category, isActive: currentStatus };
+              }
+              return category;
+            })
+          );
+          toast.error(response.message || "Có lỗi xảy ra");
         }
       } catch (error) {
+        // Nếu có lỗi, hoàn tác lại trạng thái
+        setLocalCategories(prevCategories => 
+          prevCategories.map(category => {
+            if (category._id === categoryId) {
+              return { ...category, isActive: currentStatus };
+            }
+            return category;
+          })
+        );
         console.error("Error toggling category status:", error);
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
-      } finally {
-        setLoadingId(null);
       }
     };
 
@@ -110,7 +146,11 @@ const CategoryTable = React.memo(
     const confirmDelete = async () => {
       if (!categoryToDelete) return;
       try {
-        setLoadingId(categoryToDelete);
+        // Cập nhật UI ngay lập tức
+        setLocalCategories(prevCategories => 
+          prevCategories.filter(category => category._id !== categoryToDelete)
+        );
+        
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryToDelete}`, {
           method: "DELETE",
           credentials: "include",
@@ -118,15 +158,16 @@ const CategoryTable = React.memo(
         const data = await response.json();
         if (data.success) {
           toast.success("Đã xóa danh mục thành công");
-          fetchCategories();
+          // Không cần gọi fetchCategories() nữa vì đã cập nhật UI ngay lập tức
         } else {
+          // Nếu API thất bại, hoàn tác lại trạng thái
+          fetchCategories();
           throw new Error(data.message || "Có lỗi xảy ra");
         }
       } catch (error) {
         console.error("Error deleting category:", error);
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
       } finally {
-        setLoadingId(null);
         setCategoryToDelete(null);
         setDeleteDialogOpen(false);
       }
@@ -141,7 +182,7 @@ const CategoryTable = React.memo(
               <div className="flex justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Tổng Danh Mục</p>
-                  <p className="text-2xl font-bold text-slate-800">{categories.length}</p>
+                  <p className="text-2xl font-bold text-slate-800">{localCategories.length}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
                   <span className="text-teal-500 text-xl font-bold">Σ</span>
@@ -153,7 +194,7 @@ const CategoryTable = React.memo(
                 <div>
                   <p className="text-sm font-medium text-slate-500">Đang Hoạt Động</p>
                   <p className="text-2xl font-bold text-slate-800">
-                    {categories.filter((category) => category.isActive).length}
+                    {localCategories.filter((category) => category.isActive).length}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
@@ -166,7 +207,7 @@ const CategoryTable = React.memo(
                 <div>
                   <p className="text-sm font-medium text-slate-500">Tạm Dừng</p>
                   <p className="text-2xl font-bold text-slate-800">
-                    {categories.filter((category) => !category.isActive).length}
+                    {localCategories.filter((category) => !category.isActive).length}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center">
@@ -179,7 +220,7 @@ const CategoryTable = React.memo(
                 <div>
                   <p className="text-sm font-medium text-slate-500">Có Sản Phẩm</p>
                   <p className="text-2xl font-bold text-slate-800">
-                    {categories.filter((category) => (category.products || []).length > 0).length}
+                    {localCategories.filter((category) => category.productCount > 0).length}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
@@ -198,7 +239,7 @@ const CategoryTable = React.memo(
                     <th className="px-6 py-4 w-10">
                       <input
                         type="checkbox"
-                        checked={selectedCategories.length === categories.length && categories.length > 0}
+                        checked={selectedCategories.length === localCategories.length && localCategories.length > 0}
                         onChange={onToggleSelectAll}
                         className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                       />
@@ -224,97 +265,78 @@ const CategoryTable = React.memo(
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {categories.length > 0 ? (
-                    categories.map((category, index) => (
-                      <tr
-                        key={category._id}
-                        className={`${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-teal-50 transition-colors duration-150`}
-                      >
-                        <td className="px-6 py-4">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.includes(category._id)}
-                            onChange={() => onToggleSelectCategory(category._id)}
-                            className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
-                          />
-                        </td>
-                        <td className="px-6 py-4 font-medium">{category.name}</td>
-                        <td className="px-6 py-4">{category.slug}</td>
-                        <td className="px-6 py-4">
-                          {(category.products || []).length > 0 ? (
-                            <span className="text-slate-800 font-medium">{(category.products || []).length}</span>
-                          ) : (
-                            <span className="text-slate-500">Không</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
-                        </td>
-                        <td className="px-6 py-4">{formatDate(category.createdAt)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(category._id)}
-                              className="h-8 w-8 hover:bg-muted"
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Chỉnh sửa</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleStatus(category._id, category.isActive)}
-                              disabled={loadingId === category._id}
-                              className={`h-8 w-8 ${
-                                category.isActive
-                                  ? "hover:bg-amber-50 hover:text-amber-700"
-                                  : "hover:bg-green-50 hover:text-green-700"
-                              }`}
-                            >
-                              {loadingId === category._id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Power className="h-4 w-4" />
-                              )}
-                              <span className="sr-only">
-                                {category.isActive ? "Tạm dừng" : "Kích hoạt"}
-                              </span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(category._id)}
-                              className="h-8 w-8 hover:bg-red-50 hover:text-red-700"
-                            >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">Xóa</span>
-                            </Button>
+                  {localCategories.map((category) => (
+                    <tr key={category._id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category._id)}
+                          onChange={() => onToggleSelectCategory(category._id)}
+                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 flex-shrink-0">
+                            {category.image ? (
+                              <Image
+                                src={category.image}
+                                alt={category.name}
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                                <span className="text-slate-500 text-sm font-medium">
+                                  {category.name.charAt(0)}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="mb-4 p-4 rounded-full bg-slate-100">
-                            <AlertCircle size={32} className="text-slate-400" />
+                          <div className="ml-4">
+                            <div className="font-medium text-slate-900">{category.name}</div>
+                            <div className="text-slate-500">{category.slug}</div>
                           </div>
-                          <p className="text-lg font-medium text-slate-800 mb-1">Không tìm thấy danh mục</p>
-                          <p className="text-slate-500">Hiện tại chưa có danh mục nào trong hệ thống</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{category.slug}</td>
+                      <td className="px-6 py-4 text-slate-500">{category.productCount}</td>
+                      <td className="px-6 py-4">
+                        <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
+                      </td>
+                      <td className="px-6 py-4 text-slate-500">{formatDate(category.createdAt)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => handleEdit(category._id)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(category._id, category.isActive)}
+                            className="text-amber-600 hover:text-amber-900"
+                          >
+                            <Power className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(category._id)}
+                            className="text-rose-600 hover:text-rose-900"
+                          >
+                            <Trash className="h-5 w-5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
 
           {/* Pagination */}
-          {categories.length > 0 && (
+          {localCategories.length > 0 && (
             <div className="flex flex-wrap justify-between items-center">
               <div className="text-sm text-slate-600 mb-2 sm:mb-0">
                 Trang <span className="font-medium">{page}</span> / <span className="font-medium">{totalPages}</span>
