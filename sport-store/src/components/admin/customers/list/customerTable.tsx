@@ -104,7 +104,7 @@ export function CustomerTable({
     <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
             <div className="flex justify-between">
               <div>
@@ -126,32 +126,6 @@ export function CustomerTable({
               </div>
               <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
                 <span className="text-indigo-500 text-xl font-bold">⧗</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Bị Khóa</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {Array.isArray(filteredCustomers) ? filteredCustomers.filter(customer => !customer.isActive).length : 0}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center">
-                <span className="text-amber-500 text-xl font-bold">🔒</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Online</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {Array.from(onlineUsers).length}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center">
-                <span className="text-emerald-500 text-xl font-bold">🟢</span>
               </div>
             </div>
           </div>

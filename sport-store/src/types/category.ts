@@ -7,6 +7,12 @@ export interface Category {
   image: string;
   isActive: boolean;
   productCount: number;
+  products?: {
+    _id: string;
+    name: string;
+    price: number;
+    image: string;
+  }[];
   createdBy: {
     _id: string;
     name: string;

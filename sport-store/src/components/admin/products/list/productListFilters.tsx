@@ -1,24 +1,29 @@
-"use client";
-
 import React, { useCallback, useState, useEffect } from "react";
 import { Search, Filter, Plus } from "lucide-react";
 
-interface CategoryFilterProps {
+interface ProductListFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
-  onAddCategory: () => void;
+  categoryFilter: string;
+  onCategoryFilterChange: (value: string) => void;
+  onAddProduct: () => void;
+  categories: Array<{
+    _id: string;
+    categoryId: string;
+    name: string;
+    slug: string;
+  }>;
 }
 
-const CategoryFilter = React.memo(
+const ProductListFilters = React.memo(
   ({
     searchTerm,
     onSearchChange,
-    statusFilter,
-    onStatusFilterChange,
-    onAddCategory,
-  }: CategoryFilterProps) => {
+    categoryFilter,
+    onCategoryFilterChange,
+    onAddProduct,
+    categories,
+  }: ProductListFiltersProps) => {
     const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
     // Debounce cho input tìm kiếm
@@ -36,9 +41,9 @@ const CategoryFilter = React.memo(
       setLocalSearchTerm(e.target.value);
     }, []);
 
-    const handleStatusFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-      onStatusFilterChange(e.target.value);
-    }, [onStatusFilterChange]);
+    const handleCategoryFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+      onCategoryFilterChange(e.target.value);
+    }, [onCategoryFilterChange]);
 
     return (
       <div className="bg-white rounded-xl border border-gray-100 p-6 mb-8">
@@ -50,7 +55,7 @@ const CategoryFilter = React.memo(
             </div>
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên danh mục..."
+              placeholder="Tìm kiếm theo tên sản phẩm hoặc mã SKU..."
               className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-lg bg-gray-50 placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all duration-200"
               value={localSearchTerm}
               onChange={handleSearchChange}
@@ -68,19 +73,22 @@ const CategoryFilter = React.memo(
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            {/* Lọc theo trạng thái */}
+            {/* Lọc theo danh mục */}
             <div className="relative w-full sm:w-64 group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Filter size={16} className="text-blue-400 group-focus-within:text-blue-500 transition-colors duration-200" />
               </div>
               <select
                 className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm appearance-none transition-all duration-200 cursor-pointer"
-                value={statusFilter}
-                onChange={handleStatusFilterChange}
+                value={categoryFilter}
+                onChange={handleCategoryFilterChange}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
+                <option value="">Tất cả danh mục</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
                 <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -89,19 +97,19 @@ const CategoryFilter = React.memo(
               </div>
             </div>
 
-            {/* Nút thêm danh mục */}
+            {/* Nút thêm sản phẩm */}
             <button
               className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-              onClick={onAddCategory}
+              onClick={onAddProduct}
             >
               <Plus size={18} className="mr-2" strokeWidth={2.5} />
-              Thêm Danh Mục
+              Thêm Sản Phẩm
             </button>
           </div>
         </div>
 
         {/* Hiển thị tags khi có bộ lọc đang áp dụng */}
-        {(statusFilter || localSearchTerm) && (
+        {(categoryFilter || localSearchTerm) && (
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
             <span className="text-xs font-medium text-gray-500 self-center">Đang lọc:</span>
             
@@ -119,17 +127,14 @@ const CategoryFilter = React.memo(
               </div>
             )}
             
-            {statusFilter && (
+            {categoryFilter && (
               <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs rounded-full px-3 py-1.5">
                 <span className="mr-1">
-                  Trạng thái: {
-                    statusFilter === "active" ? "Đang hoạt động" :
-                    statusFilter === "inactive" ? "Không hoạt động" : statusFilter
-                  }
+                  Danh mục: {categories.find(cat => cat._id === categoryFilter)?.name || categoryFilter}
                 </span>
                 <button 
                   className="ml-1 focus:outline-none" 
-                  onClick={() => onStatusFilterChange("")}
+                  onClick={() => onCategoryFilterChange("")}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -143,7 +148,7 @@ const CategoryFilter = React.memo(
               onClick={() => {
                 setLocalSearchTerm("");
                 onSearchChange("");
-                onStatusFilterChange("");
+                onCategoryFilterChange("");
               }}
             >
               Xóa tất cả bộ lọc
@@ -155,6 +160,6 @@ const CategoryFilter = React.memo(
   }
 );
 
-CategoryFilter.displayName = "CategoryFilter";
+ProductListFilters.displayName = "ProductListFilters";
 
-export default CategoryFilter; 
+export default ProductListFilters; 
