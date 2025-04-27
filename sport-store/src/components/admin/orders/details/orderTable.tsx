@@ -1,17 +1,24 @@
 import Image from "next/image";
 import { Package } from "lucide-react";
+import { Product } from "@/types/product";
+
+type OrderItemProduct = {
+  _id: string;
+  name: string;
+  description: string;
+  originalPrice: number;
+  salePrice: number;
+  mainImage: string;
+  subImages: string[];
+  categoryId: string;
+  stock: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 interface OrderItem {
-  product: { 
-    _id: string; 
-    name: string; 
-    price: number;
-    images: {
-      main: string;
-      sub: string[];
-    };
-    shortId: string;
-  };
+  product: OrderItemProduct;
   quantity: number;
   price: number;
   size?: string;
@@ -46,64 +53,95 @@ export default function OrderTable({ items = [], shippingMethod = { name: "Stand
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sản phẩm</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Số lượng</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Đơn giá</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thành tiền</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sản Phẩm
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Số Lượng
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Đơn Giá
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thành Tiền
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {items.map((item) => (
-              <tr key={item.product._id}>
-                <td className="px-6 py-4 flex items-center space-x-4">
-                  <div className="relative w-[50px] h-[50px]">
-                    <Image
-                      src={item.product.images?.main || "/default-image.png"}
-                      alt={item.product.name}
-                      fill
-                      className="rounded-md object-cover"
-                      sizes="50px"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/default-image.png";
-                      }}
-                    />
+            {items.map((item, index) => (
+              <tr key={index}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-10 w-10">
+                      <Image
+                        src={item.product.mainImage || '/placeholder.png'}
+                        alt={item.product.name}
+                        width={40}
+                        height={40}
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {item.product.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {item.product.description}
+                      </div>
+                      {(item.size || item.color) && (
+                        <div className="text-xs text-gray-500">
+                          {item.size && `Size: ${item.size}`}
+                          {item.color && ` | Màu: ${item.color}`}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <span>{item.product.name}</span>
                 </td>
-                <td className="px-6 py-4 text-center">{item.quantity}</td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-red-500">{item.price.toLocaleString()}₫</span>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {item.quantity}
                 </td>
-                <td className="px-6 py-4 text-right font-medium">
-                  {(item.price * item.quantity).toLocaleString()}₫
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {item.price.toLocaleString('vi-VN')}đ
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                 </td>
               </tr>
             ))}
           </tbody>
           <tfoot className="bg-gray-50">
             <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
                 Tạm tính:
               </td>
-              <td className="px-6 py-4 text-right text-sm font-medium">
-                {subtotal.toLocaleString()}₫
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {subtotal.toLocaleString('vi-VN')}đ
               </td>
             </tr>
             <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-500">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
                 Phí vận chuyển:
               </td>
-              <td className="px-6 py-4 text-right text-sm font-medium">
-                {(shippingMethod?.fee || 0).toLocaleString()}₫
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {shippingMethod.fee.toLocaleString('vi-VN')}đ
               </td>
             </tr>
+            {discount > 0 && (
+              <tr>
+                <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                  Giảm giá:
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  -{discount.toLocaleString('vi-VN')}đ
+                </td>
+              </tr>
+            )}
             <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-base font-bold text-gray-900">
-                Tổng tiền:
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                Tổng cộng:
               </td>
-              <td className="px-6 py-4 text-right text-lg font-bold text-blue-600">
-                {total.toLocaleString()}₫
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {total.toLocaleString('vi-VN')}đ
               </td>
             </tr>
           </tfoot>

@@ -30,6 +30,7 @@ interface Product {
   colors: string[];
   sizes: string[];
   sku: string;
+  slug: string;
   tags: string[];
   rating: number;
   numReviews: number;
@@ -158,12 +159,32 @@ export default function OrderProducts() {
     const cartItem: CartItem = {
       _id: Date.now().toString(),
       product: {
-        sku: product.sku,
+        _id: product._id,
         name: product.name,
-        slug: product.sku.toLowerCase(),
+        description: product.description,
         brand: product.brand,
+        originalPrice: product.originalPrice,
+        salePrice: product.salePrice || product.originalPrice,
+        stock: product.stock,
+        categoryId: product.categoryId,
+        isActive: product.isActive,
         mainImage: product.mainImage || "/images/placeholder.png",
-        salePrice: product.salePrice || product.originalPrice
+        subImages: product.subImages || [],
+        colors: product.colors || [],
+        sizes: product.sizes || [],
+        sku: product.sku,
+        slug: product.sku.toLowerCase(),
+        tags: product.tags || [],
+        rating: product.rating || 0,
+        numReviews: product.numReviews || 0,
+        viewCount: product.viewCount || 0,
+        soldCount: product.soldCount || 0,
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: new Date(review.createdAt)
+        })) || [],
+        createdAt: new Date(product.createdAt),
+        updatedAt: new Date(product.updatedAt)
       },
       quantity: quantity,
       color: color,

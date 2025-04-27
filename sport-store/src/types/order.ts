@@ -1,9 +1,33 @@
-import type { User, Product, OrderStatus, PaymentStatus, PaymentMethod } from "./base";
+import { User } from './base';
+import { Product } from './product';
 
-export { OrderStatus, PaymentStatus, PaymentMethod } from "./base";
+export enum OrderStatus {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  SHIPPED = "shipped",
+  DELIVERED = "delivered",
+  CANCELLED = "cancelled"
+}
+
+export enum PaymentMethod {
+  COD = "COD",
+  STRIPE = "Stripe"
+}
+
+export enum PaymentStatus {
+  PENDING = "pending",
+  PAID = "paid",
+  FAILED = "failed",
+  REFUNDED = "refunded"
+}
+
+export enum ShippingMethod {
+  STANDARD = "standard",
+  EXPRESS = "express",
+  SAME_DAY = "same_day"
+}
 
 export interface OrderItem {
-  _id: string;
   product: string | Product;
   quantity: number;
   price: number;
@@ -11,44 +35,90 @@ export interface OrderItem {
   sku: string;
   color?: string;
   size?: string;
-  createdAt: Date;
+}
+
+export interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  address: {
+    province: {
+      name: string;
+      code: number;
+    };
+    district: {
+      name: string;
+      code: number;
+    };
+    ward: {
+      name: string;
+      code: number;
+    };
+    street?: string;
+  };
+}
+
+export interface ShippingInfo {
+  method: ShippingMethod;
+  fee: number;
+  expectedDate?: Date;
+  courier?: string;
+  trackingId?: string;
+}
+
+export interface OrderStatusHistory {
+  status: OrderStatus;
   updatedAt: Date;
+  updatedBy: User;
+  note?: string;
 }
 
 export interface Order {
   _id: string;
   shortId: string;
-  userId?: string;
-  user?: User;
-  items: OrderItem[];
+  user: User;
   phone: string;
-  totalAmount: number;
+  items: OrderItem[];
   totalPrice: number;
+  totalAmount: number;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paymentIntentId?: string;
+  shippingAddress: ShippingAddress;
+  shippingInfo: ShippingInfo;
   shippingFee: number;
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
-  shippingAddress: {
-    province: string;
-    district: string;
-    ward: string;
-    street: string;
-  };
-  shippingMethod: {
-    method: string;
-    expectedDate: string;
-    courier: string;
-    trackingId: string;
-  };
-  coupon?: {
-    code: string;
-    type: 'percentage' | 'fixed';
-    value: number;
-    discountAmount: number;
-  };
-  note?: string;
+  notes?: string;
+  cancellationReason?: string;
+  cancelledAt?: Date;
+  cancelledBy?: User;
+  statusHistory: OrderStatusHistory[];
+  isTotalSpentUpdated: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CreateOrderInput {
+  items: {
+    product: string;
+    quantity: number;
+    price: number;
+    name: string;
+    sku: string;
+    color?: string;
+    size?: string;
+  }[];
+  shippingAddress: ShippingAddress;
+  paymentMethod: PaymentMethod;
+  shippingMethod: ShippingMethod;
+  notes?: string;
+}
+
+export interface UpdateOrderInput {
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  shippingInfo?: ShippingInfo;
+  notes?: string;
+  cancellationReason?: string;
 }
 
 export interface OrderResponse {
@@ -64,50 +134,11 @@ export interface OrderResponse {
 
 export interface OrderSearchParams {
   query?: string;
-  status?: string;
-  paymentStatus?: string;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
   phone?: string;
-}
-
-export interface CreateOrderInput {
-  items: {
-    sku: string;
-    quantity: number;
-    color?: string;
-    size?: string;
-  }[];
-  shippingAddress: {
-    fullName: string;
-    phone: string;
-    address: {
-      province: {
-        name: string;
-        code: string;
-      };
-      district: {
-        name: string;
-        code: string;
-      };
-      ward: {
-        name: string;
-        code: string;
-      };
-    };
-  };
-  paymentMethod: 'cash' | 'banking' | 'momo' | 'stripe';
-  shippingMethod: string;
-  couponCode?: string;
-  note?: string;
-}
-
-export interface UpdateOrderInput {
-  status?: Order['status'];
-  paymentStatus?: Order['paymentStatus'];
-  shippingAddress?: Order['shippingAddress'];
-  shippingMethod?: Order['shippingMethod'];
-  note?: string;
 } 

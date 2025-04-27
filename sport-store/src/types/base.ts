@@ -42,13 +42,16 @@ export enum OrderStatus {
 export enum PaymentStatus {
     PENDING = "pending",
     PAID = "paid",
-    FAILED = "failed"
+    FAILED = "failed",
+    REFUNDED = "refunded"
 }
 
 export enum PaymentMethod {
     CASH = "cash",
     BANKING = "banking",
-    MOMO = "momo"
+    MOMO = "momo",
+    COD = "COD",
+    STRIPE = "Stripe"
 }
 
 export enum ShippingMethod {
@@ -133,15 +136,28 @@ export interface Order {
     phone: string;
     items: OrderItem[];
     totalPrice: number;
-    totalAmount?: number;
+    totalAmount: number;
     status: OrderStatus;
     paymentStatus: PaymentStatus;
     paymentMethod: PaymentMethod;
     shippingAddress: {
-        province: string;
-        district: string;
-        ward: string;
-        street: string;
+        fullName: string;
+        phone: string;
+        address: {
+            province: {
+                name: string;
+                code: number;
+            };
+            district: {
+                name: string;
+                code: number;
+            };
+            ward: {
+                name: string;
+                code: number;
+            };
+            street?: string;
+        };
     };
     shippingFee: number;
     note?: string;

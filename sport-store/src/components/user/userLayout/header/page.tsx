@@ -13,14 +13,19 @@ import { useAuth } from "@/context/authContext";
 
 interface Category {
   _id: string;
+  categoryId: string;
   name: string;
-  description?: string;
-  parentCategory?: string;
-  image?: string;
+  slug: string;
+  description: string;
+  image: string;
+  isActive: boolean;
+  createdBy: string;
   productCount: number;
   createdAt: string;
   updatedAt: string;
   __v: number;
+  updatedBy: string;
+  hasProducts: boolean;
 }
 
 interface Product {
@@ -90,8 +95,8 @@ const Header = () => {
         const categoriesData = await categoriesResponse.json();
         console.log("Categories data:", categoriesData);
         
-        if (isMounted && Array.isArray(categoriesData)) {
-          setCategories(categoriesData);
+        if (isMounted && categoriesData.success && Array.isArray(categoriesData.data.categories)) {
+          setCategories(categoriesData.data.categories);
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
@@ -350,12 +355,24 @@ const Header = () => {
                       {categories.map((category) => (
                         <Link
                           key={category._id}
-                          href={`/categories/${category._id}`}
+                          href={`/categories/${category.slug}`}
                           className="flex items-center p-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-150 rounded-xl group"
                           onClick={() => setIsCategoriesOpen(false)}
                         >
-                          <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center mr-3 group-hover:bg-red-100 transition-colors">
-                            <Package className="w-5 h-5 text-red-600" />
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 mr-3">
+                            {category.image ? (
+                              <Image
+                                src={category.image}
+                                alt={category.name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-red-50 flex items-center justify-center">
+                                <Package className="w-5 h-5 text-red-600" />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{category.name}</p>
