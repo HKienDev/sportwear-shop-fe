@@ -1,12 +1,4 @@
-export interface Product {
-  sku: string;
-  name: string;
-  slug: string;
-  brand: string;
-  mainImage: string;
-  originalPrice: number;
-  salePrice: number;
-}
+import { Product } from './product';
 
 export interface CartItem {
   product: Product;

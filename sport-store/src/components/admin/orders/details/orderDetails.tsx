@@ -12,6 +12,21 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import CancelOrder from "./cancelOrder";
 
+type OrderItemProduct = {
+  _id: string;
+  name: string;
+  description: string;
+  originalPrice: number;
+  salePrice: number;
+  mainImage: string;
+  subImages: string[];
+  categoryId: string;
+  stock: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // Mô tả chi tiết từng trạng thái
 export const orderStatusInfo = {
   [OrderStatus.PENDING]: {
@@ -197,7 +212,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         />
         <ShippingAddress 
           name={order.user?.fullname || "Không có dữ liệu"}
-          address={`${order.shippingAddress.street}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`}
+          address={`${order.shippingAddress.address.street || ""}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`}
           phone={order.phone || "Không có dữ liệu"}
         />
       </div>
@@ -209,22 +224,43 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         shippingMethod="Standard"
       />
       <OrderTable 
-        items={order.items.map(item => ({
-          product: {
-            _id: typeof item.product === 'string' ? item.product : item.product._id,
-            name: typeof item.product === 'string' ? '' : item.product.name,
-            price: typeof item.product === 'string' ? 0 : item.product.price,
-            images: {
-              main: typeof item.product === 'string' ? '/default-image.png' : (Array.isArray(item.product.images) ? item.product.images[0] || '/default-image.png' : '/default-image.png'),
-              sub: typeof item.product === 'string' ? [] : (Array.isArray(item.product.images) ? item.product.images.slice(1) : [])
-            },
-            shortId: typeof item.product === 'string' ? '' : item.product._id || ''
-          },
-          quantity: item.quantity,
-          price: item.price,
-          size: item.size,
-          color: item.color
-        }))}
+        items={order.items.map(item => {
+          const productData: OrderItemProduct = typeof item.product === 'string' ? {
+            _id: item.product,
+            name: '',
+            description: '',
+            originalPrice: item.price,
+            salePrice: item.price,
+            mainImage: '',
+            subImages: [],
+            categoryId: '',
+            stock: 0,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          } : {
+            _id: item.product._id,
+            name: item.product.name,
+            description: item.product.description || '',
+            originalPrice: item.price,
+            salePrice: item.price,
+            mainImage: item.product.mainImage || '',
+            subImages: item.product.subImages || [],
+            categoryId: item.product.categoryId || '',
+            stock: item.product.stock || 0,
+            isActive: item.product.isActive || true,
+            createdAt: item.product.createdAt || new Date(),
+            updatedAt: item.product.updatedAt || new Date()
+          };
+
+          return {
+            product: productData,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size,
+            color: item.color
+          };
+        })}
         shippingMethod={{
           name: "Standard",
           fee: 30000
@@ -239,10 +275,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             product: {
               _id: typeof item.product === 'string' ? item.product : item.product._id,
               name: typeof item.product === 'string' ? '' : item.product.name,
-              price: typeof item.product === 'string' ? 0 : item.product.price,
+              price: item.price,
               images: {
-                main: typeof item.product === 'string' ? '/default-image.png' : (Array.isArray(item.product.images) ? item.product.images[0] || '/default-image.png' : '/default-image.png'),
-                sub: typeof item.product === 'string' ? [] : (Array.isArray(item.product.images) ? item.product.images.slice(1) : [])
+                main: typeof item.product === 'string' ? '' : item.product.mainImage || '',
+                sub: typeof item.product === 'string' ? [] : item.product.subImages || []
               }
             },
             quantity: item.quantity,

@@ -145,7 +145,7 @@ const OrderListPage = React.memo(
                         <td className="px-6 py-4">
                           <div className="text-sm text-slate-600 max-w-xs truncate">
                             {order.shippingAddress
-                              ? `${order.shippingAddress.street}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`
+                              ? `${order.shippingAddress.address.street || ''}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`
                               : "Không có dữ liệu"}
                           </div>
                         </td>

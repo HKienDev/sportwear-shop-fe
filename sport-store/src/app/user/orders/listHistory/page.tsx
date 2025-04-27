@@ -62,7 +62,7 @@ export default function OrderHistoryPage() {
                     {order.user?.fullname || "Không có dữ liệu"} - {order.phone}
                   </p>
                   <p className="text-gray-600">
-                    {order.shippingAddress.street}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
+                    {order.shippingAddress.address.street}, {order.shippingAddress.address.ward.name}, {order.shippingAddress.address.district.name}, {order.shippingAddress.address.province.name}
                   </p>
                   <p className="text-gray-600">
                     Tổng tiền: {order.totalAmount.toLocaleString()} VNĐ

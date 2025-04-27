@@ -158,5 +158,28 @@ export const cartService = {
       console.error('Error removing from cart:', error);
       throw new Error(getErrorMessage(error));
     }
+  },
+
+  // Xóa toàn bộ giỏ hàng
+  clearCart: async () => {
+    try {
+      // Kiểm tra token trước khi gọi API
+      const token = getToken('access');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await api.delete('/cart/clear');
+      
+      // Kiểm tra response
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      throw new Error(getErrorMessage(error));
+    }
   }
 }; 
