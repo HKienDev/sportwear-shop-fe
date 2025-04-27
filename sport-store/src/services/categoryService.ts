@@ -28,9 +28,9 @@ const categoryService = {
   },
 
   // Lấy danh mục theo ID
-  getCategoryById: async (id: string): Promise<CategoryResponse> => {
+  getCategoryById: async (categoryId: string): Promise<CategoryResponse> => {
     try {
-      const response = await axiosInstance.get(`/categories/${id}`);
+      const response = await axiosInstance.get(`/categories/${categoryId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -48,9 +48,9 @@ const categoryService = {
   },
 
   // Cập nhật danh mục
-  updateCategory: async (id: string, data: UpdateCategoryRequest): Promise<CategoryResponse> => {
+  updateCategory: async (categoryId: string, data: UpdateCategoryRequest): Promise<CategoryResponse> => {
     try {
-      const response = await axiosInstance.put(`/categories/${id}`, data);
+      const response = await axiosInstance.put(`/categories/${categoryId}`, data);
       return response.data;
     } catch (error) {
       throw error;
@@ -58,9 +58,9 @@ const categoryService = {
   },
 
   // Xóa danh mục
-  deleteCategory: async (id: string): Promise<CategoryResponse> => {
+  deleteCategory: async (categoryId: string): Promise<CategoryResponse> => {
     try {
-      const response = await axiosInstance.delete(`/categories/${id}`);
+      const response = await axiosInstance.delete(`/categories/${categoryId}`);
       return response.data;
     } catch (error) {
       throw error;

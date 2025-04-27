@@ -520,17 +520,17 @@ const apiClient = {
         getAll: (params?: { page?: string; limit?: string; search?: string }): Promise<AxiosResponse<ApiResponse<Category[]>>> =>
             api.get(`/categories`, { params }),
         
-        getById: (id: string): Promise<AxiosResponse<ApiResponse<Category>>> =>
-            api.get(`/categories/${id}`),
+        getById: (categoryId: string): Promise<AxiosResponse<ApiResponse<Category>>> =>
+            api.get(`/categories/${categoryId}`),
         
         create: (data: { name: string; slug: string; parentId?: string }): Promise<AxiosResponse<ApiResponse<Category>>> =>
             api.post(`/categories`, data),
         
-        update: (id: string, data: { name: string; slug: string; parentId?: string }): Promise<AxiosResponse<ApiResponse<Category>>> =>
-            api.put(`/categories/${id}`, data),
+        update: (categoryId: string, data: { name: string; slug: string; parentId?: string }): Promise<AxiosResponse<ApiResponse<Category>>> =>
+            api.put(`/categories/${categoryId}`, data),
         
-        delete: (id: string): Promise<AxiosResponse<ApiResponse>> =>
-            api.delete(`/categories/${id}`)
+        delete: (categoryId: string): Promise<AxiosResponse<ApiResponse>> =>
+            api.delete(`/categories/${categoryId}`)
     },
 
     // Orders

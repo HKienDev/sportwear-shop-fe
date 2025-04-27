@@ -51,7 +51,7 @@ export default function CategoryForm({
           response.data.categories?.some(
             (c) =>
               c.name.toLowerCase() === name.toLowerCase() &&
-              c._id !== category._id
+              c.categoryId !== category.categoryId
           )
         ) {
           setNameError("Tên danh mục đã được sử dụng");
@@ -68,7 +68,7 @@ export default function CategoryForm({
         setIsCheckingName(false);
       }
     },
-    [category._id]
+    [category.categoryId]
   );
 
   // Kiểm tra tên khi formData.name thay đổi

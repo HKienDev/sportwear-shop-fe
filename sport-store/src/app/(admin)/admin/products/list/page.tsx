@@ -191,7 +191,7 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`/api/products/sku/${sku}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${sku}`, {
         method: "DELETE",
         headers
       });
@@ -227,7 +227,7 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`/api/products/sku/${product.sku}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${product.sku}/status`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ isActive })

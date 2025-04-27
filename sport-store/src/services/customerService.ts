@@ -6,15 +6,50 @@ export const customerService = {
   getCustomers: async (page: number = 1, limit: number = 10) => {
     try {
       const response = await apiClient.get(`/admin/users?page=${page}&limit=${limit}`);
+      
+      // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
+      const customersWithDeliveredOrders = response.data.map((customer: any) => {
+        // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
+        if (customer.deliveredOrders !== undefined) {
+          return customer;
+        }
+        
+        // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
+        if (customer.orders && Array.isArray(customer.orders)) {
+          const deliveredOrders = customer.orders.filter((order: any) => 
+            order.status === "delivered"
+          ).length;
+          
+          return {
+            ...customer,
+            deliveredOrders
+          };
+        }
+        
+        // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
+        if (customer.orderCount !== undefined) {
+          return {
+            ...customer,
+            deliveredOrders: customer.orderCount
+          };
+        }
+        
+        // Nếu không có thông tin nào, mặc định là 0
+        return {
+          ...customer,
+          deliveredOrders: 0
+        };
+      });
+      
       return {
         success: true,
         message: "Lấy danh sách khách hàng thành công",
         data: {
-          customers: response.data,
-          total: response.data.length,
+          customers: customersWithDeliveredOrders,
+          total: customersWithDeliveredOrders.length,
           page,
           limit,
-          totalPages: Math.ceil(response.data.length / limit)
+          totalPages: Math.ceil(customersWithDeliveredOrders.length / limit)
         }
       };
     } catch (error) {
@@ -27,10 +62,29 @@ export const customerService = {
   getCustomerById: async (id: string) => {
     try {
       const response = await apiClient.get(`/admin/users/${id}`);
+      
+      // Tính toán số đơn hàng đã giao
+      const customer = response.data;
+      let deliveredOrders = 0;
+      
+      // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
+      if (customer.orders && Array.isArray(customer.orders)) {
+        deliveredOrders = customer.orders.filter((order: any) => 
+          order.status === "delivered"
+        ).length;
+      } 
+      // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
+      else if (customer.orderCount !== undefined) {
+        deliveredOrders = customer.orderCount;
+      }
+      
       return {
         success: true,
         message: "Lấy thông tin khách hàng thành công",
-        data: response.data
+        data: {
+          ...customer,
+          deliveredOrders
+        }
       };
     } catch (error) {
       console.error("Error fetching customer:", error);
@@ -53,21 +107,6 @@ export const customerService = {
     }
   },
 
-  // Cập nhật thông tin khách hàng
-  updateCustomer: async (id: string, customerData: Partial<Customer>) => {
-    try {
-      const response = await apiClient.put(`/admin/users/${id}`, customerData);
-      return {
-        success: true,
-        message: "Cập nhật thông tin khách hàng thành công",
-        data: response.data
-      };
-    } catch (error) {
-      console.error("Error updating customer:", error);
-      throw error;
-    }
-  },
-
   // Xóa khách hàng
   deleteCustomer: async (id: string) => {
     try {
@@ -79,6 +118,39 @@ export const customerService = {
       };
     } catch (error) {
       console.error("Error deleting customer:", error);
+      throw error;
+    }
+  },
+
+  // Thay đổi mật khẩu khách hàng
+  changePassword: async (id: string, newPassword: string) => {
+    try {
+      const response = await apiClient.put(`/admin/users/${id}/reset-password`, {
+        userId: id,
+        password: newPassword
+      });
+      return {
+        success: true,
+        message: "Thay đổi mật khẩu thành công",
+        data: response.data
+      };
+    } catch (error) {
+      console.error("Error changing password:", error);
+      throw error;
+    }
+  },
+
+  // Cập nhật thông tin khách hàng
+  updateCustomer: async (id: string, customerData: Partial<Customer>) => {
+    try {
+      const response = await apiClient.put(`/admin/users/${id}`, customerData);
+      return {
+        success: true,
+        message: "Cập nhật thông tin khách hàng thành công",
+        data: response.data
+      };
+    } catch (error) {
+      console.error("Error updating customer:", error);
       throw error;
     }
   },
@@ -102,15 +174,50 @@ export const customerService = {
   searchCustomers: async (query: string, page: number = 1, limit: number = 10) => {
     try {
       const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
+      
+      // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
+      const customersWithDeliveredOrders = response.data.map((customer: any) => {
+        // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
+        if (customer.deliveredOrders !== undefined) {
+          return customer;
+        }
+        
+        // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
+        if (customer.orders && Array.isArray(customer.orders)) {
+          const deliveredOrders = customer.orders.filter((order: any) => 
+            order.status === "delivered"
+          ).length;
+          
+          return {
+            ...customer,
+            deliveredOrders
+          };
+        }
+        
+        // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
+        if (customer.orderCount !== undefined) {
+          return {
+            ...customer,
+            deliveredOrders: customer.orderCount
+          };
+        }
+        
+        // Nếu không có thông tin nào, mặc định là 0
+        return {
+          ...customer,
+          deliveredOrders: 0
+        };
+      });
+      
       return {
         success: true,
         message: "Tìm kiếm khách hàng thành công",
         data: {
-          customers: response.data,
-          total: response.data.length,
+          customers: customersWithDeliveredOrders,
+          total: customersWithDeliveredOrders.length,
           page,
           limit,
-          totalPages: Math.ceil(response.data.length / limit)
+          totalPages: Math.ceil(customersWithDeliveredOrders.length / limit)
         }
       };
     } catch (error) {

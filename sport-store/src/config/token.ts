@@ -1,3 +1,5 @@
+
+
 export const TOKEN_CONFIG = {
     ACCESS_TOKEN: {
         COOKIE_NAME: 'access_token',
@@ -87,4 +89,4 @@ export const clearTokens = (): void => {
     localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
     localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-}; 
+};

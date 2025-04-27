@@ -70,7 +70,7 @@ export default function CustomerInfo({
         </div>
         <div>
           <h2 className="text-xl font-bold text-neutral-800">{customer.name || "Chưa cập nhật tên"}</h2>
-          <p className="text-indigo-600 font-medium">ID: #{customer.id}</p>
+          <p className="text-indigo-600 font-medium">ID: #VJUSPORTUSER-{customer.id.slice(0, 8)}</p>
         </div>
       </div>
 

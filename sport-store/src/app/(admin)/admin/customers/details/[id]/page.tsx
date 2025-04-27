@@ -10,6 +10,7 @@ import OrderList from "@/components/admin/customers/details/orderList";
 import ResetPasswordModal from "@/components/admin/customers/details/resetPasswordModal";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
+import { customerService } from "@/services/customerService";
 
 interface Location {
   code: string;
@@ -75,6 +76,22 @@ export default function CustomerDetail() {
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [customerError, setCustomerError] = useState<string | null>(null);
 
+  // Hàm chuyển đổi ID từ định dạng URL sang MongoDB ID
+  const getMongoIdFromUrlId = (urlId: string) => {
+    // Nếu ID đã là MongoDB ID hợp lệ, trả về luôn
+    if (/^[0-9a-fA-F]{24}$/.test(urlId)) {
+      return urlId;
+    }
+    
+    // Nếu ID có định dạng VJUSPORTUSER-, trả về nguyên ID
+    if (urlId.startsWith('VJUSPORTUSER-')) {
+      return urlId;
+    }
+    
+    // Nếu không phải cả hai trường hợp trên, trả về null
+    return null;
+  };
+
   // Fetch provinces data
   const fetchProvinces = useCallback(async () => {
     try {
@@ -129,19 +146,31 @@ export default function CustomerDetail() {
       setIsLoading(true);
       setCustomerError(null);
 
+      const mongoId = getMongoIdFromUrlId(params.id as string);
+
       // Lấy thông tin khách hàng
-      const userResponse = await fetchWithAuth(`/admin/users/${params.id}`);
+      const userResponse = await fetchWithAuth(`/admin/users/${mongoId}`);
       if (!userResponse.success) {
         throw new Error(userResponse.message || "Không thể tải thông tin khách hàng");
       }
-      setCustomer(userResponse.data as Customer);
+      const customerData = userResponse.data as Customer;
+      setCustomer(customerData);
 
-      // Lấy lịch sử đơn hàng
-      const ordersResponse = await fetchWithAuth(`/admin/orders?userId=${params.id}`);
-      if (!ordersResponse.success) {
-        throw new Error(ordersResponse.message || "Không thể tải danh sách đơn hàng");
+      try {
+        // Lấy lịch sử đơn hàng
+        const ordersResponse = await fetchWithAuth(`/orders?userId=${customerData._id}`);
+        if (ordersResponse.success) {
+          setCustomerOrders(ordersResponse.data as Order[]);
+        } else {
+          console.error("Không thể tải danh sách đơn hàng:", ordersResponse.message);
+          // Không throw error, chỉ log và để danh sách đơn hàng trống
+          setCustomerOrders([]);
+        }
+      } catch (orderError) {
+        console.error("Lỗi khi tải danh sách đơn hàng:", orderError);
+        // Không throw error, chỉ log và để danh sách đơn hàng trống
+        setCustomerOrders([]);
       }
-      setCustomerOrders(ordersResponse.data as Order[]);
     } catch (error) {
       console.error("Lỗi khi tải thông tin:", error);
       setCustomerError(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải thông tin");
@@ -215,11 +244,7 @@ export default function CustomerDetail() {
     if (!tempCustomer || !customer) return;
 
     try {
-      const response = await fetchWithAuth(`/users/${customer._id}`, {
-        method: "PUT",
-        body: JSON.stringify(tempCustomer),
-      });
-
+      const response = await customerService.updateCustomer(customer._id, tempCustomer);
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi cập nhật thông tin");
       }
@@ -235,17 +260,14 @@ export default function CustomerDetail() {
 
   // Xử lý xóa khách hàng
   const handleDeleteCustomer = useCallback(async () => {
-    if (!customer) return;
+    if (!customer || !params.id) return;
 
     if (!confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) {
       return;
     }
 
     try {
-      const response = await fetchWithAuth(`/users/admin/${customer._id}`, {
-        method: "DELETE",
-      });
-
+      const response = await customerService.deleteCustomer(params.id.toString());
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi xóa khách hàng");
       }
@@ -256,18 +278,14 @@ export default function CustomerDetail() {
       console.error("Lỗi khi xóa:", error);
       toast.error("Không thể xóa khách hàng");
     }
-  }, [customer, router]);
+  }, [customer, params.id, router]);
 
   // Xử lý thay đổi mật khẩu
   const handleChangePassword = useCallback(async (newPassword: string) => {
-    if (!customer) return;
+    if (!customer || !params.id) return;
 
     try {
-      const response = await fetchWithAuth(`/users/admin/reset-password/${customer._id}`, {
-        method: "PUT",
-        body: JSON.stringify({ password: newPassword }),
-      });
-
+      const response = await customerService.changePassword(params.id.toString(), newPassword);
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi thay đổi mật khẩu");
       }
@@ -278,7 +296,7 @@ export default function CustomerDetail() {
       console.error("Lỗi khi thay đổi mật khẩu:", error);
       toast.error("Không thể thay đổi mật khẩu");
     }
-  }, [customer]);
+  }, [customer, params.id]);
 
   // Xử lý thay đổi địa chỉ
   const handleProvinceChange = useCallback(async (value: string) => {
