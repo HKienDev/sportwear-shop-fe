@@ -3,6 +3,7 @@ import CartList from './CartList';
 import CartSummary from './CartSummary';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ArrowLeft, ShoppingBag, ArrowRight } from 'lucide-react';
 
 interface CartProps {
   cart: CartState;
@@ -26,6 +27,14 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
   const handleRemoveSelected = () => {
     selectedItems.forEach(id => onRemoveItem(id));
     setSelectedItems([]);
+  };
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  const handleContinueShopping = () => {
+    router.push('/user');
   };
 
   if (cart.loading) {
@@ -58,13 +67,26 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col justify-center items-center h-64">
+          <div className="bg-gray-100 p-6 rounded-full mb-4">
+            <ShoppingBag size={48} className="text-gray-400" />
+          </div>
           <p className="text-lg text-gray-500 mb-4">Giỏ hàng của bạn đang trống</p>
-          <button 
-            onClick={() => router.push('/user')} 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Tiếp tục mua sắm
-          </button>
+          <div className="flex space-x-4">
+            <button 
+              onClick={handleGoBack}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
+            >
+              <ArrowLeft size={16} className="mr-1" />
+              Quay lại
+            </button>
+            <button 
+              onClick={handleContinueShopping} 
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center"
+            >
+              Tiếp tục mua sắm
+              <ArrowRight size={16} className="ml-1" />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -73,12 +95,22 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Giỏ hàng của bạn</h1>
+        <div className="flex items-center">
+          <button 
+            onClick={handleGoBack}
+            className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
+          >
+            <ArrowLeft size={18} className="mr-1" />
+            <span>Quay lại</span>
+          </button>
+          <h1 className="text-2xl font-bold">Giỏ hàng của bạn</h1>
+        </div>
         <button
-          onClick={() => router.push('/user')}
-          className="text-blue-600 hover:text-blue-800"
+          onClick={handleContinueShopping}
+          className="flex items-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-md transition-all duration-300"
         >
-          Tiếp tục mua sắm
+          <ShoppingBag size={16} className="mr-1" />
+          <span>Tiếp tục mua sắm</span>
         </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

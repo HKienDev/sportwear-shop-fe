@@ -15,6 +15,7 @@ import DeliveryMethod, { SHIPPING_FEES } from '@/components/user/checkout/Delive
 import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import DeliveryInfo from '@/components/user/checkout/DeliveryInfo';
 import CouponSection from '@/components/user/checkout/CouponSection';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Checkout() {
   const [cart, setCart] = useState<CartState | null>(null);
@@ -233,9 +234,22 @@ export default function Checkout() {
   // Tính tổng tiền thanh toán
   const total = totalAfterDiscount - couponDiscount + shipping;
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">Thanh toán</h1>
+      <div className="flex items-center mb-8">
+        <button 
+          onClick={handleGoBack}
+          className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
+        >
+          <ArrowLeft size={18} className="mr-1" />
+          <span>Quay lại</span>
+        </button>
+        <h1 className="text-2xl font-bold">Thanh toán</h1>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Cột bên trái - 8/12 */}

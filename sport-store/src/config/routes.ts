@@ -12,7 +12,7 @@ export const ROUTES = {
     },
     USER: {
         PROFILE: '/user/profile',
-        ORDERS: '/user/orders',
+        ORDERS: '/user/invoice',
         SETTINGS: '/user/settings'
     },
     PRODUCTS: '/products',
