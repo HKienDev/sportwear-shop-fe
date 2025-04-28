@@ -48,7 +48,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   const refreshOrderDetails = async () => {
     try {
       setIsRefreshing(true);
-      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}`);
+      const response = await fetchWithAuth<{ status: Order["status"] }>(`/orders/${orderId}`);
       
       if (response.success && response.data?.status) {
         if (onStatusUpdate) {
@@ -65,6 +65,15 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   const handleCancelOrder = async () => {
     try {
       setIsLoading(true);
+
+      // Kiểm tra trạng thái hiện tại của đơn hàng
+      const currentOrderResponse = await fetchWithAuth<{ status: Order["status"] }>(`/orders/${orderId}`);
+      
+      if (currentOrderResponse.success && currentOrderResponse.data?.status === OrderStatus.CANCELLED) {
+        toast("Đơn hàng đã được hủy trước đó");
+        setIsOpen(false);
+        return;
+      }
 
       // Lấy thông tin user từ localStorage
       const userStr = localStorage.getItem("user");
@@ -101,7 +110,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
         restoreStock: true // Thêm flag để server biết cần hoàn lại stock
       };
 
-      const response = await fetchWithAuth<{ status: Order["status"] }>(`/api/orders/admin/${orderId}/status`, {
+      const response = await fetchWithAuth<{ status: Order["status"] }>(`/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -162,11 +171,13 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
           <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
           <AlertDialogDescription>
             Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này sẽ:
-            <ul className="list-disc list-inside mt-2 space-y-1">
+          </AlertDialogDescription>
+          <div className="mt-2">
+            <ul className="list-disc list-inside space-y-1">
               <li>Hoàn lại số lượng sản phẩm vào kho</li>
               <li>Không thể hoàn tác sau khi hủy</li>
             </ul>
-          </AlertDialogDescription>
+          </div>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Hủy</AlertDialogCancel>

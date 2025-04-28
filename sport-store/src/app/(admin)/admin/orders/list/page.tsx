@@ -29,7 +29,8 @@ export default function OrderListPage() {
       });
 
       const response = await fetchWithAuth<{
-        orders: Order[];
+        success: boolean;
+        data: Order[];
       }>(`/orders/admin?${queryParams}`);
 
       if (!response.success) {
@@ -40,7 +41,7 @@ export default function OrderListPage() {
         throw new Error("Không nhận được dữ liệu từ server");
       }
 
-      setOrders(response.data.orders);
+      setOrders(response.data);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách đơn hàng");
