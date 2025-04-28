@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Package, Truck, Home } from "lucide-react";
 import { OrderStatus } from "@/types/base";
 
@@ -16,6 +16,10 @@ export default function DeliveryTracking({
   isLoading,
 }: DeliveryTrackingProps) {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>(status);
+
+  useEffect(() => {
+    setCurrentStatus(status);
+  }, [status]);
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
     setCurrentStatus(newStatus);
@@ -78,7 +82,7 @@ export default function DeliveryTracking({
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Theo Dõi Đơn Hàng</h3>
-        {nextStatus && (
+        {nextStatus && currentStatus !== OrderStatus.CANCELLED && (
           <button
             onClick={() => handleStatusChange(nextStatus)}
             disabled={isLoading}
@@ -89,67 +93,78 @@ export default function DeliveryTracking({
         )}
       </div>
 
-      <div className="relative">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 transform -translate-y-1/2"></div>
-        <div className="relative flex justify-between">
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
-                  ? "bg-blue-500"
-                  : "bg-gray-300"
-              }`}
-            >
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-sm text-gray-600">Chờ xác nhận</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                [OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
-                  ? "bg-blue-500"
-                  : "bg-gray-300"
-              }`}
-            >
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-sm text-gray-600">Đã xác nhận</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                [OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(currentStatus)
-                  ? "bg-blue-500"
-                  : "bg-gray-300"
-              }`}
-            >
-              <Truck className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-sm text-gray-600">Đang vận chuyển</span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                currentStatus === OrderStatus.DELIVERED ? "bg-blue-500" : "bg-gray-300"
-              }`}
-            >
-              <Home className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-sm text-gray-600">Đã giao hàng</span>
+      {currentStatus === OrderStatus.CANCELLED ? (
+        <div className="mt-6 p-4 bg-red-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Clock className="w-6 h-6 text-red-500" />
+            <span className="text-red-700">Đơn hàng đã bị hủy</span>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="relative">
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 transform -translate-y-1/2"></div>
+            <div className="relative flex justify-between">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
+                      ? "bg-blue-500"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm text-gray-600">Chờ xác nhận</span>
+              </div>
 
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-2">
-          {getStatusIcon(currentStatus)}
-          <span className="text-gray-700">{getStatusText(currentStatus)}</span>
-        </div>
-      </div>
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    [OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
+                      ? "bg-blue-500"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm text-gray-600">Đã xác nhận</span>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    [OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
+                      ? "bg-blue-500"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <Truck className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm text-gray-600">Đang vận chuyển</span>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    currentStatus === OrderStatus.DELIVERED ? "bg-blue-500" : "bg-gray-300"
+                  }`}
+                >
+                  <Home className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm text-gray-600">Đã giao hàng</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              {getStatusIcon(currentStatus)}
+              <span className="text-gray-700">{getStatusText(currentStatus)}</span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

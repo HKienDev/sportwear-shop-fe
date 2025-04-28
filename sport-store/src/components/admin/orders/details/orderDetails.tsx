@@ -9,7 +9,6 @@ import OrderTable from "./orderTable";
 import { Order, OrderStatus } from "@/types/base";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
 import CancelOrder from "./cancelOrder";
 
 type OrderItemProduct = {
@@ -156,7 +155,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         setIsUpdating(true);
         const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${id}/status`, {
           method: "PUT",
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({ 
+            status: newStatus,
+            note: "Đơn hàng đã bị hủy bởi admin"
+          }),
         });
 
         if (response.success) {
@@ -177,22 +179,6 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     };
 
     updateStatus();
-  };
-
-  // Render nút hành động dựa trên trạng thái hiện tại
-  const renderActionButton = () => {
-    const statusInfo = orderStatusInfo[currentStatus];
-    if (!statusInfo.nextStatus) return null;
-
-    return (
-      <Button
-        onClick={() => handleUpdateStatus(statusInfo.nextStatus)}
-        disabled={isUpdating}
-        className={`${statusInfo.buttonColor} text-white`}
-      >
-        {isUpdating ? "Đang cập nhật..." : statusInfo.buttonText}
-      </Button>
-    );
   };
 
   return (
@@ -271,7 +257,6 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         appliedCoupon={order.appliedCoupon}
       />
       <div className="flex justify-end space-x-4">
-        {renderActionButton()}
         <CancelOrder
           orderId={orderId}
           items={order.items.map(item => ({
