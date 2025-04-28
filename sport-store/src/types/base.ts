@@ -128,6 +128,28 @@ export interface CartItem {
     updatedAt: Date;
 }
 
+export interface Coupon {
+    _id: string;
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    usageLimit: number;
+    userLimit: number;
+    startDate: string;
+    endDate: string;
+    status: 'active' | 'inactive' | 'expired';
+    usageCount: number;
+    userUsageCount: Record<string, number>;
+    minimumPurchaseAmount: number;
+    createdBy?: string;
+    updatedBy?: string;
+    createdAt: string;
+    updatedAt: string;
+    isExpired?: boolean;
+    isAvailable?: boolean;
+    isActive?: boolean;
+}
+
 export interface Order {
     _id: string;
     shortId: string;
@@ -161,6 +183,18 @@ export interface Order {
     };
     shippingFee: number;
     note?: string;
+    couponDiscount?: number;
+    couponCode?: string;
+    subtotal?: number;
+    shipping?: number;
+    appliedCoupon?: Coupon | null;
+    shippingMethod?: {
+        name: string;
+        fee: number;
+        estimatedDays: number;
+    };
+    discount?: number;
+    directDiscount?: number;
     createdAt: Date;
     updatedAt: Date;
 }

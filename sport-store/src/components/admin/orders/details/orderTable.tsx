@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Package } from "lucide-react";
+import type { Coupon } from '@/types/coupon';
 
 type OrderItemProduct = {
   _id: string;
@@ -31,16 +32,55 @@ interface OrderTableProps {
     fee: number;
   };
   discount?: number;
+  couponDiscount?: number;
+  couponCode?: string;
+  totalPrice?: number;
+  subtotal?: number;
+  shipping?: number;
+  appliedCoupon?: Coupon | null;
 }
 
-export default function OrderTable({ items = [], shippingMethod = { name: "Standard", fee: 30000 }, discount = 0 }: OrderTableProps) {
-  // Tính tổng tiền
-  const subtotal = items.reduce((total, item) => {
+export default function OrderTable({ 
+  items = [], 
+  shippingMethod = { name: "Standard", fee: 30000 }, 
+  discount = 0,
+  couponDiscount = 0,
+  couponCode = "",
+  totalPrice = 0,
+  subtotal: propSubtotal,
+  shipping: propShipping,
+  appliedCoupon
+}: OrderTableProps) {
+  // Tính tổng tiền hàng nếu không có từ props
+  const calculatedSubtotal = items.reduce((total, item) => {
     return total + (item.price * item.quantity);
   }, 0);
+  
+  // Sử dụng subtotal từ props nếu có, nếu không thì tính toán
+  const subtotal = propSubtotal || calculatedSubtotal;
+  
+  // Sử dụng shipping từ props nếu có, nếu không thì lấy từ shippingMethod
+  const shipping = propShipping || (shippingMethod?.fee || 0);
 
-  // Tính tổng tiền cuối cùng
-  const total = subtotal + (shippingMethod?.fee || 0) - discount;
+  // Sử dụng totalPrice từ API nếu có, nếu không thì tính toán
+  // Tổng tiền = Tổng tiền hàng - Giảm giá trực tiếp - Mã giảm giá + Phí vận chuyển
+  const total = totalPrice > 0 ? totalPrice : (subtotal - discount - couponDiscount + shipping);
+
+  // Tính phần trăm giảm giá trực tiếp
+  const directDiscountPercentage = subtotal > 0 ? Math.round((discount / subtotal) * 100) : 0;
+  const directDiscountText = directDiscountPercentage > 0 ? ` (${directDiscountPercentage}%)` : '';
+
+  // Tính phần trăm giảm giá từ mã
+  // Sử dụng giá trị thực của mã giảm giá nếu có
+  let couponDiscountPercentage = 0;
+  if (appliedCoupon && appliedCoupon.type === 'percentage') {
+    couponDiscountPercentage = appliedCoupon.value;
+  } else if (subtotal > 0) {
+    // Nếu không có thông tin về mã giảm giá, tính dựa trên tổng tiền sau khi trừ giảm giá trực tiếp
+    const priceAfterDirectDiscount = subtotal - discount;
+    couponDiscountPercentage = priceAfterDirectDiscount > 0 ? Math.round((couponDiscount / priceAfterDirectDiscount) * 100) : 0;
+  }
+  const couponDiscountText = couponDiscountPercentage > 0 ? ` (${couponDiscountPercentage}%)` : '';
 
   return (
     <div className="mt-8 pt-6 border-t border-gray-200">
@@ -111,7 +151,7 @@ export default function OrderTable({ items = [], shippingMethod = { name: "Stand
           <tfoot className="bg-gray-50">
             <tr>
               <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                Tạm tính:
+                Tổng tiền hàng:
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {subtotal.toLocaleString('vi-VN')}đ
@@ -119,27 +159,33 @@ export default function OrderTable({ items = [], shippingMethod = { name: "Stand
             </tr>
             <tr>
               <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                Giảm giá trực tiếp{directDiscountText}:
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                -{discount.toLocaleString('vi-VN')}đ
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                Mã giảm giá {appliedCoupon ? `(${appliedCoupon.code})` : couponCode ? `(${couponCode})` : ''}{couponDiscountText}:
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                -{couponDiscount.toLocaleString('vi-VN')}đ
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
                 Phí vận chuyển:
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {shippingMethod.fee.toLocaleString('vi-VN')}đ
+                {shipping.toLocaleString('vi-VN')}đ
               </td>
             </tr>
-            {discount > 0 && (
-              <tr>
-                <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                  Giảm giá:
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  -{discount.toLocaleString('vi-VN')}đ
-                </td>
-              </tr>
-            )}
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                Tổng cộng:
+            <tr className="border-t border-gray-200">
+              <td colSpan={3} className="px-6 py-4 text-right text-sm font-bold text-gray-900">
+                Tổng tiền thanh toán:
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
                 {total.toLocaleString('vi-VN')}đ
               </td>
             </tr>

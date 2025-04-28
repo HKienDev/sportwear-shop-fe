@@ -63,15 +63,27 @@ export default function Checkout() {
           let totalSalePrice = 0;
           let totalDirectDiscount = 0;
           
+          console.log('🛒 Dữ liệu giỏ hàng:', response.data);
+          
           response.data.items.forEach((item: CartItem) => {
             const originalPrice = item.product.originalPrice;
             const salePrice = item.product.salePrice;
             const quantity = item.quantity;
             
+            console.log(`📦 Sản phẩm: ${item.product.name}`);
+            console.log(`💰 Giá gốc: ${originalPrice}`);
+            console.log(`💰 Giá khuyến mãi: ${salePrice}`);
+            console.log(`🔢 Số lượng: ${quantity}`);
+            console.log(`💵 Tổng tiền: ${salePrice * quantity}`);
+            
             totalOriginalPrice += originalPrice * quantity;
             totalSalePrice += salePrice * quantity;
             totalDirectDiscount += (originalPrice - salePrice) * quantity;
           });
+          
+          console.log(`💰 Tổng tiền gốc: ${totalOriginalPrice}`);
+          console.log(`💰 Tổng tiền sau giảm giá: ${totalSalePrice}`);
+          console.log(`💰 Tổng giảm giá: ${totalDirectDiscount}`);
           
           setSubtotal(totalOriginalPrice);
           setDiscount(totalDirectDiscount);
@@ -123,8 +135,13 @@ export default function Checkout() {
 
         // Kiểm tra ngày hiệu lực
         const now = new Date();
-        const startDate = new Date(coupon.startDate.split(" ")[0].split("/").reverse().join("-"));
-        const endDate = new Date(coupon.endDate.split(" ")[0].split("/").reverse().join("-"));
+        // Xử lý ngày tháng từ API một cách an toàn
+        const startDate = new Date(coupon.startDate);
+        const endDate = new Date(coupon.endDate);
+        
+        console.log('Thời gian hiện tại:', now);
+        console.log('Ngày bắt đầu:', startDate);
+        console.log('Ngày kết thúc:', endDate);
 
         if (now < startDate) {
           throw new Error("Mã giảm giá chưa có hiệu lực");
