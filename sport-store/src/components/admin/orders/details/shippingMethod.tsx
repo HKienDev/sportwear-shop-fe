@@ -4,19 +4,84 @@ import { Truck } from "lucide-react";
 
 interface ShippingMethodProps {
   method: string;
-  expectedDate: string;
-  courier: string;
   shortId: string;
   shippingMethod: string;
+  createdAt?: string;
 }
 
 export default function ShippingMethod({
   method,
-  expectedDate,
-  courier,
   shortId,
-  shippingMethod
+  shippingMethod,
+  createdAt
 }: ShippingMethodProps) {
+  // Hàm chuyển đổi phương thức giao hàng
+  const getShippingMethodText = (method: string) => {
+    switch (method) {
+      case "standard":
+        return "GIAO HÀNG TIẾT KIỆM";
+      case "express":
+        return "GIAO HÀNG NHANH";
+      case "same_day":
+        return "GIAO HÀNG HỎA TỐC";
+      default:
+        return method.toUpperCase();
+    }
+  };
+
+  // Hàm tính ngày dự kiến giao hàng
+  const calculateExpectedDate = (method: string, orderDate: string) => {
+    const orderDateObj = new Date(orderDate);
+    let daysToAdd = 0;
+
+    switch (method) {
+      case "standard":
+        daysToAdd = 5;
+        break;
+      case "express":
+        daysToAdd = 2;
+        break;
+      case "same_day":
+        daysToAdd = 0;
+        break;
+      default:
+        daysToAdd = 5;
+    }
+
+    const expectedDateObj = new Date(orderDateObj);
+    expectedDateObj.setDate(expectedDateObj.getDate() + daysToAdd);
+
+    return expectedDateObj.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
+  // Lấy ngày tạo đơn từ createdAt hoặc shortId
+  const getOrderDate = () => {
+    if (createdAt) {
+      return createdAt;
+    }
+    
+    // Fallback: Lấy từ shortId nếu không có createdAt
+    const parts = shortId.split("-");
+    if (parts.length >= 3) {
+      const dateStr = parts[2];
+      if (dateStr && dateStr.length === 8) {
+        const year = dateStr.substring(0, 4);
+        const month = dateStr.substring(4, 6);
+        const day = dateStr.substring(6, 8);
+        return `${year}-${month}-${day}`;
+      }
+    }
+    return new Date().toISOString().split("T")[0]; // Fallback to current date
+  };
+
+  const orderDate = getOrderDate();
+  const calculatedExpectedDate = calculateExpectedDate(shippingMethod, orderDate);
+  const shippingMethodText = getShippingMethodText(shippingMethod);
+
   return (
     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -27,14 +92,14 @@ export default function ShippingMethod({
         <div>
           <p className="font-medium">{method}</p>
           {shippingMethod && (
-            <p className="text-gray-600 mt-1">Phương thức: {shippingMethod}</p>
+            <p className="text-gray-600 mt-1">Phương thức: {shippingMethodText}</p>
           )}
         </div>
         <div>
-          <p className="text-gray-600">{expectedDate}</p>
+          <p className="text-gray-600">Ngày dự kiến giao hàng: {calculatedExpectedDate}</p>
         </div>
         <div>
-          <p className="text-gray-600">Đơn vị vận chuyển: {courier}</p>
+          <p className="text-gray-600">Đơn vị vận chuyển: Viettel Post</p>
         </div>
         <div>
           <p className="text-gray-600">Mã vận đơn: {shortId}</p>

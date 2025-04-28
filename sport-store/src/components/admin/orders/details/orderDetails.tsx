@@ -203,11 +203,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         />
       </div>
       <ShippingMethod 
-        method="Standard"
-        expectedDate={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("vi-VN")}
-        courier="Giao Hàng Nhanh"
+        method={order.shippingMethod?.name || "Standard"}
         shortId={order.shortId}
-        shippingMethod="Standard"
+        shippingMethod="standard"
+        createdAt={order.createdAt ? new Date(order.createdAt).toISOString() : undefined}
       />
       <OrderTable 
         items={order.items.map(item => {
