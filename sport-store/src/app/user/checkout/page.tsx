@@ -148,18 +148,23 @@ export default function Checkout() {
           throw new Error("Bạn đã sử dụng hết lượt cho mã giảm giá này");
         }
 
+        // Tính tổng giá dựa trên salePrice
+        const productSubtotal = cart?.items.reduce((total, item) => {
+          return total + (item.product.salePrice * item.quantity);
+        }, 0) || 0;
+
         // Kiểm tra giá trị đơn hàng tối thiểu
-        if (coupon.minimumPurchaseAmount > 0 && subtotal < coupon.minimumPurchaseAmount) {
+        if (coupon.minimumPurchaseAmount > 0 && productSubtotal < coupon.minimumPurchaseAmount) {
           throw new Error(`Đơn hàng tối thiểu ${coupon.minimumPurchaseAmount.toLocaleString('vi-VN')}đ để áp dụng mã này`);
         }
 
         // Nếu tất cả điều kiện đều hợp lệ, cập nhật state
         setAppliedCoupon(coupon);
         
-        // Tính giảm giá từ mã giảm giá
+        // Tính giảm giá từ mã giảm giá dựa trên salePrice
         if (coupon.type === 'percentage') {
           // Tính giảm giá theo phần trăm
-          const discountAmount = (subtotal * coupon.value) / 100;
+          const discountAmount = (productSubtotal * coupon.value) / 100;
           setCouponDiscount(Math.round(discountAmount)); // Làm tròn để tránh số thập phân
         } else {
           // Giảm giá cố định

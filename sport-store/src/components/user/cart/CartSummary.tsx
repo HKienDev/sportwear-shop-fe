@@ -11,14 +11,19 @@ interface CartSummaryProps {
 }
 
 export default function CartSummary({ items, totalQuantity, cartTotal, onCheckout, showAnimation = true }: CartSummaryProps) {
-  // Tính tổng giá gốc dựa trên originalPrice của product
+  // Tính tổng giá dựa trên salePrice của product
   const originalTotal = items.reduce((total, item) => {
-    return total + (item.product.originalPrice * item.quantity);
+    return total + (item.product.salePrice * item.quantity);
   }, 0);
 
-  // Tính tổng tiền giảm giá (originalPrice - salePrice)
+  // Tính tổng tiền giảm giá dựa trên salePrice
   const totalDiscount = items.reduce((total, item) => {
-    return total + ((item.product.originalPrice - item.product.salePrice) * item.quantity);
+    // Nếu có giảm giá (originalPrice > salePrice)
+    if (item.product.originalPrice > item.product.salePrice) {
+      const itemDiscount = item.product.originalPrice - item.product.salePrice;
+      return total + (itemDiscount * item.quantity);
+    }
+    return total;
   }, 0);
 
   // Debug

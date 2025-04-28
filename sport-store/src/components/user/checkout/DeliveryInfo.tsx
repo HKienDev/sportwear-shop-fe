@@ -95,8 +95,56 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
         ward: user.address?.ward || '',
         street: user.address?.street || '',
       });
+
+      // Tự động sử dụng địa chỉ gốc nếu có
+      if (user.address?.province && user.address?.district && user.address?.ward) {
+        // Lấy danh sách tỉnh để tìm mã code
+        fetch('https://provinces.open-api.vn/api/p/')
+          .then(res => res.json())
+          .then(provincesData => {
+            const selectedProvince = provincesData.find((p: LocationOption) => p.name === user.address?.province);
+            if (selectedProvince) {
+              // Lấy danh sách quận/huyện của tỉnh
+              fetch(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
+                .then(res => res.json())
+                .then(provinceData => {
+                  const selectedDistrict = provinceData.districts.find((d: LocationOption) => d.name === user.address?.district);
+                  if (selectedDistrict) {
+                    // Lấy danh sách phường/xã của quận/huyện
+                    fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
+                      .then(res => res.json())
+                      .then(districtData => {
+                        const selectedWard = districtData.wards.find((w: LocationOption) => w.name === user.address?.ward);
+                        if (selectedWard) {
+                          const shippingAddress: ShippingAddress = {
+                            fullName: user.fullname || '',
+                            phone: user.phone || '',
+                            address: {
+                              province: {
+                                name: user.address.province,
+                                code: Number(selectedProvince.code)
+                              },
+                              district: {
+                                name: user.address.district,
+                                code: Number(selectedDistrict.code)
+                              },
+                              ward: {
+                                name: user.address.ward,
+                                code: Number(selectedWard.code)
+                              },
+                              street: user.address.street,
+                            },
+                          };
+                          onAddressChange(shippingAddress);
+                        }
+                      });
+                  }
+                });
+            }
+          });
+      }
     }
-  }, [user]);
+  }, [user, onAddressChange]);
 
   // Lấy danh sách tỉnh
   useEffect(() => {
