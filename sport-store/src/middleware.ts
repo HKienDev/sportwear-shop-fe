@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/admin')) {
         if (!accessToken || !userCookie) {
             console.log("❌ Middleware - No access token or user cookie found, redirecting to login");
-            return NextResponse.redirect(new URL('/login', request.url));
+            return NextResponse.redirect(new URL('/auth/login', request.url));
         }
 
         try {
@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
             // Kiểm tra trạng thái xác thực
             if (user.authStatus !== AuthStatus.VERIFIED) {
                 console.log('❌ Middleware - User not verified, redirecting to login');
-                return NextResponse.redirect(new URL('/login', request.url));
+                return NextResponse.redirect(new URL('/auth/login', request.url));
             }
 
             // Kiểm tra quyền admin cho các route admin
@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
             return response;
         } catch (error) {
             console.log("❌ Middleware - Error parsing user cookie:", error);
-            return NextResponse.redirect(new URL('/login', request.url));
+            return NextResponse.redirect(new URL('/auth/login', request.url));
         }
     }
 
@@ -74,7 +74,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/profile') || pathname.startsWith('/orders')) {
         if (!accessToken || !userCookie) {
             console.log("❌ Middleware - No access token or user cookie found, redirecting to login");
-            return NextResponse.redirect(new URL('/login', request.url));
+            return NextResponse.redirect(new URL('/auth/login', request.url));
         }
     }
 
