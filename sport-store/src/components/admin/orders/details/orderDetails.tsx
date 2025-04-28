@@ -261,11 +261,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             color: item.color
           };
         })}
-        shippingMethod={{
-          name: "Standard",
-          fee: 30000
-        }}
-        discount={0}
+        shippingMethod={order.shippingMethod}
+        discount={order.directDiscount || 0}
+        couponDiscount={order.couponDiscount || 0}
+        couponCode={order.couponCode || ""}
+        totalPrice={order.totalPrice}
+        subtotal={order.subtotal}
+        shipping={order.shippingFee || order.shippingMethod?.fee || 0}
+        appliedCoupon={order.appliedCoupon}
       />
       <div className="flex justify-end space-x-4">
         {renderActionButton()}

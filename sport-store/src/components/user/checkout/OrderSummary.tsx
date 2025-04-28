@@ -49,7 +49,7 @@ export default function OrderSummary({
           </div>
           
           <div className="flex justify-between">
-            <span className="text-gray-700">
+            <span className="text-gray-700">formatPrice
               Mã giảm giá {appliedCoupon ? `(${appliedCoupon.code})` : ''}
             </span>
             <span className="font-medium text-green-600">-{formatPrice(couponDiscount)}</span>
