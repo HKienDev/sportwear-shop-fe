@@ -3,7 +3,6 @@
 import { useParams } from "next/navigation";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { useOrderDetails } from "@/hooks/useOrderDetails";
-import { OrderStatus } from "@/types/base";
 
 export default function OrderDetailsPage() {
   const params = useParams();

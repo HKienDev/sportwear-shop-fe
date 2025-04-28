@@ -199,10 +199,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         shortId={order.shortId}
-        customerId={order.userId || "Không có dữ liệu"}
+        customerId={order.user?.customId || order.user?.username || "Không có dữ liệu"}
         lastUpdated={new Date(order.updatedAt).toLocaleString("vi-VN")}
         status={currentStatus}
-        paymentStatus={order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+        paymentStatus={currentStatus === OrderStatus.DELIVERED ? "Đã thanh toán" : (order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán")}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DeliveryTracking 
@@ -211,9 +211,9 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           isLoading={isUpdating}
         />
         <ShippingAddress 
-          name={order.user?.fullname || "Không có dữ liệu"}
+          name={order.shippingAddress.fullName || "Không có dữ liệu"}
           address={`${order.shippingAddress.address.street || ""}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`}
-          phone={order.phone || "Không có dữ liệu"}
+          phone={order.shippingAddress.phone || "Không có dữ liệu"}
         />
       </div>
       <ShippingMethod 

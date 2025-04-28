@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Package } from "lucide-react";
-import { Product } from "@/types/product";
 
 type OrderItemProduct = {
   _id: string;
