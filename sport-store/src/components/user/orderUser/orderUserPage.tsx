@@ -1,57 +1,178 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Filter, CheckCircle, Truck } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CheckCircle, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import axios from 'axios';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { getToken } from '@/config/token';
+import { useAuth } from '@/context/authContext';
+
+interface OrderItem {
+  product: string;
+  quantity: number;
+  price: number;
+  name: string;
+  sku: string;
+}
+
+interface Order {
+  _id: string;
+  shortId: string;
+  items: OrderItem[];
+  totalPrice: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+  isPaid: boolean;
+  isDelivered: boolean;
+}
 
 export default function OrderUserPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
   
-  const orders = [
-    { id: '2131', amount: '8.500.000 VND', paid: true, status: 'delivered', date: '16:10 24/01/2025' },
-    { id: '2130', amount: '2.150.000 VND', paid: true, status: 'shipping', date: '09:45 23/01/2025' },
-    { id: '2129', amount: '5.899.000 VND', paid: true, status: 'shipping', date: '14:30 22/01/2025' },
-    { id: '2128', amount: '1.250.000 VND', paid: true, status: 'shipping', date: '11:20 21/01/2025' },
-    { id: '2127', amount: '3.750.000 VND', paid: true, status: 'shipping', date: '16:50 20/01/2025' },
-    { id: '2126', amount: '9.200.000 VND', paid: true, status: 'shipping', date: '08:15 19/01/2025' },
-    { id: '2125', amount: '4.300.000 VND', paid: true, status: 'shipping', date: '13:40 18/01/2025' },
-    { id: '2124', amount: '6.780.000 VND', paid: true, status: 'shipping', date: '17:25 17/01/2025' },
-  ];
+  // Thêm state cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPrevPage, setHasPrevPage] = useState(false);
+  const limit = 8; // Số đơn hàng trên mỗi trang
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const token = getToken('access');
+      console.log('Token:', token); // Để debug
+      
+      if (!token) {
+        setError('Vui lòng đăng nhập để xem đơn hàng');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const response = await axios.get(`http://localhost:4000/api/orders/my-orders?page=${currentPage}&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        setOrders(response.data.data);
+        
+        // Cập nhật thông tin phân trang
+        if (response.data.pagination) {
+          setTotalPages(response.data.pagination.totalPages);
+          setTotalOrders(response.data.pagination.total);
+          setHasNextPage(response.data.pagination.hasNextPage);
+          setHasPrevPage(response.data.pagination.hasPrevPage);
+        }
+      } else {
+        setError('Không thể tải danh sách đơn hàng');
+      }
+    } catch (err) {
+      console.error('Error details:', err); // Để debug
+      setError('Đã có lỗi xảy ra khi tải đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, limit]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrders();
+    } else {
+      setError('Vui lòng đăng nhập để xem đơn hàng');
+      setLoading(false);
+    }
+  }, [isAuthenticated, currentPage, activeTab, fetchOrders]);
+
+  // Hàm chuyển trang
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'HH:mm dd/MM/yyyy', { locale: vi });
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
 
   const getStatusBadge = (status: string) => {
-    if (status === 'delivered') {
-      return (
-        <span className="flex items-center gap-1 text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-medium">
-          <CheckCircle size={14} />
-          ĐÃ GIAO
-        </span>
-      );
+    switch (status) {
+      case 'delivered':
+        return (
+          <span className="flex items-center gap-1 text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-medium">
+            <CheckCircle size={14} />
+            ĐÃ GIAO
+          </span>
+        );
+      case 'shipping':
+        return (
+          <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-xs font-medium">
+            <Truck size={14} />
+            ĐANG VẬN CHUYỂN
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="flex items-center gap-1 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full text-xs font-medium">
+            CHỜ XỬ LÝ
+          </span>
+        );
+      case 'cancelled':
+        return (
+          <span className="flex items-center gap-1 text-red-600 bg-red-50 px-3 py-1 rounded-full text-xs font-medium">
+            ĐÃ HỦY
+          </span>
+        );
+      default:
+        return (
+          <span className="flex items-center gap-1 text-gray-600 bg-gray-50 px-3 py-1 rounded-full text-xs font-medium">
+            {status.toUpperCase()}
+          </span>
+        );
     }
-    return (
-      <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-xs font-medium">
-        <Truck size={14} />
-        ĐANG VẬN CHUYỂN
-      </span>
-    );
   };
+
+  const filteredOrders = orders.filter(order => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'shipping') return order.status === 'shipping';
+    if (activeTab === 'delivered') return order.status === 'delivered';
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center">Đang tải danh sách đơn hàng...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Đơn hàng của bạn</h2>
-        <div className="flex gap-2">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm đơn hàng..."
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          </div>
-          <button className="flex items-center gap-1 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            <Filter size={18} />
-            Lọc
-          </button>
-        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -88,11 +209,11 @@ export default function OrderUserPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.amount}</td>
+              {filteredOrders.map((order) => (
+                <tr key={order._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order.shortId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.createdAt)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatPrice(order.totalPrice)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(order.status)}
                   </td>
@@ -104,6 +225,54 @@ export default function OrderUserPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Thêm phần phân trang */}
+        {orders.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+            <div className="text-sm text-gray-700">
+              Hiển thị <span className="font-medium">{orders.length}</span> trong tổng số <span className="font-medium">{totalOrders}</span> đơn hàng
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={!hasPrevPage}
+                className={`px-3 py-1 rounded-md ${
+                  hasPrevPage
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={!hasNextPage}
+                className={`px-3 py-1 rounded-md ${
+                  hasNextPage
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
