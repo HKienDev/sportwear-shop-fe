@@ -71,12 +71,10 @@ export default function OrderTable({
   const directDiscountText = directDiscountPercentage > 0 ? ` (${directDiscountPercentage}%)` : '';
 
   // Tính phần trăm giảm giá từ mã
-  // Sử dụng giá trị thực của mã giảm giá nếu có
   let couponDiscountPercentage = 0;
   if (appliedCoupon && appliedCoupon.type === 'percentage') {
     couponDiscountPercentage = appliedCoupon.value;
   } else if (subtotal > 0) {
-    // Nếu không có thông tin về mã giảm giá, tính dựa trên tổng tiền sau khi trừ giảm giá trực tiếp
     const priceAfterDirectDiscount = subtotal - discount;
     couponDiscountPercentage = priceAfterDirectDiscount > 0 ? Math.round((couponDiscount / priceAfterDirectDiscount) * 100) : 0;
   }
@@ -84,113 +82,81 @@ export default function OrderTable({
 
   return (
     <div className="mt-8 pt-6 border-t border-gray-200">
-      <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
+      <h3 className="font-medium text-gray-700 mb-4 flex items-center">
         <Package className="h-5 w-5 mr-2 text-gray-500" />
         Thông Tin Đơn Hàng
       </h3>
-      <div className="border rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sản Phẩm
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Số Lượng
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Đơn Giá
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thành Tiền
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {items.map((item, index) => (
-              <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <Image
-                        src={item.product.mainImage || '/placeholder.png'}
-                        alt={item.product.name}
-                        width={40}
-                        height={40}
-                        className="rounded-md object-cover"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {item.product.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {item.product.description}
-                      </div>
-                      {(item.size || item.color) && (
-                        <div className="text-xs text-gray-500">
-                          {item.size && `Size: ${item.size}`}
-                          {item.color && ` | Màu: ${item.color}`}
-                        </div>
-                      )}
-                    </div>
+      <div className="space-y-4 mb-8">
+        {items.map((item, index) => (
+          <div 
+            key={index} 
+            className="flex flex-col sm:flex-row border border-gray-200 rounded-xl overflow-hidden"
+            style={{
+              transition: `all 0.5s ease-out ${0.1 + index * 0.1}s`
+            }}
+          >
+            <div className="w-full sm:w-40 h-28 bg-gradient-to-br from-blue-400 to-green-300 flex items-center justify-center relative">
+              <Image
+                src={item.product.mainImage || '/placeholder.png'}
+                alt={item.product.name}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="p-4 flex-1 flex flex-col sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-900">{item.product.name}</h4>
+                <div className="mt-1 text-sm text-gray-500">{item.product.description}</div>
+                {(item.size || item.color) && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {item.size && `Size: ${item.size}`}
+                    {item.color && ` | Màu: ${item.color}`}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.quantity}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.price.toLocaleString('vi-VN')}đ
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {(item.price * item.quantity).toLocaleString('vi-VN')}đ
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot className="bg-gray-50">
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                Tổng tiền hàng:
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {subtotal.toLocaleString('vi-VN')}đ
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                )}
+              </div>
+              <div className="mt-3 sm:mt-0 flex items-center justify-between sm:flex-col sm:items-end">
+                <div className="font-medium text-gray-900">{item.price.toLocaleString('vi-VN')} VND</div>
+                <div className="text-sm text-gray-500">Số lượng: {item.quantity}</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">
+                  Thành tiền: {(item.price * item.quantity).toLocaleString('vi-VN')} VND
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        <div className="border border-gray-200 rounded-xl p-4 mt-6 bg-gray-50">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm font-medium text-gray-900">Tổng tiền hàng:</span>
+            <span className="text-sm text-gray-500">{subtotal.toLocaleString('vi-VN')} VND</span>
+          </div>
+          
+          {discount > 0 && (
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-900">
                 Giảm giá trực tiếp{directDiscountText}:
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                -{discount.toLocaleString('vi-VN')}đ
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                Mã giảm giá {appliedCoupon ? `(${appliedCoupon.code})` : couponCode ? `(${couponCode})` : ''}{couponDiscountText}:
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                -{couponDiscount.toLocaleString('vi-VN')}đ
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-medium text-gray-900">
-                Phí vận chuyển:
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {shipping.toLocaleString('vi-VN')}đ
-              </td>
-            </tr>
-            <tr className="border-t border-gray-200">
-              <td colSpan={3} className="px-6 py-4 text-right text-sm font-bold text-gray-900">
-                Tổng tiền thanh toán:
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
-                {total.toLocaleString('vi-VN')}đ
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+              </span>
+              <span className="text-sm text-green-600">-{discount.toLocaleString('vi-VN')} VND</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm font-medium text-gray-900">
+              Mã giảm giá {appliedCoupon ? `(${appliedCoupon.code})` : couponCode ? `(${couponCode})` : ''}{couponDiscountText}:
+            </span>
+            <span className="text-sm text-green-600">{couponDiscount > 0 ? '-' : ''}{couponDiscount.toLocaleString('vi-VN')} VND</span>
+          </div>
+          
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm font-medium text-gray-900">Phí vận chuyển:</span>
+            <span className="text-sm text-gray-500">{shipping.toLocaleString('vi-VN')} VND</span>
+          </div>
+          
+          <div className="flex justify-between py-3 mt-2">
+            <span className="font-bold text-gray-900">Tổng tiền thanh toán:</span>
+            <span className="font-bold text-red-600">{total.toLocaleString('vi-VN')} VND</span>
+          </div>
+        </div>
       </div>
     </div>
   );

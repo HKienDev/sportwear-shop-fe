@@ -83,27 +83,17 @@ export default function ShippingMethod({
   const shippingMethodText = getShippingMethodText(shippingMethod);
 
   return (
-    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+    <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-4">
+      <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
         <Truck className="w-5 h-5" />
         Phương Thức Vận Chuyển
       </h3>
-      <div className="space-y-3">
-        <div>
-          <p className="font-medium">{method}</p>
-          {shippingMethod && (
-            <p className="text-gray-600 mt-1">Phương thức: {shippingMethodText}</p>
-          )}
-        </div>
-        <div>
-          <p className="text-gray-600">Ngày dự kiến giao hàng: {calculatedExpectedDate}</p>
-        </div>
-        <div>
-          <p className="text-gray-600">Đơn vị vận chuyển: Viettel Post</p>
-        </div>
-        <div>
-          <p className="text-gray-600">Mã vận đơn: {shortId}</p>
-        </div>
+      <div className="text-sm">
+        <div className="font-semibold text-gray-900">{method}</div>
+        {shippingMethod && (
+          <div className="text-gray-600 mt-1">Phương thức: {shippingMethodText}</div>
+        )}
+        <div className="text-gray-600 mt-1">Ngày dự kiến giao hàng: {calculatedExpectedDate}</div>
       </div>
     </div>
   );

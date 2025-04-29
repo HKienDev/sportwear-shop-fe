@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order, OrderStatus } from "@/types/order";
+import { Loader2 } from "lucide-react";
 
 interface OrderItem {
   product: {
@@ -157,14 +157,43 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="destructive"
-          size="sm"
+        <button
           disabled={isDisabled || isLoading || isRefreshing}
-          className="w-full"
+          className={`
+            inline-flex items-center justify-center gap-2
+            px-6 py-2.5 rounded-lg font-medium text-sm
+            transition-all duration-200 ease-in-out
+            bg-red-600 hover:bg-red-700 text-white
+            shadow-sm hover:shadow-md
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transform hover:-translate-y-0.5
+            ${isLoading ? 'animate-pulse' : ''}
+          `}
         >
-          {isLoading ? "Đang hủy..." : "Hủy đơn hàng"}
-        </Button>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Đang hủy...</span>
+            </>
+          ) : (
+            <>
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              <span>Hủy đơn hàng</span>
+            </>
+          )}
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

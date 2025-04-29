@@ -1,63 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Package, Truck, Home } from "lucide-react";
+import { Clock, Package, Truck, Home, Loader2 } from "lucide-react";
 import { OrderStatus } from "@/types/base";
+import CancelOrder from "./cancelOrder";
+
+interface OrderItem {
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: {
+      main: string;
+      sub: string[];
+    };
+  };
+  quantity: number;
+  price: number;
+}
 
 interface DeliveryTrackingProps {
   status: OrderStatus;
   onChangeStatus: (status: OrderStatus) => void;
   isLoading: boolean;
+  orderId?: string;
+  items?: OrderItem[];
+  onCancelOrder?: (orderId: string, status: OrderStatus) => void;
 }
 
 export default function DeliveryTracking({
   status,
   onChangeStatus,
   isLoading,
+  orderId,
+  items,
+  onCancelOrder,
 }: DeliveryTrackingProps) {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>(status);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     setCurrentStatus(status);
   }, [status]);
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
+    setIsAnimating(true);
     setCurrentStatus(newStatus);
     await onChangeStatus(newStatus);
-  };
-
-  const getStatusText = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return "Chờ xác nhận";
-      case OrderStatus.CONFIRMED:
-        return "Đơn hàng đã được xác nhận và đang chuẩn bị hàng";
-      case OrderStatus.SHIPPED:
-        return "Đơn hàng đang được vận chuyển";
-      case OrderStatus.DELIVERED:
-        return "Đơn hàng đã được giao thành công";
-      case OrderStatus.CANCELLED:
-        return "Đơn hàng đã bị hủy";
-      default:
-        return "Chờ xác nhận";
-    }
-  };
-
-  const getStatusIcon = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return <Clock className="w-6 h-6" />;
-      case OrderStatus.CONFIRMED:
-        return <Package className="w-6 h-6" />;
-      case OrderStatus.SHIPPED:
-        return <Truck className="w-6 h-6" />;
-      case OrderStatus.DELIVERED:
-        return <Home className="w-6 h-6" />;
-      case OrderStatus.CANCELLED:
-        return <Clock className="w-6 h-6" />;
-      default:
-        return <Clock className="w-6 h-6" />;
-    }
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 1000);
   };
 
   const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
@@ -79,91 +71,125 @@ export default function DeliveryTracking({
   const nextStatus = getNextStatus(currentStatus);
 
   return (
-    <div className="mt-8">
+    <div className="px-6 py-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Theo Dõi Đơn Hàng</h3>
-        {nextStatus && currentStatus !== OrderStatus.CANCELLED && (
-          <button
-            onClick={() => handleStatusChange(nextStatus)}
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Đang cập nhật..." : "Cập nhật trạng thái"}
-          </button>
-        )}
+        <h3 className="font-medium text-gray-700 flex items-center gap-2">
+          <Package className="w-5 h-5" />
+          Theo Dõi Đơn Hàng
+        </h3>
+        
+        <div className="flex items-center gap-4">
+          {nextStatus && currentStatus !== OrderStatus.CANCELLED && (
+            <button
+              onClick={() => handleStatusChange(nextStatus)}
+              disabled={isLoading}
+              className={`
+                inline-flex items-center justify-center gap-2
+                px-6 py-2.5 rounded-lg font-medium text-sm
+                transition-all duration-200 ease-in-out
+                ${isAnimating ? 'animate-pulse' : ''}
+                ${currentStatus === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700 text-white' : 
+                  currentStatus === OrderStatus.CONFIRMED ? 'bg-purple-600 hover:bg-purple-700 text-white' :
+                  currentStatus === OrderStatus.SHIPPED ? 'bg-green-600 hover:bg-green-700 text-white' : 
+                  'bg-gray-600 hover:bg-gray-700 text-white'}
+                shadow-sm hover:shadow-md
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transform hover:-translate-y-0.5
+              `}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang cập nhật...</span>
+                </>
+              ) : (
+                <>
+                  {currentStatus === OrderStatus.PENDING && (
+                    <>
+                      <Package className="w-4 h-4" />
+                      <span>Xác nhận đơn hàng</span>
+                    </>
+                  )}
+                  {currentStatus === OrderStatus.CONFIRMED && (
+                    <>
+                      <Truck className="w-4 h-4" />
+                      <span>Bắt đầu vận chuyển</span>
+                    </>
+                  )}
+                  {currentStatus === OrderStatus.SHIPPED && (
+                    <>
+                      <Home className="w-4 h-4" />
+                      <span>Xác nhận đã giao</span>
+                    </>
+                  )}
+                </>
+              )}
+            </button>
+          )}
+          
+          {orderId && items && onCancelOrder && currentStatus !== OrderStatus.CANCELLED && currentStatus !== OrderStatus.DELIVERED && (
+            <CancelOrder
+              orderId={orderId}
+              items={items}
+              status={currentStatus}
+              onStatusUpdate={onCancelOrder}
+            />
+          )}
+        </div>
       </div>
 
       {currentStatus === OrderStatus.CANCELLED ? (
-        <div className="mt-6 p-4 bg-red-50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Clock className="w-6 h-6 text-red-500" />
-            <span className="text-red-700">Đơn hàng đã bị hủy</span>
+        <div className="p-4 bg-red-50 rounded-xl flex items-start gap-3">
+          <div className="bg-red-100 p-2 rounded-full">
+            <Clock className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <h3 className="font-medium text-red-500">Đơn hàng đã bị hủy</h3>
           </div>
         </div>
       ) : (
-        <>
-          <div className="relative">
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 transform -translate-y-1/2"></div>
-            <div className="relative flex justify-between">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                    [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
-                      ? "bg-blue-500"
-                      : "bg-gray-300"
-                  }`}
-                >
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm text-gray-600">Chờ xác nhận</span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                    [OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
-                      ? "bg-blue-500"
-                      : "bg-gray-300"
-                  }`}
-                >
-                  <Package className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm text-gray-600">Đã xác nhận</span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                    [OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(currentStatus)
-                      ? "bg-blue-500"
-                      : "bg-gray-300"
-                  }`}
-                >
-                  <Truck className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm text-gray-600">Đang vận chuyển</span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                    currentStatus === OrderStatus.DELIVERED ? "bg-blue-500" : "bg-gray-300"
-                  }`}
-                >
-                  <Home className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm text-gray-600">Đã giao hàng</span>
-              </div>
+        <div className="flex items-center justify-between w-full max-w-3xl mx-auto">
+          {/* Pending */}
+          <div className="flex flex-col items-center">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStatus === OrderStatus.PENDING || currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+              <Clock size={20} />
             </div>
+            <div className="text-xs font-medium mt-2 text-center">Chờ xác nhận</div>
           </div>
-
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2">
-              {getStatusIcon(currentStatus)}
-              <span className="text-gray-700">{getStatusText(currentStatus)}</span>
+          
+          {/* Pending connector */}
+          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
+          
+          {/* Confirmed */}
+          <div className="flex flex-col items-center">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && (currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED) ? 'animate-bounce' : ''}`}>
+              <Package size={20} />
             </div>
+            <div className="text-xs font-medium mt-2 text-center">Đã xác nhận</div>
           </div>
-        </>
+          
+          {/* Shipping connector */}
+          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
+          
+          {/* Shipping */}
+          <div className="flex flex-col items-center">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && (currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED) ? 'animate-bounce' : ''}`}>
+              <Truck size={20} />
+            </div>
+            <div className="text-xs font-medium mt-2 text-center">Đang vận chuyển</div>
+          </div>
+          
+          {/* Delivered connector */}
+          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
+          
+          {/* Delivered */}
+          <div className="flex flex-col items-center">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && currentStatus === OrderStatus.DELIVERED ? 'animate-bounce' : ''}`}>
+              <Home size={20} />
+            </div>
+            <div className="text-xs font-medium mt-2 text-center">Đã giao hàng</div>
+          </div>
+        </div>
       )}
     </div>
   );

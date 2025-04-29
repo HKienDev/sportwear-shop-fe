@@ -9,7 +9,6 @@ import OrderTable from "./orderTable";
 import { Order, OrderStatus } from "@/types/base";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import toast from "react-hot-toast";
-import CancelOrder from "./cancelOrder";
 
 type OrderItemProduct = {
   _id: string;
@@ -190,89 +189,87 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         status={currentStatus}
         paymentStatus={currentStatus === OrderStatus.DELIVERED ? "Đã thanh toán" : (order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán")}
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DeliveryTracking 
-          status={currentStatus}
-          onChangeStatus={handleUpdateStatus}
-          isLoading={isUpdating}
-        />
-        <ShippingAddress 
-          name={order.shippingAddress.fullName || "Không có dữ liệu"}
-          address={`${order.shippingAddress.address.street || ""}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`}
-          phone={order.shippingAddress.phone || "Không có dữ liệu"}
-        />
-      </div>
-      <ShippingMethod 
-        method={order.shippingMethod?.name || "Standard"}
-        shortId={order.shortId}
-        shippingMethod="standard"
-        createdAt={order.createdAt ? new Date(order.createdAt).toISOString() : undefined}
-      />
-      <OrderTable 
-        items={order.items.map(item => {
-          const productData: OrderItemProduct = typeof item.product === 'string' ? {
-            _id: item.product,
-            name: '',
-            description: '',
-            originalPrice: item.price,
-            salePrice: item.price,
-            mainImage: '',
-            subImages: [],
-            categoryId: '',
-            stock: 0,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          } : {
-            _id: item.product._id,
-            name: item.product.name,
-            description: item.product.description || '',
-            originalPrice: item.price,
-            salePrice: item.price,
-            mainImage: item.product.mainImage || '',
-            subImages: item.product.subImages || [],
-            categoryId: item.product.categoryId || '',
-            stock: item.product.stock || 0,
-            isActive: item.product.isActive || true,
-            createdAt: item.product.createdAt || new Date(),
-            updatedAt: item.product.updatedAt || new Date()
-          };
-
-          return {
-            product: productData,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size,
-            color: item.color
-          };
-        })}
-        shippingMethod={order.shippingMethod}
-        discount={order.directDiscount || 0}
-        couponDiscount={order.couponDiscount || 0}
-        couponCode={order.couponCode || ""}
-        totalPrice={order.totalPrice}
-        subtotal={order.subtotal}
-        shipping={order.shippingFee || order.shippingMethod?.fee || 0}
-        appliedCoupon={order.appliedCoupon}
-      />
-      <div className="flex justify-end space-x-4">
-        <CancelOrder
-          orderId={orderId}
-          items={order.items.map(item => ({
-            product: {
-              _id: typeof item.product === 'string' ? item.product : item.product._id,
-              name: typeof item.product === 'string' ? '' : item.product.name,
+      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+        <div className="w-full">
+          <DeliveryTracking 
+            status={currentStatus}
+            onChangeStatus={handleUpdateStatus}
+            isLoading={isUpdating}
+            orderId={orderId}
+            items={order.items.map(item => ({
+              product: {
+                _id: typeof item.product === 'string' ? item.product : item.product._id,
+                name: typeof item.product === 'string' ? '' : item.product.name,
+                price: item.price,
+                images: {
+                  main: typeof item.product === 'string' ? '' : item.product.mainImage || '',
+                  sub: typeof item.product === 'string' ? [] : item.product.subImages || []
+                }
+              },
+              quantity: item.quantity,
+              price: item.price
+            }))}
+            onCancelOrder={handleCancelOrderStatusUpdate}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ShippingMethod 
+            method={order.shippingMethod?.name || "Standard"}
+            shortId={order.shortId}
+            shippingMethod="standard"
+            createdAt={order.createdAt ? new Date(order.createdAt).toISOString() : undefined}
+          />
+          <ShippingAddress 
+            name={order.shippingAddress.fullName || "Không có dữ liệu"}
+            address={`${order.shippingAddress.address.street || ""}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`}
+            phone={order.shippingAddress.phone || "Không có dữ liệu"}
+          />
+        </div>
+        <OrderTable 
+          items={order.items.map(item => {
+            const productData: OrderItemProduct = typeof item.product === 'string' ? {
+              _id: item.product,
+              name: '',
+              description: '',
+              originalPrice: item.price,
+              salePrice: item.price,
+              mainImage: '',
+              subImages: [],
+              categoryId: '',
+              stock: 0,
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            } : {
+              _id: item.product._id,
+              name: item.product.name,
+              description: item.product.description || '',
+              originalPrice: item.price,
+              salePrice: item.price,
+              mainImage: item.product.mainImage || '',
+              subImages: item.product.subImages || [],
+              categoryId: item.product.categoryId || '',
+              stock: item.product.stock || 0,
+              isActive: item.product.isActive || true,
+              createdAt: item.product.createdAt || new Date(),
+              updatedAt: item.product.updatedAt || new Date()
+            };
+            return {
+              product: productData,
+              quantity: item.quantity,
               price: item.price,
-              images: {
-                main: typeof item.product === 'string' ? '' : item.product.mainImage || '',
-                sub: typeof item.product === 'string' ? [] : item.product.subImages || []
-              }
-            },
-            quantity: item.quantity,
-            price: item.price
-          }))}
-          status={currentStatus}
-          onStatusUpdate={handleCancelOrderStatusUpdate}
+              size: item.size,
+              color: item.color
+            };
+          })}
+          shippingMethod={order.shippingMethod}
+          discount={order.directDiscount || 0}
+          couponDiscount={order.couponDiscount || 0}
+          couponCode={order.couponCode || ""}
+          totalPrice={order.totalPrice}
+          subtotal={order.subtotal}
+          shipping={order.shippingFee || order.shippingMethod?.fee || 0}
+          appliedCoupon={order.appliedCoupon}
         />
       </div>
     </div>
