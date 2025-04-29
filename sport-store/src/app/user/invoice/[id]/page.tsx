@@ -119,7 +119,6 @@ export default function InvoicePage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState('details');
   const [isPrinting, setIsPrinting] = useState(false);
   const [animateItems, setAnimateItems] = useState(false);
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
@@ -236,9 +235,6 @@ export default function InvoicePage() {
       `}</style>
       
       <InvoiceHeader 
-        order={order}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
         handlePrint={handlePrint}
       />
 
@@ -268,11 +264,15 @@ export default function InvoicePage() {
           <div className="p-6">
             <AddressInfo 
               storeAddress={{
-                name: 'VJU SPORT',
-                phone: '+84 362 195 258',
+                name: `Phương thức: ${
+                  order.shippingMethod.method === 'standard' ? 'GIAO HÀNG TIẾT KIỆM' :
+                  order.shippingMethod.method === 'express' ? 'GIAO HÀNG NHANH' :
+                  order.shippingMethod.method === 'same_day' ? 'GIAO HÀNG HỎA TỐC' : 'GIAO HÀNG TIẾT KIỆM'
+                }`,
+                phone: order.shortId,
                 address: [
-                  'Đường Lưu Hữu Phước, Phường Cầu Diễn,',
-                  'Quận Nam Từ Liêm, Hà Nội'
+                  `Ngày dự kiến giao hàng: ${new Date(order.createdAt).toLocaleDateString('vi-VN')}`,
+                  `Đơn vị vận chuyển: Viettel Post`
                 ]
               }}
               deliveryAddress={{
