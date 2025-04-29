@@ -152,10 +152,10 @@ const CouponTable: React.FC<CouponTableProps> = ({
   };
 
   return (
-    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-7xl mx-auto">
         {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
             <div className="flex justify-between">
               <div>
@@ -209,12 +209,12 @@ const CouponTable: React.FC<CouponTableProps> = ({
         </div>
 
         {/* Coupons Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-slate-200">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                  <th className="px-6 py-4 w-10">
+                  <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={selectedCoupons.length === coupons.length && coupons.length > 0}
@@ -222,20 +222,20 @@ const CouponTable: React.FC<CouponTableProps> = ({
                       className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                     />
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Mã</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Loại</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Giá trị</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Bắt đầu</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Kết thúc</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Thao tác</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Mã</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Loại</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Giá trị</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Bắt đầu</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Kết thúc</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {currentCoupons.length > 0 ? (
                   currentCoupons.map((coupon, index) => (
                     <tr key={coupon._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedCoupons.includes(coupon._id)}
@@ -243,65 +243,54 @@ const CouponTable: React.FC<CouponTableProps> = ({
                           className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                         />
                       </td>
-                      <td className="px-6 py-4 font-medium">{coupon.code}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">{coupon.code}</td>
+                      <td className="px-4 py-3">
                         {coupon.type === 'percentage' ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 whitespace-nowrap">
                             <Percent className="h-4 w-4 text-primary" />
                             <span>Phần trăm</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 whitespace-nowrap">
                             <DollarSign className="h-4 w-4 text-primary" />
                             <span>Số tiền</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4">{getDiscountDisplay(coupon)}</td>
-                      <td className="px-6 py-4">{getTimeDisplay(coupon)}</td>
-                      <td className="px-6 py-4">{formatDate(coupon.endDate)}</td>
-                      <td className="px-6 py-4">{getStatusBadge(coupon.status)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-4 py-3 whitespace-nowrap">{getDiscountDisplay(coupon)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(coupon.startDate)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(coupon.endDate)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {getStatusBadge(coupon.status)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
-                            className="h-8 w-8 hover:bg-muted"
+                            className="h-8 w-8 p-0"
+                            onClick={() => router.push(`/admin/coupons/details/${coupon._id}`)}
                           >
                             <Eye className="h-4 w-4" />
-                            <span className="sr-only">Xem chi tiết</span>
                           </Button>
-                          {(isStatus(coupon.status, "Hoạt động") || isStatus(coupon.status, "Tạm Dừng")) && (
+                          {isStatus(coupon.status, "Hoạt động") || isStatus(coupon.status, "Tạm Dừng") ? (
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 p-0"
                               onClick={() => handleToggleStatus(coupon)}
                               disabled={isUpdating[coupon._id]}
-                              className={`h-8 w-8 ${
-                                isStatus(coupon.status, "Hoạt động")
-                                  ? "hover:bg-amber-50 hover:text-amber-700"
-                                  : "hover:bg-green-50 hover:text-green-700"
-                              }`}
                             >
-                              {isUpdating[coupon._id] ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              ) : (
-                                <Power className="h-4 w-4" />
-                              )}
-                              <span className="sr-only">
-                                {isStatus(coupon.status, "Hoạt động") ? "Tạm dừng" : "Kích hoạt"}
-                              </span>
+                              <Power className="h-4 w-4" />
                             </Button>
-                          )}
+                          ) : null}
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8 p-0 text-destructive"
                             onClick={() => handleDelete(coupon._id)}
-                            className="h-8 w-8 hover:bg-red-50 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Xóa</span>
                           </Button>
                         </div>
                       </td>
