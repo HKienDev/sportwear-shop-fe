@@ -174,10 +174,10 @@ const CategoryTable = React.memo(
     };
 
     return (
-      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto">
           {/* Status Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
               <div className="flex justify-between">
                 <div>
@@ -231,12 +231,12 @@ const CategoryTable = React.memo(
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-slate-200">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200">
                 <thead>
                   <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                    <th className="px-6 py-4 w-10">
+                    <th className="px-4 py-3 w-10">
                       <input
                         type="checkbox"
                         checked={selectedCategories.length === localCategories.length && localCategories.length > 0}
@@ -244,92 +244,109 @@ const CategoryTable = React.memo(
                         className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                       />
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-48">
                       Tên Danh Mục
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Slug
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
+                      Mã Danh Mục
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
                       Số Sản Phẩm
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">
                       Trạng Thái
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Ngày Tạo
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
                       Thao Tác
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {localCategories.map((category) => (
-                    <tr key={category._id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.includes(category._id)}
-                          onChange={() => onToggleSelectCategory(category._id)}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            {category.image ? (
-                              <Image
-                                src={category.image}
-                                alt={category.name}
-                                width={40}
-                                height={40}
-                                className="h-10 w-10 object-cover rounded-lg"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                                <span className="text-slate-500 text-sm font-medium">
-                                  {category.name.charAt(0)}
-                                </span>
+                  {localCategories.length > 0 ? (
+                    localCategories.map((category, index) => (
+                      <tr key={category._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category._id)}
+                            onChange={() => onToggleSelectCategory(category._id)}
+                            className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center">
+                            {category.image && (
+                              <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 mr-3">
+                                <Image
+                                  src={category.image}
+                                  alt={category.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="40px"
+                                />
                               </div>
                             )}
+                            <div className="min-w-0">
+                              <div className="font-medium text-slate-800 truncate">
+                                {category.name}
+                              </div>
+                              <div className="text-slate-500 text-sm truncate">
+                                {category.description || "Không có mô tả"}
+                              </div>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <div className="font-medium text-slate-900">{category.name}</div>
-                            <div className="text-slate-500">{category.slug}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-slate-800 font-mono">
+                            {category.categoryId}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">{category.slug}</td>
-                      <td className="px-6 py-4 text-slate-500">{category.productCount}</td>
-                      <td className="px-6 py-4">
-                        <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
-                      </td>
-                      <td className="px-6 py-4 text-slate-500">{formatDate(category.createdAt)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => handleEdit(category._id)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(category._id, category.isActive)}
-                            className="text-amber-600 hover:text-amber-900"
-                          >
-                            <Power className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(category._id)}
-                            className="text-rose-600 hover:text-rose-900"
-                          >
-                            <Trash className="h-5 w-5" />
-                          </button>
-                        </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-slate-800 whitespace-nowrap">
+                            {category.productCount || 0}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEdit(category._id)}
+                              className="p-1 text-slate-600 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(category._id, category.isActive)}
+                              className={`p-1 rounded-full transition-colors ${
+                                category.isActive
+                                  ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              }`}
+                              title={category.isActive ? "Tạm dừng" : "Kích hoạt"}
+                            >
+                              <Power size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(category._id)}
+                              className="p-1 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
+                              title="Xóa"
+                            >
+                              <Trash size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="text-center text-slate-500 py-4">
+                        Không có danh mục nào
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

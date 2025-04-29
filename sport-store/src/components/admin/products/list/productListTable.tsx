@@ -98,10 +98,10 @@ const ProductListTable = React.memo(
     };
 
     return (
-      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto">
           {/* Status Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
               <div className="flex justify-between">
                 <div>
@@ -155,7 +155,7 @@ const ProductListTable = React.memo(
           </div>
 
           {/* Products Summary & Selection */}
-          <div className="flex flex-wrap justify-between items-center mb-4">
+          <div className="flex flex-wrap justify-between items-center mb-2">
             <div className="flex items-center gap-2 mb-2 sm:mb-0">
               <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-lg text-sm font-medium">
                 {currentProducts.length} sản phẩm
@@ -169,12 +169,12 @@ const ProductListTable = React.memo(
           </div>
 
           {/* Products Table with Card Design */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-slate-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
+            <div className="w-full">
+              <table className="w-full divide-y divide-slate-200">
                 <thead>
                   <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                    <th className="px-6 py-4 w-10">
+                    <th className="px-2 py-3 w-[5%]">
                       <input
                         type="checkbox"
                         checked={selectedProducts.length === products.length && products.length > 0}
@@ -182,20 +182,20 @@ const ProductListTable = React.memo(
                         className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                       />
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">SKU</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Sản Phẩm</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Giá</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Tồn Kho</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Danh Mục</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Trạng Thái</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Thao Tác</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">SKU</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[30%]">Sản Phẩm</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Giá</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Tồn Kho</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[15%]">Danh Mục</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Trạng Thái</th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {currentProducts.length > 0 ? (
                     currentProducts.map((product, index) => (
                       <tr key={product._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <input
                             type="checkbox"
                             checked={selectedProducts.includes(product._id)}
@@ -203,38 +203,38 @@ const ProductListTable = React.memo(
                             className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                           />
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <Link
                             href={`/admin/products/details/${product._id}`}
-                            className="text-teal-600 hover:text-teal-800 hover:underline font-medium font-mono"
+                            className="text-teal-600 hover:text-teal-800 hover:underline font-medium font-mono text-sm"
                           >
                             {product.sku || "N/A"}
                           </Link>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <div className="flex items-center">
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
                               <Image
                                 src={product.mainImage || "/default-image.png"}
                                 alt={product.name || "Product Image"}
                                 fill
                                 className="object-cover"
-                                sizes="48px"
+                                sizes="40px"
                               />
                             </div>
-                            <div className="ml-4 min-w-0">
-                              <div className="font-medium text-slate-800 truncate">
+                            <div className="ml-2 min-w-0">
+                              <div className="font-medium text-slate-800 truncate text-sm">
                                 {product.name || "Sản phẩm chưa thêm"}
                               </div>
-                              <div className="text-slate-500 text-sm">
+                              <div className="text-slate-500 text-xs">
                                 {new Date(product.createdAt).toLocaleDateString() || "Chưa có ngày tạo"}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <div className="flex flex-col">
-                            <div className="text-sm font-medium text-slate-800 whitespace-nowrap">
+                            <div className="text-sm font-medium text-slate-800">
                               {product.salePrice === 0 
                                 ? `${product.originalPrice?.toLocaleString() || 0}₫` 
                                 : `${product.salePrice?.toLocaleString() || 0}₫`}
@@ -246,20 +246,20 @@ const ProductListTable = React.memo(
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <div className="text-sm font-medium text-slate-800">
                             {product.stock || 0}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <div className="text-sm text-slate-600 truncate">
                             {getCategoryName(product.categoryId)}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <ProductStatusBadge isActive={product.isActive} stock={product.stock} />
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-3">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">

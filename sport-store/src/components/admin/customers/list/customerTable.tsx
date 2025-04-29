@@ -103,10 +103,10 @@ export function CustomerTable({
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-7xl mx-auto">
         {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
             <div className="flex justify-between">
               <div>
@@ -134,7 +134,7 @@ export function CustomerTable({
         </div>
 
         {/* Customers Summary & Selection */}
-        <div className="flex flex-wrap justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center mb-2">
           <div className="flex items-center gap-2 mb-2 sm:mb-0">
             <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-lg text-sm font-medium">
               {currentCustomers.length} khách hàng
@@ -148,12 +148,12 @@ export function CustomerTable({
         </div>
 
         {/* Customers Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-slate-200">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                  <th className="px-6 py-4 w-10">
+                  <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={Array.isArray(filteredCustomers) && selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
@@ -161,21 +161,21 @@ export function CustomerTable({
                       className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                     />
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Mã Thành Viên</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Tên Khách Hàng</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Số Điện Thoại</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Tổng Đơn Hàng</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Tổng Chi Tiêu</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Trạng Thái</th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">Thao Tác</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Mã Thành Viên</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Tên Khách Hàng</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Số Điện Thoại</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Tổng Đơn Hàng</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Tổng Chi Tiêu</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Trạng Thái</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {currentCustomers.length > 0 ? (
                   currentCustomers.map((customer, index) => (
                     <tr key={customer._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedCustomers.includes(customer._id)}
@@ -183,7 +183,7 @@ export function CustomerTable({
                           className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                         />
                       </td>
-                      <td className="px-6 py-4 font-medium">
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -192,7 +192,7 @@ export function CustomerTable({
                           {`VJUSPORTUSER-${customer._id.slice(0, 8)}`}
                         </Button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="relative">
                             {customer.avatar ? (
@@ -215,41 +215,41 @@ export function CustomerTable({
                             )}
                           </div>
                           <div>
-                            <div className="font-medium">{customer.fullname}</div>
+                            <div className="font-medium whitespace-nowrap">{customer.fullname}</div>
                             <div className="text-xs text-gray-500 sm:hidden">
                               {customer.email}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Mail size={16} className="text-gray-400" />
-                          <span className="text-sm text-gray-600">{customer.email}</span>
+                          <span className="text-sm text-gray-600 whitespace-nowrap">{customer.email}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Phone size={16} className="text-gray-400" />
-                          <span className="text-sm text-gray-600">{customer.phone}</span>
+                          <span className="text-sm text-gray-600 whitespace-nowrap">{customer.phone}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <ShoppingBag size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600">{customer.deliveredOrders || 0}</span>
+                          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{customer.deliveredOrders || 0}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <CreditCard size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600">
+                          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
                             {formatCurrency(customer.totalSpent || 0)}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
                           customer.isActive 
                             ? "bg-green-100 text-green-800" 
                             : "bg-red-100 text-red-800"
@@ -257,7 +257,7 @@ export function CustomerTable({
                           {customer.isActive ? "Hoạt động" : "Bị khóa"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
