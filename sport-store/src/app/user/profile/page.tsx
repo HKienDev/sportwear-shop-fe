@@ -2,10 +2,13 @@
 import { useState, useEffect } from 'react';
 import ProfileUser from "@/components/user/profileUser/userProfileForm";
 import OrderUserPage from "@/components/user/orderUser/orderUserPage";
+import { useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
   const [scrolled, setScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'orders'
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam === 'orders' ? 'orders' : 'profile');
 
   // Handle scroll effect for the sticky header
   useEffect(() => {
@@ -16,6 +19,13 @@ export default function ProfilePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    if (tabParam === 'orders') {
+      setActiveTab('orders');
+    }
+  }, [tabParam]);
 
   return (
     <div className="min-h-screen bg-gray-50">
