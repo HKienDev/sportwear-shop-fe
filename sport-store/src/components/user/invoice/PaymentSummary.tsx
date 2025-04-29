@@ -1,41 +1,65 @@
 interface PaymentSummaryProps {
   subtotal: number;
   discount: number;
+  couponDiscount: number;
   shipping: number;
   total: number;
   paid: number;
 }
 
-export default function PaymentSummary({ subtotal, discount, shipping, total, paid }: PaymentSummaryProps) {
+export default function PaymentSummary({
+  subtotal,
+  discount,
+  couponDiscount,
+  shipping,
+  total,
+  paid
+}: PaymentSummaryProps) {
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' VND';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
   };
 
   return (
-    <div className="bg-gray-50 rounded-xl p-5">
-      <h3 className="font-medium text-gray-700 mb-4">Tổng thanh toán</h3>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Tổng tiền sản phẩm:</span>
+    <div className="border-t border-gray-200 pt-6">
+      <div className="space-y-4">
+        <div className="flex justify-between text-base">
+          <span className="text-gray-600">Tổng tiền hàng</span>
           <span className="font-medium">{formatCurrency(subtotal)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Giảm giá:</span>
-          <span className="font-medium">{formatCurrency(discount)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Phí vận chuyển:</span>
+        
+        {discount > 0 && (
+          <div className="flex justify-between text-base">
+            <span className="text-gray-600">Giảm giá trực tiếp</span>
+            <span className="font-medium text-red-600">-{formatCurrency(discount)}</span>
+          </div>
+        )}
+
+        {couponDiscount > 0 && (
+          <div className="flex justify-between text-base">
+            <span className="text-gray-600">Mã giảm giá</span>
+            <span className="font-medium text-red-600">-{formatCurrency(couponDiscount)}</span>
+          </div>
+        )}
+        
+        <div className="flex justify-between text-base">
+          <span className="text-gray-600">Phí vận chuyển</span>
           <span className="font-medium">{formatCurrency(shipping)}</span>
         </div>
-        <div className="my-3 border-b border-gray-200"></div>
-        <div className="flex justify-between">
-          <span className="font-medium text-gray-900">Phải thanh toán:</span>
-          <span className="font-semibold text-gray-900">{formatCurrency(total)}</span>
+        
+        <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-4">
+          <span>Tổng thanh toán</span>
+          <span>{formatCurrency(total)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Đã thanh toán:</span>
-          <span className="font-medium text-green-600">{formatCurrency(paid)}</span>
-        </div>
+
+        {paid > 0 && (
+          <div className="flex justify-between text-base text-green-600">
+            <span>Đã thanh toán</span>
+            <span>{formatCurrency(paid)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
