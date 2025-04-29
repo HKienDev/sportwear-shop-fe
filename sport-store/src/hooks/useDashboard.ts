@@ -32,6 +32,7 @@ interface DashboardData {
     totalSales: number;
     image: string;
     sku: string;
+    growthRate: number;
   }>;
   recentOrders: {
     orders: Array<{

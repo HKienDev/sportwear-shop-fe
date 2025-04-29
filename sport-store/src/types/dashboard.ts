@@ -16,8 +16,8 @@ export interface BestSellingProduct {
   image?: string;
   category: string;
   totalSales: number;
-  totalRevenue: number;
-  averagePrice: number;
+  sku: string;
+  growthRate: number;
 }
 
 export interface RecentOrder {
@@ -27,4 +27,9 @@ export interface RecentOrder {
   total: number;
   status: string;
   createdAt: string;
+}
+
+export interface DashboardData {
+  bestSellingProducts: BestSellingProduct[];
+  // ... other dashboard data
 } 
