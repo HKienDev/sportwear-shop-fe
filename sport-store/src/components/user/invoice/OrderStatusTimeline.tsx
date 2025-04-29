@@ -40,9 +40,20 @@ export default function OrderStatusTimeline({
 
   // Hàm lấy thời gian cập nhật cho mỗi trạng thái
   const getStatusDate = (status: string) => {
-    if (!statusHistory || statusHistory.length === 0) return orderDate;
+    if (!statusHistory || statusHistory.length === 0) {
+      // Nếu không có lịch sử, chỉ trả về ngày cho trạng thái hiện tại
+      return status === currentStatus ? orderDate : null;
+    }
+    
     const historyItem = statusHistory.find(item => item.status === status);
-    return historyItem ? historyItem.updatedAt : orderDate;
+    return historyItem ? historyItem.updatedAt : null;
+  };
+
+  // Hàm kiểm tra xem trạng thái đã xảy ra chưa
+  const hasStatusOccurred = (status: string) => {
+    if (status === 'pending') return true; // Trạng thái chờ xác nhận luôn xảy ra
+    if (!statusHistory || statusHistory.length === 0) return false;
+    return statusHistory.some(item => item.status === status);
   };
 
   return (
@@ -66,7 +77,9 @@ export default function OrderStatusTimeline({
             <Package size={20} />
           </div>
           <div className="text-xs font-medium mt-2 text-center">Đã xác nhận</div>
-          <div className="text-xs text-gray-500">{formatDate(getStatusDate('confirmed'))}</div>
+          <div className="text-xs text-gray-500">
+            {hasStatusOccurred('confirmed') ? formatDate(getStatusDate('confirmed')!) : 'Chưa xác nhận'}
+          </div>
         </div>
         
         {/* Shipping connector */}
@@ -78,7 +91,9 @@ export default function OrderStatusTimeline({
             <Truck size={20} />
           </div>
           <div className="text-xs font-medium mt-2 text-center">Đang vận chuyển</div>
-          <div className="text-xs text-gray-500">{formatDate(getStatusDate('shipped'))}</div>
+          <div className="text-xs text-gray-500">
+            {hasStatusOccurred('shipped') ? formatDate(getStatusDate('shipped')!) : 'Chưa vận chuyển'}
+          </div>
         </div>
         
         {/* Delivered connector */}
@@ -90,7 +105,9 @@ export default function OrderStatusTimeline({
             <Home size={20} />
           </div>
           <div className="text-xs font-medium mt-2 text-center">Đã giao</div>
-          <div className="text-xs text-gray-500">{formatDate(getStatusDate('delivered'))}</div>
+          <div className="text-xs text-gray-500">
+            {hasStatusOccurred('delivered') ? formatDate(getStatusDate('delivered')!) : 'Chưa giao'}
+          </div>
         </div>
       </div>
     </div>

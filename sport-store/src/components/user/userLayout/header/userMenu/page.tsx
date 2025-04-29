@@ -84,7 +84,7 @@ const UserMenu = () => {
     {
       label: "Đơn hàng của tôi",
       icon: <ShoppingBag className="w-4 h-4" />,
-      href: "/user/invoice",
+      href: "/user/profile?tab=orders",
     },
     {
       label: "Danh sách yêu thích",
