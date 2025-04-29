@@ -243,7 +243,10 @@ export default function Checkout() {
         await cartService.clearCart();
         
         toast.success('Đặt hàng thành công');
-        router.push('/user/invoice');
+        
+        // Chuyển hướng đến trang hóa đơn của đơn hàng vừa tạo
+        const orderId = response.data.data._id;
+        router.push(`/user/invoice/${orderId}`);
       } else {
         throw new Error(response.data.message || 'Không thể tạo đơn hàng');
       }

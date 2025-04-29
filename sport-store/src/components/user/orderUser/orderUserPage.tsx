@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { getToken } from '@/config/token';
 import { useAuth } from '@/context/authContext';
+import { useRouter } from 'next/navigation';
 
 interface OrderItem {
   product: string;
@@ -29,6 +30,7 @@ interface Order {
 }
 
 export default function OrderUserPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('all');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +155,10 @@ export default function OrderUserPage() {
     return true;
   });
 
+  const handleViewOrderDetail = (orderId: string) => {
+    router.push(`/user/invoice/${orderId}`);
+  };
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -211,14 +217,24 @@ export default function OrderUserPage() {
             <tbody className="divide-y divide-gray-200">
               {filteredOrders.map((order) => (
                 <tr key={order._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order.shortId}</td>
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                    onClick={() => handleViewOrderDetail(order._id)}
+                  >
+                    #{order.shortId}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.createdAt)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatPrice(order.totalPrice)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(order.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-800">Xem chi tiết</button>
+                    <button 
+                      className="text-blue-600 hover:text-blue-800"
+                      onClick={() => handleViewOrderDetail(order._id)}
+                    >
+                      Xem chi tiết
+                    </button>
                   </td>
                 </tr>
               ))}

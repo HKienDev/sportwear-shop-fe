@@ -1,10 +1,15 @@
+import Image from 'next/image';
+
 interface Product {
   id: number;
   name: string;
-  description: string;
   price: number;
   quantity: number;
   brand: string;
+  image: string;
+  categoryName: string;
+  color: string;
+  size: string;
 }
 
 interface ProductListProps {
@@ -27,13 +32,25 @@ export default function ProductList({ products, animateItems }: ProductListProps
               transition: `all 0.5s ease-out ${0.1 + index * 0.1}s`
             }}
           >
-            <div className="w-full sm:w-24 h-24 bg-gradient-to-br from-blue-400 to-green-300 flex items-center justify-center">
-              <span className="text-white font-medium">{product.brand}</span>
+            <div className="w-full sm:w-24 h-24 bg-gray-100 flex items-center justify-center overflow-hidden relative">
+              {product.image ? (
+                <Image 
+                  src={product.image} 
+                  alt={product.name} 
+                  fill
+                  sizes="(max-width: 640px) 100vw, 96px"
+                  className="object-cover"
+                />
+              ) : (
+                <span className="text-gray-400 font-medium">{product.brand}</span>
+              )}
             </div>
             <div className="p-4 flex-1 flex flex-col sm:flex-row sm:items-center">
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900">{product.name}</h4>
-                <div className="mt-1 text-sm text-gray-500">{product.description}</div>
+                <div className="mt-1 text-sm text-gray-500">
+                  {product.categoryName} • {product.color || 'Mặc định'} • Kích cỡ: {product.size}
+                </div>
               </div>
               <div className="mt-3 sm:mt-0 flex items-center justify-between sm:flex-col sm:items-end">
                 <div className="font-medium text-gray-900">{product.price.toLocaleString('vi-VN')} VND</div>
