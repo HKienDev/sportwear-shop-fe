@@ -28,7 +28,6 @@ interface Delivery {
   progress: number;
   originAddress: string;
   destinationAddress: string;
-  eta: string;
 }
 
 interface ActiveDeliveriesProps {
@@ -37,19 +36,6 @@ interface ActiveDeliveriesProps {
 
 export function ActiveDeliveries({ deliveries }: ActiveDeliveriesProps) {
   const router = useRouter();
-
-  // Hàm tính ETA dựa trên trạng thái đơn hàng
-  const calculateETA = (createdAt: string): string => {
-    const orderDate = new Date(createdAt);
-    const now = new Date();
-    const elapsedMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
-    
-    // Giả sử thời gian giao hàng tối đa là 30 phút
-    const maxDeliveryTime = 30;
-    const remainingMinutes = Math.max(0, maxDeliveryTime - elapsedMinutes);
-    
-    return `${remainingMinutes} phút`;
-  };
 
   // Hàm chuyển đổi RecentOrder thành Delivery
   const mapToDelivery = (order: RecentOrder): Delivery => {
@@ -81,8 +67,7 @@ export function ActiveDeliveries({ deliveries }: ActiveDeliveriesProps) {
       status: order.status,
       progress: progress,
       originAddress: order.originAddress,
-      destinationAddress: order.destinationAddress,
-      eta: calculateETA(order.createdAt)
+      destinationAddress: order.destinationAddress
     };
   };
 
@@ -192,17 +177,13 @@ export function ActiveDeliveries({ deliveries }: ActiveDeliveriesProps) {
                 </div>
               </div>
               
-              <div className="mt-4 flex justify-between items-center">
-                <div className="flex items-center text-sm text-gray-500">
-                  <Clock size={14} className="mr-1" />
-                  <span>ETA: {delivery.eta}</span>
-                </div>
+              <div className="mt-4 flex justify-end">
                 <button
                   onClick={() => handleViewDetails(delivery.id)}
-                  className="flex items-center text-sm text-gray-600 hover:text-black transition-colors"
+                  className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  <span>Xem chi tiết</span>
-                  <ChevronRight size={16} className="ml-1" />
+                  <span className="mr-1">Chi tiết</span>
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>

@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const { dashboardData, isLoading, error, refresh } = useDashboard(timeRange);
 
   useEffect(() => {

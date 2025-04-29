@@ -1,4 +1,4 @@
-import { PieChart, ArrowUp } from 'lucide-react';
+import { PieChart, ArrowUp, ArrowDown } from 'lucide-react';
 import Image from 'next/image';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -100,16 +100,16 @@ export default function BestSellingProducts() {
                   <h3 className="font-medium text-gray-900">{product.name}</h3>
                   <div className="flex items-center mt-1">
                     <span className="text-xs text-gray-500 mr-3">Mã: {product.sku}</span>
-                    <div className="flex items-center text-xs text-green-500">
-                      <ArrowUp size={12} />
-                      <span className="ml-1">+{product.totalSales}%</span>
+                    <div className={`flex items-center text-xs ${product.growthRate >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {product.growthRate >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                      <span className="ml-1">{product.growthRate >= 0 ? '+' : ''}{product.growthRate}%</span>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 <div className="px-3 py-1 bg-red-50 rounded-full text-red-600 text-sm font-medium">
-                  {product.totalSales} lượt bán
+                  {product.totalSales > 0 ? `${product.totalSales} lượt bán` : 'Chưa có lượt bán'}
                 </div>
               </div>
             </div>
