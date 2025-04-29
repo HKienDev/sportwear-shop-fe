@@ -42,32 +42,45 @@ interface Order {
       };
     };
   };
+  shippingMethod: {
+    method: string;
+    fee: number;
+  };
+  shortId: string;
+  estimatedDeliveryDate: string;
+  carrier: string;
 }
 
 export default function CreativeInvoice() {
-  const [activeSection, setActiveSection] = useState('details');
   const [isPrinting, setIsPrinting] = useState(false);
   const [animateItems, setAnimateItems] = useState(false);
   const [order, setOrder] = useState<Order>({
     shippingAddress: {
-      fullName: 'Hoàng Tiến Trung Kiên',
-      phone: '+84 362 195 258',
+      fullName: '',
+      phone: '',
       address: {
-        street: 'Số 94 (Công khắc số 2006), Đường Phú Mỹ',
+        street: '',
         ward: {
-          name: 'Mỹ Đình 2',
-          code: 1
+          name: '',
+          code: 0
         },
         district: {
-          name: 'Nam Từ Liêm',
-          code: 1
+          name: '',
+          code: 0
         },
         province: {
-          name: 'Hà Nội',
-          code: 1
+          name: '',
+          code: 0
         }
       }
-    }
+    },
+    shippingMethod: {
+      method: '',
+      fee: 0
+    },
+    shortId: '',
+    estimatedDeliveryDate: '',
+    carrier: ''
   });
   
   useEffect(() => {
@@ -144,8 +157,6 @@ export default function CreativeInvoice() {
       `}</style>
       
       <InvoiceHeader 
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
         handlePrint={handlePrint}
       />
 
@@ -180,11 +191,11 @@ export default function CreativeInvoice() {
           <div className="p-6">
             <AddressInfo 
               storeAddress={{
-                name: 'VJU SPORT',
-                phone: '+84 362 195 258',
+                name: `Phương thức: ${order.shippingMethod.method}`,
+                phone: `Mã vận đơn: ${order.shortId}`,
                 address: [
-                  'Đường Lưu Hữu Phước, Phường Cầu Diễn,',
-                  'Quận Nam Từ Liêm, Hà Nội'
+                  `Ngày dự kiến giao hàng: ${order.estimatedDeliveryDate}`,
+                  `Đơn vị vận chuyển: ${order.carrier}`
                 ]
               }}
               deliveryAddress={{
