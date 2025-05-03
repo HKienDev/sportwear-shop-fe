@@ -28,6 +28,7 @@ import { couponService } from "@/services/couponService";
 import { useAuth } from "@/context/authContext";
 import { TOKEN_CONFIG } from "@/config/token";
 import { formatDateForInput, parseDateFromInput } from "@/utils/dateUtils";
+import { Percent, Coins, Calendar, Users, ShoppingCart, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   type: z.enum(["%", "VNĐ"], {
@@ -159,29 +160,35 @@ const CouponForm = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Loại giảm giá</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Loại giảm giá</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                       <SelectValue placeholder="Chọn loại giảm giá" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="%">Phần trăm (%)</SelectItem>
-                    <SelectItem value="VNĐ">Số tiền cố định (VNĐ)</SelectItem>
+                    <SelectItem value="%" className="flex items-center gap-2">
+                      <Percent className="w-4 h-4" />
+                      Phần trăm (%)
+                    </SelectItem>
+                    <SelectItem value="VNĐ" className="flex items-center gap-2">
+                      <Coins className="w-4 h-4" />
+                      Số tiền cố định (VNĐ)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>
+                <FormDescription className="text-sm text-gray-500">
                   Chọn loại giảm giá: phần trăm hoặc số tiền cố định
                 </FormDescription>
                 <FormMessage />
@@ -193,20 +200,30 @@ const CouponForm = () => {
             control={form.control}
             name="value"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Giá trị giảm giá</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Giá trị giảm giá</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder={
-                      form.watch("type") === "%"
-                        ? "Nhập phần trăm giảm giá (0-100)"
-                        : "Nhập số tiền giảm giá"
-                    }
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      placeholder={
+                        form.watch("type") === "%"
+                          ? "Nhập phần trăm giảm giá (0-100)"
+                          : "Nhập số tiền giảm giá"
+                      }
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      {form.watch("type") === "%" ? (
+                        <Percent className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <Coins className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-sm text-gray-500">
                   {form.watch("type") === "%"
                     ? "Nhập phần trăm giảm giá (0-100%)"
                     : "Nhập số tiền giảm giá (VNĐ)"}
@@ -220,16 +237,22 @@ const CouponForm = () => {
             control={form.control}
             name="minimumPurchaseAmount"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Số tiền tối thiểu</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Số tiền tối thiểu</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Nhập số tiền tối thiểu để áp dụng mã"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      placeholder="Nhập số tiền tối thiểu để áp dụng mã"
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <ShoppingCart className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-sm text-gray-500">
                   Số tiền tối thiểu khách hàng cần mua để áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -241,16 +264,22 @@ const CouponForm = () => {
             control={form.control}
             name="usageLimit"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Giới hạn sử dụng</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Giới hạn sử dụng</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Nhập số lần sử dụng tối đa"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      placeholder="Nhập số lần sử dụng tối đa"
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Users className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-sm text-gray-500">
                   Số lần tối đa mã giảm giá có thể được sử dụng
                 </FormDescription>
                 <FormMessage />
@@ -262,17 +291,23 @@ const CouponForm = () => {
             control={form.control}
             name="userLimit"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Giới hạn sử dụng trên mỗi user</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Giới hạn sử dụng trên mỗi user</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Nhập số lần sử dụng tối đa trên mỗi user"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      placeholder="Nhập số lần sử dụng tối đa trên mỗi user"
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Users className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
-                  Số lần tối đa mỗi người dùng có thể sử dụng mã giảm giá
+                <FormDescription className="text-sm text-gray-500">
+                  Số lần tối đa mỗi user có thể sử dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -283,18 +318,23 @@ const CouponForm = () => {
             control={form.control}
             name="startDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày bắt đầu</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Ngày bắt đầu</FormLabel>
                 <FormControl>
-                  <Input
-                    type="datetime-local"
-                    min={today}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="date"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      min={today}
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
-                  Thời điểm mã giảm giá bắt đầu có hiệu lực
+                <FormDescription className="text-sm text-gray-500">
+                  Ngày bắt đầu áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -305,18 +345,23 @@ const CouponForm = () => {
             control={form.control}
             name="endDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày kết thúc</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Ngày kết thúc</FormLabel>
                 <FormControl>
-                  <Input
-                    type="datetime-local"
-                    min={form.watch("startDate") || today}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="date"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      min={form.watch("startDate") || today}
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
                 </FormControl>
-                <FormDescription>
-                  Thời điểm mã giảm giá hết hiệu lực
+                <FormDescription className="text-sm text-gray-500">
+                  Ngày kết thúc áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -324,16 +369,20 @@ const CouponForm = () => {
           />
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end pt-4">
           <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/admin/coupons/list")}
+            type="submit"
+            className="h-12 px-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200"
+            disabled={isSubmitting}
           >
-            Hủy
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Đang xử lý..." : "Tạo mã giảm giá"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Đang tạo mã...
+              </>
+            ) : (
+              "Tạo mã giảm giá"
+            )}
           </Button>
         </div>
       </form>

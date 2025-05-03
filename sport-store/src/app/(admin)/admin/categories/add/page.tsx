@@ -1,35 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import CategoryForm from "@/components/admin/categories/add/categoryForm";
+import { FileText } from "lucide-react";
 
 export default function AddCategoryPage() {
-  const router = useRouter();
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Quay lại
-        </Button>
-      </div>
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-rose-500 p-6 sm:p-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+            <div className="relative z-10 flex justify-between items-center">
+              <div>
+                <div className="flex items-center">
+                  <FileText size={28} className="text-white/90 mr-3" />
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white">Thêm Danh Mục Mới</h1>
+                </div>
+                <p className="text-white/80 mt-2 ml-1">Điền thông tin chi tiết về danh mục của bạn</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tạo danh mục mới</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CategoryForm />
-        </CardContent>
-      </Card>
+        {/* Main Content */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+          <div className="p-6">
+            <CategoryForm />
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

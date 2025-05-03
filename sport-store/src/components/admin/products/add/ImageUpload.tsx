@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Plus, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Upload, X, Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { ProductFormData } from "@/types/product";
 import { toast } from "sonner";
@@ -130,35 +130,51 @@ export default function ImageUpload({
   };
 
   return (
-    <div className="space-y-5">
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          HÌNH ẢNH CHÍNH
-        </Label>
-        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-colors border-gray-300 hover:border-blue-500 mt-1.5">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+        <ImageIcon className="w-5 h-5 text-orange-500" />
+        <h3 className="text-lg font-semibold text-gray-900">Hình ảnh sản phẩm</h3>
+      </div>
+
+      {/* Main Image Upload */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium text-gray-700">Ảnh chính</Label>
+          <span className="text-xs text-gray-500">
+            {formData.mainImage ? "Đã tải lên" : "Chưa tải lên"}
+          </span>
+        </div>
+        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 border-gray-200 hover:border-orange-500 bg-gray-50/50">
           {isUploading ? (
-            <div className="flex flex-col items-center justify-center">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-              <p className="mt-2 text-sm text-gray-500">Đang tải ảnh lên...</p>
+            <div className="flex flex-col items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+              <p className="mt-3 text-sm text-gray-600">Đang tải ảnh lên...</p>
             </div>
           ) : formData.mainImage ? (
-            <div className="relative w-48 h-48 mx-auto">
-              <Image src={formData.mainImage} alt="Main product" fill className="object-contain rounded-lg" />
+            <div className="relative w-48 h-48 mx-auto group">
+              <Image 
+                src={formData.mainImage} 
+                alt="Ảnh chính sản phẩm" 
+                fill 
+                className="object-contain rounded-lg transition-transform duration-200 group-hover:scale-105" 
+              />
               <button
                 onClick={handleMainImageRemove}
-                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all duration-200 hover:scale-110"
               >
                 <X className="w-4 h-4 text-white" />
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center">
-              <Upload className="w-10 h-10 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">Kéo thả hoặc nhấp để tải ảnh lên</p>
-              <p className="text-xs text-gray-400 mt-1">JPG, PNG hoặc WebP (tối đa 5MB)</p>
-              <label className="mt-3 cursor-pointer">
-                <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-sm">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="relative">
+                <Upload className="w-12 h-12 text-gray-400" />
+              </div>
+              <p className="mt-4 text-sm text-gray-600">Kéo thả hoặc nhấp để tải ảnh lên</p>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG hoặc WebP (tối đa 5MB)</p>
+              <label className="mt-4 cursor-pointer">
+                <span className="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all duration-200 text-sm font-medium">
                   Chọn ảnh
                 </span>
                 <input
@@ -173,33 +189,44 @@ export default function ImageUpload({
         </div>
       </div>
 
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          HÌNH ẢNH PHỤ
-        </Label>
-        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-colors border-gray-300 hover:border-blue-500 mt-1.5">
+      {/* Sub Images Upload */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium text-gray-700">Ảnh phụ</Label>
+          <span className="text-xs text-gray-500">
+            {formData.subImages.length}/5 ảnh
+          </span>
+        </div>
+        <div className="border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 border-gray-200 hover:border-orange-500 bg-gray-50/50">
           {isUploading ? (
-            <div className="flex flex-col items-center justify-center">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-              <p className="mt-2 text-sm text-gray-500">Đang tải ảnh lên...</p>
+            <div className="flex flex-col items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+              <p className="mt-3 text-sm text-gray-600">Đang tải ảnh lên...</p>
             </div>
           ) : formData.subImages.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {formData.subImages.map((image, index) => (
-                <div key={index} className="relative w-full aspect-square">
-                  <Image src={image} alt={`Sub product ${index + 1}`} fill className="object-contain rounded-lg" />
+                <div key={index} className="relative w-full aspect-square group">
+                  <Image 
+                    src={image} 
+                    alt={`Ảnh phụ ${index + 1}`} 
+                    fill 
+                    className="object-contain rounded-lg transition-transform duration-200 group-hover:scale-105" 
+                  />
                   <button
                     onClick={() => handleSubImageRemove(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all duration-200 hover:scale-110"
                   >
                     <X className="w-4 h-4 text-white" />
                   </button>
                 </div>
               ))}
               {formData.subImages.length < 5 && (
-                <label className="w-full aspect-square border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
-                  <Plus className="w-8 h-8 text-gray-400" />
+                <label className="w-full aspect-square border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-orange-500 transition-all duration-200 bg-gray-50/50">
+                  <div className="flex flex-col items-center">
+                    <Plus className="w-8 h-8 text-gray-400" />
+                    <span className="text-xs text-gray-500 mt-1">Thêm ảnh</span>
+                  </div>
                   <input
                     type="file"
                     className="hidden"
@@ -211,12 +238,14 @@ export default function ImageUpload({
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center">
-              <Upload className="w-10 h-10 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">Kéo thả hoặc nhấp để tải ảnh lên</p>
-              <p className="text-xs text-gray-400 mt-1">JPG, PNG hoặc WebP (tối đa 5 ảnh)</p>
-              <label className="mt-3 cursor-pointer">
-                <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-sm">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="relative">
+                <Upload className="w-12 h-12 text-gray-400" />
+              </div>
+              <p className="mt-4 text-sm text-gray-600">Kéo thả hoặc nhấp để tải ảnh lên</p>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG hoặc WebP (tối đa 5 ảnh)</p>
+              <label className="mt-4 cursor-pointer">
+                <span className="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all duration-200 text-sm font-medium">
                   Chọn ảnh
                 </span>
                 <input

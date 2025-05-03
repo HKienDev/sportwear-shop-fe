@@ -22,13 +22,29 @@ export default function AddCouponClient() {
     }, [user, router]);
 
     return (
-        <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Thêm mã giảm giá mới</h1>
-            </div>
+        <div className="min-h-screen bg-white p-6">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-rose-500 p-6 sm:p-8 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                        <div className="relative z-10 flex justify-between items-center">
+                            <div>
+                                <div className="flex items-center">
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-white">Thêm Mã Giảm Giá Mới</h1>
+                                </div>
+                                <p className="text-white/80 mt-2 ml-1">Điền thông tin chi tiết về mã giảm giá của bạn</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <CouponForm />
+                {/* Main Content */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+                    <div className="p-6">
+                        <CouponForm />
+                    </div>
+                </div>
             </div>
         </div>
     );
