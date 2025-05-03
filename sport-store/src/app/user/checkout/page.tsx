@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { CartState, CartItem } from '@/types/cart';
 import { cartService } from '@/services/cartService';
-import { PaymentMethod, ShippingMethod } from '@/types/order';
+import { PaymentMethod, ShippingMethod, OrderStatus } from '@/types/order';
 import { ShippingAddress } from '@/types/order';
 import { Coupon } from '@/types/coupon';
 import OrderItems from '@/components/user/checkout/OrderItems';
@@ -230,7 +230,8 @@ export default function Checkout() {
         shippingMethod: selectedShippingMethod,
         paymentMethod: selectedPaymentMethod,
         couponCode: appliedCoupon?.code || '',
-        notes: ''
+        notes: '',
+        status: OrderStatus.PENDING
       };
 
       console.log('📦 Dữ liệu đơn hàng:', orderData);
