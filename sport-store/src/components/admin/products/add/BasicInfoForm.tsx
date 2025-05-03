@@ -1,16 +1,17 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ProductFormData } from "@/types/product";
+import { ProductFormData, ProductFormErrors } from "@/types/product";
 import { useEffect } from "react";
 import { Info, AlertCircle } from "lucide-react";
 
 interface BasicInfoFormProps {
   formData: ProductFormData;
+  errors?: ProductFormErrors;
   onFieldChange: (field: keyof ProductFormData, value: string) => void;
 }
 
-export default function BasicInfoForm({ formData, onFieldChange }: BasicInfoFormProps) {
+export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: BasicInfoFormProps) {
   useEffect(() => {
     console.log('BasicInfoForm mounted/updated with formData:', formData);
   }, [formData]);
@@ -53,7 +54,7 @@ export default function BasicInfoForm({ formData, onFieldChange }: BasicInfoForm
               value={formData.name || ''}
               onChange={handleNameChange}
               placeholder="Nhập tên sản phẩm" 
-              className="block w-full border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
+              className={`block w-full border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.name ? 'border-red-500' : ''}`}
               maxLength={100}
             />
             {!formData.name && (
@@ -62,6 +63,9 @@ export default function BasicInfoForm({ formData, onFieldChange }: BasicInfoForm
               </div>
             )}
           </div>
+          {errors.name && (
+            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+          )}
           <p className="text-xs text-gray-500">
             Tên sản phẩm nên ngắn gọn, rõ ràng và dễ hiểu
           </p>
@@ -80,7 +84,7 @@ export default function BasicInfoForm({ formData, onFieldChange }: BasicInfoForm
               value={formData.description || ''}
               onChange={handleDescriptionChange}
               placeholder="Nhập mô tả chi tiết về sản phẩm..." 
-              className="block w-full h-40 border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 resize-none"
+              className={`block w-full h-40 border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 resize-none ${errors.description ? 'border-red-500' : ''}`}
               maxLength={1000}
             />
             {!formData.description && (
@@ -89,6 +93,9 @@ export default function BasicInfoForm({ formData, onFieldChange }: BasicInfoForm
               </div>
             )}
           </div>
+          {errors.description && (
+            <p className="text-xs text-red-500 mt-1">{errors.description}</p>
+          )}
           <p className="text-xs text-gray-500">
             Mô tả chi tiết về sản phẩm, bao gồm đặc điểm, công dụng và lợi ích
           </p>

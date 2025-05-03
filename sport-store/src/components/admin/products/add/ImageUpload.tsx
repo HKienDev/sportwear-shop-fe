@@ -40,7 +40,6 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      formData.append('folder', 'sport-store/products');
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -51,9 +50,18 @@ export default function ImageUpload({
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Cloudinary error:', errorData);
-        throw new Error(`Lỗi Cloudinary: ${errorData.error?.message || 'Không xác định'}`);
+        let errorMsg = 'Không thể tải ảnh lên Cloudinary';
+        try {
+          const errorData = await response.json();
+          console.error('Cloudinary error:', errorData);
+          errorMsg = errorData.error?.message
+            ? `Lỗi Cloudinary: ${errorData.error.message}`
+            : errorMsg;
+          toast.error(errorMsg);
+        } catch (parseErr) {
+          toast.error('Lỗi mạng hoặc Cloudinary không phản hồi');
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
@@ -61,6 +69,9 @@ export default function ImageUpload({
       return data.secure_url;
     } catch (error) {
       console.error('Error uploading to Cloudinary:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Không thể tải ảnh lên Cloudinary'
+      );
       throw new Error('Không thể tải ảnh lên Cloudinary');
     }
   };

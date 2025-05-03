@@ -21,7 +21,7 @@ export default function DetailInfoForm({
     console.log('DetailInfoForm - categories:', categories);
     console.log('DetailInfoForm - current categoryId:', formData.categoryId);
     if (Array.isArray(categories)) {
-      const foundCategory = categories.find(cat => cat._id === formData.categoryId);
+      const foundCategory = categories.find(cat => cat.categoryId === formData.categoryId);
       console.log('DetailInfoForm - current category:', foundCategory);
     }
   }, [categories, formData]);
@@ -31,7 +31,7 @@ export default function DetailInfoForm({
     onFieldChange('tags', tags);
   };
 
-  const currentCategory = Array.isArray(categories) ? categories.find(cat => cat._id === formData.categoryId) : null;
+  const currentCategory = Array.isArray(categories) ? categories.find(cat => cat.categoryId === formData.categoryId) : null;
   
   console.log('Current category in DetailInfoForm:', currentCategory);
   console.log('Categories in DetailInfoForm:', categories);
@@ -65,13 +65,13 @@ export default function DetailInfoForm({
         >
           <SelectTrigger className="w-full transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500">
             <SelectValue>
-              {currentCategory?.name || "Chọn danh mục"}
+              {categories.find(cat => cat.categoryId === formData.categoryId)?.name || "Chọn danh mục"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {Array.isArray(categories) && categories.length > 0 ? (
               categories.map((category) => (
-                <SelectItem key={category._id} value={category._id}>
+                <SelectItem key={category.categoryId} value={category.categoryId}>
                   {category.name}
                 </SelectItem>
               ))
