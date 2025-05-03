@@ -18,19 +18,12 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { toast } from "sonner";
 import Image from "next/image";
 import { uploadToCloudinary } from "@/utils/cloudinary";
 import categoryService from "@/services/categoryService";
 import { CreateCategoryRequest, Category } from "@/types/category";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Tên danh mục phải có ít nhất 2 ký tự"),
@@ -198,136 +191,77 @@ export default function CategoryForm() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-0 p-3 sm:p-4 md:p-6 md:pb-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-[clamp(0.875rem,2vw,1.5rem)] font-semibold">
-              Thêm danh mục mới
-            </CardTitle>
-            <CardDescription className="text-[clamp(0.75rem,1.5vw,1rem)]">
-              Thêm một danh mục sản phẩm mới vào hệ thống
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-3 pt-4 sm:p-4 sm:pt-5 md:p-6 md:pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tên danh mục</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Nhập tên danh mục" 
-                          {...field}
-                          onChange={handleNameChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mô tả</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Nhập mô tả danh mục"
-                          className="resize-none min-h-[120px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+    <div className="w-full">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Left Column - Basic Info */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <ImageIcon className="w-5 h-5 mr-2 text-orange-500" />
+                  Thông tin cơ bản
+                </h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Tên danh mục</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Nhập tên danh mục" 
+                            className="focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            {...field}
+                            onChange={handleNameChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Mô tả</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Nhập mô tả danh mục"
+                            className="resize-none min-h-[120px] focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Ảnh danh mục</FormLabel>
-                      <FormControl>
-                        <div className="space-y-4">
-                          {imagePreview ? (
-                            <div className="relative w-full aspect-[4/3] min-h-[120px] max-h-[180px] bg-muted rounded-md overflow-hidden">
-                              <Image
-                                src={imagePreview}
-                                alt="Preview"
-                                fill
-                                className="object-contain"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-2 right-2"
-                                onClick={() => {
-                                  setImagePreview(null);
-                                  form.setValue("image", "");
-                                }}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[120px] max-h-[180px] border-2 border-dashed rounded-md">
-                              <Upload className="h-6 w-6 mb-1.5 text-gray-500" />
-                              <p className="text-sm text-gray-500 mb-1.5">
-                                Kéo thả ảnh vào đây hoặc click để chọn
-                              </p>
-                              <p className="text-xs text-gray-400 mb-1.5">
-                                Tối đa 5MB, định dạng JPG, PNG hoặc WEBP
-                              </p>
-                              <Input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                onChange={handleImageChange}
-                                className="hidden"
-                                id="image-upload"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => document.getElementById("image-upload")?.click()}
-                              >
-                                Chọn ảnh
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <CheckCircle2 className="w-5 h-5 mr-2 text-orange-500" />
+                  Trạng thái
+                </h3>
                 <FormField
                   control={form.control}
                   name="isActive"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Kích hoạt</FormLabel>
+                        <FormLabel className="text-base">Hiển thị danh mục</FormLabel>
                         <FormDescription>
-                          Danh mục sẽ được hiển thị trên trang web
+                          Bật/tắt hiển thị danh mục này trên trang web
                         </FormDescription>
                       </div>
                       <FormControl>
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-orange-500"
                         />
                       </FormControl>
                     </FormItem>
@@ -335,22 +269,100 @@ export default function CategoryForm() {
                 />
               </div>
             </div>
-            <div className="flex justify-end space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={loading}
-              >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Đang tạo..." : "Tạo danh mục"}
-              </Button>
+
+            {/* Right Column - Image Upload */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Upload className="w-5 h-5 mr-2 text-orange-500" />
+                  Hình ảnh danh mục
+                </h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="image"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Ảnh đại diện</FormLabel>
+                        <FormControl>
+                          <div className="mt-2">
+                            {imagePreview ? (
+                              <div className="relative group">
+                                <div className="aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
+                                  <Image
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    width={500}
+                                    height={300}
+                                    className="object-cover w-full h-full"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setImagePreview(null);
+                                    form.setValue("image", "");
+                                  }}
+                                  className="absolute top-2 right-2 p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-all group-hover:opacity-100 opacity-0"
+                                >
+                                  <X className="w-4 h-4 text-gray-600" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-center rounded-lg border border-dashed border-gray-300 px-6 py-10 hover:border-orange-500 transition-colors">
+                                <div className="text-center">
+                                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                  <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                                    <label
+                                      htmlFor="image-upload"
+                                      className="relative cursor-pointer rounded-md bg-white font-semibold text-orange-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2 hover:text-orange-600"
+                                    >
+                                      <span>Tải lên ảnh</span>
+                                      <input
+                                        id="image-upload"
+                                        type="file"
+                                        className="sr-only"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                      />
+                                    </label>
+                                    <p className="pl-1">hoặc kéo thả</p>
+                                  </div>
+                                  <p className="text-xs leading-5 text-gray-600 mt-2">
+                                    PNG, JPG, GIF tối đa 10MB
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-md transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Đang xử lý...
+                </div>
+              ) : (
+                "Lưu danh mục"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 } 
