@@ -77,7 +77,7 @@ export default function EditProductPage() {
           return;
         }
 
-        const response = await fetchApi(`/products/${sku}`);
+        const response = await fetchApi(`/products/sku/${sku}`);
 
         if (!response.success) {
           throw new Error(response.message || 'Không thể tải thông tin sản phẩm');
