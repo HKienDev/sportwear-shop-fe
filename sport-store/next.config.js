@@ -5,7 +5,7 @@ const nextConfig = {
         ignoreDuringBuilds: true,
     },
     images: {
-        domains: ['upload.wikimedia.org', 'localhost', 'res.cloudinary.com', 'example.com', 'via.placeholder.com'],
+        domains: ['upload.wikimedia.org', 'localhost', 'res.cloudinary.com', 'example.com', 'via.placeholder.com', 'lh3.googleusercontent.com'],
         remotePatterns: [
             {
                 protocol: 'http',
@@ -30,6 +30,35 @@ const nextConfig = {
             },
         ];
     },
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'Content-Security-Policy',
+                        value: `
+                            default-src 'self';
+                            script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com;
+                            style-src 'self' 'unsafe-inline';
+                            img-src 'self' data: https: http:;
+                            frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+                            connect-src 'self' http://localhost:4000 https://api.stripe.com https://provinces.open-api.vn;
+                            font-src 'self';
+                            object-src 'none';
+                            media-src 'self';
+                            worker-src 'self' blob:;
+                        `.replace(/\s+/g, ' ').trim()
+                    }
+                ]
+            }
+        ];
+    },
+    // Thêm cấu hình HTTPS cho development
+    devServer: {
+        https: true,
+        port: 3000
+    }
 }
 
 module.exports = nextConfig 

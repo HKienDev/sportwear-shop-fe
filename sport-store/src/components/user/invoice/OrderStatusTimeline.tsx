@@ -1,3 +1,7 @@
+'use client';
+
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { CreditCard, Package, Truck, Home } from 'lucide-react';
 
 interface StatusHistory {
@@ -10,106 +14,135 @@ interface StatusHistory {
 
 interface OrderStatusTimelineProps {
   currentStatus: string;
+  paymentStatus: string;
+  paymentMethod: string;
   orderDate: Date;
-  statusHistory?: StatusHistory[];
+  statusHistory: StatusHistory[];
 }
 
-export default function OrderStatusTimeline({
+const OrderStatusTimeline = ({
   currentStatus,
+  paymentStatus,
+  paymentMethod,
   orderDate,
-  statusHistory = []
-}: OrderStatusTimelineProps) {
-  const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return new Intl.DateTimeFormat('vi-VN', {
-      day: 'numeric',
-      month: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(dateObj);
-  };
-
-  // Hàm kiểm tra trạng thái đơn hàng
-  const isStatusActive = (status: string) => {
-    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    const statusIndex = statusOrder.indexOf(status);
-    return currentIndex >= statusIndex;
-  };
-
-  // Hàm lấy thời gian cập nhật cho mỗi trạng thái
-  const getStatusDate = (status: string) => {
-    if (!statusHistory || statusHistory.length === 0) {
-      // Nếu không có lịch sử, chỉ trả về ngày cho trạng thái hiện tại
-      return status === currentStatus ? orderDate : null;
+  statusHistory
+}: OrderStatusTimelineProps) => {
+  const statuses = [
+    {
+      status: 'pending',
+      label: 'Chờ xác nhận',
+      date: orderDate
+    },
+    {
+      status: 'confirmed',
+      label: 'Đã xác nhận',
+      date: null
+    },
+    {
+      status: 'shipping',
+      label: 'Đang giao hàng',
+      date: null
+    },
+    {
+      status: 'delivered',
+      label: 'Đã giao hàng',
+      date: null
     }
-    
-    const historyItem = statusHistory.find(item => item.status === status);
-    return historyItem ? historyItem.updatedAt : null;
+  ];
+
+  // Cập nhật ngày cho các trạng thái từ lịch sử
+  statusHistory.forEach(history => {
+    const status = statuses.find(s => s.status === history.status);
+    if (status) {
+      status.date = new Date(history.updatedAt);
+    }
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'text-yellow-500';
+      case 'confirmed':
+        return 'text-blue-500';
+      case 'shipping':
+        return 'text-orange-500';
+      case 'delivered':
+        return 'text-green-500';
+      case 'cancelled':
+        return 'text-red-500';
+      default:
+        return 'text-gray-500';
+    }
   };
 
-  // Hàm kiểm tra xem trạng thái đã xảy ra chưa
-  const hasStatusOccurred = (status: string) => {
-    if (status === 'pending') return true; // Trạng thái chờ xác nhận luôn xảy ra
-    if (!statusHistory || statusHistory.length === 0) return false;
-    return statusHistory.some(item => item.status === status);
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'text-green-500';
+      case 'failed':
+        return 'text-red-500';
+      default:
+        return 'text-yellow-500';
+    }
+  };
+
+  const getPaymentStatusText = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'failed':
+        return 'Thanh toán thất bại';
+      default:
+        return 'Chờ thanh toán';
+    }
   };
 
   return (
-    <div className="px-6 py-5 bg-white border-b border-gray-100">
-      <div className="flex items-center justify-between w-full max-w-3xl mx-auto">
-        {/* Order pending */}
-        <div className="flex flex-col items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isStatusActive('pending') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-            <CreditCard size={20} />
+    <div className="p-6 border-t border-b">
+      <div className="flex items-center justify-between mb-6">
+        {statuses.map((status, index) => (
+          <div
+            key={status.status}
+            className={`flex flex-col items-center flex-1 relative ${
+              index < statuses.length - 1 ? 'after:content-[""] after:h-[2px] after:w-full after:absolute after:top-4 after:left-1/2 after:bg-gray-200' : ''
+            }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                currentStatus === status.status
+                  ? 'bg-red-500 text-white'
+                  : statuses.findIndex(s => s.status === currentStatus) > index
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {statuses.findIndex(s => s.status === currentStatus) > index ? '✓' : index + 1}
+            </div>
+            <div className="text-sm font-medium mt-2">{status.label}</div>
+            {status.date && (
+              <div className="text-xs text-gray-500 mt-1">
+                {format(status.date, 'HH:mm dd/M/yyyy', { locale: vi })}
+              </div>
+            )}
           </div>
-          <div className="text-xs font-medium mt-2 text-center">Chờ xác nhận</div>
-          <div className="text-xs text-gray-500">{formatDate(orderDate)}</div>
+        ))}
+      </div>
+
+      {/* Hiển thị trạng thái thanh toán */}
+      <div className="mt-4 flex items-center justify-between text-sm">
+        <div>
+          <span className="font-medium">Phương thức thanh toán: </span>
+          <span>{paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'Thanh toán qua thẻ'}</span>
         </div>
-        
-        {/* Processing connector */}
-        <div className={`h-1 flex-1 mx-1 ${isStatusActive('confirmed') ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-        
-        {/* Processing */}
-        <div className="flex flex-col items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isStatusActive('confirmed') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-            <Package size={20} />
-          </div>
-          <div className="text-xs font-medium mt-2 text-center">Đã xác nhận</div>
-          <div className="text-xs text-gray-500">
-            {hasStatusOccurred('confirmed') ? formatDate(getStatusDate('confirmed')!) : 'Chưa xác nhận'}
-          </div>
-        </div>
-        
-        {/* Shipping connector */}
-        <div className={`h-1 flex-1 mx-1 ${isStatusActive('shipped') ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-        
-        {/* Shipping */}
-        <div className="flex flex-col items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isStatusActive('shipped') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-            <Truck size={20} />
-          </div>
-          <div className="text-xs font-medium mt-2 text-center">Đang vận chuyển</div>
-          <div className="text-xs text-gray-500">
-            {hasStatusOccurred('shipped') ? formatDate(getStatusDate('shipped')!) : 'Chưa vận chuyển'}
-          </div>
-        </div>
-        
-        {/* Delivered connector */}
-        <div className={`h-1 flex-1 mx-1 ${isStatusActive('delivered') ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-        
-        {/* Delivered */}
-        <div className="flex flex-col items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isStatusActive('delivered') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-            <Home size={20} />
-          </div>
-          <div className="text-xs font-medium mt-2 text-center">Đã giao</div>
-          <div className="text-xs text-gray-500">
-            {hasStatusOccurred('delivered') ? formatDate(getStatusDate('delivered')!) : 'Chưa giao'}
-          </div>
+        <div>
+          <span className="font-medium">Trạng thái thanh toán: </span>
+          <span className={getPaymentStatusColor(paymentStatus)}>
+            {getPaymentStatusText(paymentStatus)}
+          </span>
         </div>
       </div>
     </div>
   );
-} 
+};
+
+export default OrderStatusTimeline; 

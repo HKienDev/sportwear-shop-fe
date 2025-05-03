@@ -47,6 +47,11 @@ const axiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
+    timeout: 10000, // Thêm timeout 10s
+    // Thêm các cấu hình retry
+    validateStatus: function (status) {
+        return status >= 200 && status < 500; // Chỉ reject khi status >= 500
+    }
 }) as CustomAxiosInstance;
 
 // Flag để kiểm soát việc refresh token
@@ -98,6 +103,26 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
+        // Log lỗi chi tiết
+        console.error('API Error:', {
+            config: error.config,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+
+        // Xử lý lỗi network
+        if (error.message === 'Network Error') {
+            console.error('Network Error - Kiểm tra kết nối mạng hoặc server');
+            return Promise.reject(new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.'));
+        }
+
+        // Xử lý timeout
+        if (error.code === 'ECONNABORTED') {
+            console.error('Request timeout');
+            return Promise.reject(new Error('Yêu cầu quá thời gian. Vui lòng thử lại.'));
+        }
+
         const originalRequest = error.config as CustomAxiosRequestConfig | undefined;
         
         console.log('🔍 API Error:', {
