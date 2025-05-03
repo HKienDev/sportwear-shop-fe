@@ -16,6 +16,8 @@ import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import DeliveryInfo from '@/components/user/checkout/DeliveryInfo';
 import CouponSection from '@/components/user/checkout/CouponSection';
 import { ArrowLeft } from 'lucide-react';
+import CheckoutStripePayment from '@/components/user/checkout/CheckoutStripePayment';
+import StripePaymentForm from '@/components/user/checkout/StripePaymentForm';
 
 export default function Checkout() {
   const [cart, setCart] = useState<CartState | null>(null);
@@ -49,6 +51,10 @@ export default function Checkout() {
   const [showCouponOptions, setShowCouponOptions] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [totalAfterDiscount, setTotalAfterDiscount] = useState(0);
+  const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -204,56 +210,96 @@ export default function Checkout() {
         return;
       }
 
-      // Kiểm tra địa chỉ giao hàng
-      if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address) {
+      // Validate shipping address
+      if (!shippingAddress.fullName || !shippingAddress.phone || 
+          !shippingAddress.address.province.name || !shippingAddress.address.district.name || 
+          !shippingAddress.address.ward.name || !shippingAddress.address.street) {
         toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
         return;
       }
 
-      // Chuẩn bị dữ liệu đơn hàng
+      // Create order data
       const orderData = {
         items: cart.items.map(item => ({
           sku: item.product.sku,
-          quantity: item.quantity,
-          color: item.color,
-          size: item.size
+          quantity: Number(item.quantity),
+          color: item.color || 'Mặc định',
+          size: item.size || 'Mặc định'
         })),
-        shippingAddress: {
-          fullName: shippingAddress.fullName,
-          phone: shippingAddress.phone,
-          address: {
-            province: shippingAddress.address.province,
-            district: shippingAddress.address.district,
-            ward: shippingAddress.address.ward,
-            street: shippingAddress.address.street
-          }
-        },
-        paymentMethod: selectedPaymentMethod,
+        shippingAddress,
         shippingMethod: selectedShippingMethod,
-        couponCode: appliedCoupon ? appliedCoupon.code : undefined
+        paymentMethod: selectedPaymentMethod,
+        couponCode: appliedCoupon?.code || '',
+        notes: ''
       };
 
       console.log('📦 Dữ liệu đơn hàng:', orderData);
 
-      // Gọi API tạo đơn hàng
-      const response = await api.post('/orders', orderData);
+      // Tăng timeout lên 30s và thêm retry logic
+      const createOrder = async (retryCount = 0) => {
+        try {
+          const response = await api.post('/orders', orderData, {
+            timeout: 30000 // 30 seconds
+          });
+          return response;
+        } catch (error: any) {
+          if (error.code === 'ECONNABORTED' && retryCount < 2) {
+            // Retry với delay tăng dần
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+            return createOrder(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      const response = await createOrder();
 
       if (response.data.success) {
         // Xóa giỏ hàng sau khi đặt hàng thành công
         await cartService.clearCart();
         
-        toast.success('Đặt hàng thành công');
+        toast.success('Đặt hàng thành công!');
+        const { orderId, requiresPayment, amount } = response.data.data;
+        setCreatedOrderId(orderId);
         
-        // Chuyển hướng đến trang hóa đơn của đơn hàng vừa tạo
-        const orderId = response.data.data._id;
-        router.push(`/user/invoice/${orderId}`);
+        // Nếu phương thức thanh toán là Stripe
+        if (requiresPayment) {
+          setIsStripeModalOpen(true);
+          setAmount(amount);
+          try {
+            const stripeResponse = await handleStripePayment(orderId, amount);
+            if (stripeResponse.clientSecret) {
+              setClientSecret(stripeResponse.clientSecret);
+            }
+          } catch (stripeError: any) {
+            toast.error(stripeError.message || 'Không thể khởi tạo thanh toán');
+          }
+        } else {
+          // Nếu là COD, chuyển hướng đến trang invoice
+          router.push(`/user/invoice/${orderId}`);
+        }
       } else {
-        throw new Error(response.data.message || 'Không thể tạo đơn hàng');
+        toast.error(response.data.message || 'Không thể tạo đơn hàng');
       }
-    } catch (error) {
-      console.error('❌ Lỗi khi tạo đơn hàng:', error);
-      toast.error(error instanceof Error ? error.message : 'Không thể tạo đơn hàng');
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Quá thời gian xử lý, vui lòng thử lại');
+      } else {
+        toast.error(error.response?.data?.message || 'Đã có lỗi xảy ra khi tạo đơn hàng');
+      }
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsStripeModalOpen(false);
+    if (createdOrderId) {
+      router.push(`/user/invoice/${createdOrderId}`);
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error(error);
   };
 
   // Tính tổng tiền thanh toán
@@ -263,70 +309,115 @@ export default function Checkout() {
     router.back();
   };
 
+  const handleStripePayment = async (orderId: string, amount: number) => {
+    try {
+      const response = await fetch('/api/stripe/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId, amount }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Không thể tạo phiên thanh toán');
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      throw new Error(error.message || 'Lỗi khi tạo phiên thanh toán');
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center mb-8">
-        <button 
-          onClick={handleGoBack}
-          className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
-        >
-          <ArrowLeft size={18} className="mr-1" />
-          <span>Quay lại</span>
-        </button>
-        <h1 className="text-2xl font-bold">Thanh toán</h1>
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center mb-8">
+          <button 
+            onClick={handleGoBack}
+            className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
+          >
+            <ArrowLeft size={18} className="mr-1" />
+            <span>Quay lại</span>
+          </button>
+          <h1 className="text-2xl font-bold">Thanh toán</h1>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Cột bên trái - 8/12 */}
+          <div className="lg:col-span-8 space-y-6">
+            <DeliveryMethod
+              expandedSection={expandedSection}
+              deliveryMethod={selectedShippingMethod}
+              setDeliveryMethod={setSelectedShippingMethod}
+              toggleSection={toggleSection}
+              formatPrice={formatPrice}
+            />
+
+            <OrderItems
+              expandedSection={expandedSection}
+              toggleSection={toggleSection}
+              formatPrice={formatPrice}
+            />
+
+            <PaymentMethodComponent
+              expandedSection={expandedSection}
+              paymentMethod={selectedPaymentMethod}
+              setPaymentMethod={setSelectedPaymentMethod}
+              toggleSection={toggleSection}
+              orderId={createdOrderId}
+              amount={totalAfterDiscount}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+            />
+          </div>
+
+          {/* Cột bên phải - 4/12 */}
+          <div className="lg:col-span-4 space-y-6">
+            <DeliveryInfo 
+              onAddressChange={setShippingAddress}
+            />
+
+            <CouponSection
+              couponCode={couponCode}
+              setCouponCode={setCouponCode}
+              onSubmitCoupon={handleSubmitCoupon}
+              showCouponOptions={showCouponOptions}
+              setShowCouponOptions={setShowCouponOptions}
+            />
+
+            <OrderSummary
+              subtotal={subtotal}
+              discount={discount}
+              couponDiscount={couponDiscount}
+              shipping={shipping}
+              total={total}
+              formatPrice={formatPrice}
+              onPlaceOrder={handlePlaceOrder}
+              appliedCoupon={appliedCoupon}
+            />
+          </div>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Cột bên trái - 8/12 */}
-        <div className="lg:col-span-8 space-y-6">
-          <DeliveryMethod
-            expandedSection={expandedSection}
-            deliveryMethod={selectedShippingMethod}
-            setDeliveryMethod={setSelectedShippingMethod}
-            toggleSection={toggleSection}
-            formatPrice={formatPrice}
-          />
-
-          <OrderItems
-            expandedSection={expandedSection}
-            toggleSection={toggleSection}
-            formatPrice={formatPrice}
-          />
-
-          <PaymentMethodComponent
-            expandedSection={expandedSection}
-            paymentMethod={selectedPaymentMethod}
-            setPaymentMethod={setSelectedPaymentMethod}
-            toggleSection={toggleSection}
-          />
+      {createdOrderId && (
+        <CheckoutStripePayment
+          isOpen={isStripeModalOpen}
+          onClose={() => setIsStripeModalOpen(false)}
+          orderId={createdOrderId}
+          amount={total}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentError={handlePaymentError}
+        />
+      )}
+      
+      {clientSecret && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Thanh toán đơn hàng</h2>
+          <StripePaymentForm clientSecret={clientSecret} amount={amount} />
         </div>
-
-        {/* Cột bên phải - 4/12 */}
-        <div className="lg:col-span-4 space-y-6">
-          <DeliveryInfo 
-            onAddressChange={setShippingAddress}
-          />
-
-          <CouponSection
-            couponCode={couponCode}
-            setCouponCode={setCouponCode}
-            onSubmitCoupon={handleSubmitCoupon}
-            showCouponOptions={showCouponOptions}
-            setShowCouponOptions={setShowCouponOptions}
-          />
-
-          <OrderSummary
-            subtotal={subtotal}
-            discount={discount}
-            couponDiscount={couponDiscount}
-            shipping={shipping}
-            total={total}
-            formatPrice={formatPrice}
-            onPlaceOrder={handlePlaceOrder}
-            appliedCoupon={appliedCoupon}
-          />
-        </div>
-      </div>
+      )}
     </div>
   );
 }

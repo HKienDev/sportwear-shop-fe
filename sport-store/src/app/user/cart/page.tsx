@@ -32,11 +32,16 @@ export default function CartPage() {
       }
     } catch (error) {
       console.error('Lỗi khi lấy giỏ hàng:', error);
-      setCart(prev => ({ 
-        ...prev, 
-        error: error instanceof Error ? error.message : 'Không thể lấy thông tin giỏ hàng',
-        loading: false 
-      }));
+      if (error instanceof Error && error.message === 'Dữ liệu đã tồn tại') {
+        // Nếu lỗi là "Dữ liệu đã tồn tại", không cần hiển thị lỗi
+        setCart(prev => ({ ...prev, loading: false }));
+      } else {
+        setCart(prev => ({ 
+          ...prev, 
+          error: error instanceof Error ? error.message : 'Không thể lấy thông tin giỏ hàng',
+          loading: false 
+        }));
+      }
     }
   };
 
@@ -48,15 +53,27 @@ export default function CartPage() {
     try {
       setCart(prev => ({ ...prev, loading: true }));
       
+      const item = cart.items.find(item => item._id === itemId);
+      if (!item) throw new Error('Không tìm thấy sản phẩm');
+      
       const response = await cartService.updateCartItemQuantity({
-        sku: cart.items.find(item => item._id === itemId)?.product.sku || '',
-        color: cart.items.find(item => item._id === itemId)?.color || '',
-        size: cart.items.find(item => item._id === itemId)?.size || '',
+        sku: item.product.sku,
+        color: item.color || '',
+        size: item.size || '',
         quantity
       });
 
       if (response.success) {
-        await fetchCart();
+        // Cập nhật state trực tiếp thay vì gọi lại fetchCart
+        setCart(prev => ({
+          ...prev,
+          items: prev.items.map(i => 
+            i._id === itemId 
+              ? { ...i, quantity: quantity }
+              : i
+          ),
+          loading: false
+        }));
         toast.success('Đã cập nhật số lượng sản phẩm');
       } else {
         throw new Error(response.message);
@@ -86,7 +103,12 @@ export default function CartPage() {
       });
 
       if (response.success) {
-        await fetchCart();
+        // Cập nhật state trực tiếp thay vì gọi lại fetchCart
+        setCart(prev => ({
+          ...prev,
+          items: prev.items.filter(i => i._id !== itemId),
+          loading: false
+        }));
         toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
       } else {
         throw new Error(response.message);
@@ -102,25 +124,12 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckout = async () => {
-    try {
-      setCart(prev => ({ ...prev, loading: true }));
-      
-      if (cart.items.length === 0) {
-        toast.error('Giỏ hàng trống');
-        return;
-      }
-
-      router.push('/user/checkout');
-    } catch (error) {
-      console.error('Lỗi khi thanh toán:', error);
-      setCart(prev => ({ 
-        ...prev, 
-        error: error instanceof Error ? error.message : 'Không thể tiến hành thanh toán',
-        loading: false 
-      }));
-      toast.error('Không thể tiến hành thanh toán');
+  const handleCheckout = () => {
+    if (cart.items.length === 0) {
+      toast.error('Giỏ hàng trống');
+      return;
     }
+    router.push('/user/checkout');
   };
 
   return (

@@ -8,6 +8,7 @@ import OrderListTable from "@/components/admin/orders/list/orderListTable";
 import { Order } from "@/types/base";
 import { toast } from "react-hot-toast";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { api } from '@/lib/api';
 
 export default function OrderListPage() {
   const router = useRouter();
@@ -19,37 +20,26 @@ export default function OrderListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch orders
-  const fetchOrders = useCallback(async () => {
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
     try {
-      setIsLoading(true);
-      const queryParams = new URLSearchParams({
-        ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter && { status: statusFilter }),
-      });
-
-      const response = await fetchWithAuth<{
-        success: boolean;
-        data: Order[];
-      }>(`/orders/admin?${queryParams}`);
-
-      if (!response.success) {
-        throw new Error(response.message || "Có lỗi xảy ra khi lấy danh sách đơn hàng");
+      const response = await api.get('/orders/admin');
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Không thể lấy danh sách đơn hàng");
       }
 
-      if (!response.data) {
-        throw new Error("Không nhận được dữ liệu từ server");
-      }
-
-      setOrders(response.data);
+      setOrders(response.data.data);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách đơn hàng");
-      setOrders([]);
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, statusFilter]);
+  };
 
   // Delete orders
   const handleDeleteOrders = useCallback(async () => {
@@ -86,12 +76,6 @@ export default function OrderListPage() {
       setIsDeleting(false);
     }
   }, [selectedOrders, fetchOrders]);
-
-  useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
-      fetchOrders();
-    }
-  }, [fetchOrders, isAuthenticated, user?.role]);
 
   // Handlers
   const handleSearchChange = useCallback((value: string) => {

@@ -9,6 +9,9 @@ import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
 import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
+import StripePayment from '@/components/user/checkout/StripePayment';
+import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
+import { PaymentMethod } from '@/types/order';
 
 interface Product {
   _id: string;
@@ -122,6 +125,8 @@ export default function InvoicePage() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [animateItems, setAnimateItems] = useState(false);
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
 
   const fetchCategoryName = async (categoryId: string) => {
     try {
@@ -201,24 +206,22 @@ export default function InvoicePage() {
     }, 100);
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">Đang tải...</div>
-        </div>
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+    </div>;
   }
 
-  if (error || !order) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center text-red-600">{error}</div>
-        </div>
-      </div>
-    );
+  if (error) {
+    return <div className="text-red-500 text-center py-8">{error}</div>;
+  }
+
+  if (!order) {
+    return <div className="text-center py-8">Không tìm thấy thông tin đơn hàng</div>;
   }
 
   return (
@@ -303,6 +306,23 @@ export default function InvoicePage() {
           </div>
         </div>
       </main>
+
+      {order.paymentStatus !== 'paid' && (
+        <div className="mt-8">
+          {order?.paymentMethod === 'Stripe' && order.paymentStatus === 'pending' && (
+            <PaymentMethodComponent
+              expandedSection={expandedSection}
+              paymentMethod={selectedPaymentMethod}
+              setPaymentMethod={setSelectedPaymentMethod}
+              toggleSection={toggleSection}
+              orderId={order._id}
+              amount={order.totalPrice}
+              onPaymentSuccess={() => window.location.reload()}
+              onPaymentError={(error) => console.error(error)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 } 

@@ -35,10 +35,12 @@ interface LocationOption {
 
 export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
   const [showForm, setShowForm] = useState(false);
+  const [user, setUser] = useState<Customer | null>(null);
   const [provinces, setProvinces] = useState<LocationOption[]>([]);
   const [districts, setDistricts] = useState<LocationOption[]>([]);
   const [wards, setWards] = useState<LocationOption[]>([]);
-  const [user, setUser] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -47,7 +49,6 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     ward: '',
     street: '',
   });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Fetch user info khi load component
   useEffect(() => {
@@ -84,8 +85,80 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     fetchUser();
   }, []);
 
+  // Hàm retry để gọi API với số lần thử lại
+  const fetchWithRetry = async (url: string, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+      }
+    }
+  };
+
   // Khi user thay đổi, cập nhật form nếu có address
   useEffect(() => {
+    const initializeAddress = async () => {
+      if (!user?.address?.province || !user?.address?.district || !user?.address?.ward) return;
+
+      setLoading(true);
+      setError(null);
+      try {
+        // Lấy danh sách tỉnh
+        const provincesData = await fetchWithRetry('https://provinces.open-api.vn/api/p/');
+        const selectedProvince = provincesData.find((p: LocationOption) => p.name === user.address?.province);
+        
+        if (!selectedProvince) {
+          throw new Error('Không tìm thấy tỉnh/thành phố');
+        }
+
+        // Lấy danh sách quận/huyện
+        const provinceData = await fetchWithRetry(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`);
+        const selectedDistrict = provinceData.districts.find((d: LocationOption) => d.name === user.address?.district);
+        
+        if (!selectedDistrict) {
+          throw new Error('Không tìm thấy quận/huyện');
+        }
+
+        // Lấy danh sách phường/xã
+        const districtData = await fetchWithRetry(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`);
+        const selectedWard = districtData.wards.find((w: LocationOption) => w.name === user.address?.ward);
+        
+        if (!selectedWard) {
+          throw new Error('Không tìm thấy phường/xã');
+        }
+
+        const shippingAddress: ShippingAddress = {
+          fullName: user.fullname || '',
+          phone: user.phone || '',
+          address: {
+            province: {
+              name: user.address.province,
+              code: Number(selectedProvince.code)
+            },
+            district: {
+              name: user.address.district,
+              code: Number(selectedDistrict.code)
+            },
+            ward: {
+              name: user.address.ward,
+              code: Number(selectedWard.code)
+            },
+            street: user.address.street,
+          },
+        };
+        onAddressChange(shippingAddress);
+      } catch (err) {
+        console.error('Error fetching address data:', err);
+        setError('Không thể tải thông tin địa chỉ. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (user) {
       setForm({
         fullName: user.fullname || '',
@@ -96,94 +169,86 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
         street: user.address?.street || '',
       });
 
-      // Tự động sử dụng địa chỉ gốc nếu có
-      if (user.address?.province && user.address?.district && user.address?.ward) {
-        // Lấy danh sách tỉnh để tìm mã code
-        fetch('https://provinces.open-api.vn/api/p/')
-          .then(res => res.json())
-          .then(provincesData => {
-            const selectedProvince = provincesData.find((p: LocationOption) => p.name === user.address?.province);
-            if (selectedProvince) {
-              // Lấy danh sách quận/huyện của tỉnh
-              fetch(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
-                .then(res => res.json())
-                .then(provinceData => {
-                  const selectedDistrict = provinceData.districts.find((d: LocationOption) => d.name === user.address?.district);
-                  if (selectedDistrict) {
-                    // Lấy danh sách phường/xã của quận/huyện
-                    fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
-                      .then(res => res.json())
-                      .then(districtData => {
-                        const selectedWard = districtData.wards.find((w: LocationOption) => w.name === user.address?.ward);
-                        if (selectedWard) {
-                          const shippingAddress: ShippingAddress = {
-                            fullName: user.fullname || '',
-                            phone: user.phone || '',
-                            address: {
-                              province: {
-                                name: user.address.province,
-                                code: Number(selectedProvince.code)
-                              },
-                              district: {
-                                name: user.address.district,
-                                code: Number(selectedDistrict.code)
-                              },
-                              ward: {
-                                name: user.address.ward,
-                                code: Number(selectedWard.code)
-                              },
-                              street: user.address.street,
-                            },
-                          };
-                          onAddressChange(shippingAddress);
-                        }
-                      });
-                  }
-                });
-            }
-          });
-      }
+      initializeAddress();
     }
   }, [user, onAddressChange]);
 
   // Lấy danh sách tỉnh
   useEffect(() => {
-    if (showForm) {
-      fetch('https://provinces.open-api.vn/api/p/')
-        .then(res => res.json())
-        .then(data => setProvinces(data));
-    }
+    const fetchProvinces = async () => {
+      if (!showForm) return;
+      
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchWithRetry('https://provinces.open-api.vn/api/p/');
+        setProvinces(data);
+      } catch (err) {
+        console.error('Error fetching provinces:', err);
+        setError('Không thể tải danh sách tỉnh/thành phố. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProvinces();
   }, [showForm]);
 
   // Lấy danh sách quận khi chọn tỉnh
   useEffect(() => {
-    if (form.province) {
-      const selectedProvince = provinces.find(p => p.name === form.province);
-      if (selectedProvince) {
-        fetch(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
-          .then(res => res.json())
-          .then(data => setDistricts(data.districts));
+    const fetchDistricts = async () => {
+      if (!form.province) {
+        setDistricts([]);
+        setWards([]);
+        setForm(f => ({ ...f, district: '', ward: '' }));
+        return;
       }
-    } else {
-      setDistricts([]);
-      setWards([]);
-      setForm(f => ({ ...f, district: '', ward: '' }));
-    }
+
+      const selectedProvince = provinces.find(p => p.name === form.province);
+      if (!selectedProvince) return;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchWithRetry(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`);
+        setDistricts(data.districts);
+      } catch (err) {
+        console.error('Error fetching districts:', err);
+        setError('Không thể tải danh sách quận/huyện. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDistricts();
   }, [form.province, provinces]);
 
   // Lấy danh sách phường khi chọn quận
   useEffect(() => {
-    if (form.district) {
-      const selectedDistrict = districts.find(d => d.name === form.district);
-      if (selectedDistrict) {
-        fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
-          .then(res => res.json())
-          .then(data => setWards(data.wards));
+    const fetchWards = async () => {
+      if (!form.district) {
+        setWards([]);
+        setForm(f => ({ ...f, ward: '' }));
+        return;
       }
-    } else {
-      setWards([]);
-      setForm(f => ({ ...f, ward: '' }));
-    }
+
+      const selectedDistrict = districts.find(d => d.name === form.district);
+      if (!selectedDistrict) return;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchWithRetry(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`);
+        setWards(data.wards);
+      } catch (err) {
+        console.error('Error fetching wards:', err);
+        setError('Không thể tải danh sách phường/xã. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWards();
   }, [form.district, districts]);
 
   const validate = () => {
@@ -193,7 +258,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     if (!form.province) newErrors.province = 'Chọn tỉnh/thành phố';
     if (!form.district) newErrors.district = 'Chọn quận/huyện';
     if (!form.ward) newErrors.ward = 'Chọn phường/xã';
-    setErrors(newErrors);
+    setError(null);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -254,6 +319,16 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">GIAO TỚI</h2>
+      {loading && (
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4">
+          {error}
+        </div>
+      )}
       {!showForm ? (
         <div className="border-b border-gray-200 pb-4">
           {user ? (
@@ -283,7 +358,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
               value={form.fullName}
               onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
             />
-            {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Số điện thoại *</label>
@@ -293,7 +368,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
             />
-            {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Tỉnh/Thành phố *</label>
@@ -309,7 +384,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
                 </option>
               ))}
             </select>
-            {errors.province && <p className="text-xs text-red-500 mt-1">{errors.province}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Quận/Huyện *</label>
@@ -326,7 +401,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
                 </option>
               ))}
             </select>
-            {errors.district && <p className="text-xs text-red-500 mt-1">{errors.district}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Phường/Xã *</label>
@@ -343,7 +418,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
                 </option>
               ))}
             </select>
-            {errors.ward && <p className="text-xs text-red-500 mt-1">{errors.ward}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
