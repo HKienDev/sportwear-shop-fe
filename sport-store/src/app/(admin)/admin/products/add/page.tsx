@@ -66,7 +66,7 @@ export default function AddProductPage() {
               <div className="flex items-center space-x-3">
                 <button 
                   onClick={handleProductSubmit}
-                  disabled={formState.isSubmitting}
+                  disabled={formState.isSubmitting || formState.categories.length === 0}
                   className="flex items-center px-4 py-2 text-sm font-medium text-orange-600 bg-white/90 hover:bg-white rounded-lg shadow-sm transition-all disabled:opacity-50"
                 >
                   {formState.isSubmitting ? (
@@ -141,6 +141,7 @@ export default function AddProductPage() {
               <div className="p-6">
                 <BasicInfoForm 
                   formData={formState.data}
+                  errors={formState.errors}
                   onFieldChange={(field, value) => {
                     console.log('Updating field:', field, 'with value:', value);
                     updateFormData(field, value);

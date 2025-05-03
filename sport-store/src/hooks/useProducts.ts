@@ -237,6 +237,10 @@ export function useProducts(options: ProductQueryParams = {}) {
     const handleSubmit = useCallback(async () => {
         console.log('Starting handleSubmit function...');
         
+        if (formState.categories.length === 0) {
+            toast.error('Vui lòng chờ tải danh mục xong trước khi tạo sản phẩm!');
+            return false;
+        }
         if (!validateForm()) {
             console.log('Form validation failed:', formState.errors);
             toast.error('Vui lòng kiểm tra lại thông tin sản phẩm');
@@ -408,39 +412,38 @@ export function useProducts(options: ProductQueryParams = {}) {
                     fetchProducts(() => apiClient.products.getAll(optionsRef.current));
                     return true;
                 } else {
-                    console.error('Failed to create product:', {
-                        response: response.data,
-                        message: response.data.message,
-                        data: response.data.data
-                    });
-                    toast.error(response.data.message || 'Có lỗi xảy ra khi thêm sản phẩm');
+                    // Nếu BE trả về lỗi chi tiết
+                    if (response.data.message) {
+                        toast.error(response.data.message);
+                    }
+                    if (response.data.errors) {
+                        Object.values(response.data.errors).forEach((err: any) => {
+                            toast.error(err);
+                        });
+                    }
                     return false;
                 }
-            } catch (apiError: unknown) {
+            } catch (apiError) {
                 const error = apiError as { 
                     response?: { 
-                        data?: { message?: string }, 
+                        data?: { message?: string, errors?: any }, 
                         status?: number 
                     },
                     message?: string 
                 };
-                
-                console.error('API error when creating product:', {
-                    error,
-                    response: error.response?.data,
-                    message: error.message,
-                    status: error.response?.status
-                });
-                
                 let errorMessage = 'Có lỗi xảy ra khi gọi API tạo sản phẩm';
-                
                 if (error.response?.data?.message) {
                     errorMessage = error.response.data.message;
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
-                
                 toast.error(errorMessage);
+                // Nếu BE trả về lỗi chi tiết
+                if (error.response?.data?.errors) {
+                    Object.values(error.response.data.errors).forEach((err: any) => {
+                        toast.error(err);
+                    });
+                }
                 return false;
             }
         } catch (error: unknown) {
