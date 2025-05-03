@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Edit2 } from "lucide-react";
 import { Product } from "@/types/product";
 import { fetchApi } from "@/utils/api";
@@ -11,14 +11,10 @@ import ProductVariants from "@/components/admin/products/details/ProductVariants
 import { toast } from "react-hot-toast";
 import { TOKEN_CONFIG } from '@/config/token';
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default function ProductDetailsPage({ params }: PageProps) {
+export default function ProductDetailsPage() {
   const router = useRouter();
+  const params = useParams();
+  const sku = params.id as string;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
@@ -39,7 +35,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
           return;
         }
 
-        const response = await fetchApi(`/products/${params.id}`);
+        const response = await fetchApi(`/products/sku/${sku}`);
 
         if (!response.success) {
           throw new Error(response.message || 'Không thể tải thông tin sản phẩm');
@@ -57,7 +53,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
     };
 
     fetchProduct();
-  }, [params.id, router]);
+  }, [sku, router]);
 
   if (loading) {
     return (

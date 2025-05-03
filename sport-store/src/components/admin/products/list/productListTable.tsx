@@ -205,7 +205,7 @@ const ProductListTable = React.memo(
                         </td>
                         <td className="px-2 py-3">
                           <Link
-                            href={`/admin/products/details/${product._id}`}
+                            href={`/admin/products/details/${product.sku}`}
                             className="text-teal-600 hover:text-teal-800 hover:underline font-medium font-mono text-sm"
                           >
                             {product.sku || "N/A"}
