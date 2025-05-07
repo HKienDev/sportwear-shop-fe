@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { CartItem } from "@/types/cart";
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Check, Truck, CreditCard, Package, AlertCircle, User, Tag } from "lucide-react";
+import { Check, Truck, CreditCard, Package, AlertCircle, User, Tag, Info } from "lucide-react";
 import Image from "next/image";
 
 interface OrderPreviewProps {
@@ -274,6 +274,14 @@ export default function OrderPreview({ onConfirmOrder, onBack }: OrderPreviewPro
           </div>
         </CardHeader>
         <CardContent className="space-y-8 p-6">
+          {/* Header with stylish gradient */}
+          <div className="p-6 text-white">
+            <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+              <Info className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-gray-900">Xem trước đơn hàng</h3>
+            </div>
+          </div>
+
           {/* Thông tin khách hàng */}
           <div className="bg-gray-50 rounded-xl p-5">
             <div className="flex items-center mb-4">

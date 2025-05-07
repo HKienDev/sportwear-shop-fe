@@ -110,7 +110,7 @@ const OrderListPage = React.memo(
                         className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-24">Mã Đơn</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Mã Đơn</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Người Đặt</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-48">Địa Chỉ</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Tổng Tiền</th>
@@ -123,7 +123,7 @@ const OrderListPage = React.memo(
                   {currentOrders.length > 0 ? (
                     currentOrders.map((order, index) => (
                       <tr key={order._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <input
                             type="checkbox"
                             checked={selectedOrders.includes(order._id)}
@@ -131,12 +131,19 @@ const OrderListPage = React.memo(
                             className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4 align-top">
                           <Link
                             href={`/admin/orders/details/${order._id}`}
                             className="text-teal-600 hover:text-teal-800 hover:underline font-medium"
                           >
-                            {order.shortId}
+                            <div className="flex flex-col text-left whitespace-normal break-words">
+                              <span className="text-base font-medium">VJUSPORTORDER-</span>
+                              <span className="text-base font-medium whitespace-nowrap">
+                                {order.shortId.startsWith('VJUSPORT-ORDER-')
+                                  ? order.shortId.substring('VJUSPORT-ORDER-'.length)
+                                  : order.shortId}
+                              </span>
+                            </div>
                           </Link>
                         </td>
                         <td className="px-4 py-3">

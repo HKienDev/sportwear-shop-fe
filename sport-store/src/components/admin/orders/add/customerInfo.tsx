@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useCustomer, Location } from "@/context/customerContext";
 import Input from "./input";
 import Select from "./select";
-import { User, MapPin, UserCircle, ChevronRight } from "lucide-react";
+import { User, MapPin, ChevronRight, Info } from "lucide-react";
 
 // Interfaces for API responses
 interface ProvinceResponse {
@@ -148,15 +148,10 @@ export default function CustomerInfo() {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
       {/* Header with stylish gradient */}
-      <div className="bg-gradient-to-r from-orange-400 to-red-400 p-6 text-white">
-        <div className="flex items-center">
-          <div className="bg-white bg-opacity-20 p-3 rounded-xl shadow-lg">
-            <UserCircle size={28} />
-          </div>
-          <div className="ml-4">
-            <h2 className="text-xl font-bold">THÔNG TIN KHÁCH HÀNG</h2>
-            <p className="text-sm opacity-90 mt-1">Vui lòng nhập đầy đủ thông tin giao hàng</p>
-          </div>
+      <div className="p-6 text-white">
+        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+          <Info className="w-5 h-5 text-orange-500" />
+          <h3 className="text-lg font-semibold text-gray-900">Thông tin khách hàng</h3>
         </div>
       </div>
 

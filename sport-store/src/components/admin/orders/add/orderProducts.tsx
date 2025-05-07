@@ -8,7 +8,7 @@ import { usePromo } from "@/context/promoContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, ShoppingBag, Search, Package, ShoppingCart, CheckCircle } from "lucide-react";
+import { X, Search, Package, ShoppingCart, CheckCircle, Info } from "lucide-react";
 import { CartItem } from "@/types/cart";
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
@@ -277,15 +277,10 @@ export default function OrderProducts() {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
       {/* Header with stylish gradient */}
-      <div className="bg-gradient-to-r from-orange-400 to-red-400 p-6 text-white">
-        <div className="flex items-center">
-          <div className="bg-white bg-opacity-20 p-3 rounded-xl shadow-lg">
-            <ShoppingBag size={28} />
-          </div>
-          <div className="ml-4">
-            <h2 className="text-xl font-bold">SẢN PHẨM ĐƠN HÀNG</h2>
-            <p className="text-sm opacity-90 mt-1">Thêm sản phẩm vào đơn hàng</p>
-          </div>
+      <div className="p-6 text-white">
+        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+          <Info className="w-5 h-5 text-orange-500" />
+          <h3 className="text-lg font-semibold text-gray-900">Thông tin đơn hàng</h3>
         </div>
       </div>
 
