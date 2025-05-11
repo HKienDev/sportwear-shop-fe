@@ -260,6 +260,8 @@ export default function InvoicePage() {
           
           <OrderStatusTimeline 
             currentStatus={order.status}
+            paymentStatus={order.paymentStatus}
+            paymentMethod={order.paymentMethod}
             orderDate={new Date(order.createdAt)}
             statusHistory={order.statusHistory}
           />

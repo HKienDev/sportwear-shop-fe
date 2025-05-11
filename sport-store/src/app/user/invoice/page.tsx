@@ -179,6 +179,8 @@ export default function CreativeInvoice() {
           
           <OrderStatusTimeline 
             currentStatus={currentStatus}
+            paymentStatus={"paid"}
+            paymentMethod={"COD"}
             orderDate={orderDate}
             statusHistory={[
               { status: 'pending', updatedAt: orderDate.toISOString(), updatedBy: 'system', note: '', _id: '1' },
