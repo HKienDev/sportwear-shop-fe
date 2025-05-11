@@ -11,7 +11,6 @@ interface Conversation {
   id: string;
   name: string;
   lastMessage: string;
-  online: boolean;
   unread: number;
 }
 
@@ -114,7 +113,7 @@ export default function AdminChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState("all"); // 'all', 'online', 'unread'
+  const [view, setView] = useState("all"); // 'all', 'unread'
   const [theme, setTheme] = useState("blue"); // 'blue', 'purple', 'green'
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [users, setUsers] = useState<UserInfo[]>([]);
@@ -342,7 +341,6 @@ export default function AdminChat() {
             id: senderId,
             name: senderName || "Unknown",
             lastMessage: msg.text,
-            online: true,
             unread: 1,
           };
           
@@ -496,7 +494,6 @@ export default function AdminChat() {
       conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Filter by view type
-    if (view === "online" && !conv.online) return false;
     if (view === "unread" && conv.unread === 0) return false;
 
     return matchesSearch;
@@ -504,7 +501,6 @@ export default function AdminChat() {
 
   // Tính toán số liệu thống kê
   const totalUnread = conversations.reduce((sum, conv) => sum + conv.unread, 0);
-  const onlineUsers = conversations.filter((conv) => conv.online).length;
 
   // Theme color configuration
   const themeColors = {
@@ -616,10 +612,6 @@ export default function AdminChat() {
             <div className="hidden md:flex items-center gap-3 mx-2">
               <div className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="text-xs font-medium">{onlineUsers} online</span>
-              </div>
-              <div className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
                 <span className="text-xs font-medium">{totalUnread} unread</span>
               </div>
             </div>
@@ -668,12 +660,6 @@ export default function AdminChat() {
                   All Chats
                 </button>
                 <button 
-                  onClick={() => setView("online")}
-                  className={`flex-1 text-xs py-2 rounded-md transition font-medium ${view === "online" ? `${colors.primary} text-white shadow-md` : "hover:bg-gray-200 text-gray-600"}`}
-                >
-                  Online
-                </button>
-                <button 
                   onClick={() => setView("unread")}
                   className={`flex-1 text-xs py-2 rounded-md transition font-medium ${view === "unread" ? `${colors.primary} text-white shadow-md` : "hover:bg-gray-200 text-gray-600"}`}
                 >
@@ -702,9 +688,6 @@ export default function AdminChat() {
                         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center text-white font-bold shadow-md`}>
                           {conv.name.charAt(0).toUpperCase()}
                         </div>
-                        {conv.online && (
-                          <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full shadow"></span>
-                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -746,10 +729,6 @@ export default function AdminChat() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-800">{selectedUser.name}</p>
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <span className={`inline-block w-2 h-2 rounded-full ${selectedUser.online ? 'bg-green-400' : 'bg-gray-300'}`}></span>
-                      {selectedUser.online ? 'Online Now' : 'Offline'}
-                    </p>
                   </div>
                 </div>
                 
