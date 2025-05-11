@@ -88,7 +88,7 @@ const LoginPage = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <span className="text-xl font-bold tracking-wider">SPORTIFY</span>
+                  <span className="text-xl font-bold tracking-wider">VJUSPORT</span>
                 </div>
                 <h1 className="text-5xl font-bold mb-4 leading-tight text-white">
                   <span className="inline-block">Kết nối.</span>
