@@ -42,7 +42,7 @@ export default function ProductStatusBadge({ isActive, stock }: ProductStatusBad
   const memoizedGetStatusText = useCallback(getStatusText, []);
 
   return (
-    <span className={`px-2 py-1 rounded-full text-sm font-medium ${memoizedGetStatusColor(isActive, stock)}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${memoizedGetStatusColor(isActive, stock)}`}>
       {memoizedGetStatusText(isActive, stock)}
     </span>
   );
