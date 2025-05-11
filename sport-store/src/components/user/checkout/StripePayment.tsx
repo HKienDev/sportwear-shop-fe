@@ -61,7 +61,7 @@ export default function StripePayment({ orderId }: StripePaymentProps) {
     <div className="w-full max-w-md mx-auto mt-4">
       {clientSecret && (
         <Elements options={options} stripe={getStripe()}>
-          <CheckoutForm />
+          <CheckoutForm amount={0} />
         </Elements>
       )}
     </div>

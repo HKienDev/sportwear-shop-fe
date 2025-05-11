@@ -367,7 +367,7 @@ export default function Checkout() {
               paymentMethod={selectedPaymentMethod}
               setPaymentMethod={setSelectedPaymentMethod}
               toggleSection={toggleSection}
-              orderId={createdOrderId}
+              orderId={createdOrderId ?? undefined}
               amount={totalAfterDiscount}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}

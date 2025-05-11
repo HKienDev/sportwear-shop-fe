@@ -1,10 +1,11 @@
 'use client';
+import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import ProfileUser from "@/components/user/profileUser/userProfileForm";
 import OrderUserPage from "@/components/user/orderUser/orderUserPage";
 import { useSearchParams } from 'next/navigation';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const [scrolled, setScrolled] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -151,5 +152,13 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Đang tải...</div>}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }

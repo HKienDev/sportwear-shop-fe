@@ -416,11 +416,6 @@ export function useProducts(options: ProductQueryParams = {}) {
                     if (response.data.message) {
                         toast.error(response.data.message);
                     }
-                    if (response.data.errors) {
-                        Object.values(response.data.errors).forEach((err: any) => {
-                            toast.error(err);
-                        });
-                    }
                     return false;
                 }
             } catch (apiError) {
@@ -438,12 +433,6 @@ export function useProducts(options: ProductQueryParams = {}) {
                     errorMessage = error.message;
                 }
                 toast.error(errorMessage);
-                // Nếu BE trả về lỗi chi tiết
-                if (error.response?.data?.errors) {
-                    Object.values(error.response.data.errors).forEach((err: any) => {
-                        toast.error(err);
-                    });
-                }
                 return false;
             }
         } catch (error: unknown) {
