@@ -8,7 +8,6 @@ import {
   Preview,
   Section,
   Text,
-  Code,
   Link,
   Hr,
 } from '@react-email/components';
@@ -51,9 +50,21 @@ const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({
             </Section>
 
             <Section className="mt-8 text-center">
-              <Code className="rounded-lg bg-gray-100 px-8 py-4 text-center text-xl font-bold tracking-widest text-gray-800">
+              <div
+                style={{
+                  borderRadius: '8px',
+                  background: '#f3f4f6',
+                  padding: '16px 0',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  letterSpacing: '4px',
+                  display: 'inline-block',
+                  width: 'auto',
+                  margin: '0 auto'
+                }}
+              >
                 {otp}
-              </Code>
+              </div>
               <Text className="mt-4 text-sm text-gray-600">
                 Mã này sẽ hết hạn sau 10 phút.
               </Text>
