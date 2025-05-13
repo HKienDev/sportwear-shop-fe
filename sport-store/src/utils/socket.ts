@@ -11,9 +11,8 @@ interface Message {
   [key: string]: unknown;
 }
 
-const socket = io(API_URL, {
-  withCredentials: true,
-});
+const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || "http://localhost:4000";
+export const socket = io(SOCKET_URL);
 
 export const initializeSocket = (userId?: string) => {
   if (userId) {

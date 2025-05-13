@@ -5,7 +5,6 @@ import { io, Socket } from "socket.io-client";
 import { 
   Send, Trash2, Search, User, Users, MessageSquare, Bell, MoreHorizontal, Smile, Paperclip, Palette
 } from "lucide-react";
-import { API_URL } from "@/utils/api";
 
 // Khai báo kiểu dữ liệu cho Conversation
 interface Conversation {
@@ -56,7 +55,7 @@ const useSocketConnection = () => {
     const connectSocket = () => {
       if (socketRef.current?.connected) return;
 
-      const socket = io(API_URL, {
+      const socket = io(SOCKET_URL, {
         reconnection: true,
         reconnectionAttempts: maxReconnectAttempts,
         reconnectionDelay: reconnectInterval,
@@ -108,6 +107,8 @@ const useSocketConnection = () => {
   return { socket: socketRef.current, isConnected };
 };
 
+const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || "http://localhost:4000";
+
 export default function AdminChat() {
   const [message, setMessage] = useState("");
   const [selectedUser, setSelectedUser] = useState<Conversation | null>(null);
@@ -131,7 +132,7 @@ export default function AdminChat() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/users`);
+        const response = await fetch(`${SOCKET_URL}/api/users`);
         if (response.ok) {
           const data = await response.json();
           console.log("Raw API response:", data);
