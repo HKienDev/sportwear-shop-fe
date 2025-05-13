@@ -1,6 +1,6 @@
 import { render } from '@react-email/render';
 import axios from 'axios';
-import { API_URL } from '@/config/constants';
+import { API_URL } from '@/utils/api';
 import { OrderEmailProps } from '@/components/emails/NewOrderEmail';
 import React from 'react';
 
