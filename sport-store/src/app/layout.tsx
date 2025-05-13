@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/authContext";
-import { CartProvider } from "@/context/cartContext";
-import { CustomerProvider } from "@/context/customerContext";
-import { PaymentMethodProvider } from "@/context/paymentMethodContext";
-import { ShippingMethodProvider } from "@/context/shippingMethodContext";
-import { PromoProvider } from "@/context/promoContext";
-import { Toaster } from "@/components/ui/toast";
+import ClientLayout from "@/components/ClientLayout";
 
 const montserrat = Montserrat({ 
   subsets: ["latin"],
@@ -28,20 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
-        <AuthProvider>
-          <CartProvider>
-            <CustomerProvider>
-              <PaymentMethodProvider>
-                <ShippingMethodProvider>
-                  <PromoProvider>
-                    {children}
-                    <Toaster />
-                  </PromoProvider>
-                </ShippingMethodProvider>
-              </PaymentMethodProvider>
-            </CustomerProvider>
-          </CartProvider>
-        </AuthProvider>
+        <ClientLayout fontClass={montserrat.variable}>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

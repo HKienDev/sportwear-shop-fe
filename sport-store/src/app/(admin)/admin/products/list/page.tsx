@@ -113,23 +113,34 @@ export default function ProductListPage() {
           },
         }
       );
+      
+      const data = await response.json();
+      
+      if (response.status === 404) {
+        // Xử lý trường hợp không tìm thấy sản phẩm
+        console.log("Không tìm thấy sản phẩm hoặc danh sách trống");
+        setProducts([]);
+        return;
+      }
+      
       if (!response.ok) {
         if (response.status === 401) {
           toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
           router.push('/auth/login');
           return;
         }
-        throw new Error("Có lỗi xảy ra khi tải danh sách sản phẩm");
+        throw new Error(data.message || "Có lỗi xảy ra khi tải danh sách sản phẩm");
       }
-      const data = await response.json();
+      
       if (data.success) {
-        setProducts(data.data.products);
+        setProducts(data.data.products || []);
       } else {
         throw new Error(data.message || "Có lỗi xảy ra khi tải danh sách sản phẩm");
       }
     } catch (err) {
       console.error("Error fetching products:", err);
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      setProducts([]);
+      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra khi tải danh sách sản phẩm");
     }
   }, [searchTerm, categoryFilter, router]);
 

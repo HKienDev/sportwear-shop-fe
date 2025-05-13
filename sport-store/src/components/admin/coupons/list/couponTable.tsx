@@ -267,9 +267,10 @@ const CouponTable: React.FC<CouponTableProps> = ({
                         <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0"
-                            onClick={() => router.push(`/admin/coupons/details/${coupon._id}`)}
+                            size="sm"
+                            onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
+                            className="text-slate-600 hover:bg-slate-100"
+                            aria-label="Xem chi tiết"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

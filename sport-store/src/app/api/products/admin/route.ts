@@ -111,11 +111,19 @@ export async function GET(request: Request) {
       if (response.status === 404) {
         return NextResponse.json(
           { 
-            success: false, 
-            message: errorMessage || 'Không tìm thấy sản phẩm',
-            details: errorData
+            success: true, 
+            message: 'Không có sản phẩm nào',
+            data: {
+              products: [],
+              pagination: {
+                total: 0,
+                currentPage: parseInt(page),
+                totalPages: 0,
+                limit: parseInt(limit)
+              }
+            }
           },
-          { status: 404 }
+          { status: 200 }
         );
       }
       

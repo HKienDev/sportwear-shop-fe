@@ -116,13 +116,25 @@ export default function EditProductPage() {
         const categoryResponse = await fetchApi('/categories');
         if (categoryResponse.success) {
           const allCategories = categoryResponse.data.categories || [];
-          console.log('All categories:', allCategories);
+          console.log('All categories:', allCategories.map(cat => ({
+            _id: cat._id,
+            categoryId: cat.categoryId,
+            name: cat.name
+          })));
           setCategories(allCategories);
           
           // Kiểm tra xem categoryId có tồn tại trong danh sách không
-          const categoryExists = allCategories.some((cat: Category) => cat._id === categoryId);
+          const categoryExists = allCategories.some((cat: Category) => 
+            cat._id === categoryId || cat.categoryId === categoryId
+          );
           if (!categoryExists) {
-            console.warn(`Category with ID ${categoryId} not found in categories list`);
+            console.warn(`Category with ID ${categoryId} not found in categories list. Available categories:`, 
+              allCategories.map((cat: Category) => ({
+                _id: cat._id,
+                categoryId: cat.categoryId,
+                name: cat.name
+              }))
+            );
           }
         }
         
@@ -199,17 +211,21 @@ export default function EditProductPage() {
       }
       
       // Kiểm tra xem categoryId có tồn tại trong danh sách categories không
-      const categoryExists = categories.some(cat => cat._id === productData.categoryId);
+      const categoryExists = categories.some(cat => 
+        cat._id === productData.categoryId || cat.categoryId === productData.categoryId
+      );
       if (!categoryExists) {
         console.error('Category not found in categories list:', productData.categoryId);
-        console.log('Available categories:', categories.map(cat => ({ id: cat._id, name: cat.name })));
+        console.log('Available categories:', categories.map(cat => ({ id: cat._id, name: cat.name, categoryId: cat.categoryId })));
         toast.error('Danh mục không tồn tại trong hệ thống', { id: 'updateProduct' });
         setSaving(false);
         return;
       }
       
       // Lấy thông tin danh mục để gửi lên API
-      const selectedCategory = categories.find(cat => cat._id === productData.categoryId);
+      const selectedCategory = categories.find(cat => 
+        cat._id === productData.categoryId || cat.categoryId === productData.categoryId
+      );
       if (selectedCategory) {
         console.log('Selected category:', selectedCategory);
         // Gửi categoryId dưới dạng categoryId của danh mục thay vì _id
