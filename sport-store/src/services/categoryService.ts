@@ -2,8 +2,6 @@ import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, Categor
 import axiosInstance from '../config/axios';
 import { API_URL } from '@/utils/api';
 
-const API_URL = API_URL;
-
 const categoryService = {
   // Lấy tất cả danh mục
   getAllCategories: async (params?: CategoryQueryParams): Promise<CategoryResponse> => {
