@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Phone, AtSign, Mail, Lock } from "lucide-react";
 import axios from "axios";
+import { API_URL } from "@/utils/api";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +36,7 @@ const RegisterForm = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/auth/register",
+        `${API_URL}/auth/register`,
         {
           email: formData.email,
           password: formData.password,

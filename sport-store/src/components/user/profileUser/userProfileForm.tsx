@@ -16,6 +16,7 @@ import {
 import useAddress from "@/hooks/useAddress";
 import { UserProfile } from "@/types/userProfileTypes";
 import MembershipTier from "./membershipTier";
+import { API_URL } from "@/utils/api";
 
 interface InfoFieldProps {
   label: string;
@@ -107,7 +108,7 @@ const UserProfileForm = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:4000/api/auth/profile", {
+        const res = await fetch(`${API_URL}/auth/profile`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -215,7 +216,7 @@ const UserProfileForm = () => {
         gender: tempUser.gender || "other",
       };
 
-      const res = await fetch("http://localhost:4000/api/auth/profile/update-request", {
+      const res = await fetch(`${API_URL}/auth/profile/update-request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -252,7 +253,7 @@ const UserProfileForm = () => {
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       if (!token) throw new Error("Token không tồn tại!");
 
-      const res = await fetch("http://localhost:4000/api/auth/profile/update", {
+      const res = await fetch(`${API_URL}/auth/profile/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -297,7 +298,7 @@ const UserProfileForm = () => {
         setOtpInput("");
         
         // Fetch updated user data
-        const userRes = await fetch("http://localhost:4000/api/auth/profile", {
+        const userRes = await fetch(`${API_URL}/auth/profile`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

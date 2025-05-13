@@ -6,6 +6,7 @@ import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
 import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
+import { API_URL } from "@/utils/api";
 
 interface Product {
   id: number;
@@ -86,7 +87,7 @@ export default function CreativeInvoice() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/orders/my-orders/123');
+        const response = await fetch(`${API_URL}/orders/my-orders/123`);
         const data = await response.json();
         if (data.success) {
           setOrder(data.data);

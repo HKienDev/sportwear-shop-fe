@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
+import { API_URL } from "@/utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -17,8 +18,8 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      console.log('Sending request to API:', 'http://localhost:4000/api/auth/forgot-password');
-      const response = await axios.post('http://localhost:4000/api/auth/forgot-password', { email });
+      console.log('Sending request to API:', `${API_URL}/auth/forgot-password`);
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
       console.log('API Response:', response.data);
 
       if (response.data?.success) {

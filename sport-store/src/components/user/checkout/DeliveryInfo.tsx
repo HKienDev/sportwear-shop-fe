@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { Customer } from '@/types/customer';
+import { API_URL } from "@/utils/api";
 
 export interface ShippingAddress {
   fullName: string;
@@ -59,7 +60,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
           setUser(null);
           return;
         }
-        const res = await fetch('http://localhost:4000/api/auth/profile', {
+        const res = await fetch(`${API_URL}/auth/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -2,9 +2,6 @@
  * Cấu hình API
  */
 
-// URL API từ biến môi trường
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-
 // Cấu hình timeout cho các request
 export const API_TIMEOUT = 30000; // 30 giây
 
