@@ -22,8 +22,6 @@ export default function ForgotPasswordCombined() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
   useEffect(() => {
-    inputRefs.current[0]?.focus();
-    
     try {
       // Kiểm tra localStorage
       const storedEmail = localStorage.getItem('forgotPasswordEmail');
@@ -340,6 +338,7 @@ export default function ForgotPasswordCombined() {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   aria-label={`OTP digit ${index + 1}`}
+                  autoFocus={index === 0}
                 />
               ))}
             </div>

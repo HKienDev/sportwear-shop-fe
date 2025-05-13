@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
         <ClientLayout fontClass={montserrat.variable}>
-          {children}
+                    {children}
         </ClientLayout>
       </body>
     </html>
