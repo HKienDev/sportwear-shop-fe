@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { render } from '@react-email/render';
 import axios from 'axios';
 import { API_URL } from '@/utils/api';
-import { OrderEmailProps } from '@/components/emails/NewOrderEmail';
+import { OrderEmailProps } from '@/types/email';
 import React from 'react';
 
 interface SendEmailParams {
