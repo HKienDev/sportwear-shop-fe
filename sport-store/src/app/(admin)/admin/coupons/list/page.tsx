@@ -168,7 +168,7 @@ export default function CouponListPage() {
                         onSearchChange={handleSearch}
                         statusFilter={statusFilter}
                         onStatusFilterChange={handleFilter}
-                        onAddCoupon={() => router.push("/admin/coupons/create")}
+                        onAddCoupon={() => router.push("/admin/coupons/add")}
                     />
                 </div>
 
