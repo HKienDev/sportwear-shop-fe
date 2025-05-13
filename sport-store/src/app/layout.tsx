@@ -23,6 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap" as="style" />
+      </head>
       <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
         <ClientLayout fontClass={montserrat.variable}>
                     {children}
