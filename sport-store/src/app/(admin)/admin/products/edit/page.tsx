@@ -116,7 +116,7 @@ export default function EditProductPage() {
         const categoryResponse = await fetchApi('/categories');
         if (categoryResponse.success) {
           const allCategories = categoryResponse.data.categories || [];
-          console.log('All categories:', allCategories.map(cat => ({
+          console.log('All categories:', allCategories.map((cat: Category) => ({
             _id: cat._id,
             categoryId: cat.categoryId,
             name: cat.name
@@ -124,11 +124,11 @@ export default function EditProductPage() {
           setCategories(allCategories);
           
           // Kiểm tra xem categoryId có tồn tại trong danh sách không
-          const categoryExists = allCategories.some((cat: Category) => 
+          const categoryExists = allCategories.some((cat: Category) =>
             cat._id === categoryId || cat.categoryId === categoryId
           );
           if (!categoryExists) {
-            console.warn(`Category with ID ${categoryId} not found in categories list. Available categories:`, 
+            console.warn(`Category with ID ${categoryId} not found in categories list. Available categories:`,
               allCategories.map((cat: Category) => ({
                 _id: cat._id,
                 categoryId: cat.categoryId,
