@@ -1,8 +1,5 @@
-import { API_URL as CONFIG_API_URL } from '@/config/api';
+import { API_URL } from '@/utils/api';
 import { ProductResponse, ProductsResponse } from '@/types/product';
-
-// Sử dụng API_URL từ config
-const API_URL = CONFIG_API_URL;
 
 /**
  * Lấy danh sách tất cả sản phẩm

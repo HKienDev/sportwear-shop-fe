@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
-import { API_URL } from '@/config/constants';
+import { API_URL } from '@/utils/api';
 import type { 
     ApiResponse, 
     PaginatedResponse,

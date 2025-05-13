@@ -1,8 +1,8 @@
 import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryQueryParams } from '../types/category';
 import axiosInstance from '../config/axios';
-import { API_URL as CONFIG_API_URL } from '@/config/api';
+import { API_URL } from '@/utils/api';
 
-const API_URL = CONFIG_API_URL;
+const API_URL = API_URL;
 
 const categoryService = {
   // Lấy tất cả danh mục
