@@ -1,4 +1,4 @@
-import { getAuthToken } from './auth';
+import { getAuthToken } from '@/utils/token';
 import { TOKEN_CONFIG } from '@/config/token';
 
 interface FetchOptions extends RequestInit {

@@ -1,4 +1,4 @@
-import { API_URL } from '@/config/api';
+import { API_URL } from '@/utils/api';
 
 /**
  * Xóa một đơn hàng theo ID

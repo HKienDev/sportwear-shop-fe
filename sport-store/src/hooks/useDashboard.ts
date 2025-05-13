@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
 import { TOKEN_CONFIG } from '@/config/token';
-import { API_URL, ENDPOINTS } from '@/config/api';
+import { API_URL } from '@/utils/api';
+import { ENDPOINTS } from '@/config/api';
 
 interface RevenueData {
   date: string;

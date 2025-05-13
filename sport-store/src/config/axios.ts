@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL } from './constants';
+import { API_URL } from '@/utils/api';
 import { TOKEN_CONFIG } from './token';
 
 // Tạo instance axios
