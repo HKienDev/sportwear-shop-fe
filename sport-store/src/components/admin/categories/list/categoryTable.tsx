@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Category } from "@/types/category";
-import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import categoryService from "@/services/categoryService";
 import { CategoryQueryParams } from "@/types/category";
