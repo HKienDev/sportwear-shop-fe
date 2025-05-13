@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { API_URL } from "@/utils/api";
 
 export async function POST(request: Request) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch('http://localhost:4000/api/stripe/create-payment-intent', {
+    const response = await fetch(`${API_URL}/stripe/create-payment-intent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

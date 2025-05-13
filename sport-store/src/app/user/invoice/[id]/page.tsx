@@ -12,6 +12,7 @@ import AddressInfo from '@/components/user/invoice/AddressInfo';
 import StripePayment from '@/components/user/checkout/StripePayment';
 import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import { PaymentMethod } from '@/types/order';
+import { API_URL } from "@/utils/api";
 
 interface Product {
   _id: string;
@@ -131,7 +132,7 @@ export default function InvoicePage() {
   const fetchCategoryName = async (categoryId: string) => {
     try {
       const token = getToken('access');
-      const response = await axios.get(`http://localhost:4000/api/categories/${categoryId}`, {
+      const response = await axios.get(`${API_URL}/categories/${categoryId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -170,7 +171,7 @@ export default function InvoicePage() {
           return;
         }
 
-        const response = await axios.get(`http://localhost:4000/api/orders/my-orders/${params.id}`, {
+        const response = await axios.get(`${API_URL}/orders/my-orders/${params.id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

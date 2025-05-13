@@ -8,6 +8,7 @@ import { vi } from 'date-fns/locale';
 import { getToken } from '@/config/token';
 import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
+import { API_URL } from "@/utils/api";
 
 interface OrderItem {
   product: string;
@@ -57,7 +58,7 @@ export default function OrderUserPage() {
       }
 
       setLoading(true);
-      const response = await axios.get(`http://localhost:4000/api/orders/my-orders?page=${currentPage}&limit=${limit}`, {
+      const response = await axios.get(`${API_URL}/orders/my-orders?page=${currentPage}&limit=${limit}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

@@ -1,6 +1,7 @@
 import { fetchApi } from './api';
 import { isAdmin as checkAdmin } from './roleUtils';
 import { TOKEN_CONFIG } from '@/config/token';
+import { API_URL } from "@/utils/api";
 
 export const getAuthToken = async (): Promise<string | null> => {
   try {
@@ -113,7 +114,7 @@ export const isAdmin = () => {
 
 export const refreshToken = async () => {
   try {
-    const response = await fetch('http://localhost:4000/api/auth/refresh', {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include'
     });

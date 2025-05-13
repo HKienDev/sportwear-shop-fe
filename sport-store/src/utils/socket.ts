@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { API_URL } from "@/utils/api";
 
 // Định nghĩa kiểu cho message
 interface Message {
@@ -10,7 +11,7 @@ interface Message {
   [key: string]: unknown;
 }
 
-const socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000", {
+const socket = io(API_URL, {
   withCredentials: true,
 });
 

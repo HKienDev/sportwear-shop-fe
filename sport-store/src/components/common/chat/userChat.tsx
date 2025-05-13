@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { MessageCircle, X, Send, Clock } from "lucide-react";
+import { API_URL } from "@/utils/api";
 
-const socket = io("http://localhost:4000");
+const socket = io(API_URL);
 
 export default function UserChat() {
   const [message, setMessage] = useState("");

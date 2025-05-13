@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from "@/utils/api";
 
 export default function ForgotPasswordCombined() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export default function ForgotPasswordCombined() {
     try {
       console.log('Đang gửi lại OTP cho email:', email);
       
-      const response = await fetch('http://localhost:4000/api/auth/resend-otp', {
+      const response = await fetch(`${API_URL}/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -172,7 +173,7 @@ export default function ForgotPasswordCombined() {
       });
 
       try {
-        const response = await axios.post('http://localhost:4000/api/auth/reset-password', {
+        const response = await axios.post(`${API_URL}/auth/reset-password`, {
           email,
           otp: otpString,
           newPassword

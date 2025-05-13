@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Sử dụng biến môi trường hoặc URL mặc định
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_URL } from "@/utils/api";
 
 export async function GET(
   request: NextRequest,

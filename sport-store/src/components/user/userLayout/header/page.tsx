@@ -10,6 +10,7 @@ import ShoppingCartButton from "./shoppingCartButton/page";
 import AuthButtons from "./authButtons/page";
 import UserMenu from "./userMenu/page";
 import { useAuth } from "@/context/authContext";
+import { API_URL } from "@/utils/api";
 
 interface Category {
   _id: string;
@@ -72,7 +73,7 @@ const Header = () => {
         if (typeof window === "undefined") return;
 
         // Fetch categories
-        const categoriesUrl = "http://localhost:4000/api/categories";
+        const categoriesUrl = `${API_URL}/categories`;
         console.log("Fetching categories from:", categoriesUrl);
         
         const categoriesResponse = await fetch(categoriesUrl, {
@@ -119,7 +120,7 @@ const Header = () => {
       try {
         setIsSearching(true);
         const response = await fetch(
-          `http://localhost:4000/api/products/search?keyword=${encodeURIComponent(value)}`
+          `${API_URL}/products/search?keyword=${encodeURIComponent(value)}`
         );
         if (!response.ok) {
           console.error("Search API Error:", {

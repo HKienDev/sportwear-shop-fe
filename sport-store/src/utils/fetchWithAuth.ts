@@ -1,4 +1,5 @@
 import { TOKEN_CONFIG } from '@/config/token';
+import { API_URL } from "@/utils/api";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -117,7 +118,7 @@ export const fetchWithAuth = async <T = unknown>(
     };
 
     // Thêm base URL vào endpoint
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    const baseUrl = API_URL;
     const fullUrl = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
 
     // Gọi API với timeout

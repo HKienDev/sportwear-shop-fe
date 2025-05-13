@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { Coupon } from '@/types/coupon';
 import { toast } from 'sonner';
+import { API_URL } from "@/utils/api";
 
 interface CouponSectionProps {
   couponCode: string;
@@ -36,7 +37,7 @@ export default function CouponSection({
       
       try {
         const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-        const res = await fetch('http://localhost:4000/api/coupons', {
+        const res = await fetch(`${API_URL}/coupons`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/utils/api";
 
 const GoogleLoginButton: React.FC = () => {
   const [mounted, setMounted] = useState(false);
@@ -20,7 +21,6 @@ const GoogleLoginButton: React.FC = () => {
     <button
       type="button"
       onClick={() => {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
         router.push(`${API_URL}/auth/google`);
       }}
       className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"

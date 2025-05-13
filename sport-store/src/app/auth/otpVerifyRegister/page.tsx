@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
+import { API_URL } from "@/utils/api";
 
 export default function RegisterVerificationOTP() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function RegisterVerificationOTP() {
       console.log("OTP gửi đi:", otpString);
   
       
-      const response = await axios.post('http://localhost:4000/api/auth/verify-account', {
+      const response = await axios.post(`${API_URL}/auth/verify-account`, {
         email: storedEmail,
         otp: otpString,
       });
@@ -107,7 +108,7 @@ export default function RegisterVerificationOTP() {
       }
 
       // Gọi API gửi lại OTP
-      await axios.post('http://localhost:4000/api/auth/resend-otp', { email });
+      await axios.post(`${API_URL}/auth/resend-otp`, { email });
 
       console.log('Mã OTP đã được gửi lại.');
     } catch (error: unknown) {
