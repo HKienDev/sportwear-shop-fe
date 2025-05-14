@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ShoppingBag, Heart, Settings, ChevronDown } from "lucide-react";
+import { LogOut, User, ShoppingBag, Heart, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -80,21 +80,19 @@ const UserMenu = () => {
       label: "Tài khoản của tôi",
       icon: <User className="w-4 h-4" />,
       href: "/user/profile",
+      disabled: false,
     },
     {
       label: "Đơn hàng của tôi",
       icon: <ShoppingBag className="w-4 h-4" />,
       href: "/user/profile?tab=orders",
+      disabled: false,
     },
     {
-      label: "Danh sách yêu thích",
+      label: "Danh sách yêu thích (coming soon)",
       icon: <Heart className="w-4 h-4" />,
-      href: "/user/wishlist",
-    },
-    {
-      label: "Cài đặt",
-      icon: <Settings className="w-4 h-4" />,
-      href: "/user/settings",
+      href: "#",
+      disabled: true,
     },
   ];
 
@@ -165,12 +163,16 @@ const UserMenu = () => {
               <button
                 key={index}
                 onClick={() => {
-                  router.push(item.href);
-                  setIsOpen(false);
+                  if (!item.disabled) {
+                    router.push(item.href);
+                    setIsOpen(false);
+                  }
                 }}
-                className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors duration-200"
+                className={`w-full px-4 py-2.5 text-sm flex items-center space-x-3 transition-colors duration-200
+                  ${item.disabled ? 'text-gray-400 cursor-not-allowed bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}
+                disabled={item.disabled}
               >
-                <span className="text-gray-400">{item.icon}</span>
+                <span className={item.disabled ? 'text-gray-300' : 'text-gray-400'}>{item.icon}</span>
                 <span>{item.label}</span>
               </button>
             ))}
