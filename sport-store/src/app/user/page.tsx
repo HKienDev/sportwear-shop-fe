@@ -9,6 +9,7 @@ import ProductCard from "@/components/user/products/productCard/page";
 import { useAuth } from "@/context/authContext";
 import { Product } from "@/types/product";
 import { getAllProducts } from "@/services/productService";
+import Skeleton from "@/components/common/Skeleton";
 
 const HomePage = () => {
   const router = useRouter();
@@ -56,7 +57,31 @@ const HomePage = () => {
     fetchData();
   }, [router, checkAuthStatus, user, isAuthenticated]);
 
-  if (loading) return <p className="text-center">Đang tải...</p>;
+  if (loading) return (
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 mt-8">
+        <div className="grid grid-cols-12 gap-6 items-stretch">
+          {/* Skeleton Messi */}
+          <div className="col-span-12 md:col-span-4 lg:col-span-3 rounded-xl overflow-hidden flex relative group shadow-lg h-[400px]">
+            <Skeleton className="w-full h-full rounded-xl" />
+          </div>
+          {/* Skeleton Ronaldo */}
+          <div className="col-span-12 md:col-span-8 lg:col-span-9 rounded-2xl overflow-hidden group shadow-lg h-[400px]">
+            <Skeleton className="w-full h-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+      {/* Skeleton sản phẩm */}
+      <div className="container mx-auto px-4 mt-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-[400px] w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
   console.log("Current Products State:", products);
@@ -345,9 +370,9 @@ const HomePage = () => {
               src="/Logo_vju.png"
               alt="Logo VJU"
               width={200}
-              height={100}
-              style={{ width: "auto", height: "auto", maxHeight: "80px" }}
+              height={80}
               className="relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-lg"
+              style={{ maxHeight: "80px" }}
             />
           </div>
           
@@ -357,9 +382,9 @@ const HomePage = () => {
               src="/Logo_deha.png"
               alt="Logo DEHA"
               width={200}
-              height={100}
-              style={{ width: "auto", height: "auto", maxHeight: "80px" }}
+              height={80}
               className="relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-lg"
+              style={{ maxHeight: "80px" }}
             />
           </div>
           
@@ -369,9 +394,9 @@ const HomePage = () => {
               src="/Logo_vnu.png"
               alt="Logo VNU"
               width={200}
-              height={100}
-              style={{ width: "auto", height: "auto", maxHeight: "80px" }}
+              height={80}
               className="relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-lg"
+              style={{ maxHeight: "80px" }}
             />
           </div>
         </div>

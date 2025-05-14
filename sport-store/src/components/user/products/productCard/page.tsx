@@ -27,7 +27,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       try {
         if (categoryId) {
           const response = await getCategoryById(categoryId);
-          if (response.success) {
+          if (response && response.success && response.data) {
             setCategoryName(response.data.name);
           } else {
             setCategoryName("Không xác định");
@@ -35,9 +35,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         } else {
           setCategoryName("Không xác định");
         }
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin category:", error);
-        setCategoryName("Không xác định");
+      } catch (error: any) {
+        // Nếu lỗi là 404 hoặc không tìm thấy, không log lỗi, chỉ set 'Không xác định'
+        if (error?.message?.includes('Failed to fetch category')) {
+          setCategoryName("Không xác định");
+        } else {
+          console.error("Lỗi khi lấy thông tin category:", error);
+          setCategoryName("Không xác định");
+        }
       }
     };
 
