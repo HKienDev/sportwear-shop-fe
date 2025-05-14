@@ -314,6 +314,7 @@ export default function ForgotPasswordCombined() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
+                  onFocus={() => setError('')}
                   aria-label={`OTP digit ${index + 1}`}
                   autoFocus={index === 0}
                 />
@@ -395,7 +396,10 @@ export default function ForgotPasswordCombined() {
           <button
             type="button"
             className="font-medium text-red-600 hover:text-red-500 px-4 py-2 rounded transition-colors"
-            onClick={() => router.push('/auth/login')}
+            onClick={() => {
+              console.log('Click login');
+              router.push('/auth/login');
+            }}
           >
             Quay lại trang đăng nhập
           </button>
