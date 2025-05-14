@@ -216,6 +216,9 @@ const UserProfileForm = () => {
         gender: tempUser.gender || "other",
       };
 
+      // Log dữ liệu gửi lên để debug
+      console.log("Dữ liệu gửi lên update-request:", updateData);
+
       const res = await fetch(`${API_URL}/auth/profile/update-request`, {
         method: "POST",
         headers: {
@@ -253,29 +256,34 @@ const UserProfileForm = () => {
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       if (!token) throw new Error("Token không tồn tại!");
 
+      const updatePayload = {
+        otp: otpInput,
+        updateData: {
+          email: tempUser?.email,
+          username: tempUser?.username,
+          fullname: tempUser?.fullname,
+          phone: tempUser?.phone || "",
+          address: {
+            province: tempUser?.address?.province || "",
+            district: tempUser?.address?.district || "",
+            ward: tempUser?.address?.ward || "",
+            street: tempUser?.address?.street || "",
+          },
+          dob: tempUser?.dob || "",
+          gender: tempUser?.gender || "other",
+        }
+      };
+
+      // Log dữ liệu gửi lên để debug
+      console.log("Dữ liệu gửi lên update (OTP):", updatePayload);
+
       const res = await fetch(`${API_URL}/auth/profile/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          otp: otpInput,
-          updateData: {
-            email: tempUser?.email,
-            username: tempUser?.username,
-            fullname: tempUser?.fullname,
-            phone: tempUser?.phone || "",
-            address: {
-              province: tempUser?.address?.province || "",
-              district: tempUser?.address?.district || "",
-              ward: tempUser?.address?.ward || "",
-              street: tempUser?.address?.street || "",
-            },
-            dob: tempUser?.dob || "",
-            gender: tempUser?.gender || "other",
-          }
-        }),
+        body: JSON.stringify(updatePayload),
         credentials: "include",
       });
 
