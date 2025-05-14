@@ -144,7 +144,7 @@ export default function InvoicePage() {
     }
   };
 
-  const processOrderItems = useCallback(async (items: OrderItem[]) => {
+  const processOrderItems = useCallback(async (items: OrderItem[]): Promise<ProcessedProduct[]> => {
     const processedItems = await Promise.all(
       items.map(async (item) => {
         if (!item.product) {
