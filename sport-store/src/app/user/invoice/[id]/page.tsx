@@ -158,7 +158,7 @@ export default function InvoicePage() {
           quantity: item.quantity,
           brand: item.product.brand,
           image: item.product.mainImage,
-          categoryName: item.product.categoryId ? await fetchCategoryName(item.product.categoryId) : 'Chưa phân loại',
+          categoryName: 'Chưa phân loại',
           color: item.product.colors?.[0] || 'Mặc định',
           size: item.product.sizes?.[0] || 'N/A'
         };
