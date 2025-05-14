@@ -73,7 +73,7 @@ export default function ForgotPassword() {
       </div>
 
       {/* Main Container */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 md:p-12 border border-gray-200">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 md:p-12 border border-gray-200 z-10">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Quên mật khẩu?</h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -125,6 +125,8 @@ export default function ForgotPassword() {
             type="button"
             tabIndex={0}
             className="font-medium text-red-600 hover:text-red-500 px-4 py-2 rounded transition-colors"
+            onFocus={e => e.currentTarget.classList.add('ring', 'ring-red-300')}
+            onBlur={e => e.currentTarget.classList.remove('ring', 'ring-red-300')}
             onClick={() => {
               console.log('Quay lại trang đăng nhập');
               router.push('/auth/login');
