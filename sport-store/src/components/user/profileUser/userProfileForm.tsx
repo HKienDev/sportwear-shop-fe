@@ -197,6 +197,14 @@ const UserProfileForm = () => {
       return;
     }
 
+    // Kiểm tra chỉ thay đổi địa chỉ hay thay đổi trường nhạy cảm
+    const isSensitiveChanged = (
+      tempUser.email !== user?.email ||
+      tempUser.username !== user?.username ||
+      tempUser.fullname !== user?.fullname ||
+      tempUser.phone !== user?.phone
+    );
+
     try {
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       if (!token) throw new Error("Token không tồn tại!");
@@ -216,29 +224,74 @@ const UserProfileForm = () => {
         gender: tempUser.gender || "other",
       };
 
-      // Log dữ liệu gửi lên để debug
-      console.log("Dữ liệu gửi lên update-request:", updateData);
-
-      const res = await fetch(`${API_URL}/auth/profile/update-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Lỗi khi gửi yêu cầu cập nhật");
-      }
-
-      const data = await res.json();
-      if (data.success) {
-        setShowOtpModal(true);
+      if (!isSensitiveChanged) {
+        // Nếu chỉ thay đổi địa chỉ, gọi API update trực tiếp (PUT), không cần OTP
+        const res = await fetch(`${API_URL}/auth/profile/update`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ updateData }),
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Lỗi khi cập nhật địa chỉ");
+        }
+        const data = await res.json();
+        if (data.success) {
+          setIsEditing(false);
+          // Fetch updated user data
+          const userRes = await fetch(`${API_URL}/auth/profile`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+          });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            if (userData.success) {
+              const updatedUserData = {
+                ...userData.data,
+                address: {
+                  street: userData.data.address?.street || "",
+                  province: userData.data.address?.province || "",
+                  district: userData.data.address?.district || "",
+                  ward: userData.data.address?.ward || "",
+                  detail: userData.data.address?.detail || "",
+                }
+              };
+              setUser(updatedUserData);
+              setTempUser(updatedUserData);
+            }
+          }
+        } else {
+          throw new Error(data.message || "Lỗi khi cập nhật địa chỉ");
+        }
       } else {
-        throw new Error(data.message || "Lỗi khi gửi yêu cầu cập nhật");
+        // Nếu thay đổi trường nhạy cảm, giữ nguyên flow xác thực OTP
+        const res = await fetch(`${API_URL}/auth/profile/update-request`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updateData),
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Lỗi khi gửi yêu cầu cập nhật");
+        }
+        const data = await res.json();
+        if (data.success) {
+          setShowOtpModal(true);
+        } else {
+          throw new Error(data.message || "Lỗi khi gửi yêu cầu cập nhật");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -565,17 +618,6 @@ const UserProfileForm = () => {
             <div className="mt-8 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 animate-gradient-x"></div>
               <div className="relative p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                      <Edit3 className="w-5 h-5 text-blue-600" />
-                    </div>
-                    Hành động
-                  </h2>
-                  <div className="text-sm text-gray-500">
-                    Bạn có thể lưu hoặc hủy các thay đổi
-                  </div>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={handleRequestUpdate}
@@ -600,12 +642,9 @@ const UserProfileForm = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-100/20 to-transparent group-hover:from-gray-200/30 transition-all duration-300"></div>
                     <div className="relative flex items-center">
                       <X className="mr-2" size={20} />
-                      <span className="font-medium">Hủy chỉnh sửa</span>
+                      <span className="font-medium">Hủy</span>
                     </div>
                   </button>
-                </div>
-                <div className="text-xs text-gray-500 text-center mt-2">
-                  Lưu ý: Thay đổi sẽ được gửi qua email để xác thực
                 </div>
               </div>
             </div>
