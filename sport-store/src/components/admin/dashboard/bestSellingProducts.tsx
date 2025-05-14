@@ -87,6 +87,7 @@ export default function BestSellingProducts() {
                         width={64} 
                         height={64}
                         className="object-cover"
+                        style={{ width: 64, height: 64 }}
                       />
                     ) : (
                       <span className="text-gray-400 text-xs">No img</span>

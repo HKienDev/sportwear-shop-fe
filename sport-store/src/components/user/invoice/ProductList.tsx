@@ -40,6 +40,7 @@ export default function ProductList({ products, animateItems }: ProductListProps
                   fill
                   sizes="(max-width: 640px) 100vw, 96px"
                   className="object-cover"
+                  style={{ width: 96, height: 96 }}
                 />
               ) : (
                 <span className="text-gray-400 font-medium">{product.brand}</span>

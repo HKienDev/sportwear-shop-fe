@@ -8,7 +8,7 @@ interface FooterProps {
 }
 
 const Footer = ({ className = "" }: FooterProps) => (
-  <footer className={`bg-white border-t border-gray-200 ${className}`}>
+  <footer className={`bg-white border-t border-gray-200 ${className}`} style={{ minHeight: 120 }}>
     <div className="container mx-auto px-4 py-8">
       {/* Main Footer Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -22,6 +22,7 @@ const Footer = ({ className = "" }: FooterProps) => (
               height={48}
               className="rounded-lg"
               priority
+              style={{ width: 48, height: 48 }}
             />
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
               VJU SPORT
