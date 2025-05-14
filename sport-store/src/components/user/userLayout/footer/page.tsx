@@ -8,7 +8,7 @@ interface FooterProps {
 }
 
 const Footer = ({ className = "" }: FooterProps) => (
-  <footer className={`bg-white border-t border-gray-200 ${className}`} style={{ minHeight: 120 }}>
+  <footer className={`bg-white border-t border-gray-200 ${className}`} style={{ minHeight: 160 }}>
     <div className="container mx-auto px-4 py-8">
       {/* Main Footer Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
