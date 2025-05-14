@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import axios from 'axios';
 import { API_URL } from "@/utils/api";
 
@@ -122,17 +121,17 @@ export default function ForgotPassword() {
         </form>
 
         <div className="mt-8 text-center">
-          {/* Use onClick for debugging */}
-          <Link 
-            href="/auth/login" 
-            className="font-medium text-red-600 hover:text-red-500 flex items-center justify-center gap-2"
-            onClick={() => console.log('Quay lại trang đăng nhập')}
+          <button
+            type="button"
+            tabIndex={0}
+            className="font-medium text-red-600 hover:text-red-500 px-4 py-2 rounded transition-colors"
+            onClick={() => {
+              console.log('Quay lại trang đăng nhập');
+              router.push('/auth/login');
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
             Quay lại trang đăng nhập
-          </Link>
+          </button>
         </div>
       </div>
     </div>
