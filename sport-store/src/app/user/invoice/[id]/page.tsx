@@ -144,21 +144,27 @@ export default function InvoicePage() {
     }
   };
 
-  const processOrderItems = useCallback(async (items: OrderItem[]) => {
+  const processOrderItems = useCallback(async (items: OrderItem[]): Promise<ProcessedProduct[]> => {
     const processedItems = await Promise.all(
-      items.map(async (item) => ({
-        id: parseInt(item.product._id.slice(-6), 16),
-        name: item.product.name,
-        price: item.product.salePrice,
-        quantity: item.quantity,
-        brand: item.product.brand,
-        image: item.product.mainImage,
-        categoryName: item.product.categoryId ? await fetchCategoryName(item.product.categoryId) : 'Chưa phân loại',
-        color: item.product.colors?.[0] || 'Mặc định',
-        size: item.product.sizes?.[0] || 'N/A'
-      }))
+      items.map(async (item) => {
+        if (!item.product) {
+          console.error('Order item missing product:', item);
+          return null;
+        }
+        return {
+          id: parseInt(item.product._id.slice(-6), 16),
+          name: item.product.name,
+          price: item.product.salePrice,
+          quantity: item.quantity,
+          brand: item.product.brand,
+          image: item.product.mainImage,
+          categoryName: item.product.categoryId ? await fetchCategoryName(item.product.categoryId) : 'Chưa phân loại',
+          color: item.product.colors?.[0] || 'Mặc định',
+          size: item.product.sizes?.[0] || 'N/A'
+        };
+      })
     );
-    return processedItems;
+    return processedItems.filter((item): item is ProcessedProduct => !!item);
   }, []);
 
   useEffect(() => {
