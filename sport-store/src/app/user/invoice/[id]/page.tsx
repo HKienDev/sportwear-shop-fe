@@ -310,7 +310,7 @@ export default function InvoicePage() {
               couponDiscount={order.couponDiscount}
               shipping={order.shippingFee}
               total={order.totalPrice}
-              paid={order.totalPrice}
+              paid={order.paymentStatus === 'paid' ? order.totalPrice : 0}
             />
           </div>
         </div>
