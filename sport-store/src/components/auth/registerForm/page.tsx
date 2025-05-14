@@ -10,7 +10,6 @@ const RegisterForm = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",
-    username: "",
     email: "",
     password: "",
   });
@@ -40,7 +39,6 @@ const RegisterForm = () => {
         {
           email: formData.email,
           password: formData.password,
-          username: formData.username,
           fullname: formData.fullName,
           phone: formData.phoneNumber
         },
@@ -85,13 +83,6 @@ const RegisterForm = () => {
       placeholder: "0912345678",
       type: "tel",
       icon: <Phone className="h-4 w-4" />,
-    },
-    {
-      label: "Tên đăng nhập",
-      id: "username",
-      placeholder: "username",
-      type: "text",
-      icon: <AtSign className="h-4 w-4" />,
     },
     {
       label: "Email",

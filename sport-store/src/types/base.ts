@@ -63,7 +63,6 @@ export enum ShippingMethod {
 export interface User {
     _id: string;
     customId?: string;
-    username?: string;
     email: string;
     password?: string;
     fullname: string;

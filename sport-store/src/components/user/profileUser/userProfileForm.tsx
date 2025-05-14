@@ -192,16 +192,14 @@ const UserProfileForm = () => {
       return;
     }
 
-    if (!tempUser.email || !tempUser.username || !tempUser.fullname) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc (email, username, họ tên)");
+    if (!tempUser.email || !tempUser.fullname) {
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc (email, họ tên)");
       return;
     }
 
     // Kiểm tra chỉ thay đổi địa chỉ hay thay đổi trường nhạy cảm
     const isSensitiveChanged = (
       tempUser.email !== user?.email ||
-      tempUser.username !== user?.username ||
-      tempUser.fullname !== user?.fullname ||
       tempUser.phone !== user?.phone
     );
 
@@ -211,8 +209,6 @@ const UserProfileForm = () => {
 
       const updateData = {
         email: tempUser.email,
-        username: tempUser.username,
-        fullname: tempUser.fullname,
         phone: tempUser.phone || "",
         address: tempUser.address || {
           province: "",
@@ -313,8 +309,6 @@ const UserProfileForm = () => {
         otp: otpInput,
         updateData: {
           email: tempUser?.email,
-          username: tempUser?.username,
-          fullname: tempUser?.fullname,
           phone: tempUser?.phone || "",
           address: {
             province: tempUser?.address?.province || "",
@@ -421,7 +415,7 @@ const UserProfileForm = () => {
             <h1 className="text-2xl font-bold">{user?.fullname}</h1>
             <div className="flex items-center space-x-4 mt-2">
               <span className="flex items-center">
-                <User size={16} className="mr-1" /> {user?.username}
+                <User size={16} className="mr-1" />
               </span>
               <span className="flex items-center">
                 <Mail size={16} className="mr-1" /> {user?.email}
@@ -461,21 +455,6 @@ const UserProfileForm = () => {
                   value={tempUser?.fullname || ""}
                   isEditing={isEditing}
                   onChange={handleChange}
-                />
-                <InfoField
-                  label="Tên đăng nhập"
-                  name="username"
-                  value={tempUser?.username || ""}
-                  isEditing={isEditing}
-                  onChange={handleChange}
-                />
-                <InfoField
-                  label="Email"
-                  name="email"
-                  value={tempUser?.email || ""}
-                  isEditing={isEditing}
-                  onChange={handleChange}
-                  type="email"
                 />
                 <InfoField
                   label="Số điện thoại"
