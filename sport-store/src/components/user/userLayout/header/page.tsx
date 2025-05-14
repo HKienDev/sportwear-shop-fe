@@ -10,6 +10,7 @@ import AuthButtons from "./authButtons/page";
 import UserMenu from "./userMenu/page";
 import { useAuth } from "@/context/authContext";
 import { API_URL } from "@/utils/api";
+import ShoppingCartButton from "./shoppingCartButton/page";
 
 interface Category {
   _id: string;
@@ -396,13 +397,7 @@ const Header = () => {
                 <Menu className="w-7 h-7 text-gray-700" />
               </button>
             </div>
-            <Link
-              href="/user/cart"
-              className="group relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-red-50 transition-colors"
-              aria-label="Giỏ hàng"
-            >
-              {/* ...icon hoặc nội dung... */}
-            </Link>
+            <ShoppingCartButton aria-label="Giỏ hàng" />
           </nav>
         </div>
       </div>
