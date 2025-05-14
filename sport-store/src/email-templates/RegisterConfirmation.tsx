@@ -8,7 +8,6 @@ import {
   Preview,
   Section,
   Text,
-  Button,
   Link,
   Hr,
 } from '@react-email/components';
@@ -19,13 +18,16 @@ interface RegisterConfirmationProps {
   fullname: string;
   email: string;
   customId: string;
+  createdAt?: string;
 }
 
 const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
   fullname,
   email,
   customId,
+  createdAt,
 }) => {
+  const registerDate = createdAt ? new Date(createdAt).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN');
   return (
     <Html>
       <Head />
@@ -35,7 +37,7 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
           <Container className="mx-auto my-10 max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
             <Section className="text-center">
               <Img
-                src="https://sport-store.vercel.app/Logo_vju.png"
+                src="/Logo_vju.png"
                 width="160"
                 height="auto"
                 alt="Sport Store Logo"
@@ -70,12 +72,18 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
                 <Text className="font-semibold text-gray-800">
                   {email}
                 </Text>
+                <Text className="mb-2 text-sm font-medium text-gray-500">
+                  Ngày đăng ký
+                </Text>
+                <Text className="mb-2 font-semibold text-gray-800">
+                  {registerDate}
+                </Text>
               </div>
             </Section>
 
             <Section className="mt-8 text-center">
               <Link 
-                href="https://sport-store.vercel.app/auth/login" 
+                href="https://www.vjusport.com/auth/login" 
                 className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-center font-medium text-white shadow-sm hover:bg-blue-700"
               >
                 Đăng nhập ngay
@@ -93,6 +101,9 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
                 Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh
+              </Text>
+              <Text className="mt-4 text-xs text-blue-700 font-medium">
+                Cam kết bảo mật: Sport Store cam kết bảo vệ tuyệt đối thông tin cá nhân và tài khoản của bạn. Mọi dữ liệu đều được mã hóa và không chia sẻ cho bên thứ ba.
               </Text>
             </Section>
           </Container>
