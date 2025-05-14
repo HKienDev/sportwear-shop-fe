@@ -164,7 +164,7 @@ export default function InvoicePage() {
         };
       })
     );
-    return processedItems.filter(Boolean);
+    return processedItems.filter((item): item is ProcessedProduct => !!item);
   }, []);
 
   useEffect(() => {
