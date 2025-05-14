@@ -23,6 +23,7 @@ export const ProductImages: React.FC<ProductImagesProps> = ({
           fill
           className="object-cover"
           priority
+          style={{ width: '100%', height: 400 }}
         />
       </div>
       {subImages && subImages.length > 0 && (
@@ -36,6 +37,7 @@ export const ProductImages: React.FC<ProductImagesProps> = ({
               alt={productName}
               fill
               className="object-cover"
+              style={{ width: '100%', height: 80 }}
             />
           </div>
           {subImages.map((image: string, index: number) => (
@@ -49,6 +51,7 @@ export const ProductImages: React.FC<ProductImagesProps> = ({
                 alt={`${productName} - ${index + 1}`}
                 fill
                 className="object-cover"
+                style={{ width: '100%', height: 80 }}
               />
             </div>
           ))}
