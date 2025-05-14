@@ -179,7 +179,8 @@ export default function InvoicePage() {
 
         const response = await axios.get(`${API_URL}/orders/my-orders/${params.id}`, {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
           }
         });
 
