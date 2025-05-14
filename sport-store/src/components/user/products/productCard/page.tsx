@@ -123,7 +123,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
           
           {/* Nút yêu thích */}
-          <button className="absolute top-3 right-3 z-10 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-50">
+          <button className="absolute top-3 right-3 z-10 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-50" aria-label="Yêu thích sản phẩm">
             <Heart className="h-5 w-5 text-gray-600 hover:text-red-500" />
           </button>
         </div>
@@ -171,6 +171,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
               }`}
               disabled={stock === 0}
+              aria-label="Thêm vào giỏ hàng"
             >
               <ShoppingCart className="h-5 w-5" />
             </button>
