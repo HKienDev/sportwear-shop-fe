@@ -46,14 +46,10 @@ export default function ForgotPasswordCombined() {
   }, []);
 
   const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // Chỉ cho phép số
-    
-    if (value.length > 1) value = value[0];
-    
+    if (!/^[0-9]?$/.test(value)) return; // Chỉ cho phép 1 số hoặc rỗng
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -62,6 +58,10 @@ export default function ForgotPasswordCombined() {
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -254,7 +254,7 @@ export default function ForgotPasswordCombined() {
       </div>
 
       {/* Main Container */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 md:p-12 border border-gray-200">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 md:p-12 border border-gray-200 z-10">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Cài lại mật khẩu</h2>
           {email ? (
@@ -314,7 +314,10 @@ export default function ForgotPasswordCombined() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  onFocus={() => setError('')}
+                  onFocus={e => {
+                    setError('');
+                    e.target.select();
+                  }}
                   aria-label={`OTP digit ${index + 1}`}
                   autoFocus={index === 0}
                 />
@@ -396,6 +399,7 @@ export default function ForgotPasswordCombined() {
           <button
             type="button"
             className="font-medium text-red-600 hover:text-red-500 px-4 py-2 rounded transition-colors"
+            tabIndex={0}
             onClick={() => {
               console.log('Click login');
               router.push('/auth/login');
