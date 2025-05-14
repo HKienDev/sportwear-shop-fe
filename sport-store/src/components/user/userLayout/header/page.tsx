@@ -6,7 +6,6 @@ import { Search, ChevronDown, Package, Phone, Mail, MapPin, ImageIcon, Menu, X }
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { debounce } from "lodash";
 import Image from "next/image";
-import ShoppingCartButton from "./shoppingCartButton/page";
 import AuthButtons from "./authButtons/page";
 import UserMenu from "./userMenu/page";
 import { useAuth } from "@/context/authContext";
@@ -392,12 +391,18 @@ const Header = () => {
               <button
                 className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                 onClick={() => setIsMobileMenuOpen(true)}
-                aria-label="Mở menu"
+                aria-label="Mở menu điều hướng"
               >
                 <Menu className="w-7 h-7 text-gray-700" />
               </button>
             </div>
-            <ShoppingCartButton />
+            <Link
+              href="/user/cart"
+              className="group relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-red-50 transition-colors"
+              aria-label="Giỏ hàng"
+            >
+              {/* ...icon hoặc nội dung... */}
+            </Link>
           </nav>
         </div>
       </div>
@@ -409,7 +414,7 @@ const Header = () => {
             <button
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
               onClick={() => setIsMobileMenuOpen(false)}
-              aria-label="Đóng menu"
+              aria-label="Đóng menu điều hướng"
             >
               <X className="w-6 h-6 text-gray-700" />
             </button>

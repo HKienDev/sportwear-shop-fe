@@ -96,7 +96,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 group h-[400px] flex flex-col relative">
         {/* Badge giảm giá */}
         {salePrice > 0 && (
-          <div className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-3 left-3 z-10 bg-red-700 text-white text-xs font-bold px-2 py-1 rounded-full">
             -{discountPercentage}%
           </div>
         )}
@@ -150,7 +150,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="flex items-center">
               {salePrice > 0 ? (
                 <>
-                  <span className="text-base font-bold text-red-500 mr-2">
+                  <span className="text-base font-bold text-red-700 mr-2">
                     {formatCurrency(salePrice)}
                   </span>
                   <span className="text-sm line-through text-gray-400">
