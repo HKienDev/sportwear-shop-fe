@@ -197,58 +197,35 @@ export default function ForgotPasswordCombined() {
         }
       } catch (error) {
         console.error("Chi tiết lỗi:", error);
-        
+        let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại.';
         if (axios.isAxiosError(error)) {
-          console.error('Axios error details:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            headers: error.response?.headers,
-            config: {
-              url: error.config?.url,
-              method: error.config?.method,
-              data: error.config?.data
+          const resData = error.response?.data;
+          if (resData) {
+            if (typeof resData.message === 'string' && resData.message) {
+              errorMessage = resData.message;
+            } else if (Array.isArray(resData.errors) && resData.errors.length > 0 && resData.errors[0].message) {
+              errorMessage = resData.errors[0].message;
             }
-          });
-
-          if (error.response?.data?.errors) {
-            console.error('Error array from server:', error.response.data.errors);
-            const errorMessage = error.response.data.errors[0]?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
-            setError(errorMessage);
-          } else {
-            console.error('Error message from server:', error.response?.data?.message);
-            setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
           }
-        } else {
-          console.error('Non-Axios error:', error);
-          setError('Có lỗi xảy ra. Vui lòng thử lại.');
         }
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
     } catch (error) {
       console.error("Chi tiết lỗi:", error);
-      
+      let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại.';
       if (axios.isAxiosError(error)) {
-        console.error('Axios error details:', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          headers: error.response?.headers
-        });
-
-        if (error.response?.data?.errors) {
-          console.error('Error array from server:', error.response.data.errors);
-          const errorMessage = error.response.data.errors[0]?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
-          setError(errorMessage);
-        } else {
-          console.error('Error message from server:', error.response?.data?.message);
-          setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+        const resData = error.response?.data;
+        if (resData) {
+          if (typeof resData.message === 'string' && resData.message) {
+            errorMessage = resData.message;
+          } else if (Array.isArray(resData.errors) && resData.errors.length > 0 && resData.errors[0].message) {
+            errorMessage = resData.errors[0].message;
+          }
         }
-      } else {
-        console.error('Non-Axios error:', error);
-        setError('Có lỗi xảy ra. Vui lòng thử lại.');
       }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
