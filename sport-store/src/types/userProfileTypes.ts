@@ -23,7 +23,6 @@ export interface WardResponse {
 export interface UserProfile {
   _id?: string;
   email: string;
-  username: string;
   fullname: string;
   phone?: string;
   address?: {

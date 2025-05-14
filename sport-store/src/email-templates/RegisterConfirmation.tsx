@@ -18,14 +18,12 @@ import * as React from 'react';
 interface RegisterConfirmationProps {
   fullname: string;
   email: string;
-  username: string;
   customId: string;
 }
 
 const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
   fullname,
   email,
-  username,
   customId,
 }) => {
   return (
@@ -64,13 +62,6 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
                 </Text>
                 <Text className="mb-4 font-semibold text-gray-800">
                   {customId}
-                </Text>
-                
-                <Text className="mb-2 text-sm font-medium text-gray-500">
-                  Tên đăng nhập
-                </Text>
-                <Text className="mb-4 font-semibold text-gray-800">
-                  {username}
                 </Text>
                 
                 <Text className="mb-2 text-sm font-medium text-gray-500">

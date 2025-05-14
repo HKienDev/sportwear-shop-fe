@@ -184,7 +184,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     <div className="space-y-6">
       <OrderHeader
         shortId={order.shortId}
-        customerId={order.user?.customId || order.user?.username || "Không có dữ liệu"}
+        customerId={order.user?.customId || "Không có dữ liệu"}
         lastUpdated={new Date(order.updatedAt).toLocaleString("vi-VN")}
         status={currentStatus}
         paymentStatus={currentStatus === OrderStatus.DELIVERED ? "Đã thanh toán" : (order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán")}
