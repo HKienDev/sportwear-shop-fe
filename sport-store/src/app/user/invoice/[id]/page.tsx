@@ -198,7 +198,7 @@ export default function InvoicePage() {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching order:', err);
-        setError('Đã có lỗi xảy ra khi tải thông tin đơn hàng');
+        setError('Không thể tải thông tin đơn hàng');
         setLoading(false);
       }
     };
