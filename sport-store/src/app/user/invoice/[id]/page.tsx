@@ -128,6 +128,7 @@ export default function InvoicePage() {
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
+  const [categories, setCategories] = useState<{ [id: string]: string }>({});
 
   const fetchCategoryName = async (categoryId: string) => {
     try {
@@ -144,28 +145,34 @@ export default function InvoicePage() {
     }
   };
 
-  const processOrderItems = useCallback(async (items: OrderItem[]): Promise<ProcessedProduct[]> => {
-    const processedItems = await Promise.all(
-      items.map(async (item) => {
-        if (!item.product) {
-          console.error('Order item missing product:', item);
-          return null;
-        }
-        return {
-          id: parseInt(item.product._id.slice(-6), 16),
-          name: item.product.name,
-          price: item.product.salePrice,
-          quantity: item.quantity,
-          brand: item.product.brand,
-          image: item.product.mainImage,
-          categoryName: 'Chưa phân loại',
-          color: item.product.colors?.[0] || 'Mặc định',
-          size: item.product.sizes?.[0] || 'N/A'
-        };
+  useEffect(() => {
+    // Gọi 1 lần khi vào trang để lấy toàn bộ category
+    axios.get(`${API_URL}/categories`)
+      .then(res => {
+        const map: { [id: string]: string } = {};
+        (res.data.data || []).forEach((cat: any) => {
+          map[cat._id] = cat.name;
+        });
+        setCategories(map);
       })
-    );
-    return processedItems.filter((item): item is ProcessedProduct => !!item);
+      .catch(err => {
+        console.error('Error fetching categories:', err);
+      });
   }, []);
+
+  const processOrderItems = useCallback((items: OrderItem[]): ProcessedProduct[] => {
+    return items.map(item => ({
+      id: parseInt(item.product._id.slice(-6), 16),
+      name: item.product.name,
+      price: item.product.salePrice,
+      quantity: item.quantity,
+      brand: item.product.brand,
+      image: item.product.mainImage,
+      categoryName: categories[item.product.categoryId] || 'Chưa phân loại',
+      color: item.product.colors?.[0] || 'Mặc định',
+      size: item.product.sizes?.[0] || 'N/A'
+    }));
+  }, [categories]);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -187,7 +194,7 @@ export default function InvoicePage() {
         if (response.data.success) {
           const orderData = response.data.data;
           setOrder(orderData);
-          const processed = await processOrderItems(orderData.items);
+          const processed = processOrderItems(orderData.items);
           setProcessedProducts(processed);
           setTimeout(() => {
             setAnimateItems(true);
