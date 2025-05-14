@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Search, ChevronDown, Package, Phone, Mail, MapPin, ImageIcon } from "lucide-react";
+import { Search, ChevronDown, Package, Phone, Mail, MapPin, ImageIcon, Menu, X } from "lucide-react";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { debounce } from "lodash";
 import Image from "next/image";
@@ -54,6 +54,7 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -185,9 +186,9 @@ const Header = () => {
             <div className="flex items-center space-x-6">
               <a href="tel:+8434567890" className="flex items-center text-sm hover:text-red-100 transition-colors group">
                 <Phone className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                <span>Hotline: 0345 678 90</span>
+                <span>Hotline: 0362 195 258</span>
               </a>
-              <a href="mailto:support@sportstore.com" className="flex items-center text-sm hover:text-red-100 transition-colors group">
+              <a href="mailto:support@vjusport.com" className="flex items-center text-sm hover:text-red-100 transition-colors group">
                 <Mail className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                 <span>support@sportstore.com</span>
               </a>
@@ -329,7 +330,7 @@ const Header = () => {
       <div className="border-t border-gray-100 relative z-10">
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-8">
               <Link
                 href="/"
                 className="py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group"
@@ -385,32 +386,64 @@ const Header = () => {
                   </div>
                 )}
               </div>
-              <Link
-                href="/new-arrivals"
-                className="py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group"
+            </div>
+            {/* Responsive: Hiển thị menu thu gọn trên mobile */}
+            <div className="flex md:hidden items-center">
+              <button
+                className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Mở menu"
               >
-                Sản phẩm mới
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
-              </Link>
-              <Link
-                href="/sale"
-                className="py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group"
-              >
-                Đang giảm giá
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
-              </Link>
-              <Link
-                href="/brands"
-                className="py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group"
-              >
-                Thương hiệu
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
-              </Link>
+                <Menu className="w-7 h-7 text-gray-700" />
+              </button>
             </div>
             <ShoppingCartButton />
           </nav>
         </div>
       </div>
+
+      {/* Mobile Drawer Menu */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[200] bg-black/40 flex">
+          <div className="w-64 bg-white h-full shadow-xl p-6 flex flex-col animate-slideInLeft relative">
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Đóng menu"
+            >
+              <X className="w-6 h-6 text-gray-700" />
+            </button>
+            <Link href="/" className="mb-6 flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="relative w-8 h-8">
+                <Image src="/Logo_vju.png" alt="VJU SPORT" fill className="object-contain" />
+              </div>
+              <span className="text-lg font-bold text-red-700">VJU SPORT</span>
+            </Link>
+            <nav className="flex flex-col gap-4 mt-4">
+              <Link href="/" className="text-gray-700 font-medium hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>
+                Trang chủ
+              </Link>
+              <div>
+                <div className="text-gray-700 font-medium mb-2">Danh mục sản phẩm</div>
+                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2">
+                  {categories.map((category) => (
+                    <Link
+                      key={category._id}
+                      href={`/categories/${category.slug}`}
+                      className="text-gray-600 hover:text-red-600 px-2 py-1 rounded"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </nav>
+          </div>
+          {/* Click outside to close */}
+          <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)}></div>
+        </div>
+      )}
     </header>
   );
 };
