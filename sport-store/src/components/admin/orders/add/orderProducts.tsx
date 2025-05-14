@@ -358,6 +358,7 @@ export default function OrderProducts() {
                       width={80}
                       height={80}
                       className="w-full h-full object-cover"
+                      style={{ width: 80, height: 80 }}
                     />
                   </div>
                   <div className="flex-1">
@@ -418,6 +419,7 @@ export default function OrderProducts() {
                         width={64}
                         height={64}
                         className="w-full h-full object-cover"
+                        style={{ width: 64, height: 64 }}
                       />
                     </div>
                     <div className="flex-1">
