@@ -129,9 +129,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Verify token ngầm
                 try {
                     const response = await api.get("/auth/check");
-                    if (response.data.success && response.data.user) {
+                    const userData = response.data.user || response.data.data;
+                    if (response.data.success && userData) {
                         console.log("✅ Access token verified successfully");
-                        updateAuthState(response.data.user, true);
+                        updateAuthState(userData, true);
                     }
                 } catch (error) {
                     console.error("❌ Error verifying access token:", error);
@@ -145,9 +146,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     const response = await api.get("/auth/check");
-                    if (response.data.success && response.data.user) {
-                        console.log("✅ Access token is valid - updating user:", response.data.user);
-                        updateAuthState(response.data.user, true);
+                    const userData = response.data.user || response.data.data;
+                    if (response.data.success && userData) {
+                        console.log("✅ Access token is valid - updating user:", userData);
+                        updateAuthState(userData, true);
                         lastCheckRef.current = now;
                         return;
                     }
