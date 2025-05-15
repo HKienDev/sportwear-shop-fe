@@ -37,7 +37,7 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
           <Container className="mx-auto my-10 max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
             <Section className="text-center">
               <Img
-                src="/Logo_vju.png"
+                src="/vju-logo-main.png"
                 width="160"
                 height="auto"
                 alt="Sport Store Logo"

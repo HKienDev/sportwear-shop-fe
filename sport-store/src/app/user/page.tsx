@@ -367,7 +367,7 @@ const HomePage = () => {
           <div className="group relative h-24 w-full max-w-[200px] flex items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
             <Image
-              src="/Logo_vju.png"
+              src="/vju-logo-main.png"
               alt="Logo VJU"
               width={200}
               height={80}
