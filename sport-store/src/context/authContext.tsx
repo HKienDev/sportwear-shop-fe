@@ -284,6 +284,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         initializeAuth();
     }, [checkAuthStatus]);
 
+    // Khi FE mount (hoặc sau login Google), luôn gọi checkAuthStatus để lấy user từ cookie
+    useEffect(() => {
+        checkAuthStatus();
+    }, [checkAuthStatus]);
+
     const login = async (email: string, password: string) => {
         try {
             if (isAuthenticatingRef.current) {
