@@ -82,7 +82,7 @@ const NewOrderEmail: React.FC<NewOrderEmailProps> = ({ order }) => {
           <Container className="mx-auto my-10 max-w-[650px] rounded-lg bg-white p-8 shadow-lg">
             <Section className="text-center">
               <Img
-                src="https://sport-store.vercel.app/Logo_vju.png"
+                src="https://sport-store.vercel.app/vju-logo-main.png"
                 width="160"
                 height="auto"
                 alt="Sport Store Logo"

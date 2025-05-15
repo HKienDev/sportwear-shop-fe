@@ -210,7 +210,7 @@ const Header = () => {
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative w-12 h-12 transform transition-transform duration-300 group-hover:scale-110">
               <Image
-                src="/Logo_vju.png"
+                src="/vju-logo-main.png"
                 alt="VJU SPORT"
                 fill
                 className="object-contain"
@@ -415,7 +415,7 @@ const Header = () => {
             </button>
             <Link href="/" className="mb-6 flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
               <div className="relative w-8 h-8">
-                <Image src="/Logo_vju.png" alt="VJU SPORT" fill className="object-contain" />
+                <Image src="/vju-logo-main.png" alt="VJU SPORT" fill className="object-contain" />
               </div>
               <span className="text-lg font-bold text-red-700">VJU SPORT</span>
             </Link>

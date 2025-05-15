@@ -16,7 +16,7 @@ const Footer = ({ className = "" }: FooterProps) => (
         <div className="space-y-4 min-h-[180px]">
           <div className="flex items-center space-x-3">
             <Image
-              src="/Logo_vju.png"
+              src="/vju-logo-main.png"
               alt="VJU Logo"
               width={48}
               height={48}
