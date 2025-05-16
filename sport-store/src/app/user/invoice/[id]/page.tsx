@@ -9,7 +9,6 @@ import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
 import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
-import StripePayment from '@/components/user/checkout/StripePayment';
 import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import { PaymentMethod } from '@/types/order';
 import { API_URL } from "@/utils/api";
@@ -128,37 +127,6 @@ export default function InvoicePage() {
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
-  const [categories, setCategories] = useState<{ [id: string]: string }>({});
-
-  const fetchCategoryName = async (categoryId: string) => {
-    try {
-      const token = getToken('access');
-      const response = await axios.get(`${API_URL}/categories/${categoryId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      return response.data.data.name;
-    } catch (error) {
-      console.error('Error fetching category:', error);
-      return 'Chưa phân loại';
-    }
-  };
-
-  useEffect(() => {
-    // Gọi 1 lần khi vào trang để lấy toàn bộ category
-    axios.get(`${API_URL}/categories`)
-      .then(res => {
-        const map: { [id: string]: string } = {};
-        (res.data.data || []).forEach((cat: any) => {
-          map[cat._id] = cat.name;
-        });
-        setCategories(map);
-      })
-      .catch(err => {
-        console.error('Error fetching categories:', err);
-      });
-  }, []);
 
   const processOrderItems = useCallback((items: OrderItem[]): ProcessedProduct[] => {
     return items.map(item => ({
@@ -168,11 +136,11 @@ export default function InvoicePage() {
       quantity: item.quantity,
       brand: item.product.brand,
       image: item.product.mainImage,
-      categoryName: categories[item.product.categoryId] || 'Chưa phân loại',
+      categoryName: 'Chưa phân loại',
       color: item.product.colors?.[0] || 'Mặc định',
       size: item.product.sizes?.[0] || 'N/A'
     }));
-  }, [categories]);
+  }, []);
 
   useEffect(() => {
     const fetchOrder = async () => {

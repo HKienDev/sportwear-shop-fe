@@ -3,11 +3,20 @@
 import { useParams } from "next/navigation";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { useOrderDetails } from "@/hooks/useOrderDetails";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.id as string;
   const { order, loading, error, refreshOrder } = useOrderDetails(orderId);
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   if (loading) {
     return (

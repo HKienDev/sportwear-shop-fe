@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 
 export default function OrderListPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -107,7 +107,7 @@ export default function OrderListPage() {
   }, []);
 
   // Redirect if not authenticated or not admin
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
     router.push('/admin/login');
     return null;
   }

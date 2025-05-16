@@ -16,7 +16,7 @@ import { RefreshCw, X, CheckCircle, ShoppingBag} from "lucide-react";
 
 export default function AddOrderPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const { resetCustomer } = useCustomer();
   const { clearCart } = useCart();
   const { setPaymentMethod } = usePaymentMethod();
@@ -39,7 +39,7 @@ export default function AddOrderPage() {
   }, [resetCustomer, clearCart, setPaymentMethod, setShippingMethod, setPromoDetails]);
 
   // Redirect if not authenticated or not admin
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
     router.push('/admin/login');
     return null;
   }

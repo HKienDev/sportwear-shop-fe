@@ -45,21 +45,17 @@ interface Product {
 
 export default function ProductListPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  // Kiểm tra xác thực khi component mount
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error("Vui lòng đăng nhập để truy cập trang này");
-      router.push("/auth/login");
-      return;
-    }
-  }, [isAuthenticated, router]);
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {

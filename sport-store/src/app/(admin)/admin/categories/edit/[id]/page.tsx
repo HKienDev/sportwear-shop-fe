@@ -1,22 +1,18 @@
+"use client";
 import EditCategoryClient from "@/components/admin/categories/edit/EditCategoryClient";
+import { useAuth } from "@/context/authContext";
+import { useRouter, useParams } from "next/navigation";
 
-interface EditCategoryPageProps {
-  params: {
-    id: string;
-  };
-  searchParams: Record<string, string | string[] | undefined>;
-}
+export default function EditCategoryPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const router = useRouter();
+  const { user, isAuthenticated, loading } = useAuth();
 
-export async function generateMetadata(props: EditCategoryPageProps) {
-  const params = await Promise.resolve(props.params);
-  const id = params.id;
-  return {
-    title: `Chỉnh sửa danh mục ${id}`,
-  };
-}
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
-export default async function EditCategoryPage(props: EditCategoryPageProps) {
-  const params = await Promise.resolve(props.params);
-  const id = params.id;
   return <EditCategoryClient categoryId={id} />;
 } 

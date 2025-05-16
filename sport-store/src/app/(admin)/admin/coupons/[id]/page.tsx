@@ -1,18 +1,19 @@
+"use client";
 import { Metadata } from 'next';
 import CouponDetailClient from './couponDetailClient';
+import { useAuth } from '@/context/authContext';
+import { useRouter, useParams } from 'next/navigation';
 
-export const metadata: Metadata = {
-    title: 'Chi Tiết Mã Giảm Giá | Admin Dashboard',
-    description: 'Xem và chỉnh sửa thông tin mã giảm giá'
-};
+export default function CouponDetailPage() {
+    const params = useParams();
+    const id = params.id as string;
+    const router = useRouter();
+    const { user, isAuthenticated, loading } = useAuth();
 
-interface PageProps {
-    params: {
-        id: string;
-    };
-}
+    if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+        router.push('/admin/login');
+        return null;
+    }
 
-export default async function CouponDetailPage({ params }: PageProps) {
-    const { id } = await params;
     return <CouponDetailClient id={id} />;
 } 
