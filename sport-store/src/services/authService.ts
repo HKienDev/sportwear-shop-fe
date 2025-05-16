@@ -188,7 +188,7 @@ export const googleCallback = async (code: string): Promise<ApiResponse<GoogleAu
             
             // Redirect based on role
             if (user.role === 'admin') {
-                window.location.replace('/admin');
+                window.location.replace('/admin/dashboard');
             } else {
                 window.location.replace('/');
             }
