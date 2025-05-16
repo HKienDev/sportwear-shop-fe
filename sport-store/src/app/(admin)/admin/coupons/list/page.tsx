@@ -11,9 +11,8 @@ import CouponFilter from "@/components/admin/coupons/list/couponFilter";
 
 export default function CouponListPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, isAuthenticated, loading } = useAuth();
     const [coupons, setCoupons] = useState<Coupon[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("");
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
@@ -53,14 +52,9 @@ export default function CouponListPage() {
     }, [statusFilter, fetchCouponsWithStatus]);
 
     useEffect(() => {
-        if (!user) {
-            router.push("/auth/login");
-            return;
-        }
-
-        if (user.role !== "admin") {
-            router.push("/");
-            return;
+        if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+            router.push('/admin/login');
+            return null;
         }
 
         fetchCoupons();

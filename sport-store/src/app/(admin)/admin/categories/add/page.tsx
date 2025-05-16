@@ -2,8 +2,17 @@
 
 import CategoryForm from "@/components/admin/categories/add/categoryForm";
 import { FileText } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function AddCategoryPage() {
+  const router = useRouter();
+  const { user, isAuthenticated, loading } = useAuth();
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white p-6">

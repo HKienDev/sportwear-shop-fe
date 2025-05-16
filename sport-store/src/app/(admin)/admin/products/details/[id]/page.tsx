@@ -10,6 +10,7 @@ import ProductImages from "@/components/admin/products/details/ProductImages";
 import ProductVariants from "@/components/admin/products/details/ProductVariants";
 import { toast } from "react-hot-toast";
 import { TOKEN_CONFIG } from '@/config/token';
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProductDetailsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function ProductDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState("details");
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -55,6 +57,11 @@ export default function ProductDetailsPage() {
 
     fetchProduct();
   }, [sku, router]);
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   if (loading) {
     return (

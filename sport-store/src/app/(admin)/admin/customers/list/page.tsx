@@ -9,6 +9,7 @@ import { CustomerTable } from "@/components/admin/customers/list/customerTable";
 import { CustomerSearch } from "@/components/admin/customers/list/customerSearch";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type FilterState = {
   status: string;
@@ -21,6 +22,7 @@ export default function CustomerList() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const fetchCustomers = async () => {
     try {
@@ -63,6 +65,11 @@ export default function CustomerList() {
     // TODO: Implement filter logic
     console.log("Applying filters:", newFilters);
   };
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   if (loading) {
     return (

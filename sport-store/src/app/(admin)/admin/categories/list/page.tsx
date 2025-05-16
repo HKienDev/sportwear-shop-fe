@@ -11,7 +11,7 @@ import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 export default function CategoryListPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,7 +126,7 @@ export default function CategoryListPage() {
   }, []);
 
   // Redirect if not authenticated or not admin
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
     router.push('/admin/login');
     return null;
   }

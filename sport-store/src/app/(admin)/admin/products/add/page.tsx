@@ -9,11 +9,13 @@ import { Loader2, Save, Image, FileText, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AddProductPage() {
   const router = useRouter();
   const { formState, updateFormData, handleSubmit, fetchCategories } = useProducts();
   const categoriesFetched = useRef(false);
+  const { user, isAuthenticated, loading } = useAuth();
   
   useEffect(() => {
     // Chỉ fetch categories một lần khi component mount
@@ -25,6 +27,10 @@ export default function AddProductPage() {
   
   console.log('AddProductPage - formState.categories:', formState.categories);
 
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   const handleProductSubmit = async () => {
     console.log('Submitting product form...');

@@ -8,6 +8,8 @@ import {
   Save, 
   AlertCircle 
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const initialRolesData = [
   {
@@ -36,6 +38,13 @@ export default function AdminRolesList() {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const router = useRouter();
+  const { user, isAuthenticated, loading } = useAuth();
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   const handlePermissionToggle = (groupIndex: number, permIndex: number, roleIndex: number) => {
     if (!isEditing) return;

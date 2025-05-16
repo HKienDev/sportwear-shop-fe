@@ -11,6 +11,7 @@ import ResetPasswordModal from "@/components/admin/customers/details/resetPasswo
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 import { customerService } from "@/services/customerService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Location {
   code: string;
@@ -75,6 +76,7 @@ export default function CustomerDetail() {
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [customerError, setCustomerError] = useState<string | null>(null);
+  const { user, isAuthenticated, loading } = useAuth();
 
   // Hàm chuyển đổi ID từ định dạng URL sang MongoDB ID
   const getMongoIdFromUrlId = (urlId: string) => {
@@ -404,6 +406,11 @@ export default function CustomerDetail() {
       ward
     };
   };
+
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
