@@ -5,6 +5,8 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import { handleRedirect } from "@/utils/navigationUtils";
 
 interface LoginFormProps {
   error: string;
@@ -15,7 +17,8 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+  const router = useRouter();
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -25,6 +28,8 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
       const result = await login(email, password);
       if (!result.success) {
         toast.error(result.message || "Đăng nhập thất bại");
+      } else {
+        await handleRedirect(router, user, window.location.pathname);
       }
     } catch (error) {
       console.error("Login error:", error);
