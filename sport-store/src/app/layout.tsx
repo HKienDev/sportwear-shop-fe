@@ -24,8 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Đã dùng next/font nên không cần preload Google Fonts ở đây */}
-        <link rel="icon" href="vju-logo-main.png" type="image/png" />
+        <link rel="icon" href="/vju-logo-main.png" type="image/png" />
       </head>
       <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
         <ClientLayout fontClass={montserrat.variable}>
