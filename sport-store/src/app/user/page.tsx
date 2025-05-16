@@ -26,7 +26,7 @@ const HomePage = () => {
       console.log("👤 HomePage - Current user:", user);
       if (user.role === "admin") {
         console.log("👑 User là admin, chuyển hướng đến dashboard");
-        router.replace("/admin");
+        router.replace("/admin/dashboard");
         return;
       }
     } else {
