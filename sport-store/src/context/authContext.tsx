@@ -105,12 +105,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const refreshToken = getToken('refresh');
             const storedUser = getUserData();
 
-            console.log("🔍 Checking auth status:", { 
-                hasAccessToken: !!accessToken, 
-                hasRefreshToken: !!refreshToken,
-                hasStoredUser: !!storedUser,
-                storedUserData: storedUser
-            });
+            // DEBUG LOG
+            console.log('[checkAuthStatus] accessToken:', accessToken, 'refreshToken:', refreshToken, 'storedUser:', storedUser);
 
             if (!accessToken && !refreshToken) {
                 console.log("❌ No tokens found - clearing auth state");
@@ -129,10 +125,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Verify token ngầm
                 try {
                     const response = await api.get("/auth/check");
+                    // DEBUG LOG
+                    console.log('[checkAuthStatus] /auth/check response:', response.data);
                     const userData = response.data.user || response.data.data;
                     if (response.data.success && userData) {
                         console.log("✅ Access token verified successfully");
                         updateAuthState(userData, true);
+                        // DEBUG LOG
+                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                     }
                 } catch (error) {
                     console.error("❌ Error verifying access token:", error);
@@ -146,10 +146,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     const response = await api.get("/auth/check");
+                    // DEBUG LOG
+                    console.log('[checkAuthStatus] /auth/check response:', response.data);
                     const userData = response.data.user || response.data.data;
                     if (response.data.success && userData) {
                         console.log("✅ Access token is valid - updating user:", userData);
                         updateAuthState(userData, true);
+                        // DEBUG LOG
+                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                         lastCheckRef.current = now;
                         return;
                     }
@@ -164,7 +168,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     console.log("🔄 Attempting to refresh token...");
                     const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
-                    
+                    // DEBUG LOG
+                    console.log('[checkAuthStatus] /auth/refresh-token response:', refreshResponse.data);
                     if (refreshResponse.data.success) {
                         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
                         
@@ -173,16 +178,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                         
                         console.log("✅ Token refresh successful - updating state:", userData);
-                        
                         // Lưu token mới
                         setToken(newAccessToken, 'access');
                         setToken(newRefreshToken, 'refresh');
-                        
                         // Cập nhật header cho API calls
                         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-                        
                         // Cập nhật state
                         updateAuthState(userData, true);
+                        // DEBUG LOG
+                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                         lastCheckRef.current = now;
                         return;
                     }
@@ -191,6 +195,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (storedUser) {
                         console.log("⚠️ Using stored user data as fallback");
                         updateAuthState(storedUser, true);
+                        // DEBUG LOG
+                        console.log('[checkAuthStatus] updateAuthState:', storedUser, true);
                         return;
                     }
                 }
@@ -199,8 +205,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Chỉ xóa state nếu không có cách nào khác
             console.log("❌ Authentication failed - clearing state");
             updateAuthState(null, false);
-            clearTokens();
+            // DEBUG LOG
+            console.log('[checkAuthStatus] updateAuthState:', null, false);
             clearUserData();
+            clearTokens();
             delete api.defaults.headers.common['Authorization'];
         } catch (error) {
             console.error("Error checking auth status:", error);
@@ -208,8 +216,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (storedUser) {
                 console.log("⚠️ Error occurred, using stored user data as fallback");
                 updateAuthState(storedUser, true);
+                // DEBUG LOG
+                console.log('[checkAuthStatus] updateAuthState:', storedUser, true);
             } else {
                 updateAuthState(null, false);
+                // DEBUG LOG
+                console.log('[checkAuthStatus] updateAuthState:', null, false);
                 clearTokens();
                 clearUserData();
                 delete api.defaults.headers.common['Authorization'];

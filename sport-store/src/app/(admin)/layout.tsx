@@ -19,28 +19,19 @@ export default function AdminLayout({
 
     useEffect(() => {
         const verifyAuth = async () => {
-            try {
-                await checkAuthStatus();
-                
-                if (!loading && !user) {
-                    console.log('❌ Chưa đăng nhập, chuyển hướng về trang login');
-                    router.replace(ROUTES.LOGIN);
-                    return;
-                }
-
-                if (user && user.role !== 'admin') {
-                    console.log('❌ Không phải admin, chuyển hướng về trang chủ');
-                    router.replace(ROUTES.HOME);
-                    return;
-                }
-            } catch (error) {
-                console.error('❌ Lỗi khi verify auth:', error);
+            await checkAuthStatus();
+            console.log('[AdminLayout] user:', user, 'loading:', loading);
+            if (!loading && !user) {
+                console.log('[AdminLayout] Chưa đăng nhập, chuyển hướng về trang login');
                 router.replace(ROUTES.LOGIN);
-            } finally {
-                setIsLoading(false);
+                return;
+            }
+            if (user && user.role !== 'admin') {
+                console.log('[AdminLayout] Không phải admin, chuyển hướng về trang chủ');
+                router.replace(ROUTES.HOME);
+                return;
             }
         };
-
         verifyAuth();
     }, [user, loading, router, checkAuthStatus]);
 
