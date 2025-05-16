@@ -10,7 +10,7 @@ import ProductImages from "@/components/admin/products/details/ProductImages";
 import ProductVariants from "@/components/admin/products/details/ProductVariants";
 import { toast } from "react-hot-toast";
 import { TOKEN_CONFIG } from '@/config/token';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 export default function ProductDetailsPage() {
   const router = useRouter();

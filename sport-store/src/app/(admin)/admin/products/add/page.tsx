@@ -9,7 +9,7 @@ import { Loader2, Save, Image, FileText, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 export default function AddProductPage() {
   const router = useRouter();

@@ -1,12 +1,8 @@
+"use client";
 import { Metadata } from 'next';
 import AddCouponClient from './addCouponClient';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
-
-export const metadata: Metadata = {
-    title: 'Thêm Mã Giảm Giá | Admin Dashboard',
-    description: 'Thêm mã giảm giá mới vào hệ thống'
-};
 
 export default function AddCouponPage() {
     const router = useRouter();

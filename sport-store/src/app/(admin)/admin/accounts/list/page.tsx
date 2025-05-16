@@ -8,7 +8,7 @@ import {
   Save, 
   AlertCircle 
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 
 const initialRolesData = [

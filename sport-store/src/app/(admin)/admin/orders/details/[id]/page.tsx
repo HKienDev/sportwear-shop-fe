@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import OrderDetails from "@/components/admin/orders/details/orderDetails";
 import { useOrderDetails } from "@/hooks/useOrderDetails";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 
 export default function OrderDetailsPage() {

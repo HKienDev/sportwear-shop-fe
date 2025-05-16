@@ -11,11 +11,12 @@ import CouponFilter from "@/components/admin/coupons/list/couponFilter";
 
 export default function CouponListPage() {
     const router = useRouter();
-    const { user, isAuthenticated, loading } = useAuth();
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("");
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const fetchCouponsWithStatus = useCallback(async (status: string | undefined) => {
         try {
@@ -52,13 +53,12 @@ export default function CouponListPage() {
     }, [statusFilter, fetchCouponsWithStatus]);
 
     useEffect(() => {
-        if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+        if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
             router.push('/admin/login');
-            return null;
+        } else {
+            fetchCoupons();
         }
-
-        fetchCoupons();
-    }, [user, router, fetchCoupons]);
+    }, [user, router, fetchCoupons, authLoading, isAuthenticated]);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
@@ -135,6 +135,10 @@ export default function CouponListPage() {
             toast.error("Đã xảy ra lỗi khi kích hoạt mã giảm giá");
         }
     };
+
+    if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50/40 to-indigo-50/40">

@@ -11,7 +11,7 @@ import ResetPasswordModal from "@/components/admin/customers/details/resetPasswo
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 import { customerService } from "@/services/customerService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 interface Location {
   code: string;

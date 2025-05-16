@@ -9,7 +9,7 @@ import { CustomerTable } from "@/components/admin/customers/list/customerTable";
 import { CustomerSearch } from "@/components/admin/customers/list/customerSearch";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 type FilterState = {
   status: string;
