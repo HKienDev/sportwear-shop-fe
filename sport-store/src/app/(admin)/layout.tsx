@@ -13,27 +13,29 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const { user, loading, checkAuthStatus } = useAuth();
+    const { user, checkAuthStatus } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     useEffect(() => {
         const verifyAuth = async () => {
             await checkAuthStatus();
-            console.log('[AdminLayout] user:', user, 'loading:', loading);
-            if (!loading && !user) {
+            const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+            console.log('[AdminLayout] verifyAuth result:', storedUser);
+            if (!storedUser) {
                 console.log('[AdminLayout] Chưa đăng nhập, chuyển hướng về trang login');
                 router.replace(ROUTES.LOGIN);
                 return;
             }
-            if (user && user.role !== 'admin') {
+            if (storedUser && storedUser.role !== 'admin') {
                 console.log('[AdminLayout] Không phải admin, chuyển hướng về trang chủ');
                 router.replace(ROUTES.HOME);
                 return;
             }
+            setIsLoading(false);
         };
         verifyAuth();
-    }, [user, loading, router, checkAuthStatus]);
+    }, [checkAuthStatus, router]);
 
     if (isLoading) {
         return (
