@@ -19,8 +19,12 @@ const GoogleAuthHandler = () => {
         // Lưu token vào localStorage để sử dụng sau này
         localStorage.setItem("token", token);
 
-        // Chuyển hướng đến trang chính
-        router.push("/");
+        // Nếu token có chứa role admin thì chuyển hướng về dashboard
+        if (decodedToken && decodedToken.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/');
+        }
       } catch (error) {
         console.error("❌ Lỗi khi decode token:", error);
       }
