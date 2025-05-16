@@ -13,7 +13,7 @@ const GoogleAuthHandler = () => {
 
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
+        const decodedToken = jwtDecode<{ role?: string }>(token);
         console.log("Decoded Token:", decodedToken);
 
         // Lưu token vào localStorage để sử dụng sau này
