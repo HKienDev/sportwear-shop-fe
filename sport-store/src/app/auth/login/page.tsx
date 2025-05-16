@@ -7,7 +7,6 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
 import { useAuth } from "@/context/authContext";
-import { handleRedirect } from "@/utils/navigationUtils";
 
 const LoginPage = () => {
   const [animateForm, setAnimateForm] = useState(false);
@@ -21,11 +20,11 @@ const LoginPage = () => {
     }, 100);
 
     if (isAuthenticated && user) {
-      console.log('🔄 User đã đăng nhập, thực hiện chuyển hướng:', {
-        role: user.role,
-        currentPath: window.location.pathname
-      });
-      handleRedirect(router, user, window.location.pathname);
+      if (user.role === "admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/user");
+      }
     }
   }, [isAuthenticated, user, router]);
 
