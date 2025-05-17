@@ -8,12 +8,33 @@ import { ActiveDeliveries } from '@/components/admin/dashboard/activeDeliveries'
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { API_URL } from '@/utils/api';
 
 type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const { dashboardData, isLoading, error, refresh } = useDashboard(timeRange);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Fetch profile để kiểm tra role
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/profile`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!data?.success || !data?.data || data.data.role !== 'admin') {
+          router.replace('/user');
+        }
+      } catch {
+        router.replace('/user');
+      }
+    };
+    fetchProfile();
+  }, [router]);
 
   useEffect(() => {
     // Lắng nghe sự kiện xóa đơn hàng

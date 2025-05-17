@@ -3,13 +3,15 @@ import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import ProfileUser from "@/components/user/profileUser/userProfileForm";
 import OrderUserPage from "@/components/user/orderUser/orderUserPage";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { API_URL } from '@/utils/api';
 
 function ProfilePageContent() {
   const [scrolled, setScrolled] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam === 'orders' ? 'orders' : 'profile');
+  const router = useRouter();
 
   // Handle scroll effect for the sticky header
   useEffect(() => {
@@ -27,6 +29,26 @@ function ProfilePageContent() {
       setActiveTab('orders');
     }
   }, [tabParam]);
+
+  useEffect(() => {
+    // Fetch profile để kiểm tra role
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/profile`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!data?.success || !data?.data) {
+          router.replace('/login');
+        } else if (data.data.role === 'admin') {
+          router.replace('/admin/dashboard');
+        }
+      } catch {
+        router.replace('/login');
+      }
+    };
+    fetchProfile();
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-50">
