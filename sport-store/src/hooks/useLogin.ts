@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "./useToast";
 import { useAuth } from '@/context/authContext';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/config/constants";
 import type { LoginRequest } from '@/types/auth';
 import type { AxiosError } from 'axios';
+import { handleRedirect } from "@/utils/navigationUtils";
 
 export const useLogin = () => {
-  const { login, handleRedirect } = useAuth();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const router = useRouter();
 

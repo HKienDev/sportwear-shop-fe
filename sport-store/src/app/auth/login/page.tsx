@@ -7,6 +7,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
 import { useAuth } from "@/context/authContext";
+import { handleRedirect } from "@/utils/navigationUtils";
 
 const LoginPage = () => {
   const [animateForm, setAnimateForm] = useState(false);
