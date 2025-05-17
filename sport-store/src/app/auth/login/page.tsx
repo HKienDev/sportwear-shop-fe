@@ -20,11 +20,7 @@ const LoginPage = () => {
     }, 100);
 
     if (isAuthenticated && user) {
-      if (user.role === "admin") {
-        router.replace("/admin/dashboard");
-      } else {
-        router.replace("/user");
-      }
+      handleRedirect(router, user, window.location.pathname);
     }
   }, [isAuthenticated, user, router]);
 

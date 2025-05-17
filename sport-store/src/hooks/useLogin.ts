@@ -7,7 +7,7 @@ import type { LoginRequest } from '@/types/auth';
 import type { AxiosError } from 'axios';
 
 export const useLogin = () => {
-  const { login } = useAuth();
+  const { login, handleRedirect } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -52,8 +52,8 @@ export const useLogin = () => {
       await handleLogin({ email, password });
       
       // Xử lý chuyển hướng
-      const redirectFrom = searchParams.get("redirect") || "/";
-      router.push(redirectFrom);
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      await handleRedirect(router, user, window.location.pathname);
     } catch (err) {
       console.error("Lỗi đăng nhập:", err);
     } finally {
