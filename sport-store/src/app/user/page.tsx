@@ -9,6 +9,8 @@ import ProductCard from "@/components/user/products/productCard/page";
 import { useAuth } from "@/context/authContext";
 import { Product } from "@/types/product";
 import { getAllProducts } from "@/services/productService";
+import { getAllCategories } from "@/services/categoryService";
+import { Category } from "@/types/category";
 import Skeleton from "@/components/common/Skeleton";
 
 // Thêm khai báo cho window.__checkedAuth
@@ -21,6 +23,7 @@ declare global {
 const HomePage = () => {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, checkAuthStatus } = useAuth();
@@ -44,17 +47,21 @@ const HomePage = () => {
   }, [user, router]);
 
   useEffect(() => {
-    // Fetch products
+    // Fetch products và categories song song
     const fetchData = async () => {
       try {
-        const response = await getAllProducts();
-        if (!response.success) {
-          throw new Error("Lỗi khi lấy dữ liệu");
-        }
-        setProducts(response.data.products);
+        const [productRes, categoryRes] = await Promise.all([
+          getAllProducts(),
+          getAllCategories(),
+        ]);
+        if (!productRes.success) throw new Error("Lỗi khi lấy dữ liệu sản phẩm");
+        if (!categoryRes.success) throw new Error("Lỗi khi lấy dữ liệu thể loại");
+        setProducts(productRes.data.products);
+        setCategories(categoryRes.data.categories || []);
       } catch {
         setError("Đã xảy ra lỗi khi tải dữ liệu");
         setProducts([]);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -262,18 +269,40 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Danh sách sản phẩm */}
+      {/* Danh sách sản phẩm chia theo thể loại */}
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Sản phẩm mới nhất</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products && products.length > 0 ? (
-            products.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))
-          ) : (
-            <p className="col-span-full text-center text-gray-500">Không có sản phẩm nào</p>
-          )}
-        </div>
+        <h1 className="text-3xl font-bold mb-8">Sản phẩm theo thể loại</h1>
+        {categories && categories.length > 0 ? (
+          categories.map((category) => {
+            const productsInCategory = products.filter(
+              (product) => product.categoryId === category._id || product.categoryId === category.categoryId
+            );
+            if (!productsInCategory.length) return null;
+            return (
+              <div key={category._id} className="mb-12">
+                <div className="flex items-center mb-4">
+                  {category.image && (
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover mr-3 border"
+                    />
+                  )}
+                  <h2 className="text-2xl font-semibold text-gray-800">{category.name}</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {productsInCategory.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-center text-gray-500">Không có thể loại nào</p>
+        )}
       </div>
 
       <Chat />
