@@ -8,14 +8,6 @@ VJU Sport Store là nền tảng thương mại điện tử hiện đại dành
 
 - **Lưu ý**: Dự án từng được deploy lên Vercel để demo nhưng hiện đã hủy. Vui lòng chạy local theo hướng dẫn để trải nghiệm.
 
-Ảnh chụp màn hình:
-
-- Trang chủ
-- Giỏ hàng
-- Quản lý đơn hàng (Admin)
-
-*(Thêm ảnh minh họa)*
-
 ---
 
 ## 🌟 Tính năng nổi bật
