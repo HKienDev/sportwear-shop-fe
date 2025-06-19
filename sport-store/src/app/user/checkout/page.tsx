@@ -206,25 +206,15 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     try {
-      // Kiểm tra giỏ hàng
-      if (!cart || cart.items.length === 0) {
-        toast.error('Giỏ hàng trống');
+      if (!shippingAddress) {
+        toast.error('Vui lòng nhập địa chỉ giao hàng');
         return;
       }
 
-      // Validate shipping address
-      if (!shippingAddress.fullName || !shippingAddress.phone || 
-          !shippingAddress.address.province.name || !shippingAddress.address.district.name || 
-          !shippingAddress.address.ward.name || !shippingAddress.address.street) {
-        toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
-        return;
-      }
-
-      // Create order data
       const orderData = {
-        items: cart.items.map(item => ({
+        items: cart?.items.map(item => ({
           sku: item.product.sku,
-          quantity: Number(item.quantity),
+          quantity: item.quantity,
           color: item.color || 'Mặc định',
           size: item.size || 'Mặc định'
         })),
@@ -238,24 +228,7 @@ export default function Checkout() {
 
       console.log('📦 Dữ liệu đơn hàng:', orderData);
 
-      // Tăng timeout lên 30s và thêm retry logic
-      const createOrder = async (retryCount = 0) => {
-        try {
-          const response = await api.post('/orders', orderData, {
-            timeout: 30000 // 30 seconds
-          });
-          return response;
-        } catch (error: any) {
-          if (error.code === 'ECONNABORTED' && retryCount < 2) {
-            // Retry với delay tăng dần
-            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-            return createOrder(retryCount + 1);
-          }
-          throw error;
-        }
-      };
-
-      const response = await createOrder();
+      const response = await api.post('/orders', orderData);
 
       if (response.data.success) {
         // Xóa giỏ hàng sau khi đặt hàng thành công
@@ -287,7 +260,16 @@ export default function Checkout() {
     } catch (error: any) {
       console.error('Error creating order:', error);
       if (error.code === 'ECONNABORTED') {
-        toast.error('Quá thời gian xử lý, vui lòng thử lại');
+        toast.error('Quá thời gian xử lý đơn hàng, vui lòng thử lại');
+      } else if (error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để đặt hàng');
+        router.push('/auth/login');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || 'Thông tin đơn hàng không hợp lệ');
+      } else if (error.response?.status >= 500) {
+        toast.error('Có lỗi xảy ra từ phía server. Vui lòng thử lại sau');
+      } else if (error.message === 'Network Error') {
+        toast.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng');
       } else {
         toast.error(error.response?.data?.message || 'Đã có lỗi xảy ra khi tạo đơn hàng');
       }

@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
     'Pragma': 'no-cache',
     'Expires': '0'
   },
-  timeout: 10000 // 10 seconds
+  timeout: 30000 // 30 seconds
 });
 
 // Thêm interceptor để thêm token vào header
@@ -59,10 +59,22 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Xử lý lỗi timeout
+    if (error.code === 'ECONNABORTED') {
+      console.error('Timeout Error:', error);
+      return Promise.reject(new Error('Yêu cầu mất quá nhiều thời gian. Vui lòng thử lại.'));
+    }
+
     // Xử lý lỗi network
     if (error.message === 'Network Error') {
       console.error('Network Error:', error);
       return Promise.reject(new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng của bạn.'));
+    }
+
+    // Xử lý lỗi server
+    if (error.response?.status >= 500) {
+      console.error('Server Error:', error);
+      return Promise.reject(new Error('Có lỗi xảy ra từ phía server. Vui lòng thử lại sau.'));
     }
 
     return Promise.reject(error);

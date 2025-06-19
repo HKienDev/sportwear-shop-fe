@@ -130,6 +130,7 @@ const HomePage = () => {
                 src="/Ronaldo.png"
                 alt="Ronaldo promotion"
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover object-center brightness-[1.02]"
                 priority
               />
@@ -317,6 +318,7 @@ const HomePage = () => {
                 src="/Ronaldo.png"
                 alt="Ronaldo"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover transition duration-700 ease-in-out"
                 priority
               />

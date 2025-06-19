@@ -8,6 +8,7 @@ import { Product } from "@/types/product";
 import { getCategoryById } from "@/services/categoryService";
 import { cartService } from "@/services/cartService";
 import { toast } from "sonner";
+import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
   product: Product;
@@ -35,9 +36,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         } else {
           setCategoryName("Không xác định");
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Nếu lỗi là 404 hoặc không tìm thấy, không log lỗi, chỉ set 'Không xác định'
-        if (error?.message?.includes('Failed to fetch category')) {
+        if (error instanceof Error && error.message?.includes('Failed to fetch category')) {
           setCategoryName("Không xác định");
         } else {
           console.error("Lỗi khi lấy thông tin category:", error);
@@ -114,18 +115,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Container ảnh */}
-        <div className="relative h-[180px] overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-            priority
-            style={{ width: '100%', height: 180 }}
-          />
+        <div className={styles.imageContainer}>
+          <div className={styles.imageWrapper}>
+            <Image
+              src={imageUrl}
+              alt={name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              className={styles.productImage}
+              priority
+            />
+          </div>
           {/* Overlay khi hover */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+          <div className={styles.imageOverlay}></div>
           
           {/* Nút yêu thích */}
           <button className="absolute top-3 right-3 z-10 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-50" aria-label="Yêu thích sản phẩm">

@@ -1,0 +1,33 @@
+.imageContainer {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.productImage {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.productImage:hover {
+  transform: scale(1.1);
+}
+
+.imageOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: black;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.imageOverlay:hover {
+  opacity: 0.1;
+} 
