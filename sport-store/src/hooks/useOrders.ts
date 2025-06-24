@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 import apiClient from '@/lib/api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
 import type { Order, OrderQueryParams } from '@/types/api';
@@ -16,7 +16,6 @@ export function useOrders(options: OrderQueryParams = {}) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { isAuthenticated, user } = useAuth();
-    const { toast } = useToast();
 
     const fetchOrders = useCallback(async () => {
         try {
@@ -31,15 +30,11 @@ export function useOrders(options: OrderQueryParams = {}) {
         } catch (error) {
             console.error('Error fetching orders:', error);
             setError(ERROR_MESSAGES.NETWORK_ERROR);
-            toast({
-                title: "Lỗi",
-                description: ERROR_MESSAGES.NETWORK_ERROR,
-                variant: "destructive"
-            });
+            toast.error(ERROR_MESSAGES.NETWORK_ERROR);
         } finally {
             setIsLoading(false);
         }
-    }, [options, toast]);
+    }, [options]);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -58,11 +53,7 @@ export function useOrders(options: OrderQueryParams = {}) {
             return response.data.data;
         } catch (error) {
             console.error('Failed to fetch order:', error);
-            toast({
-                title: "Lỗi",
-                description: ERROR_MESSAGES.NETWORK_ERROR,
-                variant: "destructive"
-            });
+            toast.error(ERROR_MESSAGES.NETWORK_ERROR);
             throw error;
         }
     };
@@ -140,19 +131,11 @@ export function useOrders(options: OrderQueryParams = {}) {
             } catch (emailError) {
                 console.error('Gửi email xác nhận đơn hàng thất bại:', emailError);
             }
-            toast({
-                title: "Thành công",
-                description: SUCCESS_MESSAGES.ORDER_CREATED,
-                variant: "default"
-            });
+            toast.success(SUCCESS_MESSAGES.ORDER_CREATED);
             return order;
         } catch (error) {
             console.error('Failed to create order:', error);
-            toast({
-                title: "Lỗi",
-                description: ERROR_MESSAGES.ORDER_CREATE_ERROR,
-                variant: "destructive"
-            });
+            toast.error(ERROR_MESSAGES.ORDER_CREATE_ERROR);
             throw error;
         }
     };
@@ -168,19 +151,11 @@ export function useOrders(options: OrderQueryParams = {}) {
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
-            toast({
-                title: "Thành công",
-                description: SUCCESS_MESSAGES.ORDER_CANCELLED,
-                variant: "default"
-            });
+            toast.success(SUCCESS_MESSAGES.ORDER_CANCELLED);
             fetchOrders();
         } catch (error) {
             console.error('Failed to cancel order:', error);
-            toast({
-                title: "Lỗi",
-                description: ERROR_MESSAGES.ORDER_CANCEL_ERROR,
-                variant: "destructive"
-            });
+            toast.error(ERROR_MESSAGES.ORDER_CANCEL_ERROR);
             throw error;
         }
     };
@@ -204,20 +179,12 @@ export function useOrders(options: OrderQueryParams = {}) {
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
-            toast({
-                title: "Thành công",
-                description: SUCCESS_MESSAGES.ORDER_UPDATED,
-                variant: "default"
-            });
+            toast.success(SUCCESS_MESSAGES.ORDER_UPDATED);
             fetchOrders();
             return response.data.data;
         } catch (error) {
             console.error('Failed to update order:', error);
-            toast({
-                title: "Lỗi",
-                description: ERROR_MESSAGES.ORDER_UPDATE_ERROR,
-                variant: "destructive"
-            });
+            toast.error(ERROR_MESSAGES.ORDER_UPDATE_ERROR);
             throw error;
         }
     };

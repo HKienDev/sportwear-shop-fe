@@ -6,8 +6,11 @@ import { useAuth } from "@/context/authContext";
 import CategoryFilter from "@/components/admin/categories/list/categoryFilter";
 import CategoryTable from "@/components/admin/categories/list/categoryTable";
 import { Category } from "@/types/category";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function CategoryListPage() {
   const router = useRouter();

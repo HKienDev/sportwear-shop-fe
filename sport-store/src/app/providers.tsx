@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { AuthProvider } from "../context/authContext";
 import { CustomerProvider } from "../context/customerContext";
 import { CartProvider } from "../context/cartContext";
@@ -18,20 +18,10 @@ const Providers = memo(function Providers({ children }: ProvidersProps) {
           {children}
           <Toaster
             position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: "#363636",
-                color: "#fff",
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: "#4aed88",
-                  secondary: "#fff",
-                },
-              },
-            }}
+            duration={3000}
+            richColors
+            closeButton
+            expand={false}
           />
         </CartProvider>
       </CustomerProvider>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ERROR_MESSAGES } from '@/config/constants';
 import type { Category } from '@/types/base';
 

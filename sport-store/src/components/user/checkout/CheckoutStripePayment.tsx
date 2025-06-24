@@ -6,7 +6,7 @@ import type { Appearance } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { api } from '@/lib/api';
 import StripePaymentForm from './StripePaymentForm';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface CheckoutStripePaymentProps {
   isOpen: boolean;

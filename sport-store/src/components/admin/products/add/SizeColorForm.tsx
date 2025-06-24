@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, X, Ruler, Palette, AlertCircle } from "lucide-react";
 import { ProductFormData } from "@/types/product";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 interface SizeColorFormProps {
   formData: ProductFormData;

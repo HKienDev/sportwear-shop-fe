@@ -8,7 +8,7 @@ import { fetchApi } from "@/utils/api";
 import ProductInfo from "@/components/admin/products/details/ProductInfo";
 import ProductImages from "@/components/admin/products/details/ProductImages";
 import ProductVariants from "@/components/admin/products/details/ProductVariants";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
 import { useAuth } from "@/context/authContext";
 

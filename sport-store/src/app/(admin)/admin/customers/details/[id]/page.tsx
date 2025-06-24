@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import Header from "@/components/admin/customers/details/header";
 import CustomerInfo from "@/components/admin/customers/details/customerInfo";
 import MembershipTier from "@/components/admin/customers/details/membershipTier";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/authContext';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import apiClient from '@/lib/api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
 import type { Product, ProductQueryParams } from '@/types/api';

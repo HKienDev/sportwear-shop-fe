@@ -9,7 +9,7 @@ import BasicInfoForm from "@/components/admin/products/add/BasicInfoForm";
 import DetailInfoForm from "@/components/admin/products/add/DetailInfoForm";
 import SizeColorForm from "@/components/admin/products/add/SizeColorForm";
 import ImageUpload from "@/components/admin/products/add/ImageUpload";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
 
 export default function EditProductPage() {

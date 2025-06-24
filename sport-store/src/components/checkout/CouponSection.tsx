@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface CouponSectionProps {
   onApplyCoupon: (discount: number) => void;

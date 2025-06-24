@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ERROR_MESSAGES } from '@/config/constants';
 import type { AxiosResponse } from 'axios';
 import type { ApiResponse, ApiResponseData } from '@/types/api';

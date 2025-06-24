@@ -8,7 +8,13 @@ import ShippingMethod from "./shippingMethod";
 import OrderTable from "./orderTable";
 import { Order, OrderStatus } from "@/types/base";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, User, CreditCard, MapPin } from "lucide-react";
 
 type OrderItemProduct = {
   _id: string;

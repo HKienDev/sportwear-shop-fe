@@ -7,7 +7,7 @@ import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
 import { handleRedirect } from '@/utils/navigationUtils';
 import { api } from '@/lib/api';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';
 import { UserRole } from '@/types/base';
 import type {
@@ -30,6 +30,7 @@ import {
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
 import { AxiosError } from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds

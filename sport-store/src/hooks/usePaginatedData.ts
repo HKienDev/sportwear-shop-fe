@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ERROR_MESSAGES } from '@/config/constants';
 import type { AxiosResponse, AxiosError } from 'axios';
 import type { ApiResponse, PaginatedResponse, ApiResponseData } from '@/types/api';

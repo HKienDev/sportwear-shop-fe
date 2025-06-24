@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/authContext';
 import apiClient from '@/lib/api';
 import { useApiCall } from './useApiCall';

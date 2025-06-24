@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ERROR_MESSAGES } from '@/config/constants';
 import type { PaginatedResponse } from '@/types/api';
 
