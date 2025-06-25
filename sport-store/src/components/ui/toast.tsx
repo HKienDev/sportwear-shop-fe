@@ -10,7 +10,6 @@ export function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
       {...props}
-      suppressHydrationWarning
       position="top-right"
       richColors
       closeButton

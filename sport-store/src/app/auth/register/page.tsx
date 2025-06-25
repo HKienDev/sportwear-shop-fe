@@ -75,9 +75,8 @@ const RegisterTemplate = () => {
               <Image
                 src="/messi.png"
                 alt="Sports Player"
-                layout="fill"
-                objectFit="cover"
-                className="opacity-80 mix-blend-normal"
+                fill
+                className="opacity-80 mix-blend-normal object-cover"
                 priority
               />
             </div>

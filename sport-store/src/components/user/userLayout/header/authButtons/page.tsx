@@ -28,15 +28,6 @@ const AuthButtons = () => {
     checkAuth();
   }, [checkAuthStatus]);
 
-  console.log("🔍 AuthButtons - Auth state:", { 
-    user, 
-    isAuthenticated, 
-    isAuthPage,
-    hasUser: !!user,
-    userRole: user?.role,
-    isChecking
-  });
-
   // Không hiển thị gì khi đang kiểm tra
   if (isChecking) {
     return null;
@@ -44,44 +35,25 @@ const AuthButtons = () => {
 
   // Không hiển thị nút khi đã đăng nhập hoặc đang ở trang auth
   if (isAuthPage || isAuthenticated) {
-    console.log("🔒 AuthButtons - Hiding buttons:", { isAuthPage, isAuthenticated });
     return null;
   }
 
   const handleLogin = async () => {
     try {
-      // Kiểm tra xác thực trước khi chuyển hướng
-      await checkAuthStatus();
-      
-      // Nếu đã xác thực, không cần chuyển hướng
-      if (isAuthenticated) {
-        toast.success("Bạn đã đăng nhập thành công");
-        return;
-      }
-      
-      // Nếu chưa xác thực, chuyển hướng đến trang đăng nhập
+      // Chuyển hướng trực tiếp đến trang đăng nhập
       router.push('/auth/login');
     } catch (error) {
-      console.error("❌ Error checking auth status:", error);
+      console.error("❌ Error navigating to login:", error);
       toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
     }
   };
 
   const handleRegister = async () => {
     try {
-      // Kiểm tra xác thực trước khi chuyển hướng
-      await checkAuthStatus();
-      
-      // Nếu đã xác thực, không cần chuyển hướng
-      if (isAuthenticated) {
-        toast.success("Bạn đã đăng nhập thành công");
-        return;
-      }
-      
-      // Nếu chưa xác thực, chuyển hướng đến trang đăng ký
+      // Chuyển hướng trực tiếp đến trang đăng ký
       router.push('/auth/register');
     } catch (error) {
-      console.error("❌ Error checking auth status:", error);
+      console.error("❌ Error navigating to register:", error);
       toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
     }
   };

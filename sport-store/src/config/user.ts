@@ -7,11 +7,6 @@ export const setUserData = (user: AuthUser): void => {
     try {
         const userJson = JSON.stringify(user);
         
-        console.log("🔍 Setting user data:", {
-            original: user,
-            json: userJson
-        });
-        
         // Lưu vào localStorage
         localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userJson);
         
@@ -25,7 +20,6 @@ export const setUserData = (user: AuthUser): void => {
 export const getUserData = (): AuthUser | null => {
     // Thử lấy từ localStorage trước
     const storageUser = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
-    console.log("🔍 Getting user data from localStorage:", storageUser);
     
     if (storageUser && storageUser !== 'undefined' && storageUser !== 'null') {
         try {
@@ -49,7 +43,6 @@ export const getUserData = (): AuthUser | null => {
     };
     
     const cookieUser = getCookie(TOKEN_CONFIG.USER.COOKIE_NAME);
-    console.log("🔍 Getting user data from cookie:", cookieUser);
     
     if (cookieUser && cookieUser !== 'undefined' && cookieUser !== 'null') {
         try {
@@ -68,7 +61,6 @@ export const getUserData = (): AuthUser | null => {
 };
 
 export const clearUserData = (): void => {
-    console.log("🗑️ Clearing user data");
     // Xóa cookie
     document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
     

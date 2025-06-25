@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { TOKEN_CONFIG, getToken, setToken, clearTokens } from '@/config/token';
 import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
-import { handleRedirect } from '@/utils/navigationUtils';
+import { handleRedirect, setJustLoggedOut, getJustLoggedOut } from '@/utils/navigationUtils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';
@@ -30,7 +30,6 @@ import {
     loginWithGoogle as loginWithGoogleService
 } from '@/services/authService';
 import { AxiosError } from 'axios';
-import { jwtDecode } from 'jwt-decode';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds
@@ -68,22 +67,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Debug effect để theo dõi thay đổi trạng thái
     useEffect(() => {
-        console.log("🔄 Auth state changed:", {
-            user,
-            isAuthenticated,
-            loading,
-            hasUser: !!user,
-            userRole: user?.role
-        });
+        // Chỉ log khi có thay đổi quan trọng
+        if (user || isAuthenticated) {
+            console.log("🔄 Auth state changed:", {
+                hasUser: !!user,
+                isAuthenticated,
+                loading,
+                userRole: user?.role
+            });
+        }
     }, [user, isAuthenticated, loading]);
 
     const updateAuthState = useCallback((userData: AuthUser | null, isAuth: boolean) => {
-        console.log("🔄 Updating auth state:", {
-            userData,
-            isAuth,
-            currentUser: user,
-            currentAuth: isAuthenticated
-        });
+        // Chỉ log khi có user hoặc đang auth
+        if (userData || isAuth) {
+            console.log("🔄 Updating auth state:", {
+                hasUser: !!userData,
+                isAuth,
+                userRole: userData?.role
+            });
+        }
         
         setUser(userData);
         setIsAuthenticated(isAuth);
@@ -98,7 +101,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const now = Date.now();
             if (lastCheckRef.current && now - lastCheckRef.current < 5000) {
-                console.log("⏳ Skipping auth check - too soon");
                 return;
             }
 
@@ -106,11 +108,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const refreshToken = getToken('refresh');
             const storedUser = getUserData();
 
-            // DEBUG LOG
-            console.log('[checkAuthStatus] accessToken:', accessToken, 'refreshToken:', refreshToken, 'storedUser:', storedUser);
-
             if (!accessToken && !refreshToken) {
-                console.log("❌ No tokens found - clearing auth state");
+                // Chỉ log khi thực sự cần thiết
+                if (user || isAuthenticated) {
+                    console.log("❌ No tokens found - clearing auth state");
+                }
                 updateAuthState(null, false);
                 clearUserData();
                 return;
@@ -126,18 +128,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Verify token ngầm
                 try {
                     const response = await api.get("/auth/check");
-                    // DEBUG LOG
-                    console.log('[checkAuthStatus] /auth/check response:', response.data);
                     const userData = response.data.user || response.data.data;
                     if (response.data.success && userData) {
                         console.log("✅ Access token verified successfully");
                         updateAuthState(userData, true);
-                        // DEBUG LOG
-                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                     }
                 } catch (error) {
                     console.error("❌ Error verifying access token:", error);
-                    // Không xóa Authorization header ngay, để thử refresh token
                 }
                 return;
             }
@@ -147,20 +144,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     const response = await api.get("/auth/check");
-                    // DEBUG LOG
-                    console.log('[checkAuthStatus] /auth/check response:', response.data);
                     const userData = response.data.user || response.data.data;
                     if (response.data.success && userData) {
-                        console.log("✅ Access token is valid - updating user:", userData);
+                        console.log("✅ Access token is valid - updating user");
                         updateAuthState(userData, true);
-                        // DEBUG LOG
-                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                         lastCheckRef.current = now;
                         return;
                     }
                 } catch (error) {
                     console.error("❌ Error verifying access token:", error);
-                    // Không xóa Authorization header ngay, để thử refresh token
                 }
             }
 
@@ -169,8 +161,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     console.log("🔄 Attempting to refresh token...");
                     const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
-                    // DEBUG LOG
-                    console.log('[checkAuthStatus] /auth/refresh-token response:', refreshResponse.data);
                     if (refreshResponse.data.success) {
                         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
                         
@@ -178,7 +168,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             throw new Error("No user data in refresh response");
                         }
                         
-                        console.log("✅ Token refresh successful - updating state:", userData);
+                        console.log("✅ Token refresh successful - updating state");
                         // Lưu token mới
                         setToken(newAccessToken, 'access');
                         setToken(newRefreshToken, 'refresh');
@@ -186,8 +176,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
                         // Cập nhật state
                         updateAuthState(userData, true);
-                        // DEBUG LOG
-                        console.log('[checkAuthStatus] updateAuthState:', userData, true);
                         lastCheckRef.current = now;
                         return;
                     }
@@ -196,18 +184,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (storedUser) {
                         console.log("⚠️ Using stored user data as fallback");
                         updateAuthState(storedUser, true);
-                        // DEBUG LOG
-                        console.log('[checkAuthStatus] updateAuthState:', storedUser, true);
                         return;
                     }
                 }
             }
 
             // Chỉ xóa state nếu không có cách nào khác
-            console.log("❌ Authentication failed - clearing state");
+            if (user || isAuthenticated) {
+                console.log("❌ Authentication failed - clearing state");
+            }
             updateAuthState(null, false);
-            // DEBUG LOG
-            console.log('[checkAuthStatus] updateAuthState:', null, false);
             clearUserData();
             clearTokens();
             delete api.defaults.headers.common['Authorization'];
@@ -217,83 +203,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (storedUser) {
                 console.log("⚠️ Error occurred, using stored user data as fallback");
                 updateAuthState(storedUser, true);
-                // DEBUG LOG
-                console.log('[checkAuthStatus] updateAuthState:', storedUser, true);
             } else {
                 updateAuthState(null, false);
-                // DEBUG LOG
-                console.log('[checkAuthStatus] updateAuthState:', null, false);
                 clearTokens();
                 clearUserData();
                 delete api.defaults.headers.common['Authorization'];
             }
         }
-    }, [updateAuthState]);
+    }, [updateAuthState, user, isAuthenticated]);
 
     // Khởi tạo state từ localStorage khi component mount
     useEffect(() => {
         const initializeAuth = async () => {
-            // Kiểm tra nếu đã khởi tạo rồi thì không khởi tạo lại
             if (isInitializedRef.current) {
                 return;
             }
+            isInitializedRef.current = true;
             
-            try {
+            // Chỉ log khi thực sự cần thiết
+            if (user || isAuthenticated) {
                 console.log("🚀 Initializing auth...");
-                
-                // Kiểm tra token từ localStorage và cookies
-                const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                const storedUser = getUserData();
-                
-                const getCookie = (name: string) => {
-                    const value = `; ${document.cookie}`;
-                    const parts = value.split(`; ${name}=`);
-                    if (parts.length === 2) return parts.pop()?.split(';').shift();
-                    return null;
-                };
-                
-                const cookieAccessToken = getCookie(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
-                const cookieRefreshToken = getCookie(TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME);
-                
-                // Ưu tiên sử dụng token từ localStorage
-                const finalAccessToken = accessToken || cookieAccessToken;
-                
-                if (finalAccessToken) {
-                    api.defaults.headers.common['Authorization'] = `Bearer ${finalAccessToken}`;
-                }
-
-                // Nếu có user data, set state
-                if (storedUser) {
-                    setUser(storedUser);
-                    setIsAuthenticated(true);
-                }
-
-                // Chỉ gọi checkAuthStatus nếu có token hoặc user data
-                if (finalAccessToken || storedUser) {
-                    await checkAuthStatus();
-                } else {
-                    // Nếu không có token và user data, set loading = false và kết thúc
-                    setLoading(false);
-                }
-                
-                // Đồng bộ token giữa localStorage và cookies nếu cần
-                if (!accessToken && cookieAccessToken) {
-                    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, cookieAccessToken);
-                }
-                if (!localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY) && cookieRefreshToken) {
-                    localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, cookieRefreshToken);
-                }
-                
-                // Đánh dấu đã khởi tạo
-                isInitializedRef.current = true;
-            } catch (error) {
-                console.error("Error initializing auth:", error);
-                clearTokens();
-                clearUserData();
-                setUser(null);
-                setIsAuthenticated(false);
-                setLoading(false);
             }
+            
+            await checkAuthStatus();
         };
 
         initializeAuth();
@@ -382,6 +314,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             await logoutService();
             
+            // Set flag để tránh redirect ngay sau logout
+            setJustLoggedOut();
+            
+            // Xóa user data ngay lập tức
+            clearUserData();
+            
             // Xóa tokens từ localStorage
             localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
             localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -394,13 +332,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Xóa Authorization header
             delete api.defaults.headers.common['Authorization'];
             
-            // Cập nhật state
+            // Cập nhật state ngay lập tức
             setUser(null);
             setIsAuthenticated(false);
             setLoading(false);
             
+            // Thêm delay để đảm bảo state được reset hoàn toàn
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
             toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
-            await handleRedirect(router, null, window.location.pathname);
+            // Không redirect ở đây, để component hoặc route bảo vệ tự redirect
         } catch (error) {
             console.error('Logout failed:', error);
             throw error;
@@ -465,7 +406,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             await updateProfileService(data);
             toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE_SUCCESS);
-            await handleRedirect(router, user, window.location.pathname);
+            // Kiểm tra flag trước khi redirect
+            if (!getJustLoggedOut()) {
+                await handleRedirect(router, user, window.location.pathname);
+            }
         } catch (error) {
             console.error('Update profile failed:', error);
             throw error;
@@ -487,7 +431,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             await requestUpdateService();
             toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
-            await handleRedirect(router, user, window.location.pathname);
+            // Kiểm tra flag trước khi redirect
+            if (!getJustLoggedOut()) {
+                await handleRedirect(router, user, window.location.pathname);
+            }
         } catch (error) {
             console.error('Request update failed:', error);
             throw error;
@@ -498,7 +445,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             await updateUserService(data);
             toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE_SUCCESS);
-            await handleRedirect(router, user, window.location.pathname);
+            // Kiểm tra flag trước khi redirect
+            if (!getJustLoggedOut()) {
+                await handleRedirect(router, user, window.location.pathname);
+            }
         } catch (error) {
             console.error('Update user failed:', error);
             throw error;

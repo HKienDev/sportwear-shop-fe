@@ -8,6 +8,7 @@ export const AUTH_CONFIG = {
         '/auth/verify-otp',
         '/auth/resend-otp',
         '/',
+        '/user',
         '/products',
         '/categories',
         '/about',

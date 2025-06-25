@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Eye, EyeOff, User, Phone, AtSign, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, User, Phone, Mail, Lock } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/utils/api";
 

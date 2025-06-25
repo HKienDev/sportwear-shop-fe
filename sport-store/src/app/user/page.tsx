@@ -96,8 +96,6 @@ const HomePage = () => {
 
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
-  console.log("Current Products State:", products);
-
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Banner - Cải thiện */}

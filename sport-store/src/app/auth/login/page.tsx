@@ -7,7 +7,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import GoogleLoginButton from "@/components/auth/googleLoginButton/page";
 import LoginForm from "@/components/auth/loginForm/page";
 import { useAuth } from "@/context/authContext";
-import { handleRedirect } from "@/utils/navigationUtils";
+import { handleRedirect, getJustLoggedOut } from "@/utils/navigationUtils";
 
 const LoginPage = () => {
   const [animateForm, setAnimateForm] = useState(false);
@@ -20,7 +20,8 @@ const LoginPage = () => {
       setAnimateForm(true);
     }, 100);
 
-    if (isAuthenticated && user) {
+    // Kiểm tra flag trước khi redirect
+    if (isAuthenticated && user && !getJustLoggedOut()) {
       handleRedirect(router, user, window.location.pathname);
     }
   }, [isAuthenticated, user, router]);

@@ -47,7 +47,7 @@ const axiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
-    timeout: 10000, // Thêm timeout 10s
+    timeout: 30000, // Đồng bộ 30s
     // Thêm các cấu hình retry
     validateStatus: function (status) {
         return status >= 200 && status < 500; // Chỉ reject khi status >= 500
@@ -268,7 +268,7 @@ export const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    timeout: 10000,
+    timeout: 30000,
     validateStatus: (status) => status >= 200 && status < 500
 });
 

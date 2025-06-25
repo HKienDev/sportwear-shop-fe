@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { handleRedirect } from "@/utils/navigationUtils";
+import { handleRedirect, getJustLoggedOut } from "@/utils/navigationUtils";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { AuthUser } from "@/types/auth";
@@ -45,10 +45,8 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
 
   useEffect(() => {
     if (mounted) {
-      console.log("🔍 Testing toast functionality...");
       try {
         toast.info("Login form loaded - toast is working!");
-        console.log("✅ Toast.info called successfully");
       } catch (error) {
         console.error("❌ Error calling toast.info:", error);
       }
@@ -118,7 +116,10 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
         }
       } else {
         toast.success("Đăng nhập thành công!");
-        await handleRedirect(router, result.data?.user ?? null, window.location.pathname);
+        // Kiểm tra flag trước khi redirect
+        if (!getJustLoggedOut()) {
+          await handleRedirect(router, result.data?.user ?? null, window.location.pathname);
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
