@@ -311,12 +311,32 @@ export const refreshToken = async (): Promise<ApiResponse<LoginResponse['data']>
 
 export const loginWithGoogle = async (token: string): Promise<ApiResponse<LoginResponse['data']>> => {
     try {
-        const response = await apiClient.auth.googleCallback(token);
-        if (response.data.success && response.data.data) {
-            const { user, accessToken, refreshToken } = response.data.data;
-            setAuthData({ accessToken, refreshToken, user });
+        // Lưu token vào localStorage
+        localStorage.setItem('accessToken', token);
+        
+        // Kiểm tra auth status để lấy thông tin user
+        const authResponse = await checkAuth();
+        
+        if (authResponse.success && authResponse.data?.user) {
+            const { user } = authResponse.data;
+            
+            // Lưu thông tin user
+            const userStr = JSON.stringify(user);
+            localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userStr);
+            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
+            
+            return {
+                success: true,
+                message: 'Google login successful',
+                data: {
+                    user,
+                    accessToken: token,
+                    refreshToken: '' // Không có refresh token từ Google flow này
+                }
+            };
+        } else {
+            throw new Error('Failed to get user information');
         }
-        return response.data;
     } catch (error) {
         console.error('Login with Google error:', error);
         throw error;

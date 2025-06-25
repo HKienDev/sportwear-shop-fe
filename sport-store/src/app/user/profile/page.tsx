@@ -11,6 +11,7 @@ function ProfilePageContent() {
   const [scrolled, setScrolled] = useState(false);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const completeParam = searchParams.get('complete');
   const [activeTab, setActiveTab] = useState(tabParam === 'orders' ? 'orders' : 'profile');
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -114,11 +115,28 @@ function ProfilePageContent() {
             <div className="flex items-center mb-6">
               <div className="p-2 bg-blue-50 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7z" />
                 </svg>
               </div>
               <h2 className="text-xl font-bold text-gray-800 ml-3">Thông tin cá nhân</h2>
             </div>
+            
+            {/* Special notification for completing profile */}
+            {completeParam === 'true' && (
+              <div className="bg-yellow-50 rounded-lg p-4 mb-6 border-l-4 border-yellow-500">
+                <div className="flex items-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">Hoàn thiện thông tin cá nhân</h3>
+                    <p className="mt-1 text-sm text-yellow-700">
+                      Chào mừng bạn đến với Sport Store! Vui lòng hoàn thiện thông tin cá nhân để có thể sử dụng đầy đủ các tính năng của hệ thống.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="bg-blue-50 rounded-lg p-4 mb-6 border-l-4 border-blue-500">
               <div className="flex items-start">

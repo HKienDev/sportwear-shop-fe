@@ -9,7 +9,6 @@ import { handleRedirect, setJustLoggedOut, getJustLoggedOut } from '@/utils/navi
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';
-import { UserRole } from '@/types/base';
 import type {
     RegisterRequest,
     ResetPasswordRequest,
@@ -26,8 +25,7 @@ import {
     resetPassword as resetPasswordService,
     updateProfile as updateProfileService,
     requestUpdate as requestUpdateService,
-    updateUser as updateUserService,
-    loginWithGoogle as loginWithGoogleService
+    updateUser as updateUserService
 } from '@/services/authService';
 import { AxiosError } from 'axios';
 
@@ -49,7 +47,7 @@ interface AuthContextType {
     verifyAccount: (data: VerifyOTPRequest) => Promise<void>;
     requestUpdate: () => Promise<void>;
     updateUser: (data: UpdateProfileRequest) => Promise<void>;
-    loginWithGoogle: (token: string) => Promise<{ success: boolean }>;
+    loginWithGoogle: (token: string) => Promise<{ success: boolean; user: AuthUser | null }>;
     setUser: (user: AuthUser | null) => void;
     checkAuthStatus: () => Promise<void>;
 }
@@ -64,6 +62,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isAuthenticatingRef = useRef(false);
     const lastCheckRef = useRef<number>(0);
     const isInitializedRef = useRef(false);
+    const userRef = useRef<AuthUser | null>(null);
+    const isAuthenticatedRef = useRef(false);
+
+    // Cập nhật ref khi state thay đổi
+    useEffect(() => {
+        userRef.current = user;
+        isAuthenticatedRef.current = isAuthenticated;
+    }, [user, isAuthenticated]);
 
     // Debug effect để theo dõi thay đổi trạng thái
     useEffect(() => {
@@ -95,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (userData) {
             setUserData(userData);
         }
-    }, [user, isAuthenticated]);
+    }, []);
 
     const checkAuthStatus = useCallback(async (): Promise<void> => {
         try {
@@ -110,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (!accessToken && !refreshToken) {
                 // Chỉ log khi thực sự cần thiết
-                if (user || isAuthenticated) {
+                if (userRef.current || isAuthenticatedRef.current) {
                     console.log("❌ No tokens found - clearing auth state");
                 }
                 updateAuthState(null, false);
@@ -190,7 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // Chỉ xóa state nếu không có cách nào khác
-            if (user || isAuthenticated) {
+            if (userRef.current || isAuthenticatedRef.current) {
                 console.log("❌ Authentication failed - clearing state");
             }
             updateAuthState(null, false);
@@ -210,7 +216,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 delete api.defaults.headers.common['Authorization'];
             }
         }
-    }, [updateAuthState, user, isAuthenticated]);
+    }, [updateAuthState]);
 
     // Khởi tạo state từ localStorage khi component mount
     useEffect(() => {
@@ -220,10 +226,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             isInitializedRef.current = true;
             
-            // Chỉ log khi thực sự cần thiết
-            if (user || isAuthenticated) {
-                console.log("🚀 Initializing auth...");
-            }
+            console.log("🚀 Initializing auth...");
             
             await checkAuthStatus();
         };
@@ -458,26 +461,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loginWithGoogle = async (token: string) => {
         try {
             setLoading(true);
-            const response = await loginWithGoogleService(token);
-            console.log('Google login response:', response);
             
-            if (response.success && response.data?.user) {
-                const userData = response.data.user as AuthUser;
-                setUser(userData);
-                setIsAuthenticated(true);
-                setLoading(false);
-                toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-                const urlParams = new URLSearchParams(window.location.search);
-                const from = urlParams.get('from') || undefined;
-                const redirectPath = from || (userData.role === UserRole.ADMIN ? '/admin/dashboard' : '/user');
-                console.log('🔄 Redirecting after login:', redirectPath);
-                await router.replace(redirectPath);
-                return { success: true };
-            } else {
-                setUser(null);
-                setIsAuthenticated(false);
-                setLoading(false);
-                throw new Error(response.message || 'Đăng nhập với Google thất bại');
+            // Lưu token vào localStorage và set Authorization header
+            setToken(token, 'access');
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            // Gọi API để lấy thông tin user từ token
+            try {
+                const response = await api.get("/auth/check");
+                const userData = response.data.user || response.data.data;
+                
+                if (response.data.success && userData) {
+                    console.log("✅ Google authentication successful");
+                    
+                    // Cập nhật state
+                    setUser(userData);
+                    setIsAuthenticated(true);
+                    setLoading(false);
+                    
+                    // Lưu user data
+                    setUserData(userData);
+                    
+                    toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+                    
+                    // Trả về user data để component có thể kiểm tra
+                    return { success: true, user: userData };
+                } else {
+                    throw new Error('Failed to get user information from token');
+                }
+            } catch (apiError) {
+                console.error("❌ Error getting user info from token:", apiError);
+                throw new Error('Token validation failed');
             }
         } catch (error) {
             console.error('❌ Lỗi khi đăng nhập với Google:', error);
