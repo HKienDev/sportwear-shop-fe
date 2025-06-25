@@ -28,7 +28,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
         <ClientLayout>
-                    {children}
+          {children}
         </ClientLayout>
         <SpeedInsights />
         <Analytics />

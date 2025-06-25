@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
@@ -34,8 +34,26 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+
+  // Test toast khi component mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      console.log("🔍 Testing toast functionality...");
+      try {
+        toast.info("Login form loaded - toast is working!");
+        console.log("✅ Toast.info called successfully");
+      } catch (error) {
+        console.error("❌ Error calling toast.info:", error);
+      }
+    }
+  }, [mounted]);
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -92,7 +110,8 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
         } else if (passwordError) {
           toast.error(passwordError.message);
         } else if (generalError) {
-          toast.error(generalError.message || "Đăng nhập thất bại");
+          // Fallback: sử dụng message chính
+          toast.error(result.message || "Đăng nhập thất bại");
         } else {
           // Fallback: sử dụng message chính
           toast.error(result.message || "Đăng nhập thất bại");

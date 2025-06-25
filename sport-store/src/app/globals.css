@@ -83,6 +83,15 @@
   }
 }
 
+/* Sonner Toast Styles */
+[data-sonner-toaster] {
+  z-index: 99999 !important;
+}
+
+[data-sonner-toast] {
+  z-index: 99999 !important;
+}
+
 @media (max-width: 640px) {
   .container {
     @apply px-4;
