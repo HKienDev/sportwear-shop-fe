@@ -9,7 +9,7 @@ export enum UserRole {
 }
 
 // Thời gian chờ chuyển hướng (ms)
-const REDIRECT_DELAY = 300;
+const REDIRECT_DELAY = 100;
 
 // Trạng thái chuyển hướng
 let isRedirecting = false;
@@ -30,32 +30,17 @@ export const handleRedirect = debounce(async (
         const actualUserData = localStorage.getItem('user');
         const hasActualUser = actualUserData && actualUserData !== 'null';
         
-        console.log('[handleRedirect] 🔍 Debug:', { 
-            hasUser: !!user, 
-            userRole: user?.role, 
-            currentPath, 
-            justLoggedOut: getJustLoggedOut(),
-            hasActualUser,
-            actualUserData: actualUserData ? 'present' : 'null'
-        });
-        
-        // Thêm stack trace để debug
-        console.log('[handleRedirect] 📍 Stack trace:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-        
         // Nếu vừa logout, không redirect
         if (getJustLoggedOut()) {
-            console.log('[handleRedirect] 🔒 Vừa logout, không redirect');
             return;
         }
         
         // Nếu không có user thực tế trong localStorage, không redirect
         if (!hasActualUser) {
-            console.log('[handleRedirect] 🔒 Không có user data thực tế, không redirect');
             return;
         }
         
         if (isRedirecting) {
-            console.log('[handleRedirect] ⚠️ Đang trong quá trình chuyển hướng, bỏ qua');
             return;
         }
         if (!router) {
@@ -74,15 +59,9 @@ export const handleRedirect = debounce(async (
                 redirectPath = '/user';
                 reason = 'role=user';
             }
-            
-            // Nếu đang ở trang auth và có user, cho phép redirect
-            if (currentPath.startsWith('/auth/')) {
-                console.log('[handleRedirect] 🔄 Redirect từ trang auth sau khi đăng nhập thành công');
-            }
         } else {
             // Nếu không có user và đang ở trang auth, không redirect
             if (currentPath.startsWith('/auth/')) {
-                console.log('[handleRedirect] 🔒 Đang ở trang auth, không có user, không redirect');
                 isRedirecting = false;
                 return;
             }
@@ -94,7 +73,6 @@ export const handleRedirect = debounce(async (
             }
         }
         
-        console.log('[handleRedirect] 🔄 Thực hiện chuyển hướng:', { from: currentPath, to: redirectPath, reason });
         await router.push(redirectPath);
         await new Promise(resolve => setTimeout(resolve, REDIRECT_DELAY));
         isRedirecting = false;
@@ -103,7 +81,7 @@ export const handleRedirect = debounce(async (
         isRedirecting = false;
         throw error;
     }
-}, 500);
+}, 100);
 
 // Function để set flag logout và cancel debounce
 export const setJustLoggedOut = () => {

@@ -84,23 +84,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user, isAuthenticated, loading]);
 
-    const updateAuthState = useCallback((userData: AuthUser | null, isAuth: boolean) => {
-        // Chỉ log khi có user hoặc đang auth
-        if (userData || isAuth) {
-            console.log("🔄 Updating auth state:", {
-                hasUser: !!userData,
-                isAuth,
-                userRole: userData?.role
-            });
-        }
-        
-        setUser(userData);
-        setIsAuthenticated(isAuth);
+    const updateAuthState = useCallback((user: AuthUser | null, isAuthenticated: boolean) => {
+        setUser(user);
+        setIsAuthenticated(isAuthenticated);
         setLoading(false);
         
-        if (userData) {
-            setUserData(userData);
-        }
+        // Cập nhật refs
+        userRef.current = user;
+        isAuthenticatedRef.current = isAuthenticated;
+        lastCheckRef.current = Date.now();
     }, []);
 
     const checkAuthStatus = useCallback(async (): Promise<void> => {
@@ -112,7 +104,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // Kiểm tra flag justLoggedOut
             if (getJustLoggedOut()) {
-                console.log("🚫 Just logged out, skipping auth check");
                 return;
             }
 
@@ -123,87 +114,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (!accessToken && !refreshToken) {
                 // Chỉ log khi thực sự cần thiết
                 if (userRef.current || isAuthenticatedRef.current) {
-                    console.log("🔒 No tokens found, clearing auth state");
                     updateAuthState(null, false);
                 }
                 return;
             }
 
-            // Nếu có access token và stored user, sử dụng ngay
-            if (accessToken && storedUser) {
-                console.log("✅ Using stored user data with valid access token");
-                api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-                updateAuthState(storedUser, true);
-                lastCheckRef.current = now;
-                
-                // Verify token ngầm
-                try {
-                    const response = await api.get("/auth/check");
-                    const userData = response.data.user || response.data.data;
-                    if (response.data.success && userData) {
-                        console.log("✅ Access token verified successfully");
-                        updateAuthState(userData, true);
-                    }
-                } catch (error) {
-                    console.error("❌ Error verifying access token:", error);
-                }
-                return;
-            }
-
-            // Nếu có access token, verify nó
+            // Nếu có access token, verify ngay
             if (accessToken) {
                 try {
-                    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-                    const response = await api.get("/auth/check");
-                    const userData = response.data.user || response.data.data;
-                    if (response.data.success && userData) {
-                        console.log("✅ Access token is valid - updating user");
-                        updateAuthState(userData, true);
-                        lastCheckRef.current = now;
+                    const response = await api.get('/auth/check');
+                    if (response.data.success) {
+                        const user = response.data.data;
+                        updateAuthState(user, true);
                         return;
                     }
                 } catch (error) {
-                    console.error("❌ Error verifying access token:", error);
+                    // Access token invalid, thử refresh
                 }
             }
 
             // Nếu có refresh token, thử refresh
             if (refreshToken) {
                 try {
-                    console.log("🔄 Attempting to refresh token...");
-                    const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
-                    if (refreshResponse.data.success) {
-                        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userData } = refreshResponse.data.data;
-                        
-                        if (!userData) {
-                            throw new Error("No user data in refresh response");
-                        }
-                        
-                        console.log("✅ Token refresh successful - updating state");
-                        // Lưu token mới
+                    const response = await api.post('/auth/refresh', { refreshToken });
+                    if (response.data.success) {
+                        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data.data;
                         setToken(newAccessToken, 'access');
                         setToken(newRefreshToken, 'refresh');
-                        // Cập nhật header cho API calls
                         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-                        // Cập nhật state
-                        updateAuthState(userData, true);
-                        lastCheckRef.current = now;
+                        updateAuthState(user, true);
                         return;
                     }
-                } catch (refreshError) {
-                    console.error("❌ Error refreshing token:", refreshError);
-                    // Không restore storedUser khi refresh token thất bại
+                } catch (error) {
+                    // Refresh token invalid
                 }
             }
 
-            // Chỉ xóa state nếu không có cách nào khác
+            // Nếu không có token hợp lệ, clear state
             if (userRef.current || isAuthenticatedRef.current) {
-                console.log("❌ Authentication failed - clearing state");
+                updateAuthState(null, false);
+                clearUserData();
+                clearTokens();
+                delete api.defaults.headers.common['Authorization'];
             }
-            updateAuthState(null, false);
-            clearUserData();
-            clearTokens();
-            delete api.defaults.headers.common['Authorization'];
         } catch (error) {
             console.error("Error checking auth status:", error);
             // Không restore storedUser khi có lỗi
@@ -222,8 +175,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             isInitializedRef.current = true;
             
-            console.log("🚀 Initializing auth...");
-            
             await checkAuthStatus();
         };
 
@@ -238,25 +189,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = async (email: string, password: string) => {
         try {
             if (isAuthenticatingRef.current) {
-                console.log("⏳ Đang có request đăng nhập đang chạy, đợi kết quả");
                 return { success: false, message: "Đang xử lý đăng nhập" };
             }
 
             isAuthenticatingRef.current = true;
             setLoading(true);
-            console.log("🔑 Đang thử đăng nhập với email:", email);
 
             const response = await api.post("/auth/login", { email, password });
-            console.log("📥 Login response:", response);
 
             if (!response.data) {
-                console.error("❌ Không có dữ liệu trong response");
                 return { success: false, message: "Không nhận được dữ liệu từ server" };
             }
 
             // Kiểm tra success từ response
             if (!response.data.success) {
-                console.error("❌ Đăng nhập thất bại:", response.data.message);
                 return { success: false, message: response.data.message };
             }
 
@@ -264,7 +210,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const { accessToken, refreshToken, user } = response.data.data;
 
             if (!accessToken || !refreshToken || !user) {
-                console.error("❌ Thiếu thông tin trong response:", response.data.data);
                 return { success: false, message: "Dữ liệu đăng nhập không hợp lệ" };
             }
 
@@ -272,17 +217,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setToken(accessToken, 'access');
             setToken(refreshToken, 'refresh');
 
-            // Sau khi login thành công, luôn gọi checkAuthStatus để đồng bộ user từ BE
-            console.log("✅ Đăng nhập thành công, đồng bộ user từ BE");
-            await checkAuthStatus();
-
             // Cập nhật header cho các request tiếp theo
             api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-            console.log("✅ Đăng nhập thành công:", { user, isAuthenticated: true });
-            return { success: true, message: SUCCESS_MESSAGES.LOGIN_SUCCESS, user };
+            // Cập nhật state ngay lập tức
+            updateAuthState(user, true);
+
+            return { 
+                success: true, 
+                message: SUCCESS_MESSAGES.LOGIN_SUCCESS, 
+                data: { user, accessToken, refreshToken }
+            };
         } catch (error) {
-            console.error("❌ Lỗi đăng nhập:", error);
             setLoading(false);
             isAuthenticatingRef.current = false;
             return { 
@@ -469,45 +415,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loginWithGoogle = async (token: string) => {
         try {
-            setLoading(true);
-            
-            // Lưu token vào localStorage và set Authorization header
+            // Lưu token ngay lập tức
             setToken(token, 'access');
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Gọi API để lấy thông tin user
+            const response = await api.get('/auth/check');
             
-            // Gọi API để lấy thông tin user từ token
-            try {
-                const response = await api.get("/auth/check");
-                const userData = response.data.user || response.data.data;
-                
-                if (response.data.success && userData) {
-                    console.log("✅ Google authentication successful");
-                    
-                    // Cập nhật state
-                    setUser(userData);
-                    setIsAuthenticated(true);
-                    setLoading(false);
-                    
-                    // Lưu user data
-                    setUserData(userData);
-                    
-                    toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-                    
-                    // Trả về user data để component có thể kiểm tra
-                    return { success: true, user: userData };
-                } else {
-                    throw new Error('Failed to get user information from token');
-                }
-            } catch (apiError) {
-                console.error("❌ Error getting user info from token:", apiError);
-                throw new Error('Token validation failed');
+            if (response.data.success) {
+                const user = response.data.data;
+                updateAuthState(user, true);
+                return { success: true, user };
+            } else {
+                throw new Error('Failed to get user data');
             }
         } catch (error) {
-            console.error('❌ Lỗi khi đăng nhập với Google:', error);
-            setUser(null);
-            setIsAuthenticated(false);
-            setLoading(false);
-            throw error;
+            console.error('Google login failed:', error);
+            return { success: false, user: null };
         }
     };
 

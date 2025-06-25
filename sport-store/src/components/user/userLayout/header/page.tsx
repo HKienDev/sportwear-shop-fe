@@ -55,14 +55,11 @@ const Header = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      console.log("User data in header:", {
-        name: user.name,
-        email: user.email,
-        role: user.role
-      });
+      // User data available
     }
   }, [user]);
 
@@ -75,7 +72,6 @@ const Header = () => {
 
         // Fetch categories
         const categoriesUrl = `${API_URL}/categories`;
-        console.log("Fetching categories from:", categoriesUrl);
         
         const categoriesResponse = await fetch(categoriesUrl, {
           method: 'GET',
@@ -95,13 +91,14 @@ const Header = () => {
           throw new Error(`HTTP error! Status: ${categoriesResponse.status}`);
         }
         const categoriesData = await categoriesResponse.json();
-        console.log("Categories data:", categoriesData);
         
         if (isMounted && categoriesData.success && Array.isArray(categoriesData.data.categories)) {
           setCategories(categoriesData.data.categories);
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -132,7 +129,6 @@ const Header = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Search results:", data);
         if (data.success && Array.isArray(data.products)) {
           setSearchResults(data.products);
         } else {
@@ -176,6 +172,11 @@ const Header = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Không hiển thị gì khi đang loading
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">

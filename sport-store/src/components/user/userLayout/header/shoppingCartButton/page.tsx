@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getJustLoggedOut } from "@/utils/navigationUtils";
+import { useEffect } from "react";
 
 const ShoppingCartButton = () => {
   const { items } = useCart();
@@ -20,31 +21,39 @@ const ShoppingCartButton = () => {
     if (!isAuthenticated) {
       // Kiểm tra xác thực trước khi chuyển hướng
       try {
-        // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
+        // Kiểm tra flag justLoggedOut
         if (getJustLoggedOut()) {
-          console.log("🚫 Just logged out, redirecting to login without auth check");
-          toast.error("Vui lòng đăng nhập để xem giỏ hàng");
           router.push('/auth/login');
           return;
         }
         
         await checkAuthStatus();
-        
-        if (!isAuthenticated) {
-          toast.error("Vui lòng đăng nhập để xem giỏ hàng");
-          router.push('/auth/login');
-          return;
-        }
       } catch (error) {
-        console.error("❌ Error checking auth status:", error);
-        toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
-        return;
+        console.error('Error checking auth:', error);
       }
     }
     
     // Nếu đã xác thực, chuyển hướng đến giỏ hàng
     router.push('/user/cart');
   };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Kiểm tra flag justLoggedOut
+        if (getJustLoggedOut()) {
+          router.push('/auth/login');
+          return;
+        }
+        
+        await checkAuthStatus();
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    };
+
+    checkAuth();
+  }, [checkAuthStatus, router]);
 
   return (
     <Link

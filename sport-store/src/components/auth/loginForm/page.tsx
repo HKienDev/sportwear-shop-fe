@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { handleRedirect, getJustLoggedOut } from "@/utils/navigationUtils";
 import { toast } from "sonner";
-import { AxiosError } from "axios";
-import { AuthUser } from "@/types/auth";
 
 interface LoginFormProps {
   error: string;
@@ -15,135 +12,62 @@ interface LoginFormProps {
 }
 
 interface ErrorField {
-  field?: string;
+  field: string;
   message: string;
-}
-
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  errors?: ErrorField[];
-  data?: {
-    user: AuthUser;
-    accessToken: string;
-    refreshToken: string;
-  };
 }
 
 const LoginForm = ({ error, loading }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
-  // Test toast khi component mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted) {
-      try {
-        toast.info("Login form loaded - toast is working!");
-      } catch (error) {
-        console.error("❌ Error calling toast.info:", error);
-      }
-    }
-  }, [mounted]);
-
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
-
-  // Validation functions
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePassword = (password: string): boolean => {
-    return password.length >= 6;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation with toast
-    if (!email.trim()) {
-      toast.error("Vui lòng nhập email");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      toast.error("Email không đúng định dạng");
-      return;
-    }
-
-    if (!password.trim()) {
-      toast.error("Vui lòng nhập mật khẩu");
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+    if (!email || !password) {
+      toast.error("Vui lòng nhập đầy đủ thông tin");
       return;
     }
 
     try {
-      const result = await login(email, password) as LoginResponse;
-      console.log("Login result:", result); // Debug log
+      const result = await login(email, password);
       
-      if (!result.success) {
-        // Đọc message từ errors array thay vì message chính
-        const errors = result.errors || [];
-        console.log("Errors array:", errors); // Debug log
-        
-        // Tìm lỗi cụ thể từ errors array
-        const emailError = errors.find((error: ErrorField) => error.field === 'email');
-        const passwordError = errors.find((error: ErrorField) => error.field === 'password');
-        const generalError = errors.find((error: ErrorField) => !error.field);
-        
-        if (emailError) {
-          toast.error(emailError.message);
-        } else if (passwordError) {
-          toast.error(passwordError.message);
-        } else if (generalError) {
-          // Fallback: sử dụng message chính
-          toast.error(result.message || "Đăng nhập thất bại");
-        } else {
-          // Fallback: sử dụng message chính
-          toast.error(result.message || "Đăng nhập thất bại");
-        }
+      if (result.success) {
+        toast.success(result.message);
+        router.push('/user');
       } else {
-        toast.success("Đăng nhập thành công!");
-        // Kiểm tra flag trước khi redirect
-        if (!getJustLoggedOut()) {
-          await handleRedirect(router, result.data?.user ?? null, window.location.pathname);
-        }
+        toast.error(result.message);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      const axiosError = error as AxiosError<{ message: string; errors?: ErrorField[] }>;
-      const errorMessage = axiosError?.response?.data?.message?.toLowerCase() || "";
-      const errors = axiosError?.response?.data?.errors || [];
-      console.log("Axios error message:", errorMessage); // Debug log
-      console.log("Axios errors array:", errors); // Debug log
-      console.log("Axios status:", axiosError?.response?.status); // Debug log
-      
-      // Đọc từ errors array trước
-      const emailError = errors.find((error: ErrorField) => error.field === 'email');
-      const passwordError = errors.find((error: ErrorField) => error.field === 'password');
-      const generalError = errors.find((error: ErrorField) => !error.field);
-      
-      if (emailError) {
-        toast.error(emailError.message);
-      } else if (passwordError) {
-        toast.error(passwordError.message);
-      } else if (generalError) {
-        toast.error(generalError.message || "Đăng nhập thất bại");
+      // Xử lý lỗi Axios
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; errors?: ErrorField[] } } };
+        const errorMessage = axiosError.response?.data?.message || "Đăng nhập thất bại";
+        const errors = axiosError.response?.data?.errors || [];
+        
+        if (errors.length > 0) {
+          const emailError = errors.find((error: ErrorField) => error.field === 'email');
+          const passwordError = errors.find((error: ErrorField) => error.field === 'password');
+          const generalError = errors.find((error: ErrorField) => !error.field);
+          
+          if (emailError) {
+            toast.error(emailError.message);
+          } else if (passwordError) {
+            toast.error(passwordError.message);
+          } else if (generalError) {
+            toast.error(generalError.message);
+          } else {
+            toast.error(errorMessage);
+          }
+        } else {
+          toast.error(errorMessage);
+        }
       } else {
-        // Fallback: sử dụng message từ server
-        toast.error(axiosError?.response?.data?.message || "Đăng nhập thất bại");
+        toast.error("Đăng nhập thất bại");
       }
     }
   };

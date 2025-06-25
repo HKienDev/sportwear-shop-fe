@@ -49,7 +49,6 @@ export default function OrderUserPage() {
   const fetchOrders = useCallback(async () => {
     try {
       const token = getToken('access');
-      console.log('Token:', token); // Để debug
       
       if (!token) {
         setError('Vui lòng đăng nhập để xem đơn hàng');
@@ -78,12 +77,18 @@ export default function OrderUserPage() {
         setError('Không thể tải danh sách đơn hàng');
       }
     } catch (err) {
-      console.error('Error details:', err); // Để debug
       setError('Đã có lỗi xảy ra khi tải đơn hàng');
     } finally {
       setLoading(false);
     }
   }, [currentPage, limit]);
+
+  useEffect(() => {
+    const token = getToken('access');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -21,16 +21,15 @@ const UserMenu = () => {
       try {
         setIsLoading(true);
         
-        // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
+        // Kiểm tra flag justLoggedOut
         if (getJustLoggedOut()) {
-          console.log("🚫 Just logged out, skipping auth check in UserMenu");
           setIsLoading(false);
           return;
         }
         
         await checkAuthStatus();
       } catch (error) {
-        console.error("❌ Error checking auth status:", error);
+        console.error('Error initializing auth:', error);
       } finally {
         setIsLoading(false);
       }
@@ -53,14 +52,12 @@ const UserMenu = () => {
     };
   }, []);
 
-  // Log để debug
-  console.log("🔍 UserMenu - Auth state:", {
-    user,
-    isAuthenticated,
-    isLoading,
-    hasUser: !!user,
-    userRole: user?.role
-  });
+  // Debug log để kiểm tra auth state
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      // User data đã sẵn sàng
+    }
+  }, [user, isAuthenticated]);
 
   // Không hiển thị gì khi đang loading
   if (isLoading) {
@@ -76,11 +73,9 @@ const UserMenu = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success("Đăng xuất thành công");
-      router.push("/");
+      router.push('/');
     } catch (error) {
-      console.error("❌ Error logging out:", error);
-      toast.error("Có lỗi xảy ra khi đăng xuất");
+      console.error('Logout failed:', error);
     }
   };
 
