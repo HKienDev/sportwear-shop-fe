@@ -110,6 +110,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return;
             }
 
+            // Kiểm tra flag justLoggedOut
+            if (getJustLoggedOut()) {
+                console.log("🚫 Just logged out, skipping auth check");
+                return;
+            }
+
             const accessToken = getToken('access');
             const refreshToken = getToken('refresh');
             const storedUser = getUserData();
@@ -117,10 +123,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (!accessToken && !refreshToken) {
                 // Chỉ log khi thực sự cần thiết
                 if (userRef.current || isAuthenticatedRef.current) {
-                    console.log("❌ No tokens found - clearing auth state");
+                    console.log("🔒 No tokens found, clearing auth state");
+                    updateAuthState(null, false);
                 }
-                updateAuthState(null, false);
-                clearUserData();
                 return;
             }
 
@@ -187,11 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     }
                 } catch (refreshError) {
                     console.error("❌ Error refreshing token:", refreshError);
-                    if (storedUser) {
-                        console.log("⚠️ Using stored user data as fallback");
-                        updateAuthState(storedUser, true);
-                        return;
-                    }
+                    // Không restore storedUser khi refresh token thất bại
                 }
             }
 
@@ -205,16 +206,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             delete api.defaults.headers.common['Authorization'];
         } catch (error) {
             console.error("Error checking auth status:", error);
-            const storedUser = getUserData();
-            if (storedUser) {
-                console.log("⚠️ Error occurred, using stored user data as fallback");
-                updateAuthState(storedUser, true);
-            } else {
-                updateAuthState(null, false);
-                clearTokens();
-                clearUserData();
-                delete api.defaults.headers.common['Authorization'];
-            }
+            // Không restore storedUser khi có lỗi
+            updateAuthState(null, false);
+            clearTokens();
+            clearUserData();
+            delete api.defaults.headers.common['Authorization'];
         }
     }, [updateAuthState]);
 
@@ -331,6 +327,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Xóa tokens từ cookies
             document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
             document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+            document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
             
             // Xóa Authorization header
             delete api.defaults.headers.common['Authorization'];
@@ -340,8 +337,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsAuthenticated(false);
             setLoading(false);
             
+            // Reset các ref
+            userRef.current = null;
+            isAuthenticatedRef.current = false;
+            lastCheckRef.current = 0;
+            isInitializedRef.current = false;
+            
             // Thêm delay để đảm bảo state được reset hoàn toàn
             await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Clear flag sau 5 giây để cho phép auth check hoạt động bình thường
+            setTimeout(() => {
+                // Clear justLoggedOut flag
+                localStorage.removeItem('justLoggedOut');
+            }, 5000);
             
             toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
             // Không redirect ở đây, để component hoặc route bảo vệ tự redirect

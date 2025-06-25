@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { getJustLoggedOut } from "@/utils/navigationUtils";
 
 const AuthButtons = () => {
   const { user, isAuthenticated, checkAuthStatus } = useAuth();
@@ -18,6 +19,14 @@ const AuthButtons = () => {
     const checkAuth = async () => {
       try {
         setIsChecking(true);
+        
+        // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
+        if (getJustLoggedOut()) {
+          console.log("🚫 Just logged out, skipping auth check in AuthButtons");
+          setIsChecking(false);
+          return;
+        }
+        
         await checkAuthStatus();
       } catch (error) {
         console.error("❌ Error checking auth status:", error);

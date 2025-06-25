@@ -6,6 +6,7 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { getJustLoggedOut } from "@/utils/navigationUtils";
 
 const ShoppingCartButton = () => {
   const { items } = useCart();
@@ -19,6 +20,14 @@ const ShoppingCartButton = () => {
     if (!isAuthenticated) {
       // Kiểm tra xác thực trước khi chuyển hướng
       try {
+        // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
+        if (getJustLoggedOut()) {
+          console.log("🚫 Just logged out, redirecting to login without auth check");
+          toast.error("Vui lòng đăng nhập để xem giỏ hàng");
+          router.push('/auth/login');
+          return;
+        }
+        
         await checkAuthStatus();
         
         if (!isAuthenticated) {

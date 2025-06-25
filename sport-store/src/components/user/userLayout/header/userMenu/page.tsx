@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { formatCurrency } from "@/utils/format";
+import { getJustLoggedOut } from "@/utils/navigationUtils";
 
 const UserMenu = () => {
   const { user, logout, isAuthenticated, checkAuthStatus } = useAuth();
@@ -19,6 +20,14 @@ const UserMenu = () => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
+        
+        // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
+        if (getJustLoggedOut()) {
+          console.log("🚫 Just logged out, skipping auth check in UserMenu");
+          setIsLoading(false);
+          return;
+        }
+        
         await checkAuthStatus();
       } catch (error) {
         console.error("❌ Error checking auth status:", error);

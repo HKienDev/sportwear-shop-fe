@@ -13,10 +13,11 @@ const REDIRECT_DELAY = 300;
 
 // Trạng thái chuyển hướng
 let isRedirecting = false;
-let justLoggedOut = false;
 
 // Export để kiểm tra từ bên ngoài
-export const getJustLoggedOut = () => justLoggedOut;
+export const getJustLoggedOut = () => {
+    return localStorage.getItem('justLoggedOut') === 'true';
+};
 
 // Debounced version của handleRedirect
 export const handleRedirect = debounce(async (
@@ -25,19 +26,31 @@ export const handleRedirect = debounce(async (
     currentPath: string
 ): Promise<void> => {
     try {
+        // Kiểm tra user data thực tế từ localStorage
+        const actualUserData = localStorage.getItem('user');
+        const hasActualUser = actualUserData && actualUserData !== 'null';
+        
         console.log('[handleRedirect] 🔍 Debug:', { 
             hasUser: !!user, 
             userRole: user?.role, 
             currentPath, 
-            justLoggedOut 
+            justLoggedOut: getJustLoggedOut(),
+            hasActualUser,
+            actualUserData: actualUserData ? 'present' : 'null'
         });
         
         // Thêm stack trace để debug
         console.log('[handleRedirect] 📍 Stack trace:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
         
         // Nếu vừa logout, không redirect
-        if (justLoggedOut) {
+        if (getJustLoggedOut()) {
             console.log('[handleRedirect] 🔒 Vừa logout, không redirect');
+            return;
+        }
+        
+        // Nếu không có user thực tế trong localStorage, không redirect
+        if (!hasActualUser) {
+            console.log('[handleRedirect] 🔒 Không có user data thực tế, không redirect');
             return;
         }
         
@@ -95,13 +108,13 @@ export const handleRedirect = debounce(async (
 // Function để set flag logout và cancel debounce
 export const setJustLoggedOut = () => {
     console.log('[setJustLoggedOut] 🔒 Setting justLoggedOut flag to true');
-    justLoggedOut = true;
+    localStorage.setItem('justLoggedOut', 'true');
     // Cancel debounce
     handleRedirect.cancel();
     console.log('[setJustLoggedOut] ✅ Cancelled handleRedirect debounce');
     // Reset flag sau 2 giây
     setTimeout(() => {
-        justLoggedOut = false;
+        localStorage.removeItem('justLoggedOut');
         console.log('[setJustLoggedOut] 🔄 Reset justLoggedOut flag to false');
     }, 2000);
 }; 

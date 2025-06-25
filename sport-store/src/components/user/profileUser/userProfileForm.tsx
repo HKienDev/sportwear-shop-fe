@@ -207,118 +207,9 @@ const UserProfileForm = () => {
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       if (!token) throw new Error("Token không tồn tại!");
 
-      const updateData = {
-        email: tempUser.email,
-        phone: tempUser.phone || "",
-        address: tempUser.address || {
-          province: "",
-          district: "",
-          ward: "",
-          street: "",
-        },
-        dob: tempUser.dob || "",
-        gender: tempUser.gender || "other",
-      };
-
-      if (!isSensitiveChanged) {
-        // Nếu chỉ thay đổi địa chỉ, gọi API update trực tiếp (PUT), không cần OTP
-        const res = await fetch(`${API_URL}/auth/profile/update`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ updateData }),
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || "Lỗi khi cập nhật địa chỉ");
-        }
-        const data = await res.json();
-        if (data.success) {
-          setIsEditing(false);
-          // Fetch updated user data
-          const userRes = await fetch(`${API_URL}/auth/profile`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: "include",
-          });
-          if (userRes.ok) {
-            const userData = await userRes.json();
-            if (userData.success) {
-              const updatedUserData = {
-                ...userData.data,
-                address: {
-                  street: userData.data.address?.street || "",
-                  province: userData.data.address?.province || "",
-                  district: userData.data.address?.district || "",
-                  ward: userData.data.address?.ward || "",
-                  detail: userData.data.address?.detail || "",
-                }
-              };
-              setUser(updatedUserData);
-              setTempUser(updatedUserData);
-            }
-          }
-        } else {
-          throw new Error(data.message || "Lỗi khi cập nhật địa chỉ");
-        }
-      } else {
-        // Nếu thay đổi trường nhạy cảm, giữ nguyên flow xác thực OTP
-        const res = await fetch(`${API_URL}/auth/profile/update-request`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updateData),
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || "Lỗi khi gửi yêu cầu cập nhật");
-        }
-        const data = await res.json();
-        if (data.success) {
-          setShowOtpModal(true);
-        } else {
-          throw new Error(data.message || "Lỗi khi gửi yêu cầu cập nhật");
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "Lỗi khi gửi yêu cầu cập nhật");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otpInput) {
-      alert("Vui lòng nhập mã OTP");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      if (!token) throw new Error("Token không tồn tại!");
-
+      // Chỉ gửi OTP, không gửi updateData vì đã được lưu trong Redis từ bước trước
       const updatePayload = {
-        otp: otpInput,
-        updateData: {
-          email: tempUser?.email,
-          phone: tempUser?.phone || "",
-          address: {
-            province: tempUser?.address?.province || "",
-            district: tempUser?.address?.district || "",
-            ward: tempUser?.address?.ward || "",
-            street: tempUser?.address?.street || "",
-          },
-          dob: tempUser?.dob || "",
-          gender: tempUser?.gender || "other",
-        }
+        otp: otpInput
       };
 
       // Log dữ liệu gửi lên để debug
@@ -395,6 +286,92 @@ const UserProfileForm = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setTempUser(user ? { ...user } : null);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpInput) {
+      alert("Vui lòng nhập mã OTP");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      if (!token) throw new Error("Token không tồn tại!");
+
+      // Chỉ gửi OTP, không gửi updateData vì đã được lưu trong Redis từ bước trước
+      const updatePayload = {
+        otp: otpInput
+      };
+
+      // Log dữ liệu gửi lên để debug
+      console.log("Dữ liệu gửi lên update (OTP):", updatePayload);
+
+      const res = await fetch(`${API_URL}/auth/profile/update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatePayload),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (res.status === 400) {
+          throw new Error(errorData.message || "Mã OTP không hợp lệ hoặc đã hết hạn");
+        } else if (res.status === 401) {
+          localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+          throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        } else {
+          throw new Error(errorData.message || "Lỗi khi xác thực OTP");
+        }
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setIsEditing(false);
+        setShowOtpModal(false);
+        setOtpInput("");
+        
+        // Fetch updated user data
+        const userRes = await fetch(`${API_URL}/auth/profile`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        });
+
+        if (!userRes.ok) {
+          throw new Error("Không thể cập nhật thông tin người dùng");
+        }
+
+        const userData = await userRes.json();
+        if (userData.success) {
+          const updatedUserData = {
+            ...userData.data,
+            address: {
+              street: userData.data.address?.street || "",
+              province: userData.data.address?.province || "",
+              district: userData.data.address?.district || "",
+              ward: userData.data.address?.ward || "",
+              detail: userData.data.address?.detail || "",
+            }
+          };
+          setUser(updatedUserData);
+          setTempUser(updatedUserData);
+        } else {
+          throw new Error(userData.message || "Không thể cập nhật thông tin người dùng");
+        }
+      } else {
+        throw new Error(data.message || "Lỗi khi xác thực OTP");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      alert(error instanceof Error ? error.message : "Lỗi khi xác thực OTP");
+    }
   };
 
   if (loading) return <p>Loading...</p>;
