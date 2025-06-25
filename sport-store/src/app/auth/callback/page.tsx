@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 
-const GoogleAuthCallback: React.FC = () => {
+const GoogleAuthCallbackContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser, checkAuthStatus } = useAuth();
@@ -85,6 +85,21 @@ const GoogleAuthCallback: React.FC = () => {
   }
 
   return null;
+};
+
+const GoogleAuthCallback: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    }>
+      <GoogleAuthCallbackContent />
+    </Suspense>
+  );
 };
 
 export default GoogleAuthCallback; 
