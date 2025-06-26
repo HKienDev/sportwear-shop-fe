@@ -1,0 +1,61 @@
+/* Din Pro Font Family */
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Regular.woff2') format('woff2'),
+       url('/fonts/DINPro-Regular.woff') format('woff'),
+       url('/fonts/DINPro-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Medium.woff2') format('woff2'),
+       url('/fonts/DINPro-Medium.woff') format('woff'),
+       url('/fonts/DINPro-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Bold.woff2') format('woff2'),
+       url('/fonts/DINPro-Bold.woff') format('woff'),
+       url('/fonts/DINPro-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Light.woff2') format('woff2'),
+       url('/fonts/DINPro-Light.woff') format('woff'),
+       url('/fonts/DINPro-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Black.woff2') format('woff2'),
+       url('/fonts/DINPro-Black.woff') format('woff'),
+       url('/fonts/DINPro-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallback fonts */
+@font-face {
+  font-family: 'Din Pro';
+  src: url('/fonts/DINPro-Regular.woff2') format('woff2'),
+       url('/fonts/DINPro-Regular.woff') format('woff'),
+       url('/fonts/DINPro-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+} 

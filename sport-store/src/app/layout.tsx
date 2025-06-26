@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
 import "./globals.css";
+import "./fonts.css";
 import ClientLayout from "@/components/ClientLayout";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-
-const montserrat = Montserrat({ 
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-montserrat"
-});
 
 export const metadata: Metadata = {
   title: "Sport Store",
@@ -26,7 +20,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/vju-logo-main.png" type="image/png" />
       </head>
-      <body className={`${montserrat.variable} font-sans min-h-screen bg-background antialiased`}>
+      <body className="font-din-pro min-h-screen bg-background antialiased">
         <ClientLayout>
           {children}
         </ClientLayout>
