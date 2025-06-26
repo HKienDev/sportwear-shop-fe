@@ -4,6 +4,7 @@ import React, { memo } from "react";
 import { AuthProvider } from "../context/authContext";
 import { CustomerProvider } from "../context/customerContext";
 import { CartProvider } from "../context/cartContext";
+import TokenManager from "../components/TokenManager";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -12,11 +13,13 @@ interface ProvidersProps {
 const Providers = memo(function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
-      <CustomerProvider>
-        <CartProvider>
-          {children}
-        </CartProvider>
-      </CustomerProvider>
+      <TokenManager>
+        <CustomerProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </CustomerProvider>
+      </TokenManager>
     </AuthProvider>
   );
 });

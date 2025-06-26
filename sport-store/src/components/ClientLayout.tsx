@@ -3,6 +3,7 @@
 import { Providers } from "../app/providers";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
+import SessionTimeoutWarning from "./SessionTimeoutWarning";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <Providers>
       {children}
       <ToasterWrapper />
+      <SessionTimeoutWarning />
     </Providers>
   );
 } 

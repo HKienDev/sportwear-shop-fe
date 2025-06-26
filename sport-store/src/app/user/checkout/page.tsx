@@ -52,8 +52,6 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [totalAfterDiscount, setTotalAfterDiscount] = useState(0);
   const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
   const [originalTotal, setOriginalTotal] = useState(0);
   const router = useRouter();
@@ -211,6 +209,35 @@ export default function Checkout() {
         return;
       }
 
+      // Nếu phương thức thanh toán là Stripe, không tạo đơn hàng ngay
+      if (selectedPaymentMethod === PaymentMethod.STRIPE) {
+        // Lưu thông tin đơn hàng để tạo sau khi thanh toán thành công
+        const orderData = {
+          items: cart?.items.map(item => ({
+            sku: item.product.sku,
+            quantity: item.quantity,
+            color: item.color || 'Mặc định',
+            size: item.size || 'Mặc định'
+          })),
+          shippingAddress,
+          shippingMethod: selectedShippingMethod,
+          paymentMethod: selectedPaymentMethod,
+          couponCode: appliedCoupon?.code || '',
+          notes: '',
+          status: OrderStatus.PENDING
+        };
+
+        // Lưu orderData vào localStorage để sử dụng sau khi thanh toán thành công
+        localStorage.setItem('pendingOrderData', JSON.stringify(orderData));
+        
+        // Mở modal thanh toán Stripe
+        setIsStripeModalOpen(true);
+        setAmount(total);
+        toast.info('Vui lòng hoàn thành thanh toán để xác nhận đơn hàng');
+        return;
+      }
+
+      // Nếu là COD, tạo đơn hàng ngay
       const orderData = {
         items: cart?.items.map(item => ({
           sku: item.product.sku,
@@ -231,29 +258,11 @@ export default function Checkout() {
       const response = await api.post('/orders', orderData);
 
       if (response.data.success) {
-        // Xóa giỏ hàng sau khi đặt hàng thành công
+        const { orderId } = response.data.data;
+        // Nếu là COD, xóa giỏ hàng và chuyển hướng đến trang invoice
         await cartService.clearCart();
-        
         toast.success('Đặt hàng thành công!');
-        const { orderId, requiresPayment, amount } = response.data.data;
-        setCreatedOrderId(orderId);
-        
-        // Nếu phương thức thanh toán là Stripe
-        if (requiresPayment) {
-          setIsStripeModalOpen(true);
-          setAmount(amount);
-          try {
-            const stripeResponse = await handleStripePayment(orderId, amount);
-            if (stripeResponse.clientSecret) {
-              setClientSecret(stripeResponse.clientSecret);
-            }
-          } catch (stripeError: any) {
-            toast.error(stripeError.message || 'Không thể khởi tạo thanh toán');
-          }
-        } else {
-          // Nếu là COD, chuyển hướng đến trang invoice
-          router.push(`/user/invoice/${orderId}`);
-        }
+        router.push(`/user/invoice/${orderId}`);
       } else {
         toast.error(response.data.message || 'Không thể tạo đơn hàng');
       }
@@ -276,10 +285,44 @@ export default function Checkout() {
     }
   };
 
-  const handlePaymentSuccess = () => {
-    setIsStripeModalOpen(false);
-    if (createdOrderId) {
-      router.push(`/user/invoice/${createdOrderId}`);
+  const handlePaymentSuccess = async () => {
+    try {
+      // Lấy thông tin đơn hàng từ localStorage
+      const pendingOrderData = localStorage.getItem('pendingOrderData');
+      
+      if (!pendingOrderData) {
+        toast.error('Không tìm thấy thông tin đơn hàng');
+        setIsStripeModalOpen(false);
+        return;
+      }
+
+      const orderData = JSON.parse(pendingOrderData);
+      
+      // Tạo đơn hàng sau khi thanh toán thành công
+      console.log('📦 Tạo đơn hàng sau thanh toán thành công:', orderData);
+      
+      const response = await api.post('/orders', orderData);
+
+      if (response.data.success) {
+        const { orderId } = response.data.data;
+        
+        // Xóa thông tin đơn hàng tạm thời
+        localStorage.removeItem('pendingOrderData');
+        
+        // Xóa giỏ hàng sau khi thanh toán thành công
+        await cartService.clearCart();
+        toast.success('Thanh toán và đặt hàng thành công!');
+        
+        setIsStripeModalOpen(false);
+        router.push(`/user/invoice/${orderId}`);
+      } else {
+        toast.error(response.data.message || 'Không thể tạo đơn hàng sau thanh toán');
+        setIsStripeModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Error creating order after payment:', error);
+      toast.error('Thanh toán thành công nhưng không thể tạo đơn hàng. Vui lòng liên hệ hỗ trợ.');
+      setIsStripeModalOpen(false);
     }
   };
 
@@ -387,11 +430,10 @@ export default function Checkout() {
         </div>
       </div>
       
-      {createdOrderId && (
+      {isStripeModalOpen && (
         <CheckoutStripePayment
           isOpen={isStripeModalOpen}
           onClose={() => setIsStripeModalOpen(false)}
-          orderId={createdOrderId}
           amount={total}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}

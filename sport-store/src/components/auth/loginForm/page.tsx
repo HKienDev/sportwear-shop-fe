@@ -34,15 +34,27 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
     }
 
     try {
+      console.log('🚀 Login form - Starting login process...');
       const result = await login(email, password);
       
+      console.log('📋 Login form - Login result:', result);
+      
       if (result.success) {
+        console.log('✅ Login form - Login successful, redirecting to /user');
         toast.success(result.message);
-        router.push('/user');
+        
+        // Thêm delay nhỏ để đảm bảo state được cập nhật
+        setTimeout(() => {
+          console.log('🔄 Login form - Executing redirect to /user');
+          router.push('/user');
+        }, 100);
       } else {
+        console.log('❌ Login form - Login failed:', result.message);
         toast.error(result.message);
       }
     } catch (error) {
+      console.error('💥 Login form - Login error:', error);
+      
       // Xử lý lỗi Axios
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string; errors?: ErrorField[] } } };

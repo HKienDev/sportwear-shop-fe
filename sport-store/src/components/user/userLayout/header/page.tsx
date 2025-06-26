@@ -52,10 +52,14 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [mounted, setMounted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -68,8 +72,6 @@ const Header = () => {
 
     const fetchData = async () => {
       try {
-        if (typeof window === "undefined") return;
-
         // Fetch categories
         const categoriesUrl = `${API_URL}/categories`;
         
@@ -97,12 +99,14 @@ const Header = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    fetchData();
+    // Only fetch on client side
+    if (typeof window !== 'undefined') {
+      fetchData();
+    }
+
     return () => {
       isMounted = false;
     };
@@ -174,8 +178,51 @@ const Header = () => {
   }, []);
 
   // Không hiển thị gì khi đang loading
-  if (isLoading) {
-    return null;
+  if (!mounted) {
+    return (
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-2">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <a href="tel:+8434567890" className="flex items-center text-sm">
+                  <Phone className="w-4 h-4 mr-2" />
+                  <span>Hotline: 0362 195 258</span>
+                </a>
+                <a href="mailto:support@vjusport.com" className="flex items-center text-sm">
+                  <Mail className="w-4 h-4 mr-2" />
+                  <span>support@sportstore.com</span>
+                </a>
+              </div>
+              <div className="flex items-center space-x-4">
+                <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <span>Hệ thống cửa hàng</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gray-200 rounded"></div>
+              <div className="flex flex-col">
+                <div className="h-6 w-32 bg-gray-200 rounded"></div>
+                <div className="h-3 w-24 bg-gray-200 rounded mt-1"></div>
+              </div>
+            </div>
+            <div className="flex-1 max-w-2xl mx-8">
+              <div className="h-10 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="h-8 w-8 bg-gray-200 rounded"></div>
+              <div className="h-8 w-8 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
   }
 
   return (

@@ -36,12 +36,19 @@ const HomePage = () => {
   }, [user, checkAuthStatus]);
 
   useEffect(() => {
+    console.log('👤 User page - User state:', {
+      hasUser: !!user,
+      userRole: user?.role,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+    
     if (
       user &&
       user.role === "admin" &&
       typeof window !== "undefined" &&
       window.location.pathname === "/user"
     ) {
+      console.log('🔄 User page - Admin user detected, redirecting to admin dashboard');
       router.replace("/admin/dashboard");
     }
   }, [user, router]);

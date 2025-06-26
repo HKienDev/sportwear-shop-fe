@@ -12,35 +12,23 @@ const AuthButtons = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname.startsWith("/auth");
-  const [isChecking, setIsChecking] = useState(true);
 
   // Kiểm tra trạng thái xác thực khi component mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        setIsChecking(true);
-        
         // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
         if (getJustLoggedOut()) {
-          console.log("🚫 Just logged out, skipping auth check in AuthButtons");
-          setIsChecking(false);
           return;
         }
         
         await checkAuthStatus();
       } catch (error) {
         console.error("❌ Error checking auth status:", error);
-      } finally {
-        setIsChecking(false);
       }
     };
     checkAuth();
   }, [checkAuthStatus]);
-
-  // Không hiển thị gì khi đang kiểm tra
-  if (isChecking) {
-    return null;
-  }
 
   // Không hiển thị nút khi đã đăng nhập hoặc đang ở trang auth
   if (isAuthPage || isAuthenticated) {

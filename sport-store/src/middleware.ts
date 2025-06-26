@@ -70,10 +70,27 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Kiểm tra các route cần đăng nhập
-    if (pathname.startsWith('/profile') || pathname.startsWith('/orders')) {
+    // Kiểm tra các route cần đăng nhập (bao gồm /user)
+    if (pathname.startsWith('/user') || pathname.startsWith('/profile') || pathname.startsWith('/orders')) {
+        console.log('🔍 Middleware - Checking auth for protected route:', pathname);
+        
         if (!accessToken || !userCookie) {
             console.log("❌ Middleware - No access token or user cookie found, redirecting to login");
+            return NextResponse.redirect(new URL('/auth/login', request.url));
+        }
+
+        try {
+            const user = JSON.parse(decodeURIComponent(userCookie));
+            
+            // Kiểm tra trạng thái xác thực
+            if (user.authStatus !== AuthStatus.VERIFIED) {
+                console.log('❌ Middleware - User not verified, redirecting to login');
+                return NextResponse.redirect(new URL('/auth/login', request.url));
+            }
+
+            console.log('✅ Middleware - User authenticated for protected route');
+        } catch (error) {
+            console.log("❌ Middleware - Error parsing user cookie for protected route:", error);
             return NextResponse.redirect(new URL('/auth/login', request.url));
         }
     }

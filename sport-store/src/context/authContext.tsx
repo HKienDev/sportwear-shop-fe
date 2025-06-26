@@ -28,6 +28,7 @@ import {
     updateUser as updateUserService
 } from '@/services/authService';
 import { AxiosError } from 'axios';
+import sessionManager from '@/utils/sessionManager';
 
 // Constants
 // const CHECK_INTERVAL = 5000; // 5 seconds
@@ -195,6 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isAuthenticatingRef.current = true;
             setLoading(true);
 
+            console.log('🔐 Auth context - Starting login request...');
             const response = await api.post("/auth/login", { email, password });
 
             if (!response.data) {
@@ -213,15 +215,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return { success: false, message: "Dữ liệu đăng nhập không hợp lệ" };
             }
 
+            console.log('✅ Auth context - Login response received:', {
+                hasAccessToken: !!accessToken,
+                hasRefreshToken: !!refreshToken,
+                hasUser: !!user,
+                userRole: user.role
+            });
+
             // Lưu token
             setToken(accessToken, 'access');
             setToken(refreshToken, 'refresh');
+            
+            // Lưu user data
+            setUserData(user);
+            
+            console.log('✅ Tokens saved - Access:', !!accessToken, 'Refresh:', !!refreshToken);
+            console.log('✅ Cookie name:', TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
+            console.log('✅ User data saved:', {
+                hasUser: !!user,
+                userRole: user.role,
+                userEmail: user.email
+            });
 
             // Cập nhật header cho các request tiếp theo
             api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
             // Cập nhật state ngay lập tức
+            console.log('🔄 Auth context - Updating auth state...');
             updateAuthState(user, true);
+            
+            console.log('✅ Auth context - Auth state updated:', {
+                user: !!user,
+                isAuthenticated: true,
+                userRole: user.role
+            });
 
             return { 
                 success: true, 
@@ -229,6 +256,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 data: { user, accessToken, refreshToken }
             };
         } catch (error) {
+            console.error('❌ Auth context - Login error:', error);
             setLoading(false);
             isAuthenticatingRef.current = false;
             return { 
@@ -262,6 +290,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Set flag để tránh redirect ngay sau logout
             setJustLoggedOut();
             
+            // Clear session manager
+            sessionManager.clearSession();
+            
             // Xóa user data ngay lập tức
             clearUserData();
             
@@ -270,10 +301,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             
-            // Xóa tokens từ cookies
-            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
-            document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
-            document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+            // Xóa tokens từ cookies với đúng tên
+            document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+            document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
             
             // Xóa Authorization header
             delete api.defaults.headers.common['Authorization'];

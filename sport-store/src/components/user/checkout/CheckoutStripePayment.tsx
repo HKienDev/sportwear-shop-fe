@@ -1,9 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import type { Appearance } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import StripePaymentForm from './StripePaymentForm';
 import { toast } from 'sonner';
@@ -11,7 +8,6 @@ import { toast } from 'sonner';
 interface CheckoutStripePaymentProps {
   isOpen: boolean;
   onClose: () => void;
-  orderId: string;
   amount: number;
   onPaymentSuccess?: () => void;
   onPaymentError?: (error: string) => void;
@@ -20,7 +16,6 @@ interface CheckoutStripePaymentProps {
 export default function CheckoutStripePayment({
   isOpen,
   onClose,
-  orderId,
   amount,
   onPaymentSuccess,
   onPaymentError
@@ -28,14 +23,15 @@ export default function CheckoutStripePayment({
   const [clientSecret, setClientSecret] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const requestInProgress = useRef(false);
   const retryCount = useRef(0);
   const maxRetries = 3;
 
-  const createPaymentIntent = async (retryCount = 0) => {
+  const createPaymentIntent = useCallback(async (retryCount = 0) => {
     try {
       setIsLoading(true);
-      console.log('Creating payment intent for order:', orderId);
+      console.log('Creating payment intent for amount:', amount);
 
       if (requestInProgress.current) {
         console.log('Request already in progress, waiting...');
@@ -45,7 +41,7 @@ export default function CheckoutStripePayment({
       requestInProgress.current = true;
 
       const response = await api.post('/stripe/create-payment-intent', {
-        orderId
+        amount: amount
       });
 
       if (response.data.success) {
@@ -53,11 +49,14 @@ export default function CheckoutStripePayment({
         const { clientSecret } = response.data;
         setClientSecret(clientSecret);
         setError('');
+        setShowPaymentForm(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating payment intent:', error);
       
-      const errorMessage = error.response?.data?.message || error.message;
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred';
       
       if (errorMessage.includes('payment intent đang xử lý')) {
         toast.error('Đơn hàng đang được xử lý, vui lòng đợi trong giây lát');
@@ -77,30 +76,7 @@ export default function CheckoutStripePayment({
       setIsLoading(false);
       requestInProgress.current = false;
     }
-  };
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    if (isOpen && orderId && !clientSecret && !requestInProgress.current) {
-      timeoutId = setTimeout(() => {
-        createPaymentIntent();
-      }, 500);
-    }
-
-    if (!isOpen) {
-      setClientSecret('');
-      setError('');
-      requestInProgress.current = false;
-      retryCount.current = 0;
-    }
-
-    return () => {
-      clearTimeout(timeoutId);
-      requestInProgress.current = false;
-      retryCount.current = 0;
-    };
-  }, [isOpen, orderId]);
+  }, [amount, maxRetries]);
 
   const handlePaymentSuccess = useCallback(() => {
     onPaymentSuccess?.();
@@ -110,52 +86,27 @@ export default function CheckoutStripePayment({
   const handleRetry = useCallback(() => {
     setClientSecret('');
     setError('');
+    setShowPaymentForm(false);
     requestInProgress.current = false;
     retryCount.current = 0;
     createPaymentIntent();
-  }, []);
+  }, [createPaymentIntent]);
+
+  const handleClose = useCallback(() => {
+    setClientSecret('');
+    setError('');
+    setShowPaymentForm(false);
+    setIsLoading(false);
+    requestInProgress.current = false;
+    retryCount.current = 0;
+    onClose();
+  }, [onClose]);
+
+  const handleStartPayment = useCallback(() => {
+    createPaymentIntent();
+  }, [createPaymentIntent]);
 
   if (!isOpen) return null;
-
-  const appearance: Appearance = {
-    theme: 'stripe',
-    variables: {
-      colorPrimary: '#0570de',
-      colorBackground: '#ffffff',
-      colorText: '#30313d',
-      colorDanger: '#df1b41',
-      fontFamily: 'system-ui, sans-serif',
-      spacingUnit: '4px',
-      borderRadius: '4px',
-    },
-    rules: {
-      '.Input': {
-        border: '1px solid #e6e6e6',
-        boxShadow: 'none',
-        fontSize: '16px'
-      },
-      '.Input:focus': {
-        border: '1px solid #0570de',
-        boxShadow: '0 1px 3px 0 #cfd7df'
-      },
-      '.Tab': {
-        display: 'none'
-      },
-      '.Tab--selected': {
-        display: 'block'
-      },
-      '.Label': {
-        fontWeight: '500'
-      }
-    }
-  };
-
-  const options = {
-    clientSecret,
-    appearance,
-    loader: 'auto' as const,
-    payment_method_types: ['card'] as const
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -164,7 +115,7 @@ export default function CheckoutStripePayment({
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Thanh toán bằng thẻ</h2>
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-500 hover:text-gray-700"
             >
               ✕
@@ -187,7 +138,7 @@ export default function CheckoutStripePayment({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               <span className="ml-2">Đang tạo phiên thanh toán{retryCount.current > 0 ? ` (Lần ${retryCount.current})` : ''}...</span>
             </div>
-          ) : clientSecret ? (
+          ) : showPaymentForm && clientSecret ? (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Số tiền thanh toán:</p>
@@ -204,8 +155,21 @@ export default function CheckoutStripePayment({
               />
             </div>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-500">Đang khởi tạo...</p>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Số tiền thanh toán:</p>
+                <p className="text-lg font-semibold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)}</p>
+              </div>
+              <div className="text-center py-4">
+                <p className="text-gray-600 mb-4">Nhấn nút bên dưới để bắt đầu thanh toán</p>
+                <button
+                  onClick={handleStartPayment}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Đang xử lý...' : 'Bắt đầu thanh toán'}
+                </button>
+              </div>
             </div>
           )}
         </div>

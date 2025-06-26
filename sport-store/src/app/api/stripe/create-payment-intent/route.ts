@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { API_URL } from "@/utils/api";
+import { TOKEN_CONFIG } from "@/config/token";
 
 export async function POST(request: Request) {
   try {
     const { orderId, amount } = await request.json();
     
-    if (!orderId || !amount) {
+    if (!amount) {
       return NextResponse.json(
-        { success: false, message: 'Thiếu thông tin đơn hàng hoặc số tiền' },
+        { success: false, message: 'Thiếu thông tin số tiền' },
         { status: 400 }
       );
     }
 
     const cookieStore = await cookies();
-    const token = await cookieStore.get('accessToken')?.value;
+    const token = await cookieStore.get(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME)?.value;
+    
+    console.log('Cookie name:', TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
+    console.log('Token found:', !!token);
+    console.log('Token preview:', token ? `${token.substring(0, 20)}...` : 'null');
 
     if (!token) {
       return NextResponse.json(
@@ -23,13 +28,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Nếu có orderId, gửi cả orderId và amount
+    // Nếu không có orderId, chỉ gửi amount
+    const requestBody = orderId ? { orderId, amount } : { amount };
+
     const response = await fetch(`${API_URL}/stripe/create-payment-intent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ orderId, amount })
+      body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { getToken } from '@/config/token';
 import InvoiceHeader from '@/components/user/invoice/InvoiceHeader';
@@ -10,8 +10,10 @@ import PaymentSummary from '@/components/user/invoice/PaymentSummary';
 import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
 import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
+import CancelOrderButton from '@/components/user/invoice/CancelOrderButton';
 import { PaymentMethod } from '@/types/order';
 import { API_URL } from "@/utils/api";
+import { toast } from 'sonner';
 
 interface Product {
   _id: string;
@@ -119,6 +121,7 @@ interface ProcessedProduct {
 
 export default function InvoicePage() {
   const params = useParams();
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +196,12 @@ export default function InvoicePage() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
+  const handleOrderCancelled = () => {
+    toast.success('Đơn hàng đã được hủy thành công');
+    // Refresh the page to show updated status
+    window.location.reload();
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">
       <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
@@ -238,6 +247,16 @@ export default function InvoicePage() {
                 <div className="font-bold text-lg">#{order.shortId}</div>
                 <div className="text-sm mt-1 text-red-100">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
               </div>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex justify-end mt-4 gap-3">
+              <CancelOrderButton
+                orderId={order._id}
+                orderStatus={order.status}
+                paymentStatus={order.paymentStatus}
+                onOrderCancelled={handleOrderCancelled}
+              />
             </div>
           </div>
           

@@ -13,25 +13,19 @@ const UserMenu = () => {
   const { user, logout, isAuthenticated, checkAuthStatus } = useAuth();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        setIsLoading(true);
-        
         // Kiểm tra flag justLoggedOut
         if (getJustLoggedOut()) {
-          setIsLoading(false);
           return;
         }
         
         await checkAuthStatus();
       } catch (error) {
         console.error('Error initializing auth:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -59,14 +53,8 @@ const UserMenu = () => {
     }
   }, [user, isAuthenticated]);
 
-  // Không hiển thị gì khi đang loading
-  if (isLoading) {
-    return null;
-  }
-
   // Nếu không có user hoặc chưa xác thực, không hiển thị menu
   if (!user || !isAuthenticated) {
-    console.log("❌ UserMenu - No user or not authenticated");
     return null;
   }
 
