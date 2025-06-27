@@ -31,13 +31,19 @@ export default function OrderListPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await api.get('/orders/admin');
+      const response = await fetch('/api/orders/admin');
       
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Không thể lấy danh sách đơn hàng");
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
       }
 
-      setOrders(response.data.data);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || "Không thể lấy danh sách đơn hàng");
+      }
+
+      setOrders(data.data);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đơn hàng:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi lấy danh sách đơn hàng");

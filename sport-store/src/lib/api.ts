@@ -576,7 +576,11 @@ const apiClient = {
             api.delete(`/orders/${id}`),
         
         getByPhone: (phone: string): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
-            api.get(`/orders/by-phone`, { params: { phone } })
+            api.get(`/orders/by-phone`, { params: { phone } }),
+        
+        // Admin-specific methods
+        getAllAdmin: (params?: OrderQueryParams): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
+            api.get(`/orders/admin`, { params })
     },
 
     // Upload

@@ -1,15 +1,13 @@
-
-
 export const TOKEN_CONFIG = {
     ACCESS_TOKEN: {
-        COOKIE_NAME: 'access_token',
+        COOKIE_NAME: process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'accessToken',
         STORAGE_KEY: 'access_token',
         HEADER_KEY: 'Authorization',
         PREFIX: 'Bearer',
         EXPIRY: 15 * 60 * 1000, // 15 minutes in milliseconds
     },
     REFRESH_TOKEN: {
-        COOKIE_NAME: 'refresh_token',
+        COOKIE_NAME: process.env.NEXT_PUBLIC_REFRESH_COOKIE_NAME || 'refreshToken',
         STORAGE_KEY: 'refresh_token',
         EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     },
@@ -19,8 +17,8 @@ export const TOKEN_CONFIG = {
     },
     COOKIE_OPTIONS: {
         PATH: '/',
-        SECURE: process.env.NODE_ENV === 'production',
-        SAME_SITE: 'lax' as const,
+        SECURE: process.env.NEXT_PUBLIC_COOKIE_SECURE === 'true',
+        SAME_SITE: (process.env.NEXT_PUBLIC_COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
         HTTP_ONLY: false, // Cho phép JavaScript truy cập để refresh token
     },
 } as const;
