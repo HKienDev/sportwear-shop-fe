@@ -13,7 +13,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        'din-pro': ["'Din Pro'", "ui-sans-serif", "system-ui", "sans-serif"],
+        'barlow': ["'Barlow'", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",

@@ -20,7 +20,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/vju-logo-main.png" type="image/png" />
       </head>
-      <body className="font-din-pro min-h-screen bg-background antialiased">
+      <body className="font-barlow min-h-screen bg-background antialiased">
         <ClientLayout>
           {children}
         </ClientLayout>

@@ -1,44 +1,24 @@
-# Font Din Pro Setup
+# Font Barlow Setup
 
-## Cài đặt font Din Pro
+## Cài đặt font Barlow (Google Fonts)
 
-### Bước 1: Tải font files
-Tải các file font Din Pro và đặt vào thư mục `public/fonts/`:
+### Bước 1: Font đã được cấu hình
+Font Barlow được load từ Google Fonts và đã được cấu hình sẵn:
 
-```
-public/fonts/
-├── DINPro-Regular.woff2
-├── DINPro-Regular.woff
-├── DINPro-Regular.ttf
-├── DINPro-Medium.woff2
-├── DINPro-Medium.woff
-├── DINPro-Medium.ttf
-├── DINPro-Bold.woff2
-├── DINPro-Bold.woff
-├── DINPro-Bold.ttf
-├── DINPro-Light.woff2
-├── DINPro-Light.woff
-├── DINPro-Light.ttf
-├── DINPro-Black.woff2
-├── DINPro-Black.woff
-└── DINPro-Black.ttf
-```
-
-### Bước 2: Font đã được cấu hình
-- ✅ `src/app/fonts.css` - Định nghĩa font faces
+- ✅ `src/app/fonts.css` - Import Google Fonts và định nghĩa font faces
 - ✅ `src/app/layout.tsx` - Import font CSS
 - ✅ `src/app/globals.css` - CSS variables
 - ✅ `tailwind.config.ts` - Tailwind font family
 
-### Bước 3: Sử dụng font
-Font Din Pro sẽ được áp dụng tự động cho toàn bộ website. Bạn cũng có thể sử dụng class Tailwind:
+### Bước 2: Sử dụng font
+Font Barlow sẽ được áp dụng tự động cho toàn bộ website. Bạn cũng có thể sử dụng class Tailwind:
 
 ```html
-<!-- Sử dụng font mặc định (Din Pro) -->
-<div class="font-sans">Text with Din Pro</div>
+<!-- Sử dụng font mặc định (Barlow) -->
+<div class="font-sans">Text with Barlow</div>
 
-<!-- Sử dụng font Din Pro trực tiếp -->
-<div class="font-din-pro">Text with Din Pro</div>
+<!-- Sử dụng font Barlow trực tiếp -->
+<div class="font-barlow">Text with Barlow</div>
 
 <!-- Các weight khác nhau -->
 <div class="font-light">Light text</div>
@@ -49,6 +29,7 @@ Font Din Pro sẽ được áp dụng tự động cho toàn bộ website. Bạn
 ```
 
 ### Lưu ý
-- Font files cần được tải và đặt vào thư mục `public/fonts/`
-- Nếu không có font files, website sẽ fallback về system fonts
-- Font được cấu hình với `font-display: swap` để tối ưu performance 
+- Font Barlow được load từ Google Fonts, không cần file font local
+- Font được cấu hình với `font-display: swap` để tối ưu performance
+- Nếu không thể load từ Google Fonts, website sẽ fallback về system fonts
+- Font hỗ trợ đầy đủ các weight từ 100-900 và italic styles 

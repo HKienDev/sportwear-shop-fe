@@ -1,61 +1,43 @@
-/* Din Pro Font Family */
+/* Google Fonts - Barlow */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* Barlow Font Family - Fallback definitions */
 @font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Regular.woff2') format('woff2'),
-       url('/fonts/DINPro-Regular.woff') format('woff'),
-       url('/fonts/DINPro-Regular.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('https://fonts.gstatic.com/s/barlow/v12/7cHpv4kjgoGqM7E_DMs5.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Medium.woff2') format('woff2'),
-       url('/fonts/DINPro-Medium.woff') format('woff'),
-       url('/fonts/DINPro-Medium.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('https://fonts.gstatic.com/s/barlow/v12/7cHpv4kjgoGqM7E_DMs5.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Bold.woff2') format('woff2'),
-       url('/fonts/DINPro-Bold.woff') format('woff'),
-       url('/fonts/DINPro-Bold.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('https://fonts.gstatic.com/s/barlow/v12/7cHpv4kjgoGqM7E_DMs5.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Light.woff2') format('woff2'),
-       url('/fonts/DINPro-Light.woff') format('woff'),
-       url('/fonts/DINPro-Light.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('https://fonts.gstatic.com/s/barlow/v12/7cHpv4kjgoGqM7E_DMs5.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Black.woff2') format('woff2'),
-       url('/fonts/DINPro-Black.woff') format('woff'),
-       url('/fonts/DINPro-Black.ttf') format('truetype');
+  font-family: 'Barlow';
+  src: url('https://fonts.gstatic.com/s/barlow/v12/7cHpv4kjgoGqM7E_DMs5.woff2') format('woff2');
   font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Fallback fonts */
-@font-face {
-  font-family: 'Din Pro';
-  src: url('/fonts/DINPro-Regular.woff2') format('woff2'),
-       url('/fonts/DINPro-Regular.woff') format('woff'),
-       url('/fonts/DINPro-Regular.ttf') format('truetype');
-  font-weight: normal;
   font-style: normal;
   font-display: swap;
 } 
