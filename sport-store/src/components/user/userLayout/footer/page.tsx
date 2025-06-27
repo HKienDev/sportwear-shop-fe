@@ -99,7 +99,7 @@ const Footer = ({ className = "" }: FooterProps) => (
             </li>
             <li className="flex items-center text-gray-600">
               <Mail size={20} style={{ width: 20, height: 20 }} className="mr-2" />
-              <span>info@vjusport.com</span>
+              <span>notify.vjusport@gmail.com</span>
             </li>
             <li className="flex items-center text-gray-600">
               <MapPin size={20} style={{ width: 20, height: 20 }} className="mr-2" />
@@ -134,7 +134,7 @@ const Footer = ({ className = "" }: FooterProps) => (
       <div className="pt-6 border-t border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500">
-            © 2024 VJU SPORT. All rights reserved.
+            © 2025 VJU SPORT. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-gray-500 hover:text-purple-600 transition-colors">

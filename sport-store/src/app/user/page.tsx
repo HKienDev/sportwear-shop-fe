@@ -158,7 +158,8 @@ const HomePage = () => {
 
               {/* Main Title */}
               <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold mb-3">
-                Giảm Giá Lên Đến{' '}
+                Giảm Giá Lên Đến
+                <span className="text-[#1CFB8C] align-middle">&nbsp;</span>
                 <span className="relative inline-block">
                   <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-600">50%</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20 blur-xl"></span>

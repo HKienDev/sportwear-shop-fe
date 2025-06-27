@@ -13,29 +13,34 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const { user, checkAuthStatus } = useAuth();
+    const { user, loading, checkAuthStatus } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     useEffect(() => {
         const verifyAuth = async () => {
+            console.log('🔍 AdminLayout - Checking auth status...');
             await checkAuthStatus();
-            if (!user || user.role !== 'admin') {
-                router.replace(ROUTES.LOGIN);
-                return;
-            }
-            setIsLoading(false);
+            
+            // Đợi một chút để đảm bảo auth state đã được cập nhật
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 500);
         };
+        
         verifyAuth();
-    }, [checkAuthStatus, router, user]);
+    }, [checkAuthStatus]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== 'admin')) {
+        // Chỉ redirect khi không còn loading và user không phải admin
+        if (!isLoading && !loading && (!user || user.role !== 'admin')) {
+            console.log('❌ AdminLayout - User not admin, redirecting to login');
             router.replace(ROUTES.LOGIN);
         }
-    }, [isLoading, user, router]);
+    }, [isLoading, loading, user, router]);
 
-    if (isLoading) {
+    // Hiển thị loading khi đang kiểm tra auth
+    if (isLoading || loading) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="h-[clamp(4rem,8vw,8rem)] w-[clamp(4rem,8vw,8rem)] animate-spin rounded-full border-b-2 border-t-2 border-gray-900"></div>
@@ -43,6 +48,7 @@ export default function AdminLayout({
         );
     }
 
+    // Không hiển thị gì nếu user không phải admin (sẽ redirect)
     if (!user || user.role !== 'admin') {
         return null;
     }
