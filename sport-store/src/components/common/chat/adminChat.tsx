@@ -107,7 +107,25 @@ const useSocketConnection = () => {
   return { socket: socketRef.current, isConnected };
 };
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || "http://localhost:4000";
+const SOCKET_URL = (() => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  if (!apiUrl) {
+    return "http://localhost:4000";
+  }
+  
+  // Loại bỏ /api và chuyển đổi protocol
+  const baseUrl = apiUrl.replace(/\/api$/, '');
+  
+  // Chuyển đổi http/https thành ws/wss
+  if (baseUrl.startsWith('https://')) {
+    return baseUrl.replace('https://', 'wss://');
+  } else if (baseUrl.startsWith('http://')) {
+    return baseUrl.replace('http://', 'ws://');
+  }
+  
+  return baseUrl;
+})();
 
 export default function AdminChat() {
   const [message, setMessage] = useState("");

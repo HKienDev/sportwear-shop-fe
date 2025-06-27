@@ -4,8 +4,35 @@ import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { MessageCircle, X, Send, Clock } from "lucide-react";
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || "http://localhost:4000";
-const socket = io(SOCKET_URL);
+// Tạo URL WebSocket dựa trên môi trường
+const getSocketUrl = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  if (!apiUrl) {
+    return "http://localhost:4000";
+  }
+  
+  // Loại bỏ /api và chuyển đổi protocol
+  const baseUrl = apiUrl.replace(/\/api$/, '');
+  
+  // Chuyển đổi http/https thành ws/wss
+  if (baseUrl.startsWith('https://')) {
+    return baseUrl.replace('https://', 'wss://');
+  } else if (baseUrl.startsWith('http://')) {
+    return baseUrl.replace('http://', 'ws://');
+  }
+  
+  return baseUrl;
+};
+
+const SOCKET_URL = getSocketUrl();
+const socket = io(SOCKET_URL, {
+  transports: ['websocket', 'polling'],
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 export default function UserChat() {
   const [message, setMessage] = useState("");
