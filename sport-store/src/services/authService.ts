@@ -16,7 +16,6 @@ import { setAuthCookies, clearAuthCookies } from '@/utils/cookieUtils';
 import { setAuthStorage, clearAuthStorage } from '@/utils/storageUtils';
 import { TOKEN_CONFIG } from '@/config/token';
 import { AxiosError } from 'axios';
-import axios from 'axios';
 
 interface AuthData {
     accessToken: string;
@@ -347,16 +346,4 @@ function clearAuthData(): void {
     // Clear cookies and localStorage
     clearAuthCookies();
     clearAuthStorage();
-}
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-export const checkAuthStatus = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/auth/check`);
-    return response.data;
-  } catch (error) {
-    console.error('Error checking auth status:', error);
-    return { isAuthenticated: false };
-  }
-}; 
+} 
