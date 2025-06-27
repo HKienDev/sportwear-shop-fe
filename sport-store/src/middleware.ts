@@ -35,7 +35,12 @@ export async function middleware(request: NextRequest) {
         }
 
         try {
-            const user = JSON.parse(decodeURIComponent(userCookie));
+            // Decode user cookie
+            const decodedUserCookie = decodeURIComponent(userCookie);
+            const user = JSON.parse(decodedUserCookie);
+            
+            console.log('👤 Middleware - User role:', user.role);
+            
             if (user.role !== UserRole.ADMIN) {
                 console.log("❌ Middleware - User is not admin");
                 return NextResponse.redirect(new URL('/', request.url));
@@ -80,7 +85,9 @@ export async function middleware(request: NextRequest) {
         }
 
         try {
-            const user = JSON.parse(decodeURIComponent(userCookie));
+            // Decode user cookie
+            const decodedUserCookie = decodeURIComponent(userCookie);
+            const user = JSON.parse(decodedUserCookie);
             
             // Kiểm tra trạng thái xác thực
             if (user.authStatus !== AuthStatus.VERIFIED) {

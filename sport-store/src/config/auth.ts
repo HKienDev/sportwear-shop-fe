@@ -8,7 +8,6 @@ export const AUTH_CONFIG = {
         '/auth/verify-otp',
         '/auth/resend-otp',
         '/',
-        '/user',
         '/products',
         '/categories',
         '/about',
@@ -19,6 +18,7 @@ export const AUTH_CONFIG = {
     ] as const,
     PROTECTED_ROUTES: [
         '/admin',
+        '/user',
         '/profile',
         '/cart',
         '/checkout',

@@ -40,13 +40,22 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
       console.log('📋 Login form - Login result:', result);
       
       if (result.success) {
-        console.log('✅ Login form - Login successful, redirecting to /user');
+        console.log('✅ Login form - Login successful');
         toast.success(result.message);
+        
+        // Kiểm tra role để redirect đúng trang
+        const userRole = result.data?.user?.role;
+        console.log('👤 Login form - User role:', userRole);
         
         // Thêm delay nhỏ để đảm bảo state được cập nhật
         setTimeout(() => {
-          console.log('🔄 Login form - Executing redirect to /user');
-          router.push('/user');
+          if (userRole === 'admin') {
+            console.log('🔄 Login form - Redirecting admin to /admin/dashboard');
+            router.push('/admin/dashboard');
+          } else {
+            console.log('🔄 Login form - Redirecting user to /user');
+            router.push('/user');
+          }
         }, 100);
       } else {
         console.log('❌ Login form - Login failed:', result.message);
