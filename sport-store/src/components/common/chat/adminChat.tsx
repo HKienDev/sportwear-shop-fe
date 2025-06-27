@@ -12,6 +12,8 @@ interface Conversation {
   name: string;
   lastMessage: string;
   unread: number;
+  lastMessageTime: string;
+  userInfo: any;
 }
 
 // Khai báo kiểu dữ liệu cho Message
@@ -150,7 +152,7 @@ export default function AdminChat() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${SOCKET_URL}/api/users`);
+        const response = await fetch('/api/users');
         if (response.ok) {
           const data = await response.json();
           console.log("Raw API response:", data);
@@ -184,6 +186,46 @@ export default function AdminChat() {
 
     fetchUsers();
   }, []);
+
+  // Lấy danh sách cuộc trò chuyện từ API
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch('/api/chat/conversations', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Conversations API response:", data);
+          
+          if (data.success && data.data?.conversations) {
+            const formattedConversations = data.data.conversations.map((conv: any) => ({
+              id: conv.id,
+              name: conv.name,
+              lastMessage: conv.lastMessage,
+              unread: conv.unread,
+              lastMessageTime: conv.lastMessageTime,
+              userInfo: conv.userInfo
+            }));
+            
+            setConversations(formattedConversations);
+            console.log("Formatted conversations:", formattedConversations);
+          }
+        } else {
+          console.error("Failed to fetch conversations:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      }
+    };
+
+    if (isConnected) {
+      fetchConversations();
+    }
+  }, [isConnected]);
 
   // Hàm để lấy thông tin người dùng từ danh sách users
   const getUserInfo = useCallback((userId: string) => {
@@ -362,6 +404,8 @@ export default function AdminChat() {
             name: senderName || "Unknown",
             lastMessage: msg.text,
             unread: 1,
+            lastMessageTime: messageTime,
+            userInfo: msg.userInfo
           };
           
           setConversations((prev) => [...prev, newUser]);
@@ -374,6 +418,7 @@ export default function AdminChat() {
                     ...conv,
                     lastMessage: msg.text,
                     unread: conv.id === selectedUser?.id ? 0 : conv.unread + 1,
+                    lastMessageTime: messageTime
                   }
                 : conv
             )
@@ -713,7 +758,7 @@ export default function AdminChat() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
                           <p className="font-semibold text-gray-800 truncate">{conv.name}</p>
-                          <span className="text-xs text-gray-400">12:42</span>
+                          <span className="text-xs text-gray-400">{conv.lastMessageTime}</span>
                         </div>
                         <p className="text-sm text-gray-500 truncate mt-0.5">{conv.lastMessage}</p>
                       </div>

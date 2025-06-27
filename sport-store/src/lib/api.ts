@@ -617,3 +617,23 @@ const apiClient = {
 
 // Export apiClient làm default export
 export default apiClient;
+
+// Tạo API client với admin token
+export const createAdminApiClient = () => {
+    const adminToken = localStorage.getItem('adminToken');
+    
+    const adminAxiosInstance = axios.create({
+        baseURL: API_URL,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(adminToken && { Authorization: `Bearer ${adminToken}` })
+        },
+        withCredentials: true,
+        timeout: 30000
+    });
+
+    return adminAxiosInstance;
+};
+
+// API client cho admin
+export const adminApiClient = createAdminApiClient();

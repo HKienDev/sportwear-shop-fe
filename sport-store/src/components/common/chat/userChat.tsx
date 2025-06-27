@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { MessageCircle, X, Send, Clock } from "lucide-react";
+import { useAuth } from "@/context/authContext";
 
-// Tạo URL WebSocket dựa trên môi trường
+// Hàm để lấy socket URL
 const getSocketUrl = () => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   
@@ -40,15 +41,16 @@ export default function UserChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   // Xác định danh tính khi kết nối
   useEffect(() => {
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
       
-      // Lấy thông tin người dùng từ localStorage hoặc context
-      const userId = localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 9);
-      const userName = localStorage.getItem("userName") || "User";
+      // Lấy thông tin người dùng từ context hoặc localStorage
+      const userId = user?.id || localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 9);
+      const userName = user?.fullname || localStorage.getItem("userName") || "User";
       
       // Xác định danh tính với server
       socket.emit("identifyUser", { userId, userName, isAdmin: false });
@@ -59,6 +61,13 @@ export default function UserChat() {
       console.log("Identification response:", data);
       if (data.status === 'success' && data.role === 'user') {
         console.log("User successfully identified with socket ID:", data.socketId);
+        // Lưu thông tin user vào localStorage nếu chưa có
+        if (!localStorage.getItem("userId") && data.userId) {
+          localStorage.setItem("userId", data.userId);
+        }
+        if (!localStorage.getItem("userName") && data.userInfo?.name) {
+          localStorage.setItem("userName", data.userInfo.name);
+        }
       }
     });
 
@@ -76,8 +85,9 @@ export default function UserChat() {
       socket.off("disconnect");
       socket.off("connect_error");
     };
-  }, []);
+  }, [user]);
 
+  // Nhận tin nhắn từ admin
   useEffect(() => {
     socket.on("receiveMessage", (msg) => {
       // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
@@ -134,9 +144,9 @@ export default function UserChat() {
       minute: '2-digit' 
     });
     
-    // Get user info from localStorage
-    const userId = localStorage.getItem("userId");
-    const userName = localStorage.getItem("userName") || "User";
+    // Get user info from context or localStorage
+    const userId = user?.id || localStorage.getItem("userId");
+    const userName = user?.fullname || localStorage.getItem("userName") || "User";
     
     socket.emit("sendMessage", { 
       text: message,
@@ -197,6 +207,9 @@ export default function UserChat() {
             <div className="flex items-center">
               <div>
                 <h3 className="font-medium">Chat với Admin</h3>
+                <p className="text-xs text-blue-100">
+                  {user?.fullname || localStorage.getItem("userName") || "User"}
+                </p>
               </div>
             </div>
             <button onClick={toggleChat} className="text-blue-100 hover:text-white">
