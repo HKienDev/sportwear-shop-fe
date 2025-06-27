@@ -17,7 +17,6 @@ import DeliveryInfo from '@/components/user/checkout/DeliveryInfo';
 import CouponSection from '@/components/user/checkout/CouponSection';
 import { ArrowLeft } from 'lucide-react';
 import CheckoutStripePayment from '@/components/user/checkout/CheckoutStripePayment';
-import StripePaymentForm from '@/components/user/checkout/StripePaymentForm';
 
 export default function Checkout() {
   const [cart, setCart] = useState<CartState | null>(null);
@@ -54,6 +53,7 @@ export default function Checkout() {
   const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
   const [amount, setAmount] = useState<number>(0);
   const [originalTotal, setOriginalTotal] = useState(0);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -438,13 +438,6 @@ export default function Checkout() {
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}
         />
-      )}
-      
-      {clientSecret && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-semibold mb-4">Thanh toán đơn hàng</h2>
-          <StripePaymentForm clientSecret={clientSecret} amount={amount} />
-        </div>
       )}
     </div>
   );

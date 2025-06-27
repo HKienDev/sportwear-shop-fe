@@ -98,7 +98,6 @@ export default function PaymentMethodComponent({
         <CheckoutStripePayment
           isOpen={isStripeModalOpen}
           onClose={() => setIsStripeModalOpen(false)}
-          orderId={orderId}
           amount={amount}
           onPaymentSuccess={onPaymentSuccess}
           onPaymentError={onPaymentError}
