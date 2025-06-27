@@ -10,8 +10,9 @@ export const setUserData = (user: AuthUser): void => {
         // Lưu vào localStorage
         localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userJson);
         
-        // Lưu vào cookie (không cần encode vì browser sẽ tự handle)
-        document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userJson}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY}`;
+        // Lưu vào cookie với encoding
+        const encodedUser = encodeURIComponent(userJson);
+        document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodedUser}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY}`;
     } catch (error) {
         console.error("❌ Error setting user data:", error);
     }
@@ -26,7 +27,8 @@ export const getUserData = (): AuthUser | null => {
             const userData = JSON.parse(storageUser);
             if (userData) {
                 // Đồng bộ với cookie
-                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${storageUser}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY}`;
+                const encodedUser = encodeURIComponent(storageUser);
+                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${encodedUser}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY}`;
                 return userData;
             }
         } catch (error) {
@@ -46,10 +48,12 @@ export const getUserData = (): AuthUser | null => {
     
     if (cookieUser && cookieUser !== 'undefined' && cookieUser !== 'null') {
         try {
-            const userData = JSON.parse(cookieUser);
+            // Decode cookie value
+            const decodedUser = decodeURIComponent(cookieUser);
+            const userData = JSON.parse(decodedUser);
             if (userData) {
                 // Đồng bộ với localStorage
-                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, cookieUser);
+                localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, decodedUser);
                 return userData;
             }
         } catch (error) {

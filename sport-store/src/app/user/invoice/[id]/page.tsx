@@ -9,7 +9,6 @@ import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
 import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
-import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import CancelOrderButton from '@/components/user/invoice/CancelOrderButton';
 import { PaymentMethod } from '@/types/order';
 import { API_URL } from "@/utils/api";
@@ -129,7 +128,6 @@ export default function InvoicePage() {
   const [animateItems, setAnimateItems] = useState(false);
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PaymentMethod.COD);
 
   const processOrderItems = useCallback((items: OrderItem[]): ProcessedProduct[] => {
     return items.map(item => ({
@@ -190,10 +188,6 @@ export default function InvoicePage() {
       window.print();
       setIsPrinting(false);
     }, 100);
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
   };
 
   const handleOrderCancelled = () => {
@@ -315,23 +309,6 @@ export default function InvoicePage() {
           </div>
         </div>
       </main>
-
-      {order.paymentStatus !== 'paid' && (
-        <div className="mt-8">
-          {order?.paymentMethod === 'Stripe' && order.paymentStatus === 'pending' && (
-            <PaymentMethodComponent
-              expandedSection={expandedSection}
-              paymentMethod={selectedPaymentMethod}
-              setPaymentMethod={setSelectedPaymentMethod}
-              toggleSection={toggleSection}
-              orderId={order._id}
-              amount={order.totalPrice}
-              onPaymentSuccess={() => window.location.reload()}
-              onPaymentError={(error) => console.error(error)}
-            />
-          )}
-        </div>
-      )}
     </div>
   );
 } 
