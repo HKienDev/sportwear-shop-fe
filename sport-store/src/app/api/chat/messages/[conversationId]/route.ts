@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { conversationId: string } }
+) {
   try {
-    console.log('🔍 Users API called');
+    const { conversationId } = params;
+    console.log('🔍 Chat Messages API called for conversation:', conversationId);
     
     // Lấy token từ header
     const authHeader = request.headers.get('authorization');
@@ -30,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Tạo URL cho backend API
-    const backendUrl = `${apiUrl}/users`;
+    const backendUrl = `${apiUrl}/chat/messages/${conversationId}`;
     console.log('🌐 Backend URL:', backendUrl);
 
     // Gọi backend API
@@ -56,7 +60,7 @@ export async function GET(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { success: false, message: 'Không thể lấy danh sách người dùng' },
+        { success: false, message: 'Không thể lấy tin nhắn' },
         { status: response.status }
       );
     }
@@ -67,7 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('❌ Users API error:', error);
+    console.error('❌ Chat Messages API error:', error);
     return NextResponse.json(
       { success: false, message: 'Lỗi server' },
       { status: 500 }

@@ -619,9 +619,7 @@ const apiClient = {
 export default apiClient;
 
 // Tạo API client với admin token
-export const createAdminApiClient = () => {
-    const adminToken = localStorage.getItem('adminToken');
-    
+export const createAdminApiClient = (adminToken?: string) => {
     const adminAxiosInstance = axios.create({
         baseURL: API_URL,
         headers: {
@@ -635,5 +633,8 @@ export const createAdminApiClient = () => {
     return adminAxiosInstance;
 };
 
-// API client cho admin
+// API client cho admin (client-side)
 export const adminApiClient = createAdminApiClient();
+
+// API client cho admin (server-side)
+export const serverAdminApiClient = createAdminApiClient();

@@ -43,8 +43,8 @@ const nextConfig = {
                             style-src 'self' 'unsafe-inline';
                             img-src 'self' data: https: http:;
                             frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
-                            connect-src 'self' http://localhost:4000 https://sport-store-be-graduation-production.up.railway.app wss://sport-store-be-graduation-production.up.railway.app https://sportwear-shop-be-production.up.railway.app wss://sportwear-shop-be-production.up.railway.app https://api.stripe.com https://provinces.open-api.vn https://api.cloudinary.com;
-                            font-src 'self';
+                            connect-src 'self' http://localhost:4000 ws://localhost:4000 https://sport-store-be-graduation-production.up.railway.app wss://sport-store-be-graduation-production.up.railway.app https://sportwear-shop-be-production.up.railway.app wss://sportwear-shop-be-production.up.railway.app https://api.stripe.com https://provinces.open-api.vn https://api.cloudinary.com;
+                            font-src 'self' data: https: http:;
                             object-src 'none';
                             media-src 'self';
                             worker-src 'self' blob:;

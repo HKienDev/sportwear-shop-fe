@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 import { ROUTES } from '@/config/constants';
 import Sidebar from '@/components/admin/adminLayout/sidebar';
@@ -13,9 +13,16 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
+    const pathname = usePathname();
     const { user, loading, checkAuthStatus } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // Kiểm tra xem có đang ở messages page không
+    const isMessagesPage = pathname === '/admin/messages';
+    
+    console.log('🔍 AdminLayout - Current pathname:', pathname);
+    console.log('🔍 AdminLayout - isMessagesPage:', isMessagesPage);
 
     useEffect(() => {
         const verifyAuth = async () => {

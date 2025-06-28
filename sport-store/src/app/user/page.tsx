@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ShoppingBag, Users, Award } from "lucide-react";
-import Chat from "@/components/common/chat/userChat";
 import ProductCard from "@/components/user/products/productCard/page";
 import { useAuth } from "@/context/authContext";
 import { Product } from "@/types/product";
@@ -311,8 +310,6 @@ const HomePage = () => {
           <p className="text-center text-gray-500">Không có thể loại nào</p>
         )}
       </div>
-
-      <Chat />
 
       {/* About Section - Cải thiện */}
       <div className="w-full bg-gray-50 mt-20">

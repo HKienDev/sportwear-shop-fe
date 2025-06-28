@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Users API called');
+    console.log('🔍 Chat Send Message API called');
     
     // Lấy token từ header
     const authHeader = request.headers.get('authorization');
@@ -19,6 +19,19 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7);
     console.log('🔑 Token extracted:', token ? 'Present' : 'Missing');
 
+    // Lấy body từ request
+    const body = await request.json();
+    console.log('📤 Request body:', body);
+
+    // Validate required fields
+    const { conversationId, message, senderId, senderName } = body;
+    if (!conversationId || !message || !senderId) {
+      return NextResponse.json(
+        { success: false, message: 'ConversationId, message và senderId là bắt buộc' },
+        { status: 400 }
+      );
+    }
+
     // Lấy URL từ environment variable
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
@@ -30,16 +43,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Tạo URL cho backend API
-    const backendUrl = `${apiUrl}/users`;
+    const backendUrl = `${apiUrl}/chat/send`;
     console.log('🌐 Backend URL:', backendUrl);
 
     // Gọi backend API
     const response = await fetch(backendUrl, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        conversationId,
+        message,
+        senderId,
+        senderName: senderName || senderId
+      }),
     });
 
     console.log('📡 Backend response status:', response.status);
@@ -56,7 +75,7 @@ export async function GET(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { success: false, message: 'Không thể lấy danh sách người dùng' },
+        { success: false, message: 'Không thể gửi tin nhắn' },
         { status: response.status }
       );
     }
@@ -67,7 +86,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('❌ Users API error:', error);
+    console.error('❌ Chat Send Message API error:', error);
     return NextResponse.json(
       { success: false, message: 'Lỗi server' },
       { status: 500 }

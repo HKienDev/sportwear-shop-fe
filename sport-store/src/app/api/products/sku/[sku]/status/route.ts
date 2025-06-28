@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { sku: string } }
+  context: { params: Promise<{ sku: string }> }
 ) {
   try {
     // Lấy token từ header Authorization
@@ -16,7 +16,7 @@ export async function PATCH(
     const token = authHeader.substring(7); // Loại bỏ 'Bearer ' prefix
 
     // Lấy SKU từ params
-    const sku = context.params.sku;
+    const { sku } = await context.params;
     if (!sku) {
       return NextResponse.json(
         { message: 'Product SKU is required' },

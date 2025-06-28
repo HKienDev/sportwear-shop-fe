@@ -4,7 +4,7 @@ import { TOKEN_CONFIG } from '@/config/token';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Lấy access token từ cookie hoặc header Authorization
@@ -27,7 +27,7 @@ export async function PATCH(
     }
 
     // Lấy productId từ params
-    const productId = params.id;
+    const { id: productId } = await params;
     const body = await request.json();
     const { isActive } = body;
 

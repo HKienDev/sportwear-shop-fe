@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    
+    <button onclick="testAPI()">Test Conversations API</button>
+    <div id="result" class="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                // Admin token for testing
+                const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODVmMDdkODhhZWNhNDk3ZjI0YWZhM2YiLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUxMDU4MzkyLCJleHAiOjE3NTExNDQ3OTJ9.KZ8y71CZk7mJUYLrZf3DQ5jNsyUXCoVO21q_Yemi_oY';
+                
+                const response = await fetch('/api/chat/conversations', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <h4>Raw Response:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    
+                    <h4>Analysis:</h4>
+                    <ul>
+                        <li>Type: ${typeof data}</li>
+                        <li>Is Array: ${Array.isArray(data)}</li>
+                        <li>Object Keys: ${data && typeof data === 'object' ? Object.keys(data).join(', ') : 'N/A'}</li>
+                        <li>Has conversations: ${!!data.conversations}</li>
+                        <li>Has data: ${!!data.data}</li>
+                        <li>Has success: ${!!data.success}</li>
+                        <li>Data.data type: ${typeof data.data}</li>
+                        <li>Data.data.conversations: ${data.data?.conversations ? 'Present' : 'Missing'}</li>
+                    </ul>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html> 

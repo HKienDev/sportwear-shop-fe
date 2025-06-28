@@ -27,15 +27,19 @@ const getSocketUrl = () => {
 };
 
 const SOCKET_URL = getSocketUrl();
+console.log('🔌 User Chat - Socket URL:', SOCKET_URL);
+
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
+  timeout: 10000,
+  forceNew: true
 });
 
-export default function UserChat() {
+export default function UserChat({ height = "h-80" }: { height?: string }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<{ sender: string; text: string; time?: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -49,8 +53,19 @@ export default function UserChat() {
       console.log("Socket connected:", socket.id);
       
       // Lấy thông tin người dùng từ context hoặc localStorage
-      const userId = user?.id || localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 9);
+      const userId = user?._id || localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 9);
       const userName = user?.fullname || localStorage.getItem("userName") || "User";
+      
+      // Lưu userId vào localStorage để đảm bảo nhất quán
+      if (userId) {
+        localStorage.setItem("userId", userId);
+      }
+      if (userName) {
+        localStorage.setItem("userName", userName);
+      }
+      
+      console.log("🔍 UserChat - Using userId:", userId);
+      console.log("🔍 UserChat - Using userName:", userName);
       
       // Xác định danh tính với server
       socket.emit("identifyUser", { userId, userName, isAdmin: false });
@@ -61,6 +76,7 @@ export default function UserChat() {
       console.log("Identification response:", data);
       if (data.status === 'success' && data.role === 'user') {
         console.log("User successfully identified with socket ID:", data.socketId);
+        console.log("🔍 UserChat - User joined room: user_" + data.userId);
         // Lưu thông tin user vào localStorage nếu chưa có
         if (!localStorage.getItem("userId") && data.userId) {
           localStorage.setItem("userId", data.userId);
@@ -90,12 +106,15 @@ export default function UserChat() {
   // Nhận tin nhắn từ admin
   useEffect(() => {
     socket.on("receiveMessage", (msg) => {
+      console.log("🔍 UserChat - Received message:", msg);
+      
       // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
       const messageExists = messages.some(
         (m) => m.text === msg.text && m.sender === msg.senderName
       );
       
       if (!messageExists) {
+        console.log("🔍 UserChat - Adding new message to UI");
         // Format timestamp
         const messageTime = msg.timestamp 
           ? new Date(msg.timestamp).toLocaleTimeString('vi-VN', { 
@@ -117,6 +136,8 @@ export default function UserChat() {
         if (!isOpen) {
           setNewMessageAlert(true);
         }
+      } else {
+        console.log("🔍 UserChat - Message already exists, skipping");
       }
     });
 
@@ -145,7 +166,7 @@ export default function UserChat() {
     });
     
     // Get user info from context or localStorage
-    const userId = user?.id || localStorage.getItem("userId");
+    const userId = user?._id || localStorage.getItem("userId");
     const userName = user?.fullname || localStorage.getItem("userName") || "User";
     
     socket.emit("sendMessage", { 
@@ -218,7 +239,7 @@ export default function UserChat() {
           </div>
 
           {/* Chat messages */}
-          <div className="h-80 overflow-y-auto p-4 bg-gray-50">
+          <div className={`${height} overflow-y-auto p-4 bg-gray-50 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100`}>
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <MessageCircle size={40} className="mb-2" />

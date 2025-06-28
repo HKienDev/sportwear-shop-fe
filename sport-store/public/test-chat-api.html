@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #ffe6e6; color: #d32f2f; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>Chat API Test Page</h1>
+    
+    <div class="test-section">
+        <h3>Test Conversations API</h3>
+        <button onclick="testConversations()">Test Get Conversations</button>
+        <div id="conversations-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Messages API</h3>
+        <input type="text" id="conversationId" placeholder="Enter conversation ID" value="685f0690a3b28ba9bb12d181">
+        <button onclick="testMessages()">Test Get Messages</button>
+        <div id="messages-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Send Message API</h3>
+        <input type="text" id="sendConversationId" placeholder="Enter conversation ID" value="685f0690a3b28ba9bb12d181">
+        <input type="text" id="messageText" placeholder="Enter message text" value="Test message from admin">
+        <button onclick="testSendMessage()">Test Send Message</button>
+        <div id="send-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Mark as Read API</h3>
+        <input type="text" id="markReadConversationId" placeholder="Enter conversation ID" value="685f0690a3b28ba9bb12d181">
+        <button onclick="testMarkAsRead()">Test Mark as Read</button>
+        <div id="mark-read-result" class="result"></div>
+    </div>
+
+    <script>
+        // Admin token for testing
+        const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODVmMDdkODhhZWNhNDk3ZjI0YWZhM2YiLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUxMDU4MzkyLCJleHAiOjE3NTExNDQ3OTJ9.KZ8y71CZk7mJUYLrZf3DQ5jNsyUXCoVO21q_Yemi_oY';
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function testConversations() {
+            try {
+                const response = await fetch('/api/chat/conversations', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                showResult('conversations-result', data, !response.ok);
+            } catch (error) {
+                showResult('conversations-result', { error: error.message }, true);
+            }
+        }
+
+        async function testMessages() {
+            try {
+                const conversationId = document.getElementById('conversationId').value;
+                const response = await fetch(`/api/chat/messages/${conversationId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                showResult('messages-result', data, !response.ok);
+            } catch (error) {
+                showResult('messages-result', { error: error.message }, true);
+            }
+        }
+
+        async function testSendMessage() {
+            try {
+                const conversationId = document.getElementById('sendConversationId').value;
+                const messageText = document.getElementById('messageText').value;
+                
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        conversationId,
+                        message: messageText,
+                        senderId: 'admin',
+                        senderName: 'Admin'
+                    })
+                });
+                
+                const data = await response.json();
+                showResult('send-result', data, !response.ok);
+            } catch (error) {
+                showResult('send-result', { error: error.message }, true);
+            }
+        }
+
+        async function testMarkAsRead() {
+            try {
+                const conversationId = document.getElementById('markReadConversationId').value;
+                
+                const response = await fetch(`/api/chat/mark-read/${conversationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                showResult('mark-read-result', data, !response.ok);
+            } catch (error) {
+                showResult('mark-read-result', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html> 
