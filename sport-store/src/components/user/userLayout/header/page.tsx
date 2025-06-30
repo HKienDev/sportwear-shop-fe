@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-
-import { Search, ChevronDown, Package, Phone, Mail, MapPin, ImageIcon, Menu, X } from "lucide-react";
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { debounce } from "lodash";
+import { ChevronDown, Package, Phone, Mail, MapPin, Menu, X } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import AuthButtons from "./authButtons/page";
 import UserMenu from "./userMenu/page";
 import { useAuth } from "@/context/authContext";
 import { API_URL } from "@/utils/api";
 import ShoppingCartButton from "./shoppingCartButton/page";
+import AdvancedSearchBar from "./AdvancedSearchBar";
 
 interface Category {
   _id: string;
@@ -29,31 +28,11 @@ interface Category {
   hasProducts: boolean;
 }
 
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  discountPrice?: number;
-  category: Category;
-  images: {
-    main: string;
-    sub?: string[];
-  };
-  description: string;
-  slug: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const Header = () => {
   const { user } = useAuth();
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [mounted, setMounted] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
   const categoriesDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -112,62 +91,8 @@ const Header = () => {
     };
   }, []);
 
-  const debouncedHandler = useMemo(() => {
-    return debounce(async (value: string) => {
-      if (!value.trim()) {
-        setSearchResults([]);
-        return;
-      }
-      
-      try {
-        setIsSearching(true);
-        const response = await fetch(
-          `${API_URL}/products/search?keyword=${encodeURIComponent(value)}`
-        );
-        if (!response.ok) {
-          console.error("Search API Error:", {
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url
-          });
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.success && Array.isArray(data.products)) {
-          setSearchResults(data.products);
-        } else {
-          setSearchResults([]);
-        }
-      } catch (error) {
-        console.error("Lỗi khi tìm kiếm:", error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      debouncedHandler.cancel();
-    };
-  }, [debouncedHandler]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (!value.trim()) {
-      setSearchResults([]);
-    }
-    debouncedHandler(value);
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!searchRef.current?.contains(event.target as Node)) {
-        setSearchResults([]);
-        setSearchQuery("");
-      }
       if (!categoriesDropdownRef.current?.contains(event.target as Node)) {
         setIsCategoriesOpen(false);
       }
@@ -273,99 +198,8 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Search Bar */}
-          <div ref={searchRef} className="flex-1 max-w-2xl mx-8 relative">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-hover:text-red-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm sản phẩm..."
-                className="w-full px-4 py-2.5 pl-12 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white group-hover:border-red-200"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery("");
-                    setSearchResults([]);
-                  }
-                }}
-              />
-            </div>
-
-            {/* Search Results */}
-            {searchQuery && (isSearching || searchResults.length > 0) && (
-              <div className="absolute top-full left-0 w-full bg-white rounded-xl shadow-2xl p-4 mt-2 border border-gray-100 animate-fadeIn z-[100]">
-                {isSearching ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-                  </div>
-                ) : searchResults.length > 0 ? (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {searchResults.map((product) => (
-                      <Link
-                        key={product._id}
-                        href={`/product/${product.slug}`}
-                        className="flex items-center gap-4 p-2 hover:bg-red-50 rounded-lg transition-all duration-200 group"
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSearchResults([]);
-                        }}
-                      >
-                        <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg group-hover:scale-105 transition-transform duration-200">
-                          {product.images?.main ? (
-                            <Image
-                              src={product.images.main}
-                              alt={product.name}
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                              <ImageIcon className="w-6 h-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-red-600 transition-colors">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {product.category?.name || "Chưa phân loại"}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-medium text-red-500">
-                              {product.discountPrice
-                                ? product.discountPrice.toLocaleString("vi-VN", {
-                                    style: "currency",
-                                    currency: "VND",
-                                  })
-                                : product.price.toLocaleString("vi-VN", {
-                                    style: "currency",
-                                    currency: "VND",
-                                  })}
-                            </span>
-                            {product.discountPrice && (
-                              <span className="text-sm text-gray-500 line-through">
-                                {product.price.toLocaleString("vi-VN", {
-                                  style: "currency",
-                                  currency: "VND",
-                                })}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    Không tìm thấy sản phẩm nào
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Advanced Search Bar */}
+          <AdvancedSearchBar categories={categories} />
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
