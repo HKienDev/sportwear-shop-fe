@@ -190,8 +190,14 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     setSearchHistory(newHistory);
     localStorage.setItem('searchHistory', JSON.stringify(newHistory));
     
-    // Navigate to search results
-    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+    // If we have search results, navigate to the first product
+    if (searchResults.length > 0) {
+      const firstProduct = searchResults[0];
+      window.location.href = `/user/products/details/${firstProduct._id}`;
+    } else {
+      // Navigate to user page with search parameter
+      window.location.href = `/user?search=${encodeURIComponent(query)}`;
+    }
   };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
