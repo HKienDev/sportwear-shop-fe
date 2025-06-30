@@ -472,7 +472,6 @@ export default function OrderProducts() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="COD">Thanh toán khi nhận hàng (COD)</SelectItem>
-                    <SelectItem value="Stripe">Thanh toán qua Stripe</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

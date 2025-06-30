@@ -16,7 +16,6 @@ import PaymentMethodComponent from '@/components/user/checkout/PaymentMethod';
 import DeliveryInfo from '@/components/user/checkout/DeliveryInfo';
 import CouponSection from '@/components/user/checkout/CouponSection';
 import { ArrowLeft } from 'lucide-react';
-import CheckoutStripePayment from '@/components/user/checkout/CheckoutStripePayment';
 
 export default function Checkout() {
   const [cart, setCart] = useState<CartState | null>(null);
@@ -50,10 +49,6 @@ export default function Checkout() {
   const [showCouponOptions, setShowCouponOptions] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [totalAfterDiscount, setTotalAfterDiscount] = useState(0);
-  const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
-  const [amount, setAmount] = useState<number>(0);
-  const [originalTotal, setOriginalTotal] = useState(0);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -90,7 +85,6 @@ export default function Checkout() {
           console.log(`💰 Tổng tiền sau giảm giá: ${totalSalePrice}`);
           console.log(`💰 Tổng giảm giá: ${totalDirectDiscount}`);
           
-          setOriginalTotal(totalOriginalPrice);
           setSubtotal(totalSalePrice);
           setDiscount(totalOriginalPrice - totalSalePrice);
           setTotalAfterDiscount(totalSalePrice);
@@ -209,35 +203,7 @@ export default function Checkout() {
         return;
       }
 
-      // Nếu phương thức thanh toán là Stripe, không tạo đơn hàng ngay
-      if (selectedPaymentMethod === PaymentMethod.STRIPE) {
-        // Lưu thông tin đơn hàng để tạo sau khi thanh toán thành công
-        const orderData = {
-          items: cart?.items.map(item => ({
-            sku: item.product.sku,
-            quantity: item.quantity,
-            color: item.color || 'Mặc định',
-            size: item.size || 'Mặc định'
-          })),
-          shippingAddress,
-          shippingMethod: selectedShippingMethod,
-          paymentMethod: selectedPaymentMethod,
-          couponCode: appliedCoupon?.code || '',
-          notes: '',
-          status: OrderStatus.PENDING
-        };
-
-        // Lưu orderData vào localStorage để sử dụng sau khi thanh toán thành công
-        localStorage.setItem('pendingOrderData', JSON.stringify(orderData));
-        
-        // Mở modal thanh toán Stripe
-        setIsStripeModalOpen(true);
-        setAmount(total);
-        toast.info('Vui lòng hoàn thành thanh toán để xác nhận đơn hàng');
-        return;
-      }
-
-      // Nếu là COD, tạo đơn hàng ngay
+      // Tạo đơn hàng
       const orderData = {
         items: cart?.items.map(item => ({
           sku: item.product.sku,
@@ -259,7 +225,7 @@ export default function Checkout() {
 
       if (response.data.success) {
         const { orderId } = response.data.data;
-        // Nếu là COD, xóa giỏ hàng và chuyển hướng đến trang invoice
+        // Xóa giỏ hàng và chuyển hướng đến trang invoice
         await cartService.clearCart();
         toast.success('Đặt hàng thành công!');
         router.push(`/user/invoice/${orderId}`);
@@ -285,77 +251,11 @@ export default function Checkout() {
     }
   };
 
-  const handlePaymentSuccess = async () => {
-    try {
-      // Lấy thông tin đơn hàng từ localStorage
-      const pendingOrderData = localStorage.getItem('pendingOrderData');
-      
-      if (!pendingOrderData) {
-        toast.error('Không tìm thấy thông tin đơn hàng');
-        setIsStripeModalOpen(false);
-        return;
-      }
-
-      const orderData = JSON.parse(pendingOrderData);
-      
-      // Tạo đơn hàng sau khi thanh toán thành công
-      console.log('📦 Tạo đơn hàng sau thanh toán thành công:', orderData);
-      
-      const response = await api.post('/orders', orderData);
-
-      if (response.data.success) {
-        const { orderId } = response.data.data;
-        
-        // Xóa thông tin đơn hàng tạm thời
-        localStorage.removeItem('pendingOrderData');
-        
-        // Xóa giỏ hàng sau khi thanh toán thành công
-        await cartService.clearCart();
-        toast.success('Thanh toán và đặt hàng thành công!');
-        
-        setIsStripeModalOpen(false);
-        router.push(`/user/invoice/${orderId}`);
-      } else {
-        toast.error(response.data.message || 'Không thể tạo đơn hàng sau thanh toán');
-        setIsStripeModalOpen(false);
-      }
-    } catch (error) {
-      console.error('Error creating order after payment:', error);
-      toast.error('Thanh toán thành công nhưng không thể tạo đơn hàng. Vui lòng liên hệ hỗ trợ.');
-      setIsStripeModalOpen(false);
-    }
-  };
-
-  const handlePaymentError = (error: string) => {
-    toast.error(error);
-  };
-
   // Tính tổng tiền thanh toán
   const total = totalAfterDiscount - couponDiscount + shipping;
 
   const handleGoBack = () => {
     router.back();
-  };
-
-  const handleStripePayment = async (orderId: string, amount: number) => {
-    try {
-      const response = await fetch('/api/stripe/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId, amount }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Không thể tạo phiên thanh toán');
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      throw new Error(error.message || 'Lỗi khi tạo phiên thanh toán');
-    }
   };
 
   return (
@@ -394,10 +294,7 @@ export default function Checkout() {
               paymentMethod={selectedPaymentMethod}
               setPaymentMethod={setSelectedPaymentMethod}
               toggleSection={toggleSection}
-              orderId={createdOrderId ?? undefined}
               amount={totalAfterDiscount}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
             />
           </div>
 
@@ -416,7 +313,7 @@ export default function Checkout() {
             />
 
             <OrderSummary
-              originalTotal={originalTotal}
+              originalTotal={totalAfterDiscount}
               subtotal={subtotal}
               discount={discount}
               couponDiscount={couponDiscount}
@@ -429,16 +326,6 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-      
-      {isStripeModalOpen && (
-        <CheckoutStripePayment
-          isOpen={isStripeModalOpen}
-          onClose={() => setIsStripeModalOpen(false)}
-          amount={total}
-          onPaymentSuccess={handlePaymentSuccess}
-          onPaymentError={handlePaymentError}
-        />
-      )}
     </div>
   );
 }

@@ -10,8 +10,7 @@ export enum OrderStatus {
 }
 
 export enum PaymentMethod {
-  COD = "COD",
-  STRIPE = "Stripe"
+  COD = "COD"
 }
 
 export enum PaymentStatus {

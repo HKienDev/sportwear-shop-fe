@@ -300,8 +300,7 @@ export default function InvoicePage() {
               shipping={order.shippingFee}
               total={order.totalPrice}
               paid={
-                (order.paymentMethod === PaymentMethod.STRIPE && order.paymentStatus === 'paid') ||
-                (order.paymentMethod === PaymentMethod.COD && order.status === 'delivered')
+                order.paymentMethod === PaymentMethod.COD && order.status === 'delivered'
                   ? order.totalPrice
                   : 0
               }
