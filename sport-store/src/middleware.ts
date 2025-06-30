@@ -11,6 +11,12 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     console.log('🔒 Middleware - Processing request:', pathname);
     
+    // Handle 404 routes - redirect to not-found page
+    if (pathname === '/search' || pathname.startsWith('/search/')) {
+        console.log('🔍 Middleware - Search route detected, redirecting to not-found');
+        return NextResponse.redirect(new URL('/error-pages/not-found', request.url));
+    }
+    
     // Kiểm tra nếu là public route
     const isPublicRoute = AUTH_CONFIG.PUBLIC_ROUTES.some(route => 
         pathname === route || pathname.startsWith(`${route}/`)
@@ -42,8 +48,8 @@ export async function middleware(request: NextRequest) {
             console.log('👤 Middleware - User role:', user.role);
             
             if (user.role !== UserRole.ADMIN) {
-                console.log("❌ Middleware - User is not admin");
-                return NextResponse.redirect(new URL('/', request.url));
+                console.log("❌ Middleware - User is not admin, redirecting to unauthorized");
+                return NextResponse.redirect(new URL('/error-pages/unauthorized', request.url));
             }
 
             // Kiểm tra trạng thái xác thực
@@ -58,8 +64,8 @@ export async function middleware(request: NextRequest) {
             console.log('👑 Middleware - Has admin access:', hasAdmin);
             
             if (!hasAdmin) {
-                console.log('❌ Middleware - No admin access, redirecting to home');
-                return NextResponse.redirect(new URL('/', request.url));
+                console.log('❌ Middleware - No admin access, redirecting to unauthorized');
+                return NextResponse.redirect(new URL('/error-pages/unauthorized', request.url));
             }
 
             // Nếu là admin và đang ở trang admin, cho phép tiếp tục
@@ -120,6 +126,7 @@ export const config = {
         '/checkout/:path*',
         '/orders/:path*',
         '/settings/:path*',
-        '/user/:path*'
+        '/user/:path*',
+        '/search/:path*'
     ]
 };

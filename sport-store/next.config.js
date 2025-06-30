@@ -20,6 +20,25 @@ const nextConfig = {
     // Thêm cấu hình để xử lý các file static
     poweredByHeader: false,
     compress: true,
+    // Webpack configuration để xử lý HMR issues với lucide-react
+    webpack: (config, { dev, isServer }) => {
+        if (dev && !isServer) {
+            // Cải thiện HMR cho lucide-react
+            config.resolve.alias = {
+                ...config.resolve.alias,
+                'lucide-react': require.resolve('lucide-react'),
+            };
+            
+            // Thêm cấu hình để tránh HMR issues
+            config.watchOptions = {
+                ...config.watchOptions,
+                poll: 1000,
+                aggregateTimeout: 300,
+            };
+        }
+        
+        return config;
+    },
     // Thêm cấu hình để xử lý các route
     async redirects() {
         return [

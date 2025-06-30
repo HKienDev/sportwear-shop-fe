@@ -1,10 +1,7 @@
-/* Google Fonts - Montserrat */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-/* Montserrat Font Family - Fallback definitions */
+/* System Fonts - Fallback to system fonts to avoid CSP issues */
 @font-face {
   font-family: 'Montserrat';
-  src: url('https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2') format('woff2');
+  src: local('Montserrat'), local('Arial'), local('sans-serif');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,7 +9,7 @@
 
 @font-face {
   font-family: 'Montserrat';
-  src: url('https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2') format('woff2');
+  src: local('Montserrat'), local('Arial'), local('sans-serif');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -20,7 +17,7 @@
 
 @font-face {
   font-family: 'Montserrat';
-  src: url('https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2') format('woff2');
+  src: local('Montserrat'), local('Arial'), local('sans-serif');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -28,7 +25,7 @@
 
 @font-face {
   font-family: 'Montserrat';
-  src: url('https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2') format('woff2');
+  src: local('Montserrat'), local('Arial'), local('sans-serif');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -36,7 +33,7 @@
 
 @font-face {
   font-family: 'Montserrat';
-  src: url('https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2') format('woff2');
+  src: local('Montserrat'), local('Arial'), local('sans-serif');
   font-weight: 900;
   font-style: normal;
   font-display: swap;

@@ -80,14 +80,24 @@ export const register = async (data: { email: string; password: string; name: st
     }
 };
 
-export const logout = async (): Promise<ApiResponse<EmptyResponse>> => {
+export const logout = async (): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.auth.logout();
         clearAuthData();
-        return response.data;
+        return {
+            success: true,
+            message: 'Logged out successfully',
+            data: {}
+        };
     } catch (error) {
         console.error('Logout error:', error);
-        throw error;
+        // Clear auth data even if API fails (401, network error, etc.)
+        clearAuthData();
+        return {
+            success: true,
+            message: 'Logged out successfully',
+            data: {}
+        };
     }
 };
 

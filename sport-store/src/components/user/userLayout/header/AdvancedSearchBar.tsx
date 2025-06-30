@@ -6,6 +6,8 @@ import { debounce } from "lodash";
 import Image from "next/image";
 import Link from "next/link";
 import { API_URL } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 interface Category {
   _id: string;
@@ -59,6 +61,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilter>({});
   const searchRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Load search history and hot keywords
   useEffect(() => {
@@ -148,21 +151,25 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
 
   // Track search for SEO and analytics
   const trackSearch = (query: string, resultCount: number) => {
-    // Track in localStorage for analytics
-    const searchAnalytics = JSON.parse(localStorage.getItem('searchAnalytics') || '{}');
-    if (!searchAnalytics[query]) {
-      searchAnalytics[query] = { count: 0, lastSearched: new Date().toISOString() };
-    }
-    searchAnalytics[query].count++;
-    searchAnalytics[query].lastSearched = new Date().toISOString();
-    localStorage.setItem('searchAnalytics', JSON.stringify(searchAnalytics));
-    
-    // Track in Google Analytics (if available)
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'search', {
-        search_term: query,
-        results_count: resultCount
-      });
+    try {
+      // Track in localStorage for analytics
+      const searchAnalytics = JSON.parse(localStorage.getItem('searchAnalytics') || '{}');
+      if (!searchAnalytics[query]) {
+        searchAnalytics[query] = { count: 0, lastSearched: new Date().toISOString() };
+      }
+      searchAnalytics[query].count++;
+      searchAnalytics[query].lastSearched = new Date().toISOString();
+      localStorage.setItem('searchAnalytics', JSON.stringify(searchAnalytics));
+      
+      // Track in Google Analytics (if available)
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'search', {
+          search_term: query,
+          results_count: resultCount
+        });
+      }
+    } catch (error) {
+      console.error('Error tracking search:', error);
     }
   };
 
@@ -193,15 +200,21 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     // If we have search results, navigate to the first product
     if (searchResults.length > 0) {
       const firstProduct = searchResults[0];
-      window.location.href = `/user/products/details/${firstProduct._id}`;
+      // Use router.push instead of window.location for better navigation
+      router.push(`/user/products/details/${firstProduct._id}`);
     } else {
       // Navigate to user page with search parameter
-      window.location.href = `/user?search=${encodeURIComponent(query)}`;
+      router.push(`/user?search=${encodeURIComponent(query)}`);
     }
   };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-    handleSearchSubmit(suggestion.text);
+    if (suggestion.type === 'category') {
+      // Navigate to category page
+      router.push(`/user?category=${encodeURIComponent(suggestion.text)}`);
+    } else {
+      handleSearchSubmit(suggestion.text);
+    }
   };
 
   const clearSearchHistory = () => {
@@ -543,4 +556,13 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
   );
 };
 
-export default AdvancedSearchBar; 
+// Wrap with ErrorBoundary
+const AdvancedSearchBarWithErrorBoundary: React.FC<AdvancedSearchBarProps> = (props) => {
+  return (
+    <ErrorBoundary>
+      <AdvancedSearchBar {...props} />
+    </ErrorBoundary>
+  );
+};
+
+export default AdvancedSearchBarWithErrorBoundary; 

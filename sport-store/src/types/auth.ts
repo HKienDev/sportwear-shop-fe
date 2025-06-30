@@ -77,7 +77,7 @@ export interface ProfileResponse {
 export interface EmptyResponse {
     success: boolean;
     message?: string;
-    data?: null;
+    data?: Record<string, unknown> | null;
 }
 
 export interface GoogleAuthResponse {
