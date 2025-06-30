@@ -3,6 +3,9 @@ import { API_URL } from '@/utils/api';
 import { TOKEN_CONFIG } from './token';
 import { toast } from 'sonner';
 
+// Debug log
+console.log('🔍 Axios config - API_URL:', API_URL);
+
 // Tạo instance axios
 const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -15,6 +18,9 @@ const axiosInstance = axios.create({
   },
   timeout: 30000 // 30 seconds
 });
+
+// Debug log baseURL
+console.log('🔍 Axios instance - baseURL:', axiosInstance.defaults.baseURL);
 
 // Flag để tránh multiple refresh requests
 let isRefreshing = false;

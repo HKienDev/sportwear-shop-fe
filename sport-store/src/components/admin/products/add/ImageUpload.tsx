@@ -58,7 +58,7 @@ export default function ImageUpload({
             ? `Lỗi Cloudinary: ${errorData.error.message}`
             : errorMsg;
           toast.error(errorMsg);
-        } catch (parseErr) {
+        } catch {
           toast.error('Lỗi mạng hoặc Cloudinary không phản hồi');
         }
         throw new Error(errorMsg);
@@ -169,7 +169,6 @@ export default function ImageUpload({
                 alt="Ảnh chính sản phẩm" 
                 fill 
                 className="object-contain rounded-lg transition-transform duration-200 group-hover:scale-105" 
-                style={{ width: 192, height: 192 }}
               />
               <button
                 onClick={handleMainImageRemove}
@@ -224,7 +223,6 @@ export default function ImageUpload({
                     alt={`Ảnh phụ ${index + 1}`} 
                     fill 
                     className="object-contain rounded-lg transition-transform duration-200 group-hover:scale-105" 
-                    style={{ width: '100%', height: '100%' }}
                   />
                   <button
                     onClick={() => handleSubImageRemove(index)}
