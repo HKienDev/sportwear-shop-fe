@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
 export async function GET(request: Request) {
   try {
     // Lấy access token từ header Authorization
@@ -52,13 +54,13 @@ export async function GET(request: Request) {
     });
 
     // Log request URL for debugging
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/products/admin?${queryParams}`;
+    const apiUrl = `${API_URL}/products/admin?${queryParams}`;
     console.log('Requesting URL:', apiUrl);
     console.log('Search param value:', search);
     console.log('Access token:', accessToken ? 'Token exists' : 'No token');
 
     // Kiểm tra API URL
-    if (!process.env.NEXT_PUBLIC_API_URL) {
+    if (!API_URL) {
       console.error('NEXT_PUBLIC_API_URL is not defined');
       return NextResponse.json(
         { success: false, message: 'API URL is not configured' },
@@ -225,7 +227,7 @@ export async function POST(request: Request) {
     console.log('Creating product with data:', productData);
 
     // Kiểm tra API URL
-    if (!process.env.NEXT_PUBLIC_API_URL) {
+    if (!API_URL) {
       console.error('NEXT_PUBLIC_API_URL is not defined');
       return NextResponse.json(
         { success: false, message: 'API URL is not configured' },
@@ -235,7 +237,7 @@ export async function POST(request: Request) {
 
     // Gửi request đến backend
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products`,
+      `${API_URL}/products`,
       {
         method: 'POST',
         headers: {
