@@ -146,7 +146,7 @@ const ProductCardWithTimer = ({
             onClick={handleAddToCart}
             className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm"
           >
-            ADD TO CART
+            Thêm Vào Giỏ
           </button>
 
           {/* Stock Information */}
@@ -183,22 +183,22 @@ const ProductCardWithTimer = ({
     <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
       <div className="flex flex-col lg:flex-row">
         {/* Product Image - Responsive với height ngắn hơn */}
-        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-          <div className="relative w-full max-w-sm lg:max-w-md group">
+        <div className="w-full lg:w-1/2 p-2 sm:p-3 lg:p-4 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+          <div className="relative w-full max-w-sm lg:max-w-md group aspect-[4/3] overflow-hidden" style={{height: '180px'}}>
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Image 
               src="/default-image.png" 
               alt="Product Pack"
-              width={300}
-              height={300}
-              className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              width={240}
+              height={180}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               priority
             />
           </div>
         </div>
 
         {/* Product Details - Responsive với spacing tối ưu */}
-        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 flex flex-col justify-center space-y-2 sm:space-y-3 lg:space-y-4">
+        <div className="w-full lg:w-1/2 p-2 sm:p-3 lg:p-4 flex flex-col justify-center space-y-1 sm:space-y-2 lg:space-y-3">
           {/* Rating */}
           <RatingStars rating={3} />
 
@@ -226,7 +226,7 @@ const ProductCardWithTimer = ({
             onClick={handleAddToCart}
             className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm"
           >
-            ADD TO CART
+            Thêm Vào Giỏ
           </button>
 
           {/* Stock Information */}

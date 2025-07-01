@@ -29,7 +29,7 @@ interface Category {
 }
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -41,8 +41,22 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
+    console.log('🔍 Header - User state changed:', {
+      hasUser: !!user,
+      isAuthenticated,
+      userRole: user?.role,
+      mounted
+    });
+  }, [user, isAuthenticated, mounted]);
+
+  useEffect(() => {
     if (user) {
       // User data available
+      console.log('✅ Header - User data available:', {
+        name: user.fullname,
+        role: user.role,
+        email: user.email
+      });
     }
   }, [user]);
 
@@ -203,7 +217,15 @@ const Header = () => {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
-            {user ? <UserMenu /> : <AuthButtons />}
+            {(() => {
+              console.log('🔍 Header - Render decision:', {
+                hasUser: !!user,
+                isAuthenticated,
+                willRenderUserMenu: !!user,
+                willRenderAuthButtons: !user
+              });
+              return user ? <UserMenu /> : <AuthButtons />;
+            })()}
           </div>
         </div>
       </div>

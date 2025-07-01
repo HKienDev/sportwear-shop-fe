@@ -12,6 +12,7 @@ import { getAllProducts } from "@/services/productService";
 import { getAllCategories } from "@/services/categoryService";
 import { Category } from "@/types/category";
 import Skeleton from "@/components/common/Skeleton";
+import { NumberTicker } from "@/components/magicui/number-ticker";
 
 // Thêm khai báo cho window.__checkedAuth
 declare global {
@@ -156,15 +157,10 @@ const BrandShowcase = memo(() => {
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Thương Hiệu Đối Tác</h2>
         <p className="text-gray-600">Các thương hiệu thể thao hàng đầu thế giới</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center">
-        {['Nike', 'Adidas', 'Puma', 'Under Armour', 'New Balance', 'Asics'].map((brand) => (
-          <div
-            key={brand}
-            className="flex items-center justify-center h-16 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-300"
-          >
-            <span className="font-bold text-gray-600">{brand}</span>
-          </div>
-        ))}
+      <div className="flex justify-center">
+        <div className="w-full max-w-xl h-32 bg-white rounded-2xl shadow-lg flex items-center justify-center border border-gray-100">
+          <span className="text-2xl font-bold text-gray-400 tracking-widest select-none">Coming soon</span>
+        </div>
       </div>
     </div>
   );
@@ -172,68 +168,29 @@ const BrandShowcase = memo(() => {
 
 BrandShowcase.displayName = 'BrandShowcase';
 
-// Quick Links Component
-const QuickLinks = memo(() => (
-  <div className="bg-gray-50 py-12">
-    <div className="container mx-auto px-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div>
-          <h3 className="font-bold text-gray-800 mb-4">Hỗ Trợ Khách Hàng</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Trung tâm trợ giúp</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Hướng dẫn mua hàng</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách đổi trả</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Liên hệ chúng tôi</a></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 mb-4">Về Chúng Tôi</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Giới thiệu</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Tin tức</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Tuyển dụng</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Liên hệ</a></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 mb-4">Chính Sách</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Điều khoản sử dụng</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách bảo mật</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách vận chuyển</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách thanh toán</a></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 mb-4">Theo Dõi</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Facebook</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">Instagram</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">YouTube</a></li>
-            <li><a href="#" className="hover:text-purple-600 transition-colors">TikTok</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-));
-
-QuickLinks.displayName = 'QuickLinks';
-
 // Social Proof Component
 const SocialProof = memo(() => (
   <div className="container mx-auto px-4 py-12">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
       <div>
-        <div className="text-4xl font-bold text-purple-600 mb-2">50K+</div>
+        <span className="inline-flex items-center justify-center">
+          <NumberTicker value={50000} className="text-4xl font-bold text-purple-600 mb-2" />
+          <span className="ml-1 text-3xl font-bold text-purple-600">+</span>
+        </span>
         <div className="text-gray-600">Khách hàng hài lòng</div>
       </div>
       <div>
-        <div className="text-4xl font-bold text-purple-600 mb-2">1000+</div>
+        <span className="inline-flex items-center justify-center">
+          <NumberTicker value={1000} className="text-4xl font-bold text-purple-600 mb-2" />
+          <span className="ml-1 text-3xl font-bold text-purple-600">+</span>
+        </span>
         <div className="text-gray-600">Sản phẩm đa dạng</div>
       </div>
       <div>
-        <div className="text-4xl font-bold text-purple-600 mb-2">4.8★</div>
+        <span className="inline-flex items-center justify-center">
+          <NumberTicker value={4.8} className="text-4xl font-bold text-purple-600 mb-2" />
+          <span className="ml-1 text-3xl font-bold text-purple-600 relative -top-1">★</span>
+        </span>
         <div className="text-gray-600">Đánh giá trung bình</div>
       </div>
     </div>
@@ -277,10 +234,9 @@ const HeroBanner = memo(() => (
           {/* Main Title */}
           <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold mb-3">
             Giảm Giá Lên Đến
-            <span className="text-[#1CFB8C] align-middle">&nbsp;</span>
+            <span> </span>
             <span className="relative inline-block">
-              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-600">50%</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20 blur-xl"></span>
+              <AnimatedNumberTicker />
             </span>
           </h1>
 
@@ -309,6 +265,18 @@ const HeroBanner = memo(() => (
 ));
 
 HeroBanner.displayName = 'HeroBanner';
+
+function AnimatedNumberTicker() {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    setTimeout(() => setValue(50), 300);
+  }, []);
+  return (
+    <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-600">
+      <NumberTicker value={value} className="inline" />%
+    </span>
+  );
+}
 
 // Tách component Product Section riêng
 const ProductSection = memo(({ products, categories }: { products: Product[]; categories: Category[] }) => {
@@ -647,7 +615,6 @@ const HomePage = () => {
       <SocialProof />
       <BrandShowcase />
       <TestimonialsSection />
-      <QuickLinks />
     </div>
   );
 };

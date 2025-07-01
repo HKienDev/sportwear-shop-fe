@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, memo, useEffect, useMemo } from "react";
+import React, { useCallback, memo, useEffect, useMemo } from "react";
 import ProductCardWithTimer from "../ProductCardWithTimer/page";
 
 interface FeaturedProduct {
@@ -150,24 +150,21 @@ const FeaturedProductsCarousel = ({
       <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
       <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
       
-      {/* Infinite Scroll Container */}
+      {/* Single Product Display with Scroll */}
       <div 
         className="featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="flex gap-6 pb-4 min-w-max">
-          {infiniteProducts.map((product, index) => (
-            <div
-              key={`${product.id}-${index}`}
-              className="flex-shrink-0 min-w-[300px] max-w-[300px]"
-            >
-              <ProductCardWithTimer 
-                product={product}
-                isCompact={false}
-              />
-            </div>
-          ))}
+        <div className="flex gap-6 pb-4 min-w-max justify-center">
+          {/* Chỉ render 1 card đầu tiên ở giữa, rộng hơn */}
+          <div className="w-full max-w-2xl mx-auto">
+            <ProductCardWithTimer 
+              product={infiniteProducts[0]}
+              isCompact={false}
+            />
+          </div>
         </div>
       </div>
     </div>

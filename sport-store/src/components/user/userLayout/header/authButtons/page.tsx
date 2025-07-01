@@ -4,14 +4,23 @@ import { useAuth } from "@/context/authContext";
 import { usePathname, useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getJustLoggedOut } from "@/utils/navigationUtils";
 
 const AuthButtons = () => {
-  const { user, isAuthenticated, checkAuthStatus } = useAuth();
+  const { isAuthenticated, checkAuthStatus } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname.startsWith("/auth");
+
+  // Debug log để kiểm tra trạng thái
+  useEffect(() => {
+    console.log('🔍 AuthButtons - Current state:', {
+      isAuthenticated,
+      isAuthPage,
+      pathname
+    });
+  }, [isAuthenticated, isAuthPage, pathname]);
 
   // Kiểm tra trạng thái xác thực khi component mount
   useEffect(() => {
@@ -19,9 +28,11 @@ const AuthButtons = () => {
       try {
         // Kiểm tra flag justLoggedOut trước khi gọi checkAuthStatus
         if (getJustLoggedOut()) {
+          console.log('🚫 AuthButtons - Just logged out, skipping auth check');
           return;
         }
         
+        console.log('🔍 AuthButtons - Checking auth status...');
         await checkAuthStatus();
       } catch (error) {
         console.error("❌ Error checking auth status:", error);
@@ -32,8 +43,11 @@ const AuthButtons = () => {
 
   // Không hiển thị nút khi đã đăng nhập hoặc đang ở trang auth
   if (isAuthPage || isAuthenticated) {
+    console.log('🚫 AuthButtons - Hiding buttons:', { isAuthPage, isAuthenticated });
     return null;
   }
+
+  console.log('✅ AuthButtons - Showing buttons');
 
   const handleLogin = async () => {
     try {
