@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useCallback, memo, useEffect, useMemo } from "react";
 import ProductCardWithTimer from "../ProductCardWithTimer/page";
 
 interface FeaturedProduct {
@@ -77,106 +76,91 @@ const FeaturedProductsCarousel = ({
     }
   ]
 }: FeaturedProductsCarouselProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const displayProducts = useMemo(() => products || [], [products]);
+  const count = displayProducts.length;
 
-  // Responsive items per view
-  const getItemsPerView = () => {
-    // Luôn hiển thị 1 sản phẩm trên mọi thiết bị
-    return 1;
-  };
+  // Tạo infinite loop bằng cách duplicate products
+  const infiniteProducts = useMemo(() => {
+    if (count === 0) return [];
+    // Duplicate 3 lần để tạo hiệu ứng infinite
+    return [...displayProducts, ...displayProducts, ...displayProducts];
+  }, [displayProducts, count]);
 
-  const [itemsPerView, setItemsPerView] = useState(getItemsPerView());
-  const maxIndex = Math.max(0, products.length - itemsPerView);
+  // Auto scroll effect
+  useEffect(() => {
+    if (count === 0) return;
 
-  // Update items per view on resize (không cần thiết nữa nhưng giữ lại để tương thích)
-  React.useEffect(() => {
-    const handleResize = () => {
-      setItemsPerView(getItemsPerView());
+    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
+    if (!container) return;
+
+    let animationId: number;
+    let scrollDirection = 1; // 1 = right, -1 = left
+    const scrollSpeed = 0.8; // pixels per frame (chậm hơn categories)
+
+    const autoScroll = () => {
+      if (!container) return;
+
+      const scrollLeft = container.scrollLeft;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+
+      // Đổi hướng khi đến cuối hoặc đầu
+      if (scrollLeft >= maxScroll) {
+        scrollDirection = -1;
+      } else if (scrollLeft <= 0) {
+        scrollDirection = 1;
+      }
+
+      container.scrollLeft += scrollSpeed * scrollDirection;
+      animationId = requestAnimationFrame(autoScroll);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    // Bắt đầu auto scroll sau 3 giây (lâu hơn categories)
+    const startTimeout = setTimeout(() => {
+      animationId = requestAnimationFrame(autoScroll);
+    }, 3000);
 
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex(prev => Math.max(0, prev - 1));
-  }, []);
+    return () => {
+      clearTimeout(startTimeout);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [count]);
 
-  const goToNext = useCallback(() => {
-    setCurrentIndex(prev => Math.min(products.length - 1, prev + 1));
-  }, [products.length]);
-
-  const goToSlide = useCallback((index: number) => {
-    setCurrentIndex(Math.max(0, Math.min(index, products.length - 1)));
-  }, [products.length]);
-
-  // Touch/Swipe handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (e.currentTarget as HTMLElement).offsetLeft);
-    setScrollLeft((e.currentTarget as HTMLElement).scrollLeft);
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - (e.currentTarget as HTMLElement).offsetLeft;
-    const walk = (x - startX) * 2;
-    (e.currentTarget as HTMLElement).scrollLeft = scrollLeft - walk;
-  }, [isDragging, startX, scrollLeft]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+  // Pause auto scroll on hover
+  const handleMouseEnter = useCallback(() => {
+    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
+    if (container) {
+      container.style.scrollBehavior = 'auto';
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
+    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
+    if (container) {
+      container.style.scrollBehavior = 'smooth';
+    }
   }, []);
 
   return (
-    <div className="relative w-full">
-      {/* Navigation Buttons */}
-      {currentIndex > 0 && (
-        <button
-          onClick={goToPrevious}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 border border-gray-200"
-          aria-label="Previous products"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-      )}
-
-      {currentIndex < products.length - 1 && (
-        <button
-          onClick={goToNext}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 border border-gray-200"
-          aria-label="Next products"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      )}
-
-      {/* Carousel Container */}
+    <div className="relative w-full overflow-hidden">
+      {/* Gradient Overlays for Scroll Indicators */}
+      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
+      
+      {/* Infinite Scroll Container */}
       <div 
-        className="overflow-hidden w-full"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        className="featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth"
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div 
-          className="flex w-full transition-transform duration-500 ease-out"
-          style={{
-            transform: `translateX(-${currentIndex * 100}%)`
-          }}
-        >
-          {products.map((product) => (
-            <div 
-              key={product.id} 
-              className="flex-shrink-0 w-full min-w-full"
+        <div className="flex gap-6 pb-4 min-w-max">
+          {infiniteProducts.map((product, index) => (
+            <div
+              key={`${product.id}-${index}`}
+              className="flex-shrink-0 min-w-[300px] max-w-[300px]"
             >
               <ProductCardWithTimer 
                 product={product}
@@ -185,34 +169,6 @@ const FeaturedProductsCarousel = ({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Dots Indicator */}
-      {products.length > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
-          {Array.from({ length: products.length }, (_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex 
-                  ? 'bg-pink-500 w-6' 
-                  : 'bg-gray-300 hover:bg-gray-400'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Progress Bar */}
-      <div className="mt-4 w-full bg-gray-200 rounded-full h-1">
-        <div 
-          className="bg-gradient-to-r from-pink-400 to-pink-500 h-1 rounded-full transition-all duration-500"
-          style={{ 
-            width: `${((currentIndex + 1) / products.length) * 100}%` 
-          }}
-        />
       </div>
     </div>
   );

@@ -183,14 +183,14 @@ const ProductCardWithTimer = ({
     <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
       <div className="flex flex-col lg:flex-row">
         {/* Product Image - Responsive với height ngắn hơn */}
-        <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-          <div className="relative w-full max-w-md lg:max-w-lg group">
+        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+          <div className="relative w-full max-w-sm lg:max-w-md group">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Image 
               src="/default-image.png" 
               alt="Product Pack"
-              width={400}
-              height={400}
+              width={300}
+              height={300}
               className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-105"
               priority
             />
@@ -198,25 +198,25 @@ const ProductCardWithTimer = ({
         </div>
 
         {/* Product Details - Responsive với spacing tối ưu */}
-        <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3 sm:space-y-4 lg:space-y-6">
+        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 flex flex-col justify-center space-y-2 sm:space-y-3 lg:space-y-4">
           {/* Rating */}
           <RatingStars rating={3} />
 
           {/* Product Title */}
-          <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 leading-tight">
             SHAMPOO, CONDITIONER & FACEWASH PACKS
           </h1>
 
           {/* Description */}
-          <p className="text-sm sm:text-base text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3">
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-2">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam voluptates, quod, quia, voluptate quae voluptatem quibusdam voluptatibus quos quas nesciunt.
           </p>
 
           {/* Price with discount badge */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="text-2xl sm:text-3xl font-bold text-pink-500">100.000đ</span>
-            <span className="text-lg sm:text-xl text-gray-400 line-through">2.000.000đ</span>
-            <span className="bg-red-100 text-red-600 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-lg sm:text-xl font-bold text-pink-500">100.000đ</span>
+            <span className="text-sm sm:text-base text-gray-400 line-through">2.000.000đ</span>
+            <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
               -{discountPercentage}%
             </span>
           </div>
@@ -224,13 +224,13 @@ const ProductCardWithTimer = ({
           {/* Add to Cart Button */}
           <button 
             onClick={handleAddToCart}
-            className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base"
+            className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm"
           >
             ADD TO CART
           </button>
 
           {/* Stock Information */}
-          <div className="flex justify-between items-center text-xs sm:text-sm">
+          <div className="flex justify-between items-center text-xs">
             <span className="text-gray-600">
               Đã bán: <span className="font-semibold text-gray-900">20</span>
             </span>
@@ -243,12 +243,12 @@ const ProductCardWithTimer = ({
           <ProgressBar sold={20} total={60} />
 
           {/* Countdown Timer */}
-          <div className="space-y-2 sm:space-y-3">
-            <p className="text-xs sm:text-sm font-semibold text-gray-700">
+          <div className="space-y-1 sm:space-y-2">
+            <p className="text-xs font-semibold text-gray-700">
               ⏰ Nhanh tay! Ưu đãi kết thúc sau:
             </p>
             {isComplete ? (
-              <div className="text-red-500 font-bold text-base sm:text-lg">OFFER EXPIRED!</div>
+              <div className="text-red-500 font-bold text-sm">OFFER EXPIRED!</div>
             ) : (
               <CountdownTimer timeLeft={timeLeft} />
             )}

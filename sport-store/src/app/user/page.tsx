@@ -22,53 +22,75 @@ declare global {
 
 // Categories Showcase Component
 const CategoriesShowcase = memo(({ categories }: { categories: Category[] }) => {
-  // Luôn chỉ lấy tối đa 6 category đầu tiên
-  const displayCategories = categories ? categories.slice(0, 6) : [];
+  // Wrap displayCategories in useMemo to fix ESLint warning
+  const displayCategories = useMemo(() => categories || [], [categories]);
   const count = displayCategories.length;
 
-  // Nếu <= 6, chỉ hiển thị grid, không scroll
-  if (count <= 6) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Danh Mục Sản Phẩm</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Khám phá đa dạng sản phẩm thể thao chất lượng cao từ các thương hiệu uy tín
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-          {displayCategories.map((category) => (
-            <div
-              key={category._id}
-              className="group cursor-pointer bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-200"
-            >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300">
-                {category.image ? (
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-cover rounded-full"
-                  />
-                ) : (
-                  <SafeIcons.ShoppingBag className="w-8 h-8 text-purple-600" />
-                )}
-              </div>
-              <h3 className="text-center font-semibold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                {category.name}
-              </h3>
-              <p className="text-center text-sm text-gray-500 mt-2">
-                {category.productCount || 0} sản phẩm
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Tạo infinite loop bằng cách duplicate categories
+  const infiniteCategories = useMemo(() => {
+    if (count === 0) return [];
+    // Duplicate 3 lần để tạo hiệu ứng infinite
+    return [...displayCategories, ...displayCategories, ...displayCategories];
+  }, [displayCategories, count]);
 
-  // Nếu có nhiều hơn 6 category, chỉ lấy 6 và cho scroll ngang tự nhiên
+  // Auto scroll effect
+  useEffect(() => {
+    if (count === 0) return;
+
+    const container = document.querySelector('.categories-scroll-container') as HTMLElement;
+    if (!container) return;
+
+    let animationId: number;
+    let scrollDirection = 1; // 1 = right, -1 = left
+    const scrollSpeed = 1; // pixels per frame
+
+    const autoScroll = () => {
+      if (!container) return;
+
+      const scrollLeft = container.scrollLeft;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+
+      // Đổi hướng khi đến cuối hoặc đầu
+      if (scrollLeft >= maxScroll) {
+        scrollDirection = -1;
+      } else if (scrollLeft <= 0) {
+        scrollDirection = 1;
+      }
+
+      container.scrollLeft += scrollSpeed * scrollDirection;
+      animationId = requestAnimationFrame(autoScroll);
+    };
+
+    // Bắt đầu auto scroll sau 2 giây
+    const startTimeout = setTimeout(() => {
+      animationId = requestAnimationFrame(autoScroll);
+    }, 2000);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [count]);
+
+  // Pause auto scroll on hover
+  const handleMouseEnter = useCallback(() => {
+    const container = document.querySelector('.categories-scroll-container') as HTMLElement;
+    if (container) {
+      container.style.scrollBehavior = 'auto';
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    const container = document.querySelector('.categories-scroll-container') as HTMLElement;
+    if (container) {
+      container.style.scrollBehavior = 'smooth';
+    }
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-8">
@@ -77,34 +99,47 @@ const CategoriesShowcase = memo(({ categories }: { categories: Category[] }) => 
           Khám phá đa dạng sản phẩm thể thao chất lượng cao từ các thương hiệu uy tín
         </p>
       </div>
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-6 min-w-full">
-          {displayCategories.map((category) => (
-            <div
-              key={category._id}
-              className="group cursor-pointer bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-200 min-w-[220px]"
-            >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300">
-                {category.image ? (
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-cover rounded-full"
-                  />
-                ) : (
-                  <SafeIcons.ShoppingBag className="w-8 h-8 text-purple-600" />
-                )}
+      
+      {/* Infinite Horizontal Scrolling Container */}
+      <div className="relative overflow-hidden">
+        {/* Gradient Overlays for Scroll Indicators */}
+        <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
+        
+        {/* Infinite Scroll Container */}
+        <div 
+          className="categories-scroll-container overflow-x-auto scrollbar-hide scroll-smooth"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="flex gap-6 pb-4 min-w-max">
+            {infiniteCategories.map((category, index) => (
+              <div
+                key={`${category._id}-${index}`}
+                className="group cursor-pointer bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-200 min-w-[200px] max-w-[200px] flex-shrink-0"
+              >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300">
+                  {category.image ? (
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 object-cover rounded-full"
+                    />
+                  ) : (
+                    <SafeIcons.ShoppingBag className="w-8 h-8 text-purple-600" />
+                  )}
+                </div>
+                <h3 className="text-center font-semibold text-gray-800 group-hover:text-purple-600 transition-colors duration-300 text-sm">
+                  {category.name}
+                </h3>
+                <p className="text-center text-xs text-gray-500 mt-2">
+                  {category.productCount || 0} sản phẩm
+                </p>
               </div>
-              <h3 className="text-center font-semibold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                {category.name}
-              </h3>
-              <p className="text-center text-sm text-gray-500 mt-2">
-                {category.productCount || 0} sản phẩm
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
