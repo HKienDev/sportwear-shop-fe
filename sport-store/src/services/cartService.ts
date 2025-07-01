@@ -1,5 +1,4 @@
 import { api } from '@/lib/api';
-import { getToken } from '@/config/token';
 import type { AxiosError } from 'axios';
 
 function parseError(error: unknown): string {
@@ -63,12 +62,6 @@ export const cartService = {
   // Lấy giỏ hàng
   getCart: async () => {
     try {
-      // Kiểm tra token trước khi gọi API
-      const token = getToken('access');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       const response = await api.get('/cart');
       return response.data;
     } catch (error) {
@@ -82,16 +75,6 @@ export const cartService = {
     try {
       console.log('🛒 Bắt đầu thêm vào giỏ hàng:', data);
       
-      // Kiểm tra token trước khi gọi API
-      const token = getToken('access');
-      console.log('🔑 Access token exists:', !!token);
-      
-      if (!token) {
-        console.log('❌ Không tìm thấy access token');
-        throw new Error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-      }
-
-      // Kiểm tra dữ liệu đầu vào
       if (!data.sku || !data.color || !data.size || !data.quantity) {
         console.log('❌ Dữ liệu không hợp lệ:', data);
         throw new Error('Thiếu thông tin sản phẩm');
@@ -101,7 +84,6 @@ export const cartService = {
       const response = await api.post('/cart/add', data);
       console.log('📥 Kết quả API:', response.data);
       
-      // Kiểm tra response
       if (!response.data) {
         console.log('❌ Response không hợp lệ');
         throw new Error('Không thể thêm sản phẩm vào giỏ hàng');
@@ -117,15 +99,8 @@ export const cartService = {
   // Cập nhật số lượng
   updateCartItemQuantity: async (data: UpdateCartItemRequest) => {
     try {
-      // Kiểm tra token trước khi gọi API
-      const token = getToken('access');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       const response = await api.put('/cart/update', data);
       
-      // Kiểm tra response
       if (!response.data) {
         throw new Error('Invalid response from server');
       }
@@ -140,15 +115,8 @@ export const cartService = {
   // Xóa khỏi giỏ hàng
   removeFromCart: async (data: RemoveFromCartRequest) => {
     try {
-      // Kiểm tra token trước khi gọi API
-      const token = getToken('access');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       const response = await api.delete('/cart/remove', { data });
       
-      // Kiểm tra response
       if (!response.data) {
         throw new Error('Invalid response from server');
       }
@@ -163,15 +131,8 @@ export const cartService = {
   // Xóa toàn bộ giỏ hàng
   clearCart: async () => {
     try {
-      // Kiểm tra token trước khi gọi API
-      const token = getToken('access');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       const response = await api.delete('/cart/clear');
       
-      // Kiểm tra response
       if (!response.data) {
         throw new Error('Invalid response from server');
       }

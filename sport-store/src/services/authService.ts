@@ -80,9 +80,9 @@ export const register = async (data: { email: string; password: string; name: st
     }
 };
 
-export const logout = async (): Promise<ApiResponse<any>> => {
+export const logout = async (): Promise<ApiResponse<unknown>> => {
     try {
-        const response = await apiClient.auth.logout();
+        await apiClient.auth.logout();
         clearAuthData();
         return {
             success: true,

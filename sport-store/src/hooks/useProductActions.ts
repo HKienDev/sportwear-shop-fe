@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/authContext';
 import apiClient from '@/lib/api';
-import { getToken } from '@/config/token';
 
 interface CartData {
   sku: string;
@@ -26,14 +25,6 @@ export const useProductActions = (productId: string) => {
       // Kiểm tra và refresh token nếu cần
       await checkAuthStatus();
       
-      // Kiểm tra lại authentication sau khi refresh
-      const accessToken = getToken('access');
-      if (!accessToken) {
-        toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-        router.push('/auth/login');
-        return { success: false, message: 'Vui lòng đăng nhập' };
-      }
-
       const response = await apiClient.cart.addToCart(data);
       
       if (response.data.success) {

@@ -1,9 +1,17 @@
 import React from 'react';
-import { ArrowRight, FileText, DollarSign, Users, Package, Percent, Coins, Calendar, ShoppingCart, Loader2, ArrowLeft, Edit, Trash2, Power, Tag, Clock } from 'lucide-react';
+import { ArrowRight, FileText, DollarSign, Users, Package, Percent, Coins, Calendar, ShoppingCart, Loader2, ArrowLeft, Edit, Trash2, Power, Tag, Clock, Search, ShoppingBag } from 'lucide-react';
+
+// Common props type for all icons
+type IconProps = {
+  className?: string;
+  size?: string | number;
+  color?: string;
+  [key: string]: unknown;
+};
 
 // Safe icon exports với error handling
 export const SafeIcons = {
-  ArrowRight: (props: any) => {
+  ArrowRight: (props: IconProps) => {
     try {
       return <ArrowRight {...props} />;
     } catch (error) {
@@ -11,7 +19,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  FileText: (props: any) => {
+  FileText: (props: React.ComponentProps<typeof FileText>) => {
     try {
       return <FileText {...props} />;
     } catch (error) {
@@ -19,7 +27,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  DollarSign: (props: any) => {
+  DollarSign: (props: React.ComponentProps<typeof DollarSign>) => {
     try {
       return <DollarSign {...props} />;
     } catch (error) {
@@ -27,7 +35,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Users: (props: any) => {
+  Users: (props: React.ComponentProps<typeof Users>) => {
     try {
       return <Users {...props} />;
     } catch (error) {
@@ -35,7 +43,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Package: (props: any) => {
+  Package: (props: React.ComponentProps<typeof Package>) => {
     try {
       return <Package {...props} />;
     } catch (error) {
@@ -43,7 +51,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Percent: (props: any) => {
+  Percent: (props: React.ComponentProps<typeof Percent>) => {
     try {
       return <Percent {...props} />;
     } catch (error) {
@@ -51,7 +59,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Coins: (props: any) => {
+  Coins: (props: React.ComponentProps<typeof Coins>) => {
     try {
       return <Coins {...props} />;
     } catch (error) {
@@ -59,7 +67,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Calendar: (props: any) => {
+  Calendar: (props: React.ComponentProps<typeof Calendar>) => {
     try {
       return <Calendar {...props} />;
     } catch (error) {
@@ -67,7 +75,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  ShoppingCart: (props: any) => {
+  ShoppingCart: (props: React.ComponentProps<typeof ShoppingCart>) => {
     try {
       return <ShoppingCart {...props} />;
     } catch (error) {
@@ -75,7 +83,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Loader2: (props: any) => {
+  Loader2: (props: React.ComponentProps<typeof Loader2>) => {
     try {
       return <Loader2 {...props} />;
     } catch (error) {
@@ -83,7 +91,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  ArrowLeft: (props: any) => {
+  ArrowLeft: (props: React.ComponentProps<typeof ArrowLeft>) => {
     try {
       return <ArrowLeft {...props} />;
     } catch (error) {
@@ -91,7 +99,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Edit: (props: any) => {
+  Edit: (props: React.ComponentProps<typeof Edit>) => {
     try {
       return <Edit {...props} />;
     } catch (error) {
@@ -99,7 +107,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Trash2: (props: any) => {
+  Trash2: (props: React.ComponentProps<typeof Trash2>) => {
     try {
       return <Trash2 {...props} />;
     } catch (error) {
@@ -107,7 +115,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Power: (props: any) => {
+  Power: (props: React.ComponentProps<typeof Power>) => {
     try {
       return <Power {...props} />;
     } catch (error) {
@@ -115,7 +123,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Tag: (props: any) => {
+  Tag: (props: React.ComponentProps<typeof Tag>) => {
     try {
       return <Tag {...props} />;
     } catch (error) {
@@ -123,7 +131,7 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
-  Clock: (props: any) => {
+  Clock: (props: React.ComponentProps<typeof Clock>) => {
     try {
       return <Clock {...props} />;
     } catch (error) {
@@ -131,13 +139,28 @@ export const SafeIcons = {
       return <IconFallback {...props} />;
     }
   },
+  Search: (props: React.ComponentProps<typeof Search>) => {
+    try {
+      return <Search {...props} />;
+    } catch (error) {
+      console.warn('Search icon failed to load:', error);
+      return <IconFallback {...props} />;
+    }
+  },
+  ShoppingBag: (props: React.ComponentProps<typeof ShoppingBag>) => {
+    try {
+      return <ShoppingBag {...props} />;
+    } catch (error) {
+      console.warn('ShoppingBag icon failed to load:', error);
+      return <IconFallback {...props} />;
+    }
+  },
 };
 
 // Fallback component
-const IconFallback = ({ className = "w-6 h-6", size, ...props }: any) => (
+const IconFallback = ({ className = "w-6 h-6", size }: IconProps) => (
   <div 
     className={`${className} bg-gray-200 rounded animate-pulse`} 
     style={{ width: size, height: size }}
-    {...props}
   />
 ); 

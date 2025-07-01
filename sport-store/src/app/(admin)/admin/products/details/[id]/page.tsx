@@ -20,7 +20,7 @@ export default function ProductDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState("details");
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {

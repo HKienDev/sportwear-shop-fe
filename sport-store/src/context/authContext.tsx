@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TOKEN_CONFIG, getToken, setToken, clearTokens } from '@/config/token';
+import { TOKEN_CONFIG } from '@/config/token';
 import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
 import { handleRedirect, setJustLoggedOut, getJustLoggedOut } from '@/utils/navigationUtils';
@@ -108,8 +108,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return;
             }
 
-            const accessToken = getToken('access');
-            const refreshToken = getToken('refresh');
+            const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             const storedUser = getUserData();
 
             console.log('🔍 Auth check - Tokens:', { 
@@ -142,7 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         updateAuthState(user, true);
                         return;
                     }
-                } catch (error) {
+                } catch {
                     console.log('⚠️ Server verification failed, keeping stored user');
                     // Giữ nguyên stored user nếu server check thất bại
                     return;
@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         updateAuthState(user, true);
                         return;
                     }
-                } catch (error) {
+                } catch {
                     console.log('⚠️ Access token invalid, trying refresh');
                     // Access token invalid, thử refresh
                 }
@@ -174,14 +174,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     const response = await axiosInstance.post('/auth/refresh-token', { refreshToken });
                     if (response.data.success) {
                         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data.data;
-                        setToken(newAccessToken, 'access');
-                        setToken(newRefreshToken, 'refresh');
+                        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
+                        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
                         setUserData(user); // Lưu user data mới
                         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
                         updateAuthState(user, true);
                         return;
                     }
-                } catch (error) {
+                } catch {
                     console.log('❌ Refresh token invalid');
                     // Refresh token invalid
                 }
@@ -192,15 +192,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.log('❌ No valid tokens, clearing auth state');
                 updateAuthState(null, false);
                 clearUserData();
-                clearTokens();
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 delete axiosInstance.defaults.headers.common['Authorization'];
             }
         } catch (error) {
             console.error("Error checking auth status:", error);
             // Không restore storedUser khi có lỗi
             updateAuthState(null, false);
-            clearTokens();
-            clearUserData();
+            localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+            localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             delete axiosInstance.defaults.headers.common['Authorization'];
         }
     }, [updateAuthState]);
@@ -257,21 +258,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 hasRefreshToken: !!refreshToken,
                 hasUser: !!user,
                 userRole: user.role
-            });
-
-            // Lưu token
-            setToken(accessToken, 'access');
-            setToken(refreshToken, 'refresh');
-            
-            // Lưu user data
-            setUserData(user);
-            
-            console.log('✅ Tokens saved - Access:', !!accessToken, 'Refresh:', !!refreshToken);
-            console.log('✅ Cookie name:', TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
-            console.log('✅ User data saved:', {
-                hasUser: !!user,
-                userRole: user.role,
-                userEmail: user.email
             });
 
             // Cập nhật header cho các request tiếp theo
@@ -334,7 +320,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             clearUserData();
             
             // Xóa tokens từ localStorage
-            localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
             localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             
@@ -484,7 +469,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loginWithGoogle = async (token: string) => {
         try {
             // Lưu token ngay lập tức
-            setToken(token, 'access');
+            localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
             axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             // Gọi API để lấy thông tin user

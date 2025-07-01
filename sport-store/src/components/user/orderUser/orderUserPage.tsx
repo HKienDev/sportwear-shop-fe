@@ -5,7 +5,6 @@ import { CheckCircle, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { getToken } from '@/config/token';
 import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
 import { API_URL } from "@/utils/api";
@@ -48,20 +47,8 @@ export default function OrderUserPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const token = getToken('access');
-      
-      if (!token) {
-        setError('Vui lòng đăng nhập để xem đơn hàng');
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
-      const response = await axios.get(`${API_URL}/orders/my-orders?page=${currentPage}&limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${API_URL}/orders/my-orders?page=${currentPage}&limit=${limit}`);
 
       if (response.data.success) {
         setOrders(response.data.data);
@@ -82,13 +69,6 @@ export default function OrderUserPage() {
       setLoading(false);
     }
   }, [currentPage, limit]);
-
-  useEffect(() => {
-    const token = getToken('access');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {

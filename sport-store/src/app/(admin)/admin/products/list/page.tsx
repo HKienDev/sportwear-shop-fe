@@ -52,11 +52,6 @@ export default function ProductListPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
-    router.push('/admin/login');
-    return null;
-  }
-
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
@@ -255,6 +250,17 @@ export default function ProductListPage() {
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
     }
   }, [fetchProducts, products]);
+
+  // Check if should redirect after all hooks are defined
+  const shouldRedirect = !loading && (!isAuthenticated || user?.role !== 'admin');
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      router.push('/admin/login');
+    }
+  }, [shouldRedirect, router]);
+
+  if (shouldRedirect) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/40 to-indigo-50/40">

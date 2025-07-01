@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import axios from "axios";
-import { Coupon } from "@/models/coupon";
 
 export async function GET(request: Request) {
     try {

@@ -28,7 +28,7 @@ import type {
     EmptyResponse
 } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
-import { TOKEN_CONFIG, getToken, setToken, clearTokens } from '@/config/token';
+import { TOKEN_CONFIG } from '@/config/token';
 
 // Mở rộng kiểu AxiosInstance để thêm phương thức setAuthToken
 interface CustomAxiosInstance extends AxiosInstance {
@@ -88,7 +88,7 @@ const resetRefreshAttempts = () => {
 // Thêm interceptor để tự động thêm token vào header
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = getToken('access');
+        const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -155,7 +155,8 @@ axiosInstance.interceptors.response.use(
                 
                 if (!canRefreshResult) {
                     console.log('❌ Không thể refresh token, clear tokens và chuyển hướng');
-                    clearTokens();
+                    localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                    localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                     window.location.href = '/auth/login';
                     return Promise.reject(error);
                 }
@@ -164,12 +165,13 @@ axiosInstance.interceptors.response.use(
                 console.log('🔢 Số lần thử refresh:', refreshAttempts);
                 
                 // Lấy refresh token từ localStorage
-                const refreshToken = getToken('refresh');
+                const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 console.log('🎟️ Refresh token exists:', !!refreshToken);
                 
                 if (!refreshToken) {
                     console.log('❌ Không tìm thấy refresh token, clear tokens và chuyển hướng');
-                    clearTokens();
+                    localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                    localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                     window.location.href = '/auth/login';
                     return Promise.reject(error);
                 }
@@ -183,8 +185,8 @@ axiosInstance.interceptors.response.use(
                     const { accessToken, refreshToken: newRefreshToken } = response.data.data;
                     
                     // Cập nhật tokens
-                    setToken(accessToken, 'access');
-                    setToken(newRefreshToken, 'refresh');
+                    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+                    localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
                     
                     // Reset các biến kiểm soát
                     resetRefreshAttempts();
@@ -208,7 +210,8 @@ axiosInstance.interceptors.response.use(
                 console.error('❌ Lỗi khi refresh token:', refreshError);
                 
                 // Clear tokens và chuyển hướng
-                clearTokens();
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 window.location.href = '/auth/login';
                 
                 // Reject tất cả các request đang chờ
@@ -230,10 +233,10 @@ axiosInstance.interceptors.response.use(
 // Thêm phương thức setAuthToken vào axiosInstance
 axiosInstance.setAuthToken = (token: string | null) => {
     if (token) {
-        setToken(token, 'access');
+        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-        clearTokens();
+        localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         delete axiosInstance.defaults.headers.common['Authorization'];
     }
 };
@@ -308,7 +311,8 @@ api.interceptors.response.use(
                 
                 if (!canRefreshResult) {
                     console.log('❌ Không thể refresh token, clear tokens và chuyển hướng');
-                    clearTokens();
+                    localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                    localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                     window.location.href = '/auth/login';
                     return Promise.reject(error);
                 }
@@ -317,12 +321,13 @@ api.interceptors.response.use(
                 console.log('🔢 Số lần thử refresh:', refreshAttempts);
                 
                 // Lấy refresh token từ localStorage
-                const refreshToken = getToken('refresh');
+                const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 console.log('🎟️ Refresh token exists:', !!refreshToken);
                 
                 if (!refreshToken) {
                     console.log('❌ Không tìm thấy refresh token, clear tokens và chuyển hướng');
-                    clearTokens();
+                    localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                    localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                     window.location.href = '/auth/login';
                     return Promise.reject(error);
                 }
@@ -361,7 +366,8 @@ api.interceptors.response.use(
                 console.error('❌ Lỗi khi refresh token:', refreshError);
                 
                 // Clear tokens và chuyển hướng
-                clearTokens();
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 window.location.href = '/auth/login';
                 
                 // Reject tất cả các request đang chờ
@@ -421,9 +427,8 @@ const apiClient = {
                     const [name] = cookie.split('=');
                     document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
                 });
-                localStorage.removeItem('user');
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
+                localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+                localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
                 return response;
             } catch (error) {
                 console.error('Logout error:', error);
@@ -471,7 +476,7 @@ const apiClient = {
         },
         check: async () => {
             try {
-                const token = getToken('access');
+                const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                 if (!token) {
                     throw new Error('No token found');
                 }
@@ -504,7 +509,7 @@ const apiClient = {
         
         create: (data: CreateProductData): Promise<AxiosResponse<ApiResponse<Product>>> => {
             // Lấy token từ localStorage
-            const token = getToken('access');
+            const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             
             if (!token) {
                 console.error('No token found for product creation');

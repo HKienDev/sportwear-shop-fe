@@ -8,10 +8,6 @@ import OrderListTable from "@/components/admin/orders/list/orderListTable";
 import { Order } from "@/types/base";
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { api } from '@/lib/api';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function OrderListPage() {
   const router = useRouter();
@@ -25,11 +21,7 @@ export default function OrderListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await fetch('/api/orders/admin');
       
@@ -50,7 +42,11 @@ export default function OrderListPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Delete orders
   const handleDeleteOrders = useCallback(async () => {

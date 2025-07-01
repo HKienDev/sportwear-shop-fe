@@ -15,7 +15,7 @@ interface CustomJWT {
   role?: string;
   accessToken?: string;
   refreshToken?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const setAuthData = (data: AuthResponseData) => {

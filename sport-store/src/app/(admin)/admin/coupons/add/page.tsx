@@ -1,5 +1,4 @@
 "use client";
-import { Metadata } from 'next';
 import AddCouponClient from './addCouponClient';
 import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';

@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import axios from 'axios';
-import { getToken } from '@/config/token';
 import InvoiceHeader from '@/components/user/invoice/InvoiceHeader';
 import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
@@ -120,14 +119,12 @@ interface ProcessedProduct {
 
 export default function InvoicePage() {
   const params = useParams();
-  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [animateItems, setAnimateItems] = useState(false);
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const processOrderItems = useCallback((items: OrderItem[]): ProcessedProduct[] => {
     return items.map(item => ({
@@ -146,16 +143,8 @@ export default function InvoicePage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const token = getToken('access');
-        if (!token) {
-          setError('Vui lòng đăng nhập để xem hóa đơn');
-          setLoading(false);
-          return;
-        }
-
         const response = await axios.get(`${API_URL}/orders/my-orders/${params.id}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Cache-Control': 'no-cache',
           }
         });

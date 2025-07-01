@@ -3,7 +3,6 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/authContext";
-import { setToken } from "@/config/token";
 
 const GoogleAuthHandler = () => {
   const { user, isAuthenticated, loginWithGoogle } = useAuth();
@@ -18,9 +17,6 @@ const GoogleAuthHandler = () => {
         
         if (token) {
           console.log('🔑 Received JWT token from Google OAuth');
-          
-          // Lưu token vào localStorage
-          setToken(token, 'access');
           
           // Gọi loginWithGoogle để xử lý authentication
           const result = await loginWithGoogle(token);

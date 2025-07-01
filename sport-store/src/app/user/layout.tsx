@@ -13,9 +13,6 @@ const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat
 
 function UserLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  
-  // Kiểm tra xem có đang ở messages page không
-  const isMessagesPage = pathname === '/user/messages';
 
   return (
     <div className={`min-h-screen flex flex-col ${montserrat.variable} overflow-x-hidden`}>

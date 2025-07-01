@@ -20,6 +20,193 @@ declare global {
   }
 }
 
+// Categories Showcase Component
+const CategoriesShowcase = memo(({ categories }: { categories: Category[] }) => {
+  // Luôn chỉ lấy tối đa 6 category đầu tiên
+  const displayCategories = categories ? categories.slice(0, 6) : [];
+  const count = displayCategories.length;
+
+  // Nếu <= 6, chỉ hiển thị grid, không scroll
+  if (count <= 6) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Danh Mục Sản Phẩm</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Khám phá đa dạng sản phẩm thể thao chất lượng cao từ các thương hiệu uy tín
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          {displayCategories.map((category) => (
+            <div
+              key={category._id}
+              className="group cursor-pointer bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-200"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300">
+                {category.image ? (
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 object-cover rounded-full"
+                  />
+                ) : (
+                  <SafeIcons.ShoppingBag className="w-8 h-8 text-purple-600" />
+                )}
+              </div>
+              <h3 className="text-center font-semibold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                {category.name}
+              </h3>
+              <p className="text-center text-sm text-gray-500 mt-2">
+                {category.productCount || 0} sản phẩm
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu có nhiều hơn 6 category, chỉ lấy 6 và cho scroll ngang tự nhiên
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">Danh Mục Sản Phẩm</h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Khám phá đa dạng sản phẩm thể thao chất lượng cao từ các thương hiệu uy tín
+        </p>
+      </div>
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex gap-6 min-w-full">
+          {displayCategories.map((category) => (
+            <div
+              key={category._id}
+              className="group cursor-pointer bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-200 min-w-[220px]"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300">
+                {category.image ? (
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 object-cover rounded-full"
+                  />
+                ) : (
+                  <SafeIcons.ShoppingBag className="w-8 h-8 text-purple-600" />
+                )}
+              </div>
+              <h3 className="text-center font-semibold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                {category.name}
+              </h3>
+              <p className="text-center text-sm text-gray-500 mt-2">
+                {category.productCount || 0} sản phẩm
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+CategoriesShowcase.displayName = 'CategoriesShowcase';
+
+// Brand Showcase Component
+const BrandShowcase = memo(() => {
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Thương Hiệu Đối Tác</h2>
+        <p className="text-gray-600">Các thương hiệu thể thao hàng đầu thế giới</p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center">
+        {['Nike', 'Adidas', 'Puma', 'Under Armour', 'New Balance', 'Asics'].map((brand) => (
+          <div
+            key={brand}
+            className="flex items-center justify-center h-16 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-300"
+          >
+            <span className="font-bold text-gray-600">{brand}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+BrandShowcase.displayName = 'BrandShowcase';
+
+// Quick Links Component
+const QuickLinks = memo(() => (
+  <div className="bg-gray-50 py-12">
+    <div className="container mx-auto px-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 className="font-bold text-gray-800 mb-4">Hỗ Trợ Khách Hàng</h3>
+          <ul className="space-y-2 text-gray-600">
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Trung tâm trợ giúp</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Hướng dẫn mua hàng</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách đổi trả</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Liên hệ chúng tôi</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-800 mb-4">Về Chúng Tôi</h3>
+          <ul className="space-y-2 text-gray-600">
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Giới thiệu</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Tin tức</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Tuyển dụng</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Liên hệ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-800 mb-4">Chính Sách</h3>
+          <ul className="space-y-2 text-gray-600">
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Điều khoản sử dụng</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách bảo mật</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách vận chuyển</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Chính sách thanh toán</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-800 mb-4">Theo Dõi</h3>
+          <ul className="space-y-2 text-gray-600">
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Facebook</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">Instagram</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">YouTube</a></li>
+            <li><a href="#" className="hover:text-purple-600 transition-colors">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+
+QuickLinks.displayName = 'QuickLinks';
+
+// Social Proof Component
+const SocialProof = memo(() => (
+  <div className="container mx-auto px-4 py-12">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      <div>
+        <div className="text-4xl font-bold text-purple-600 mb-2">50K+</div>
+        <div className="text-gray-600">Khách hàng hài lòng</div>
+      </div>
+      <div>
+        <div className="text-4xl font-bold text-purple-600 mb-2">1000+</div>
+        <div className="text-gray-600">Sản phẩm đa dạng</div>
+      </div>
+      <div>
+        <div className="text-4xl font-bold text-purple-600 mb-2">4.8★</div>
+        <div className="text-gray-600">Đánh giá trung bình</div>
+      </div>
+    </div>
+  </div>
+));
+
+SocialProof.displayName = 'SocialProof';
+
 // Tách component Hero Banner riêng để tối ưu
 const HeroBanner = memo(() => (
   <div className="container mx-auto px-4 mt-8">
@@ -361,15 +548,27 @@ const HomePage = () => {
   // Tối ưu data fetching với useCallback
   const fetchData = useCallback(async () => {
     try {
+      console.log('🔄 Fetching data...');
       const [productRes, categoryRes] = await Promise.all([
         getAllProducts(),
         getAllCategories(),
       ]);
+      
+      console.log('📦 Product response:', productRes);
+      console.log('📂 Category response:', categoryRes);
+      
       if (!productRes.success) throw new Error("Lỗi khi lấy dữ liệu sản phẩm");
       if (!categoryRes.success) throw new Error("Lỗi khi lấy dữ liệu thể loại");
+      
       setProducts(productRes.data.products);
       setCategories(categoryRes.data.categories || []);
-    } catch {
+      console.log('✅ Data loaded successfully');
+      console.log('📊 Categories loaded:', {
+        count: categoryRes.data.categories?.length || 0,
+        categories: categoryRes.data.categories?.map((c: Category) => c.name)
+      });
+    } catch (error) {
+      console.error('❌ Error fetching data:', error);
       setError("Đã xảy ra lỗi khi tải dữ liệu");
       setProducts([]);
       setCategories([]);
@@ -407,9 +606,13 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-white">
       <HeroBanner />
+      <CategoriesShowcase categories={categories} />
       <FeaturedProductSection />
       <ProductSection products={products} categories={categories} />
+      <SocialProof />
+      <BrandShowcase />
       <TestimonialsSection />
+      <QuickLinks />
     </div>
   );
 };

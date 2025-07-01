@@ -421,7 +421,7 @@ export function useProducts(options: ProductQueryParams = {}) {
             } catch (apiError) {
                 const error = apiError as { 
                     response?: { 
-                        data?: { message?: string, errors?: any }, 
+                        data?: { message?: string, errors?: unknown }, 
                         status?: number 
                     },
                     message?: string 

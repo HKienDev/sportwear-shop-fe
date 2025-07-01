@@ -8,35 +8,36 @@ export const customerService = {
       const response = await apiClient.get(`/admin/users?page=${page}&limit=${limit}`);
       
       // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
-      const customersWithDeliveredOrders = response.data.map((customer: any) => {
+      const customersWithDeliveredOrders = response.data.map((customer: unknown) => {
+        const customerObj = customer as Record<string, unknown>;
         // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
-        if (customer.deliveredOrders !== undefined) {
+        if (customerObj.deliveredOrders !== undefined) {
           return customer;
         }
         
         // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
-        if (customer.orders && Array.isArray(customer.orders)) {
-          const deliveredOrders = customer.orders.filter((order: any) => 
-            order.status === "delivered"
+        if (customerObj.orders && Array.isArray(customerObj.orders)) {
+          const deliveredOrders = (customerObj.orders as unknown[]).filter((order: unknown) => 
+            (order as Record<string, unknown>).status === "delivered"
           ).length;
           
           return {
-            ...customer,
+            ...(customer as object),
             deliveredOrders
           };
         }
         
         // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
-        if (customer.orderCount !== undefined) {
+        if (customerObj.orderCount !== undefined) {
           return {
-            ...customer,
-            deliveredOrders: customer.orderCount
+            ...(customer as object),
+            deliveredOrders: customerObj.orderCount
           };
         }
         
         // Nếu không có thông tin nào, mặc định là 0
         return {
-          ...customer,
+          ...(customer as object),
           deliveredOrders: 0
         };
       });
@@ -69,8 +70,8 @@ export const customerService = {
       
       // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
       if (customer.orders && Array.isArray(customer.orders)) {
-        deliveredOrders = customer.orders.filter((order: any) => 
-          order.status === "delivered"
+        deliveredOrders = (customer.orders as unknown[]).filter((order: unknown) => 
+          (order as Record<string, unknown>).status === "delivered"
         ).length;
       } 
       // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
@@ -176,35 +177,36 @@ export const customerService = {
       const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
       
       // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
-      const customersWithDeliveredOrders = response.data.map((customer: any) => {
+      const customersWithDeliveredOrders = response.data.map((customer: unknown) => {
+        const customerObj = customer as Record<string, unknown>;
         // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
-        if (customer.deliveredOrders !== undefined) {
+        if (customerObj.deliveredOrders !== undefined) {
           return customer;
         }
         
         // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
-        if (customer.orders && Array.isArray(customer.orders)) {
-          const deliveredOrders = customer.orders.filter((order: any) => 
-            order.status === "delivered"
+        if (customerObj.orders && Array.isArray(customerObj.orders)) {
+          const deliveredOrders = (customerObj.orders as unknown[]).filter((order: unknown) => 
+            (order as Record<string, unknown>).status === "delivered"
           ).length;
           
           return {
-            ...customer,
+            ...(customer as object),
             deliveredOrders
           };
         }
         
         // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
-        if (customer.orderCount !== undefined) {
+        if (customerObj.orderCount !== undefined) {
           return {
-            ...customer,
-            deliveredOrders: customer.orderCount
+            ...(customer as object),
+            deliveredOrders: customerObj.orderCount
           };
         }
         
         // Nếu không có thông tin nào, mặc định là 0
         return {
-          ...customer,
+          ...(customer as object),
           deliveredOrders: 0
         };
       });

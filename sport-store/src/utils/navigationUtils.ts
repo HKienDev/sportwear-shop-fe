@@ -49,15 +49,12 @@ export const handleRedirect = debounce(async (
         }
         isRedirecting = true;
         let redirectPath = '/';
-        let reason = '';
         
         if (user) {
             if (user.role === UserRole.ADMIN) {
                 redirectPath = '/admin/dashboard';
-                reason = 'role=admin';
             } else {
                 redirectPath = '/user';
-                reason = 'role=user';
             }
         } else {
             // Nếu không có user và đang ở trang auth, không redirect
@@ -69,7 +66,6 @@ export const handleRedirect = debounce(async (
             // Nếu không có user và đang ở trang protected, redirect về login
             if (currentPath.startsWith('/admin/') || currentPath.startsWith('/user/')) {
                 redirectPath = '/auth/login';
-                reason = 'no user, cần xác thực';
             }
         }
         
