@@ -23,7 +23,7 @@ export default function FeaturedProducts({
 
   return (
     <motion.div 
-      className="mt-4 sm:mt-6 bg-white rounded-xl shadow-md overflow-hidden"
+      className="mt-4 sm:mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: showAnimation ? 1 : 0, y: showAnimation ? 0 : 20 }}
       transition={{ duration: 0.3, delay: 0.3 }}
@@ -35,7 +35,7 @@ export default function FeaturedProducts({
       <div className="p-3 sm:p-4 md:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {products.map((product) => (
-            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-purple-300 transition-all duration-300">
               <div className="h-28 sm:h-32 md:h-36 w-full bg-gray-100 relative">
                 <Image
                   src={product.image}

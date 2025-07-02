@@ -104,7 +104,7 @@ const ProductCardWithTimer = ({
 
   if (isCompact) {
     return (
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-105 min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[360px]">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:border-purple-300 hover:scale-105 min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[360px]">
         {/* Product Image - Mobile-first */}
         <div className="relative h-36 sm:h-40 md:h-48 lg:h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -144,7 +144,7 @@ const ProductCardWithTimer = ({
           {/* Add to Cart Button - Mobile-first */}
           <button 
             onClick={handleAddToCart}
-            className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base md:text-lg"
+            className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg"
           >
             Thêm Vào Giỏ
           </button>
@@ -180,7 +180,7 @@ const ProductCardWithTimer = ({
 
   // Original large layout - Mobile-first
   return (
-    <div className="w-full max-w-4xl sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
+    <div className="w-full max-w-4xl sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:border-purple-300">
       <div className="flex flex-col lg:flex-row">
         {/* Product Image - Mobile-first */}
         <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -224,7 +224,7 @@ const ProductCardWithTimer = ({
           {/* Add to Cart Button - Mobile-first */}
           <button 
             onClick={handleAddToCart}
-            className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base md:text-lg"
+            className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg"
           >
             Thêm Vào Giỏ
           </button>

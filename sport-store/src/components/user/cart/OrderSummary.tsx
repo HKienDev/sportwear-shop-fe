@@ -22,7 +22,7 @@ export default function OrderSummary({
     <div className="lg:col-span-1 space-y-6">
       {/* Order Summary */}
       <motion.div 
-        className="bg-white rounded-xl shadow-md overflow-hidden sticky top-6"
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-6"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: showAnimation ? 1 : 0, x: showAnimation ? 0 : 20 }}
         transition={{ duration: 0.3, delay: 0.4 }}

@@ -55,7 +55,7 @@ export default function CartList({
           initial={showAnimation ? { opacity: 0, x: -20 } : false}
           animate={showAnimation ? { opacity: 1, x: 0 } : false}
           transition={{ duration: 0.3, delay: index * 0.1 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
+                      className="bg-white rounded-xl border border-gray-200 hover:border-purple-300 transition-all duration-300 overflow-hidden"
         >
           <div className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">

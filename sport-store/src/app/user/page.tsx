@@ -188,7 +188,7 @@ const SocialProof = memo(() => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 text-center">
         {/* Khách hàng hài lòng */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-purple-50/30 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-purple-100/50 hover:border-purple-200">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-purple-50/30 rounded-xl sm:rounded-2xl border border-purple-100/50 hover:border-purple-200 transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -202,7 +202,7 @@ const SocialProof = memo(() => (
         </div>
 
         {/* Sản phẩm đa dạng */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-red-50/30 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-red-100/50 hover:border-red-200">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-red-50/30 rounded-xl sm:rounded-2xl border border-red-100/50 hover:border-red-200 transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -216,7 +216,7 @@ const SocialProof = memo(() => (
         </div>
 
         {/* Đánh giá trung bình */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-yellow-50/30 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-yellow-100/50 hover:border-yellow-200 sm:col-span-2 lg:col-span-1">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-yellow-50/30 rounded-xl sm:rounded-2xl border border-yellow-100/50 hover:border-yellow-200 transition-all duration-300 sm:col-span-2 lg:col-span-1">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -401,7 +401,7 @@ const TestimonialsSection = memo(() => (
 
           {/* Testimonial Cards - Mobile-first */}
           {/* Card 1 */}
-          <div className="group bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden border border-purple-100 hover:border-purple-300">
+          <div className="group bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl border border-purple-100 hover:border-purple-300 transition-all duration-500 relative overflow-hidden">
             <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <div className="flex items-center mb-3 sm:mb-4 md:mb-6 lg:mb-8 relative">
@@ -443,7 +443,7 @@ const TestimonialsSection = memo(() => (
           </div>
 
           {/* Card 2 */}
-          <div className="group bg-gradient-to-br from-white to-red-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden border border-red-100 hover:border-red-300">
+          <div className="group bg-gradient-to-br from-white to-red-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl border border-red-100 hover:border-red-300 transition-all duration-500 relative overflow-hidden">
             <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-red-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <div className="flex items-center mb-3 sm:mb-4 md:mb-6 lg:mb-8 relative">
@@ -484,7 +484,7 @@ const TestimonialsSection = memo(() => (
           </div>
 
           {/* Card 3 */}
-          <div className="group bg-gradient-to-br from-white to-pink-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden border border-pink-100 hover:border-pink-300 sm:col-span-2 lg:col-span-1">
+          <div className="group bg-gradient-to-br from-white to-pink-50/50 backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 xl:p-10 rounded-lg sm:rounded-xl md:rounded-2xl border border-pink-100 hover:border-pink-300 transition-all duration-500 relative overflow-hidden sm:col-span-2 lg:col-span-1">
             <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <div className="flex items-center mb-3 sm:mb-4 md:mb-6 lg:mb-8 relative">

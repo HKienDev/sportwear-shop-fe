@@ -99,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Link href={`/user/products/details/${sku}`} className="block">
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-md sm:shadow-lg overflow-hidden transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl hover:scale-[1.02] sm:hover:scale-105 group h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px] xl:h-[420px] flex flex-col relative">
+      <div className="bg-white rounded-lg sm:rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:border-purple-300 hover:scale-[1.02] sm:hover:scale-105 group h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px] xl:h-[420px] flex flex-col relative">
         {/* Badge giảm giá - Mobile-first */}
         {salePrice > 0 && (
           <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10 bg-red-700 text-white text-xs sm:text-sm font-bold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
