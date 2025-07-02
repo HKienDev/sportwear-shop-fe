@@ -237,13 +237,13 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
   }, []);
 
   return (
-    <div ref={searchRef} className="flex-1 max-w-2xl mx-8 relative">
+    <div ref={searchRef} className="w-full relative">
       <div className="relative group">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-hover:text-red-500 transition-colors" />
+        <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5 group-hover:text-red-500 transition-colors" />
         <input
           type="text"
           placeholder="Tìm kiếm sản phẩm, danh mục..."
-          className="w-full px-4 py-2.5 pl-12 pr-20 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white group-hover:border-red-200"
+          className="w-full px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 pl-9 sm:pl-10 md:pl-12 pr-14 sm:pr-16 md:pr-20 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white group-hover:border-red-200 text-sm sm:text-base"
           value={searchQuery}
           onChange={handleSearchChange}
           onKeyDown={(e) => {
@@ -258,24 +258,24 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
         />
         <button
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+          className="absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-1.5 rounded-full hover:bg-red-50 transition-colors"
           title="Bộ lọc nâng cao"
         >
-          <Filter className="w-4 h-4 text-gray-400 hover:text-red-500" />
+          <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500" />
         </button>
       </div>
 
-      {/* Advanced Search Dropdown */}
+      {/* Advanced Search Dropdown - Enhanced Responsive */}
       {(searchQuery || showAdvancedFilters) && (
-        <div className="absolute top-full left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 mt-2 z-[100] max-h-[600px] overflow-hidden">
-          <div className="flex">
+        <div className="absolute top-full left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 mt-1.5 sm:mt-2 z-[100] max-h-[500px] sm:max-h-[600px] overflow-hidden">
+          <div className="flex flex-col lg:flex-row">
             {/* Main Content */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-2.5 sm:p-3 md:p-4">
               {/* Search Suggestions */}
               {searchQuery && searchSuggestions.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <Search className="w-4 h-4 mr-2" />
+                    <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Gợi ý tìm kiếm
                   </h3>
                   <div className="space-y-1">
@@ -283,13 +283,13 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="w-full text-left p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-between group"
+                        className="w-full text-left p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-between group"
                       >
-                        <span className="text-sm text-gray-700 group-hover:text-red-600">
+                        <span className="text-sm text-gray-700 group-hover:text-red-600 truncate">
                           {suggestion.text}
                         </span>
                         {suggestion.count && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ml-2 flex-shrink-0">
                             {suggestion.count} sản phẩm
                           </span>
                         )}
@@ -301,10 +301,10 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
 
               {/* Search History */}
               {!searchQuery && searchHistory.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                       Lịch sử tìm kiếm
                     </h3>
                     <button
@@ -319,7 +319,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                       <button
                         key={index}
                         onClick={() => handleSearchSubmit(item)}
-                        className="w-full text-left p-2 hover:bg-red-50 rounded-lg transition-colors text-sm text-gray-700 hover:text-red-600"
+                        className="w-full text-left p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-colors text-sm text-gray-700 hover:text-red-600 truncate"
                       >
                         {item}
                       </button>
@@ -330,17 +330,17 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
 
               {/* Hot Keywords */}
               {!searchQuery && hotKeywords.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <TrendingUp className="w-4 h-4 mr-2" />
+                    <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Từ khóa hot
                   </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {hotKeywords.slice(0, 8).map((keyword, index) => (
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                    {hotKeywords.slice(0, 6).map((keyword, index) => (
                       <button
                         key={index}
                         onClick={() => handleSearchSubmit(keyword)}
-                        className="px-3 py-1 bg-red-50 text-red-600 text-xs rounded-full hover:bg-red-100 transition-colors"
+                        className="px-2 sm:px-3 py-1 bg-red-50 text-red-600 text-xs rounded-full hover:bg-red-100 transition-colors"
                       >
                         {keyword}
                       </button>
@@ -353,27 +353,27 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
               {searchQuery && (isSearching || searchResults.length > 0) && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Kết quả tìm kiếm ({searchResults.length})
                   </h3>
                   {isSearching ? (
                     <div className="flex items-center justify-center py-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-red-500"></div>
                     </div>
                   ) : searchResults.length > 0 ? (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    <div className="space-y-1.5 sm:space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto">
                       {searchResults.map((product) => (
                         <Link
                           key={product._id}
                           href={`/user/products/details/${product._id}`}
-                          className="flex items-center gap-4 p-2 hover:bg-red-50 rounded-lg transition-all duration-200 group"
+                          className="flex items-center gap-2.5 sm:gap-3 md:gap-4 p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-all duration-200 group"
                           onClick={() => {
                             setSearchQuery("");
                             setSearchResults([]);
                             setSearchSuggestions([]);
                           }}
                         >
-                          <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg group-hover:scale-105 transition-transform duration-200">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg group-hover:scale-105 transition-transform duration-200">
                             {product.images?.main ? (
                               <Image
                                 src={product.images.main}
@@ -384,7 +384,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                <ImageIcon className="w-6 h-6 text-gray-400" />
+                                <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-400" />
                               </div>
                             )}
                           </div>
@@ -392,11 +392,11 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                             <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-red-600 transition-colors">
                               {product.name}
                             </h3>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">
                               {product.category?.name || "Chưa phân loại"}
                             </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-sm font-medium text-red-500">
+                            <div className="flex items-center gap-1.5 sm:gap-2 mt-1">
+                              <span className="text-xs sm:text-sm font-medium text-red-500">
                                 {product.discountPrice
                                   ? product.discountPrice.toLocaleString("vi-VN", {
                                       style: "currency",
@@ -408,7 +408,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                                     })}
                               </span>
                               {product.discountPrice && (
-                                <span className="text-sm text-gray-500 line-through">
+                                <span className="text-xs sm:text-sm text-gray-500 line-through">
                                   {product.price.toLocaleString("vi-VN", {
                                     style: "currency",
                                     currency: "VND",
@@ -417,22 +417,22 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                               )}
                             </div>
                             {/* Product stats */}
-                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mt-1 text-xs text-gray-400">
                               {product.rating && (
                                 <div className="flex items-center">
-                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-0.5 sm:mr-1" />
                                   {product.rating}
                                 </div>
                               )}
                               {product.viewCount && (
                                 <div className="flex items-center">
-                                  <Eye className="w-3 h-3 mr-1" />
+                                  <Eye className="w-3 h-3 mr-0.5 sm:mr-1" />
                                   {product.viewCount}
                                 </div>
                               )}
                               {product.soldCount && (
                                 <div className="flex items-center">
-                                  <ShoppingBag className="w-3 h-3 mr-1" />
+                                  <ShoppingBag className="w-3 h-3 mr-0.5 sm:mr-1" />
                                   {product.soldCount}
                                 </div>
                               )}
@@ -450,16 +450,16 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
               )}
             </div>
 
-            {/* Advanced Filters Sidebar */}
+            {/* Advanced Filters Sidebar - Enhanced Responsive */}
             {showAdvancedFilters && (
-              <div className="w-64 border-l border-gray-100 p-4 bg-gray-50">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Bộ lọc nâng cao</h3>
+              <div className="w-full lg:w-64 border-t lg:border-l lg:border-t-0 border-gray-100 p-2.5 sm:p-3 md:p-4 bg-gray-50">
+                <h3 className="text-sm font-medium text-gray-700 mb-2.5 sm:mb-3">Bộ lọc nâng cao</h3>
                 
                 {/* Category Filter */}
-                <div className="mb-4">
-                  <label className="text-xs font-medium text-gray-600 mb-2 block">Danh mục</label>
+                <div className="mb-3 sm:mb-4">
+                  <label className="text-xs font-medium text-gray-600 mb-1.5 sm:mb-2 block">Danh mục</label>
                   <select
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                     value={searchFilters.category || ''}
                     onChange={(e) => setSearchFilters({...searchFilters, category: e.target.value})}
                   >
@@ -473,13 +473,13 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                 </div>
 
                 {/* Price Range Filter */}
-                <div className="mb-4">
-                  <label className="text-xs font-medium text-gray-600 mb-2 block">Khoảng giá</label>
-                  <div className="space-y-2">
+                <div className="mb-3 sm:mb-4">
+                  <label className="text-xs font-medium text-gray-600 mb-1.5 sm:mb-2 block">Khoảng giá</label>
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                     <input
                       type="number"
-                      placeholder="Giá tối thiểu"
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="Tối thiểu"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                       value={searchFilters.priceRange?.min || ''}
                       onChange={(e) => setSearchFilters({
                         ...searchFilters, 
@@ -488,8 +488,8 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                     />
                     <input
                       type="number"
-                      placeholder="Giá tối đa"
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="Tối đa"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                       value={searchFilters.priceRange?.max || ''}
                       onChange={(e) => setSearchFilters({
                         ...searchFilters, 
@@ -500,10 +500,10 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                 </div>
 
                 {/* Rating Filter */}
-                <div className="mb-4">
-                  <label className="text-xs font-medium text-gray-600 mb-2 block">Đánh giá</label>
+                <div className="mb-3 sm:mb-4">
+                  <label className="text-xs font-medium text-gray-600 mb-1.5 sm:mb-2 block">Đánh giá</label>
                   <select
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                     value={searchFilters.rating || ''}
                     onChange={(e) => setSearchFilters({...searchFilters, rating: Number(e.target.value)})}
                   >
@@ -515,11 +515,11 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                 </div>
 
                 {/* Stock Filter */}
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label className="flex items-center text-xs font-medium text-gray-600">
                     <input
                       type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      className="mr-1.5 sm:mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
                       checked={searchFilters.inStock || false}
                       onChange={(e) => setSearchFilters({...searchFilters, inStock: e.target.checked})}
                     />
@@ -528,11 +528,11 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                 </div>
 
                 {/* Sale Filter */}
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label className="flex items-center text-xs font-medium text-gray-600">
                     <input
                       type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      className="mr-1.5 sm:mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
                       checked={searchFilters.onSale || false}
                       onChange={(e) => setSearchFilters({...searchFilters, onSale: e.target.checked})}
                     />
@@ -543,7 +543,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                 {/* Apply Filters Button */}
                 <button
                   onClick={() => handleSearchSubmit(searchQuery)}
-                  className="w-full bg-red-600 text-white text-sm py-2 rounded-lg hover:bg-red-700 transition-colors"
+                  className="w-full bg-red-600 text-white text-sm py-1.5 sm:py-2 rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Áp dụng bộ lọc
                 </button>

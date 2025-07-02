@@ -146,25 +146,82 @@ const FeaturedProductsCarousel = ({
 
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Gradient Overlays for Scroll Indicators */}
-      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
+      {/* Gradient Overlays for Scroll Indicators - Mobile-first */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
       
-      {/* Single Product Display with Scroll */}
+      {/* Responsive Carousel Container - Mobile-first */}
       <div 
         className="featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="flex gap-6 pb-4 min-w-max justify-center">
-          {/* Chỉ render 1 card đầu tiên ở giữa, rộng hơn */}
-          <div className="w-full max-w-2xl mx-auto">
-            <ProductCardWithTimer 
-              product={infiniteProducts[0]}
-              isCompact={false}
-            />
-          </div>
+        <div className="flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 min-w-max px-4 sm:px-6 md:px-8">
+          {/* Mobile: 1 card, Tablet: 2 cards, Desktop: 4 cards */}
+          {infiniteProducts.map((product, index) => (
+            <div 
+              key={`${product.id}-${index}`}
+              className="flex-shrink-0"
+              style={{
+                width: 'calc(100vw - 2rem)', // Mobile: full width minus padding
+                minWidth: 'calc(100vw - 2rem)',
+                maxWidth: 'calc(100vw - 2rem)',
+              }}
+            >
+              {/* Mobile: 1 card per slide */}
+              <div className="block sm:hidden">
+                <ProductCardWithTimer 
+                  product={product}
+                  isCompact={true}
+                />
+              </div>
+              
+              {/* Tablet: 2 cards per slide */}
+              <div className="hidden sm:block lg:hidden">
+                <div className="grid grid-cols-2 gap-4">
+                  <ProductCardWithTimer 
+                    product={product}
+                    isCompact={true}
+                  />
+                  {infiniteProducts[index + 1] && (
+                    <ProductCardWithTimer 
+                      product={infiniteProducts[index + 1]}
+                      isCompact={true}
+                    />
+                  )}
+                </div>
+              </div>
+              
+              {/* Desktop: 4 cards per slide */}
+              <div className="hidden lg:block">
+                <div className="grid grid-cols-4 gap-6">
+                  <ProductCardWithTimer 
+                    product={product}
+                    isCompact={true}
+                  />
+                  {infiniteProducts[index + 1] && (
+                    <ProductCardWithTimer 
+                      product={infiniteProducts[index + 1]}
+                      isCompact={true}
+                    />
+                  )}
+                  {infiniteProducts[index + 2] && (
+                    <ProductCardWithTimer 
+                      product={infiniteProducts[index + 2]}
+                      isCompact={true}
+                    />
+                  )}
+                  {infiniteProducts[index + 3] && (
+                    <ProductCardWithTimer 
+                      product={infiniteProducts[index + 3]}
+                      isCompact={true}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

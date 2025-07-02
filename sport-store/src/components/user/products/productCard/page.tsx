@@ -99,29 +99,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Link href={`/user/products/details/${sku}`} className="block">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 group h-[400px] flex flex-col relative">
-        {/* Badge giảm giá */}
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-md sm:shadow-lg overflow-hidden transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl hover:scale-[1.02] sm:hover:scale-105 group h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px] xl:h-[420px] flex flex-col relative">
+        {/* Badge giảm giá - Mobile-first */}
         {salePrice > 0 && (
-          <div className="absolute top-3 left-3 z-10 bg-red-700 text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10 bg-red-700 text-white text-xs sm:text-sm font-bold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
             -{discountPercentage}%
           </div>
         )}
 
-        {/* Badge hết hàng */}
+        {/* Badge hết hàng - Mobile-first */}
         {stock === 0 && (
-          <div className="absolute top-3 right-3 z-10 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 bg-gray-800 text-white text-xs sm:text-sm font-bold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
             Hết hàng
           </div>
         )}
 
-        {/* Container ảnh */}
+        {/* Container ảnh - Mobile-first */}
         <div className={styles.imageContainer}>
           <div className={styles.imageWrapper}>
             <Image
               src={imageUrl}
               alt={name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
               className={styles.productImage}
               priority
             />
@@ -129,50 +129,50 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Overlay khi hover */}
           <div className={styles.imageOverlay}></div>
           
-          {/* Nút yêu thích */}
-          <button className="absolute top-3 right-3 z-10 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-50" aria-label="Yêu thích sản phẩm">
-            <Heart className="h-5 w-5 text-gray-600 hover:text-red-500" />
+          {/* Nút yêu thích - Mobile-first */}
+          <button className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 p-1.5 sm:p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-50" aria-label="Yêu thích sản phẩm">
+            <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 hover:text-red-500" />
           </button>
         </div>
 
-        {/* Container thông tin */}
-        <div className="p-4 flex flex-col flex-grow">
-          {/* Category */}
-          <div className="mb-1">
-            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+        {/* Container thông tin - Mobile-first */}
+        <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-grow">
+          {/* Category - Mobile-first */}
+          <div className="mb-2 sm:mb-2.5">
+            <span className="text-xs sm:text-sm font-medium text-purple-600 bg-purple-50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
               {categoryName}
             </span>
           </div>
 
-          {/* Tên sản phẩm */}
-          <h3 className="text-base font-bold text-gray-800 mb-1 line-clamp-1 group-hover:text-purple-600 transition-colors">
+          {/* Tên sản phẩm - Mobile-first */}
+          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-2 sm:mb-2.5 line-clamp-1 group-hover:text-purple-600 transition-colors">
             {name}
           </h3>
 
-          {/* Mô tả */}
-          <p className="text-gray-600 text-sm mb-2 line-clamp-2">{description}</p>
+          {/* Mô tả - Mobile-first */}
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 line-clamp-2">{description}</p>
 
-          {/* Giá và nút mua */}
+          {/* Giá và nút mua - Mobile-first */}
           <div className="flex justify-between items-center mt-auto">
             <div className="flex items-center">
               {salePrice > 0 ? (
                 <>
-                  <span className="text-base font-bold text-red-700 mr-2">
+                  <span className="text-sm sm:text-base md:text-lg font-bold text-red-700 mr-2 sm:mr-2.5">
                     {formatCurrency(salePrice)}
                   </span>
-                  <span className="text-sm line-through text-gray-400">
+                  <span className="text-xs sm:text-sm line-through text-gray-400">
                     {formatCurrency(originalPrice)}
                   </span>
                 </>
               ) : (
-                <span className="text-base font-bold text-gray-800">
+                <span className="text-sm sm:text-base md:text-lg font-bold text-gray-800">
                   {formatCurrency(originalPrice)}
                 </span>
               )}
             </div>
             <button 
               onClick={handleAddToCart}
-              className={`flex items-center justify-center p-2 rounded-full transition-all duration-300 ${
+              className={`flex items-center justify-center p-2 sm:p-2.5 md:p-3 rounded-full transition-all duration-300 ${
                 stock === 0 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                   : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
@@ -180,7 +180,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               disabled={stock === 0}
               aria-label="Thêm vào giỏ hàng"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
             </button>
           </div>
         </div>

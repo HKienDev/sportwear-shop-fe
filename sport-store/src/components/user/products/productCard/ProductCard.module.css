@@ -1,8 +1,33 @@
 .imageContainer {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 140px; /* Mobile first - increased height for better proportion */
   overflow: hidden;
+}
+
+/* Responsive image container heights - Mobile-first approach */
+@media (min-width: 640px) {
+  .imageContainer {
+    height: 160px; /* sm */
+  }
+}
+
+@media (min-width: 768px) {
+  .imageContainer {
+    height: 180px; /* md */
+  }
+}
+
+@media (min-width: 1024px) {
+  .imageContainer {
+    height: 200px; /* lg */
+  }
+}
+
+@media (min-width: 1280px) {
+  .imageContainer {
+    height: 220px; /* xl */
+  }
 }
 
 .imageWrapper {
