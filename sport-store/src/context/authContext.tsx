@@ -151,6 +151,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (storedUser && accessToken) {
                 console.log('✅ Restoring auth state from stored data');
                 axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                
+                // Set cookies để middleware có thể đọc được
+                const userCookieValue = encodeURIComponent(JSON.stringify(storedUser));
+                document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                
                 updateAuthState(storedUser, true);
                 
                 // Verify với server trong background
@@ -159,6 +165,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (response.data.success) {
                         const user = response.data.data;
                         setUserData(user); // Cập nhật user data mới
+                        
+                        // Set cookies để middleware có thể đọc được
+                        const userCookieValue = encodeURIComponent(JSON.stringify(user));
+                        document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                        document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                        
                         updateAuthState(user, true);
                         return;
                     }
@@ -197,6 +209,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
                         localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
                         setUserData(user); // Lưu user data mới
+                        
+                        // Set cookies để middleware có thể đọc được
+                        const userCookieValue = encodeURIComponent(JSON.stringify(user));
+                        document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${newAccessToken}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                        document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${newRefreshToken}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                        document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                        
                         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
                         updateAuthState(user, true);
                         return;
@@ -265,6 +284,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
                     localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
                     
+                    // Lưu tokens vào cookies để middleware có thể đọc được
+                    console.log('🍪 Auth context - Setting cookies for middleware...');
+                    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                    document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                    
                     // Verify tokens đã được lưu
                     const savedAccessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
                     const savedRefreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
@@ -283,6 +307,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     // Lưu user data
                     console.log('💾 Auth context - Saving user data...');
                     setUserData(user);
+                    
+                    // Lưu user data vào cookie để middleware có thể đọc được
+                    console.log('🍪 Auth context - Setting user cookie for middleware...');
+                    const userCookieValue = encodeURIComponent(JSON.stringify(user));
+                    document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
                     const savedUser = getUserData();
                     console.log('🔍 Auth context - User data saved:', {
                         hasUser: !!savedUser,
