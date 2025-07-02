@@ -29,11 +29,11 @@ const GoogleAuthHandler = () => {
             if (userData && !userData.phone) {
               // User chưa có số điện thoại, redirect đến trang complete profile
               console.log('📝 User needs to complete profile');
-              router.push('/user/profile?complete=true');
+              router.replace('/user/profile?complete=true');
             } else if (userData) {
               // User đã có đầy đủ thông tin, redirect bình thường
-              const redirectPath = userData.role === 'admin' ? '/admin/dashboard' : '/';
-              router.push(redirectPath);
+              const redirectPath = userData.role === 'admin' ? '/admin/dashboard' : '/user';
+              router.replace(redirectPath);
             }
             return;
           } else {
@@ -41,12 +41,12 @@ const GoogleAuthHandler = () => {
           }
         } else {
           console.error('❌ No token found in URL parameters');
-          router.push('/auth/login?error=no_token');
+          router.replace('/auth/login?error=no_token');
         }
-      } catch (error) {
-        console.error('❌ Error during Google authentication:', error);
-        router.push('/auth/login?error=google_auth_failed');
-      }
+              } catch (error) {
+          console.error('❌ Error during Google authentication:', error);
+          router.replace('/auth/login?error=google_auth_failed');
+        }
     };
 
     // Chỉ xử lý nếu chưa authenticated
@@ -60,10 +60,10 @@ const GoogleAuthHandler = () => {
     if (isAuthenticated && user) {
       // Kiểm tra xem user có cần hoàn thiện thông tin không
       if (!user.phone) {
-        router.push('/user/profile?complete=true');
+        router.replace('/user/profile?complete=true');
       } else {
-        const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/';
-        router.push(redirectPath);
+        const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/user';
+        router.replace(redirectPath);
       }
     }
   }, [isAuthenticated, user, router]);

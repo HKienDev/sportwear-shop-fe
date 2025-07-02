@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { TOKEN_CONFIG } from '@/config/token';
 import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
-import { handleRedirect, setJustLoggedOut, getJustLoggedOut } from '@/utils/navigationUtils';
+import { handleRedirect, setJustLoggedOut, getJustLoggedOut, clearJustLoggedOut } from '@/utils/navigationUtils';
 import axiosInstance from '@/config/axios';
 import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';
@@ -240,11 +240,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         initializeAuth();
     }, [checkAuthStatus]);
 
-    // Khi FE mount (hoặc sau login Google), luôn gọi checkAuthStatus để lấy user từ cookie
-    useEffect(() => {
-        checkAuthStatus();
-    }, [checkAuthStatus]);
-
     const login = async (email: string, password: string) => {
         console.log('🚀 Auth context - LOGIN FUNCTION CALLED with email:', email);
         setLoading(true);
@@ -306,6 +301,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         isAuthenticated: true,
                         userRole: user.role
                     });
+                    
+                    // Clear justLoggedOut flag khi login thành công
+                    clearJustLoggedOut();
                     
                     // Thêm delay nhỏ để đảm bảo state được cập nhật trước khi redirect
                     console.log('⏳ Auth context - Adding delay before return...');

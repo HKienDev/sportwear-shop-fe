@@ -16,7 +16,9 @@ let isRedirecting = false;
 
 // Export để kiểm tra từ bên ngoài
 export const getJustLoggedOut = () => {
-    return localStorage.getItem('justLoggedOut') === 'true';
+    const justLoggedOut = localStorage.getItem('justLoggedOut') === 'true';
+    console.log('[getJustLoggedOut] 🔍 Checking justLoggedOut flag:', justLoggedOut);
+    return justLoggedOut;
 };
 
 // Debounced version của handleRedirect
@@ -32,15 +34,18 @@ export const handleRedirect = debounce(async (
         
         // Nếu vừa logout, không redirect
         if (getJustLoggedOut()) {
+            console.log('[handleRedirect] 🔒 Just logged out, skipping redirect');
             return;
         }
         
         // Nếu không có user thực tế trong localStorage, không redirect
         if (!hasActualUser) {
+            console.log('[handleRedirect] ❌ No actual user data in localStorage');
             return;
         }
         
         if (isRedirecting) {
+            console.log('[handleRedirect] ⏳ Already redirecting, skipping');
             return;
         }
         if (!router) {
@@ -69,7 +74,8 @@ export const handleRedirect = debounce(async (
             }
         }
         
-        await router.push(redirectPath);
+        console.log(`[handleRedirect] 🔄 Redirecting to: ${redirectPath}`);
+        await router.replace(redirectPath);
         await new Promise(resolve => setTimeout(resolve, REDIRECT_DELAY));
         isRedirecting = false;
     } catch (error) {
@@ -91,4 +97,11 @@ export const setJustLoggedOut = () => {
         localStorage.removeItem('justLoggedOut');
         console.log('[setJustLoggedOut] 🔄 Reset justLoggedOut flag to false');
     }, 2000);
+};
+
+// Function để clear flag khi login thành công
+export const clearJustLoggedOut = () => {
+    console.log('[clearJustLoggedOut] 🧹 Clearing justLoggedOut flag');
+    localStorage.removeItem('justLoggedOut');
+    console.log('[clearJustLoggedOut] ✅ JustLoggedOut flag cleared');
 }; 

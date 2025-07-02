@@ -5,6 +5,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { clearJustLoggedOut } from "@/utils/navigationUtils";
 
 interface LoginFormProps {
   error: string;
@@ -43,6 +44,9 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
         console.log('✅ Login form - Login successful');
         toast.success(result.message);
         
+        // Clear justLoggedOut flag khi login thành công
+        clearJustLoggedOut();
+        
         // Kiểm tra role để redirect đúng trang
         const userRole = result.data?.user?.role;
         console.log('👤 Login form - User role:', userRole);
@@ -51,12 +55,12 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
         setTimeout(() => {
           if (userRole === 'admin') {
             console.log('🔄 Login form - Redirecting admin to /admin/dashboard');
-            router.push('/admin/dashboard');
+            router.replace('/admin/dashboard');
           } else {
             console.log('🔄 Login form - Redirecting user to /user');
-            router.push('/user');
+            router.replace('/user');
           }
-        }, 100);
+        }, 200);
       } else {
         console.log('❌ Login form - Login failed:', result.message);
         toast.error(result.message);

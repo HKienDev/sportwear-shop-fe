@@ -22,14 +22,14 @@ export default function HomePage() {
           // Chuyển hướng dựa trên role
           if (user.role === UserRole.ADMIN) {
             console.log('👑 User là admin, chuyển hướng đến dashboard');
-            router.push('/admin/dashboard');
+            router.replace('/admin/dashboard');
           } else {
             console.log('👤 User là user thường, chuyển hướng đến trang user');
-            router.push('/user');
+            router.replace('/user');
           }
         } else {
           console.log('🔒 User chưa đăng nhập, chuyển hướng về trang login');
-          router.push('/auth/login');
+          router.replace('/auth/login');
         }
       } catch (error) {
         console.error('❌ Lỗi khi kiểm tra xác thực:', error);
