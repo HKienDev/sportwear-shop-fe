@@ -61,7 +61,7 @@ const LoginPage = () => {
 
         {/* Main Container */}
         <div
-          className={`w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row border border-gray-200 transition-all duration-700 ease-out ${
+          className={`w-full max-w-7xl xl:max-w-8xl 2xl:max-w-9xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row border border-gray-200 transition-all duration-700 ease-out ${
             animateForm ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 opacity-0 scale-95"
           }`}
         >
@@ -86,7 +86,7 @@ const LoginPage = () => {
               <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-red-600 to-transparent"></div>
               <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-600/20 rounded-full blur-3xl"></div>
             </div>
-            <div className="relative h-full flex flex-col justify-between p-12 z-10">
+            <div className="relative h-full flex flex-col justify-between p-8 lg:p-12 xl:p-16 z-10">
               <div className="mb-auto">
                 <div className="flex items-center space-x-3 mb-8">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
@@ -96,43 +96,43 @@ const LoginPage = () => {
                   </div>
                   <span className="text-xl font-bold tracking-wider">VJUSPORT</span>
                 </div>
-                <h1 className="text-5xl font-bold mb-4 leading-tight text-white">
+                <h1 className="text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold mb-4 leading-tight text-white">
                   <span className="inline-block">Kết nối.</span>
                   <span className="inline-block ml-1 text-red-500">Thi đấu.</span>
                   <span className="inline-block ml-1">Chiến thắng.</span>
                 </h1>
-                <div className="flex flex-wrap gap-3 mb-10">
-                  <div className="py-1 px-4 bg-white/10 rounded-full text-sm backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors duration-300 cursor-pointer">
+                <div className="flex flex-wrap gap-2 lg:gap-3 mb-8 lg:mb-10">
+                  <div className="py-1 px-3 lg:px-4 bg-white/10 rounded-full text-xs lg:text-sm backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors duration-300 cursor-pointer">
                     Luyện tập
                   </div>
-                  <div className="py-1 px-4 bg-red-600/80 rounded-full text-sm backdrop-blur-sm border border-red-500/20 hover:bg-red-600/90 transition-colors duration-300 cursor-pointer">
+                  <div className="py-1 px-3 lg:px-4 bg-red-600/80 rounded-full text-xs lg:text-sm backdrop-blur-sm border border-red-500/20 hover:bg-red-600/90 transition-colors duration-300 cursor-pointer">
                     Giải đấu
                   </div>
-                  <div className="py-1 px-4 bg-white/10 rounded-full text-sm backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors duration-300 cursor-pointer">
+                  <div className="py-1 px-3 lg:px-4 bg-white/10 rounded-full text-xs lg:text-sm backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors duration-300 cursor-pointer">
                     Huấn luyện
                   </div>
                 </div>
               </div>
 
               {/* Thêm phần đánh giá và phản hồi */}
-              <div className="backdrop-blur-md rounded-2xl p-6 bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                <div className="flex items-center space-x-1 mb-3">
+              <div className="backdrop-blur-md rounded-2xl p-4 lg:p-6 xl:p-8 bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-center space-x-1 mb-2 lg:mb-3">
                   {[1, 2, 3, 4, 5].map((star, index) => (
-                    <svg key={index} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <svg key={index} xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 lg:h-5 lg:w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   ))}
                 </div>
-                <blockquote className="text-white/90 text-lg mb-4 italic">
+                <blockquote className="text-white/90 text-sm lg:text-lg xl:text-xl mb-3 lg:mb-4 italic leading-relaxed">
                   Nền tảng này đã thay đổi hoàn toàn cách tôi luyện tập và kết nối với cộng đồng thể thao.
                 </blockquote>
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-white/50 overflow-hidden bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
-                    <span className="font-bold">CT</span>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 border-white/50 overflow-hidden bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
+                    <span className="font-bold text-sm lg:text-base">CT</span>
                   </div>
-                  <div className="ml-4">
-                    <p className="font-semibold">Hán Cao Tổ</p>
-                    <p className="text-sm text-gray-300">Vận động viên chuyên nghiệp • Hà Nội</p>
+                  <div className="ml-3 lg:ml-4">
+                    <p className="font-semibold text-sm lg:text-base">Hán Cao Tổ</p>
+                    <p className="text-xs lg:text-sm text-gray-300">Vận động viên chuyên nghiệp • Hà Nội</p>
                   </div>
                 </div>
               </div>
@@ -140,8 +140,8 @@ const LoginPage = () => {
           </div>
 
           {/* Right side - Login Form */}
-          <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 text-gray-900">
-            <div className="w-full max-w-md mx-auto">
+          <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 lg:p-16 xl:p-20 text-gray-900">
+            <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
               <div className="text-center mb-8">
                 <div className="flex justify-center mb-6">
                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg shadow-gray-200 relative">
@@ -173,6 +173,31 @@ const LoginPage = () => {
                 </div>
                 <div className="mt-6">
                   <GoogleLoginButton />
+                </div>
+              </div>
+              
+              {/* Mobile Customer Review Section */}
+              <div className="lg:hidden mt-8 p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-2xl border border-red-200">
+                <div className="text-center">
+                  <div className="flex justify-center items-center space-x-1 mb-3">
+                    {[1, 2, 3, 4, 5].map((star, index) => (
+                      <svg key={index} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <blockquote className="text-gray-700 text-base mb-4 italic leading-relaxed">
+                    "Nền tảng này đã thay đổi hoàn toàn cách tôi luyện tập và kết nối với cộng đồng thể thao."
+                  </blockquote>
+                  <div className="flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full border-2 border-red-300 overflow-hidden bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
+                      <span className="font-bold text-white">CT</span>
+                    </div>
+                    <div className="ml-4">
+                      <p className="font-semibold text-gray-900">Hán Cao Tổ</p>
+                      <p className="text-sm text-gray-600">Vận động viên chuyên nghiệp • Hà Nội</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
