@@ -42,11 +42,10 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 
 // Khởi tạo axiosInstance với cấu hình mặc định
 const axiosInstance = axios.create({
-    baseURL: API_URL,
+    baseURL: '', // Sử dụng relative URL để gọi Next.js API routes
     headers: {
         'Content-Type': 'application/json',
     },
-    withCredentials: true,
     timeout: 30000, // Đồng bộ 30s
     // Thêm các cấu hình retry
     validateStatus: function (status) {
@@ -89,12 +88,18 @@ const resetRefreshAttempts = () => {
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+        console.log('🔍 Request interceptor - Token:', token ? 'Có' : 'Không có');
+        console.log('🔍 Request URL:', config.url);
+        console.log('🔍 Request method:', config.method);
+        
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('🔍 Authorization header đã được thêm');
         }
         return config;
     },
     (error) => {
+        console.error('❌ Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
@@ -566,26 +571,26 @@ const apiClient = {
     // Orders
     orders: {
         getAll: (params?: OrderQueryParams): Promise<AxiosResponse<ApiResponse<PaginatedResponse<Order>>>> =>
-            api.get(`/orders`, { params }),
+            api.get(`/api/orders`, { params }),
         
         getById: (id: string): Promise<AxiosResponse<ApiResponse<Order>>> =>
-            api.get(`/orders/${id}`),
+            api.get(`/api/orders/${id}`),
         
         create: (data: CreateOrderData): Promise<AxiosResponse<ApiResponse<Order>>> =>
-            api.post(`/orders`, data),
+            api.post(`/api/orders`, data),
         
         update: (id: string, data: UpdateOrderData): Promise<AxiosResponse<ApiResponse<Order>>> =>
-            api.put(`/orders/${id}`, data),
+            api.put(`/api/orders/${id}`, data),
         
         delete: (id: string): Promise<AxiosResponse<ApiResponse>> =>
-            api.delete(`/orders/${id}`),
+            api.delete(`/api/orders/${id}`),
         
         getByPhone: (phone: string): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
-            api.get(`/orders/by-phone`, { params: { phone } }),
+            api.get(`/api/orders/by-phone`, { params: { phone } }),
         
         // Admin-specific methods
         getAllAdmin: (params?: OrderQueryParams): Promise<AxiosResponse<ApiResponse<Order[]>>> =>
-            api.get(`/orders/admin`, { params })
+            api.get(`/api/orders/admin`, { params })
     },
 
     // Upload
@@ -604,19 +609,19 @@ const apiClient = {
     // Cart
     cart: {
         getCart: (): Promise<AxiosResponse<ApiResponse<CartItem[]>>> =>
-            api.get(`/cart`),
+            api.get(`/api/cart`),
         
         addToCart: (data: { sku: string; quantity: number; color?: string; size?: string }) =>
-            api.post<ApiResponse<CartItem[]>>('/cart/add', data),
+            api.post<ApiResponse<CartItem[]>>('/api/cart/add', data),
         
         updateCart: (data: { sku: string; quantity: number; color?: string; size?: string }) =>
-            api.put<ApiResponse<CartItem[]>>('/cart/update', data),
+            api.put<ApiResponse<CartItem[]>>('/api/cart/update', data),
         
         removeFromCart: (data: { sku: string; color?: string; size?: string }) =>
-            api.post<ApiResponse<CartItem[]>>('/cart/remove', data),
+            api.post<ApiResponse<CartItem[]>>('/api/cart/remove', data),
         
         clearCart: () =>
-            api.delete<ApiResponse<EmptyResponse['data']>>('/cart'),
+            api.delete<ApiResponse<EmptyResponse['data']>>('/api/cart/clear'),
     }
 };
 

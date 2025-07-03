@@ -1,68 +1,116 @@
+import type { Category } from '@/types/category';
+import type { ApiResponse } from '@/types/api';
 import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryQueryParams } from '../types/category';
-import axiosInstance from '../config/axios';
 import { API_URL } from '@/utils/api';
 
-const categoryService = {
-  // Lấy tất cả danh mục
-  getAllCategories: async (params?: CategoryQueryParams): Promise<CategoryResponse> => {
+// Tạo axios instance riêng cho public API calls (không cần authentication)
+import axios from 'axios';
+
+const publicApiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export interface CategoriesResponse {
+  categories: Category[];
+  total?: number;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export const categoryService = {
+  // Get all categories
+  async getCategories(params?: any): Promise<ApiResponse<CategoriesResponse>> {
     try {
-      const response = await axiosInstance.get('/categories', { params });
-      return response.data;
+      console.log('🔍 categoryService.getCategories - Calling API with params:', params);
+      const response = await publicApiClient.get('/categories', { params });
+      console.log('📦 categoryService.getCategories - Raw response:', response);
+      console.log('📦 categoryService.getCategories - Response data:', response.data);
+      
+      // If response.data is an array, wrap it in categories property
+      if (Array.isArray(response.data)) {
+        console.log('✅ categoryService.getCategories - Array response, wrapping in categories property');
+        return { success: true, data: { categories: response.data } };
+      }
+      
+      // If response.data already has categories property, return as is
+      if (response.data && response.data.data && response.data.data.categories) {
+        console.log('✅ categoryService.getCategories - Response has categories property');
+        // Pass through pagination if present
+        return {
+          success: response.data.success,
+          data: {
+            categories: response.data.data.categories,
+            pagination: response.data.data.pagination
+          }
+        };
+      }
+      
+      // If response.data has success and data properties
+      if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+        console.log('✅ categoryService.getCategories - Response has success/data structure');
+        const apiData = response.data.data;
+        if (Array.isArray(apiData)) {
+          return { success: response.data.success, data: { categories: apiData } };
+        }
+        if (apiData && (apiData as any).categories) {
+          return { 
+            success: response.data.success, 
+            data: { 
+              categories: (apiData as any).categories,
+              pagination: (apiData as any).pagination
+            } 
+          };
+        }
+      }
+      
+      console.log('❌ categoryService.getCategories - Unknown response structure, returning empty');
+      // Fallback
+      return { success: false, data: { categories: [] } };
     } catch (error) {
+      console.error('❌ categoryService.getCategories - Error:', error);
       throw error;
     }
   },
 
-  // Tìm kiếm danh mục
-  searchCategories: async (query: string): Promise<CategoryResponse> => {
-    try {
-      const response = await axiosInstance.get('/categories/search', {
-        params: { query }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  // Get category by ID
+  async getCategoryById(id: string): Promise<ApiResponse<Category>> {
+    const response = await publicApiClient.get(`/categories/${id}`);
+    return response.data as ApiResponse<Category>;
   },
 
-  // Lấy danh mục theo ID
-  getCategoryById: async (categoryId: string): Promise<CategoryResponse> => {
-    try {
-      const response = await axiosInstance.get(`/categories/${categoryId}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  // Create category (requires authentication - use apiClient)
+  async createCategory(categoryData: any): Promise<ApiResponse<Category>> {
+    throw new Error('Create category requires authentication');
   },
 
-  // Tạo danh mục mới
-  createCategory: async (data: CreateCategoryRequest): Promise<CategoryResponse> => {
-    try {
-      const response = await axiosInstance.post('/categories', data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  // Update category (requires authentication - use apiClient)
+  async updateCategory(id: string, categoryData: any): Promise<ApiResponse<Category>> {
+    throw new Error('Update category requires authentication');
   },
 
-  // Cập nhật danh mục
-  updateCategory: async (categoryId: string, data: UpdateCategoryRequest): Promise<CategoryResponse> => {
-    try {
-      const response = await axiosInstance.put(`/categories/${categoryId}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  // Delete category (requires authentication - use apiClient)
+  async deleteCategory(id: string): Promise<ApiResponse<{ message: string }>> {
+    throw new Error('Delete category requires authentication');
   },
 
-  // Xóa danh mục
-  deleteCategory: async (categoryId: string): Promise<CategoryResponse> => {
-    try {
-      const response = await axiosInstance.delete(`/categories/${categoryId}`);
-      return response.data;
-    } catch (error) {
-      throw error;
+  // Search categories by name
+  async searchCategories(name: string): Promise<ApiResponse<CategoriesResponse>> {
+    const response = await publicApiClient.get('/categories', { params: { search: name } });
+    if (Array.isArray(response.data)) {
+      return { success: true, data: { categories: response.data } };
     }
+    if (response.data && response.data.data && response.data.data.categories) {
+      return response.data as ApiResponse<CategoriesResponse>;
+    }
+    return { success: false, data: { categories: [] } };
   }
 };
 
@@ -70,7 +118,7 @@ const categoryService = {
  * Lấy danh sách tất cả categories
  * @returns Promise với danh sách categories
  */
-export const getAllCategories = async () => {
+export const getAllCategories = async (): Promise<ApiResponse<Category[]>> => {
   try {
     const response = await fetch(`${API_URL}/categories`, {
       method: 'GET',
@@ -95,7 +143,7 @@ export const getAllCategories = async () => {
  * @param categoryId ID của category cần lấy
  * @returns Promise với thông tin category
  */
-export const getCategoryById = async (categoryId: string) => {
+export const getCategoryById = async (categoryId: string): Promise<ApiResponse<Category>> => {
   try {
     const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: 'GET',

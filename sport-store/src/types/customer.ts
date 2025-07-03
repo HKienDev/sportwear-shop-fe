@@ -1,19 +1,15 @@
 import type { Gender, UserRole, MembershipLevel, AuthStatus } from './base';
+import { Address } from './location';
 
 export interface Customer {
   _id: string;
   fullname: string;
   avatar: string;
   phone: string;
-  address: {
-    province: string;
-    district: string;
-    ward: string;
-    street: string;
-  };
+  address: Address;
   totalOrders?: number;
   totalSpent?: number;
-  createdAt: string | Date;
+  createdAt: string;
   updatedAt: string | Date;
   isActive: boolean;
   role?: string;
@@ -76,4 +72,16 @@ export interface CustomerUpdateInput {
   points?: number;
   authStatus?: AuthStatus;
   isActive?: boolean;
-} 
+}
+
+export type CustomerUpdateField = 
+  | "fullname" 
+  | "phone" 
+  | "avatar" 
+  | "address" 
+  | "isActive";
+
+export type CustomerUpdateValue = 
+  | string 
+  | boolean 
+  | Address; 

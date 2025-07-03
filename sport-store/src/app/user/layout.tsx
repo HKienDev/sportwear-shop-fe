@@ -1,19 +1,16 @@
 "use client";
 
 import { Montserrat } from "next/font/google";
-import { usePathname } from "next/navigation";
 import Header from "@/components/user/userLayout/header/page";
 import Footer from "@/components/user/userLayout/footer/page";
 import UserChat from "@/components/common/chat/userChat";
 import { AuthProvider } from "../../context/authContext";
-import { CartProvider } from "../../context/cartContext";
+import CartProvider from "../../providers/CartProvider";
 import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
 
 function UserLayoutContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
   return (
     <div className={`min-h-screen flex flex-col ${montserrat.variable} overflow-x-hidden`}>
       <Header />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface ColorSelectorProps {
   colors: string[];
@@ -8,19 +8,19 @@ interface ColorSelectorProps {
 const ColorSelector: React.FC<ColorSelectorProps> = ({ colors, onColorSelect }) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Tự động chọn màu đầu tiên khi component được mount
-    if (colors.length > 0 && !selectedColor) {
-      handleColorSelect(colors[0]);
-    }
-  }, [colors]);
-
-  const handleColorSelect = (color: string): void => {
+  const handleColorSelect = useCallback((color: string): void => {
     setSelectedColor(color);
     if (onColorSelect) {
       onColorSelect(color);
     }
-  };
+  }, [onColorSelect]);
+
+  useEffect(() => {
+    // Tự động chọn màu đầu tiên khi component được mount
+    if (colors && colors.length > 0 && !selectedColor) {
+      handleColorSelect(colors[0]);
+    }
+  }, [colors, selectedColor, handleColorSelect]);
 
   return (
     <div className="mb-6">
@@ -28,9 +28,9 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({ colors, onColorSelect }) 
         <h2 className="text-sm font-medium text-gray-900">Lựa chọn màu</h2>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        {colors.map(color => (
+        {colors.map((color, index) => (
           <button
-            key={color}
+            key={`${color}-${index}`}
             onClick={() => handleColorSelect(color)}
             className={`py-3 border rounded-md text-center font-medium transition-colors
               ${selectedColor === color 

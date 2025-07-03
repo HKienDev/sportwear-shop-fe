@@ -59,7 +59,7 @@ async function refreshToken(): Promise<string | null> {
       throw new Error("Không tìm thấy refresh token");
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
+    const response = await fetch(`/api/auth/refresh-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -199,34 +199,50 @@ export const fetchWithAuth = async <T = unknown>(
           throw error;
         }
       } else {
-        // Nếu đang refresh token, thêm request vào hàng đợi
-        return new Promise((resolve, reject) => {
-          failedRequestsQueue.push(async () => {
-            try {
-              const retryResponse = await fetchWithAuth<T>(endpoint, options);
-              resolve(retryResponse);
-            } catch (error) {
-              reject(error);
-            }
+        // Nếu đang refresh, thêm request vào queue
+        return new Promise<ApiResponse<T>>((resolve, reject) => {
+          failedRequestsQueue.push(() => {
+            fetchWithAuth<T>(endpoint, options)
+              .then(resolve)
+              .catch(reject);
           });
         });
       }
     }
 
+    // Xử lý các lỗi khác
     if (!response.ok) {
-      throw new Error(responseData?.message || "Không thể kết nối đến server");
+      throw new Error(responseData.message || "Không thể kết nối đến server");
     }
 
     return responseData;
   } catch (error) {
     if (error instanceof Error) {
-      // Xử lý các loại lỗi cụ thể
-      if (error.message.includes("Phiên đăng nhập đã hết hạn") || 
-          error.message.includes("Không tìm thấy refresh token")) {
-        window.dispatchEvent(new CustomEvent('logout'));
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout. Vui lòng thử lại.");
       }
       throw error;
     }
-    throw new Error("Có lỗi xảy ra khi gọi API");
+    throw new Error("Có lỗi xảy ra khi kết nối đến server");
   }
 };
+
+// Helper function để gọi API Next.js với token
+export async function fetchWithAuthNextJS(input: RequestInfo, init: RequestInit = {}) {
+  let token: string | null = null;
+  // Ưu tiên lấy từ localStorage, fallback sang cookie nếu cần
+  if (typeof window !== 'undefined') {
+    token = localStorage.getItem('accessToken');
+    if (!token) {
+      // Lấy từ cookie nếu cần
+      const match = document.cookie.match(/(?:^|; )accessToken=([^;]*)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+  }
+  const headers = {
+    ...(init.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'Content-Type': 'application/json',
+  };
+  return fetch(input, { ...init, headers });
+}

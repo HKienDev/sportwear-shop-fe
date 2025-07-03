@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/orders/by-phone?phone=${phone}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/orders/by-phone?phone=${phone}`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,

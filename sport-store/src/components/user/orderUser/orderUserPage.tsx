@@ -63,7 +63,7 @@ export default function OrderUserPage() {
       } else {
         setError('Không thể tải danh sách đơn hàng');
       }
-    } catch (err) {
+    } catch {
       setError('Đã có lỗi xảy ra khi tải đơn hàng');
     } finally {
       setLoading(false);

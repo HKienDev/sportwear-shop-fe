@@ -2,13 +2,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag, Package, DollarSign, Box, Info, AlertCircle } from "lucide-react";
-import { Category, ProductFormData } from "@/types/product";
+import { AdminCategory, ProductFormData } from "@/types/product";
 import { useEffect } from "react";
 
 interface DetailInfoFormProps {
   formData: ProductFormData;
   onFieldChange: (field: keyof ProductFormData, value: string | number | string[] | boolean) => void;
-  categories: Category[];
+  categories: AdminCategory[];
 }
 
 export default function DetailInfoForm({ 

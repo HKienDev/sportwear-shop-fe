@@ -1,19 +1,18 @@
 "use client";
 
-import { useCart } from "@/context/cartContext";
+import { useCartOptimized } from "@/hooks/useCartOptimized";
 import { useAuth } from "@/context/authContext";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { getJustLoggedOut } from "@/utils/navigationUtils";
 import { useEffect } from "react";
 
 const ShoppingCartButton = () => {
-  const { items } = useCart();
+  const { cart } = useCartOptimized();
   const { isAuthenticated, checkAuthStatus } = useAuth();
   const router = useRouter();
-  const itemCount = items.length;
+  const itemCount = cart?.items?.length || 0;
 
   const handleCartClick = async (e: React.MouseEvent) => {
     e.preventDefault();

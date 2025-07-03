@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@/types/product";
+import { AdminProduct } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye } from "lucide-react";
 import {
@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import * as productService from "@/services/productService";
+import { productService } from "@/services/productService";
 
 interface ProductTableProps {
   categoryId: string;
@@ -24,7 +24,7 @@ interface ProductTableProps {
 
 export default function ProductTable({ categoryId }: ProductTableProps) {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function ProductTable({ categoryId }: ProductTableProps) {
         setLoading(true);
         const response = await productService.getProductsByCategory(categoryId);
         if (response.success) {
-          setProducts(response.data.products || []);
+          setProducts((response.data.products || []) as unknown as AdminProduct[]);
         }
       } catch (error) {
         console.error("Error fetching products:", error);

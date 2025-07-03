@@ -7,7 +7,7 @@ import { useAuth } from "@/context/authContext";
 
 // Hàm để lấy socket URL
 const getSocketUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl: string = process.env.NEXT_PUBLIC_API_URL || '';
   
   if (!apiUrl) {
     return "http://localhost:4000";

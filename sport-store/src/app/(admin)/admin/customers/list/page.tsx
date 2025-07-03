@@ -29,7 +29,7 @@ export default function CustomerList() {
       setLoading(true);
       const response = await customerService.getCustomers();
       if (response.success) {
-        setCustomers(response.data.customers);
+        setCustomers(response.data.users);
       } else {
         setError(response.message || "Không thể tải danh sách khách hàng");
         toast.error(response.message || "Không thể tải danh sách khách hàng");

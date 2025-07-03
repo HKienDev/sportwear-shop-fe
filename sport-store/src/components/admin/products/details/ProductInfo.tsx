@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Product } from '@/types/product';
+import { AdminProduct } from '@/types/product';
 import { Clock, Tag, Info, Award, Box, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ProductInfoProps {
-  product: Product;
+  product: AdminProduct;
 }
 
 const formatCurrency = (amount: number): string => {

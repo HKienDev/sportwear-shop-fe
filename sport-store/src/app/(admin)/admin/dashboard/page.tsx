@@ -15,7 +15,7 @@ type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
-  const { dashboardData, isLoading, error, refresh } = useDashboard(timeRange);
+  const { dashboardData, isLoading, error, refetch } = useDashboard(timeRange);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -28,12 +28,12 @@ export default function Dashboard() {
   useEffect(() => {
     // Lắng nghe sự kiện xóa đơn hàng
     const handleOrderDeleted = () => {
-      refresh();
+      refetch();
     };
 
     // Lắng nghe sự kiện xóa sản phẩm
     const handleProductDeleted = () => {
-      refresh();
+      refetch();
     };
 
     window.addEventListener('orderDeleted', handleOrderDeleted);
@@ -43,7 +43,7 @@ export default function Dashboard() {
       window.removeEventListener('orderDeleted', handleOrderDeleted);
       window.removeEventListener('productDeleted', handleProductDeleted);
     };
-  }, [refresh]);
+  }, [refetch]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -141,7 +141,7 @@ export default function Dashboard() {
           ) : (
             <>
               <BestSellingProducts />
-              <ActiveDeliveries deliveries={recentOrders?.orders || []} />
+              <ActiveDeliveries deliveries={recentOrders || []} />
             </>
           )}
         </div>

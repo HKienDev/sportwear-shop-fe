@@ -53,8 +53,8 @@ interface Product {
 export default function ProductDetail() {
   const params = useParams();
   const router = useRouter();
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,9 +125,13 @@ export default function ProductDetail() {
     try {
       console.log('🛒 Bắt đầu thêm vào giỏ hàng');
       
-      if (!selectedColor || !selectedSize) {
-        console.log('❌ Chưa chọn màu hoặc kích thước');
-        toast.error('Vui lòng chọn màu và kích thước sản phẩm');
+      // Nếu sản phẩm không có colors hoặc sizes, sử dụng giá trị mặc định
+      const color = selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định');
+      const size = selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định');
+      
+      if (!color || !size) {
+        console.log('❌ Không thể xác định màu hoặc kích thước');
+        toast.error('Không thể xác định màu và kích thước sản phẩm');
         return;
       }
 
@@ -147,8 +151,8 @@ export default function ProductDetail() {
       console.log('📤 Gọi API thêm vào giỏ hàng');
       const response = await cartService.addToCart({
         sku: product.sku,
-        color: selectedColor,
-        size: selectedSize,
+        color: color,
+        size: size,
         quantity
       });
 
@@ -173,10 +177,14 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = async () => {
-    if (!product || !selectedColor || !selectedSize) {
-      toast.error("Vui lòng chọn màu sắc và kích thước");
+    if (!product) {
+      toast.error("Không tìm thấy thông tin sản phẩm");
       return;
     }
+    
+    // Nếu sản phẩm không có colors hoặc sizes, sử dụng giá trị mặc định
+    const color = selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định');
+    const size = selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định');
 
     try {
       // Kiểm tra đăng nhập
@@ -190,9 +198,9 @@ export default function ProductDetail() {
       // Thêm vào giỏ hàng
       const response = await cartService.addToCart({
         sku: product.sku,
-        color: selectedColor,
-        size: selectedSize,
-        quantity: quantity
+        color: color,
+        size: size,
+        quantity
       });
       
       if (response.success) {
@@ -267,15 +275,19 @@ export default function ProductDetail() {
 
           <div className="h-px bg-gray-200 my-6"></div>
 
-          <ColorSelector 
-            colors={product.colors} 
-            onColorSelect={handleColorSelect}
-          />
+          {product.colors && product.colors.length > 0 && (
+            <ColorSelector 
+              colors={product.colors} 
+              onColorSelect={handleColorSelect}
+            />
+          )}
           
-          <SizeSelector 
-            sizes={product.sizes} 
-            onSizeSelect={handleSizeSelect} 
-          />
+          {product.sizes && product.sizes.length > 0 && (
+            <SizeSelector 
+              sizes={product.sizes} 
+              onSizeSelect={handleSizeSelect} 
+            />
+          )}
 
           <QuantitySelector 
             initialQuantity={quantity}
@@ -283,7 +295,7 @@ export default function ProductDetail() {
           />
 
           <ProductActions 
-            isSizeSelected={!!selectedSize && !!selectedColor}
+            isSizeSelected={true}
             onBuyNow={handleBuyNow}
             onAddToCart={handleAddToCart}
             isOutOfStock={product.isOutOfStock}

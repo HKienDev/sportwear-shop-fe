@@ -22,6 +22,8 @@ export default function EditProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
+    slug: "",
+    sku: "",
     description: "",
     brand: "",
     originalPrice: 0,
@@ -33,7 +35,7 @@ export default function EditProductPage() {
     colors: [],
     sizes: [],
     tags: [],
-    isActive: true,
+    isActive: true
   });
 
   // Fetch categories
@@ -140,6 +142,8 @@ export default function EditProductPage() {
         
         setFormData({
           name: productData.name || "",
+          slug: productData.slug || "",
+          sku: productData.sku || "",
           description: productData.description || "",
           brand: productData.brand || "",
           originalPrice: originalPrice,
@@ -189,6 +193,7 @@ export default function EditProductPage() {
       // Chuẩn bị dữ liệu sản phẩm
       const productData = {
         name: formData.name,
+        slug: formData.slug,
         description: formData.description,
         brand: formData.brand,
         originalPrice: formData.originalPrice,

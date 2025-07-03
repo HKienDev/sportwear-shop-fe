@@ -1,10 +1,10 @@
-import { Product } from '@/types/product';
+import { AdminProduct } from '@/types/product';
 import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface ProductImagesProps {
-  product: Product;
+  product: AdminProduct;
 }
 
 export default function ProductImages({ product }: ProductImagesProps) {

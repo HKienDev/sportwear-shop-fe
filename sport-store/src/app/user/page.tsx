@@ -7,10 +7,29 @@ import { SafeIcons } from "@/utils/safeIcons";
 import ProductCard from "@/components/user/products/productCard/page";
 import FeaturedProductsCarousel from "@/components/user/products/FeaturedProductsCarousel/page";
 import { useAuth } from "@/context/authContext";
-import { Product } from "@/types/product";
-import { getAllProducts } from "@/services/productService";
-import { getAllCategories } from "@/services/categoryService";
+import { UserProduct } from "@/types/product";
+import { userProductService } from "@/services/userProductService";
+import { categoryService } from "@/services/categoryService";
 import { Category } from "@/types/category";
+
+// Type definitions for API responses
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+interface UserProductsResponse {
+  products: UserProduct[];
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
+interface CategoriesResponse {
+  categories: Category[];
+  total?: number;
+}
 import Skeleton from "@/components/common/Skeleton";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 
@@ -87,9 +106,9 @@ const CategoriesShowcase = memo(({ categories }: { categories: Category[] }) => 
 
   return (
     <div className="w-full bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 xl:py-6">
         {/* Header Section - Mobile-first */}
-        <div className="text-center mb-6 sm:mb-8 lg:mb-12 xl:mb-16">
+        <div className="text-center mb-2 sm:mb-3 lg:mb-4 xl:mb-6">
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4 leading-tight">
             Danh Mục Sản Phẩm
           </h2>
@@ -156,9 +175,9 @@ CategoriesShowcase.displayName = 'CategoriesShowcase';
 const BrandShowcase = memo(() => {
   return (
     <div className="w-full bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 xl:py-6">
         {/* Header Section - Mobile-first */}
-        <div className="text-center mb-6 sm:mb-8 lg:mb-12 xl:mb-16">
+        <div className="text-center mb-2 sm:mb-3 lg:mb-4 xl:mb-6">
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4 leading-tight">
             Thương Hiệu Đối Tác
           </h2>
@@ -185,7 +204,7 @@ BrandShowcase.displayName = 'BrandShowcase';
 // Social Proof Component - Mobile-first Responsive
 const SocialProof = memo(() => (
   <div className="w-full bg-white">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 sm:pt-2 lg:pt-3 xl:pt-4 pb-2 sm:pb-3 lg:pb-4 xl:pb-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 text-center">
         {/* Khách hàng hài lòng */}
         <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-purple-50/30 rounded-xl sm:rounded-2xl border border-purple-100/50 hover:border-purple-200 transition-all duration-300">
@@ -315,7 +334,7 @@ function AnimatedNumberTicker() {
 }
 
 // Product Section Component - Mobile-first Responsive
-const ProductSection = memo(({ products, categories }: { products: Product[]; categories: Category[] }) => {
+const ProductSection = memo(({ products, categories }: { products: UserProduct[]; categories: Category[] }) => {
   const productsByCategory = useMemo(() => {
     return categories.map(category => {
       const productsInCategory = products.filter(
@@ -331,9 +350,9 @@ const ProductSection = memo(({ products, categories }: { products: Product[]; ca
 
   return (
     <div className="w-full bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 xl:py-6">
         {/* Main Title - Mobile-first */}
-        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-6 sm:mb-8 lg:mb-10 xl:mb-12 leading-tight">
+        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 lg:mb-4 xl:mb-6 leading-tight">
           Sản phẩm Mới
         </h1>
         
@@ -372,7 +391,7 @@ ProductSection.displayName = 'ProductSection';
 
 // Testimonials Section Component - Mobile-first Responsive
 const TestimonialsSection = memo(() => (
-  <div className="relative py-8 sm:py-12 lg:py-16 xl:py-20 2xl:py-24 overflow-hidden bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100">
+  <div className="relative py-2 sm:py-3 lg:py-4 xl:py-6 overflow-hidden bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100">
     {/* Background với gradient và pattern */}
     <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-white to-red-100/30"></div>
     
@@ -384,7 +403,7 @@ const TestimonialsSection = memo(() => (
     <div className="w-full">
       <div className="max-w-8xl xl:max-w-9xl 2xl:max-w-full 2xl:mx-8 mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header - Mobile-first */}
-        <div className="text-center mb-6 sm:mb-8 lg:mb-10 xl:mb-12">
+        <div className="text-center mb-2 sm:mb-3 lg:mb-4 xl:mb-6">
           <div className="flex flex-col items-center">
             <div className="w-12 h-1 sm:w-16 sm:h-1.5 md:w-20 md:h-2 lg:w-24 lg:h-2 bg-gradient-to-r from-purple-500 to-red-500 rounded-full mb-3 sm:mb-4 md:mb-6 lg:mb-8"></div>
             <span className="text-purple-600 font-semibold tracking-wider mb-2 sm:mb-3 text-sm sm:text-base lg:text-lg">KHÁCH HÀNG NÓI GÌ</span>
@@ -540,9 +559,9 @@ TestimonialsSection.displayName = 'TestimonialsSection';
 // Featured Product Section Component - Mobile-first Responsive
 const FeaturedProductSection = memo(() => (
   <div className="w-full bg-white">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 xl:py-16 2xl:py-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 xl:py-6">
       {/* Header Section - Mobile-first */}
-      <div className="text-center mb-4 sm:mb-6 lg:mb-8 xl:mb-10">
+      <div className="text-center mb-2 sm:mb-3 lg:mb-4 xl:mb-6">
         <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4 leading-tight">
           Sản Phẩm Nổi Bật
         </h2>
@@ -564,7 +583,7 @@ FeaturedProductSection.displayName = 'FeaturedProductSection';
 // Main HomePage Component - Responsive
 const HomePage = () => {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<UserProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -610,9 +629,9 @@ const HomePage = () => {
     try {
       console.log('🔄 Fetching data...');
       const [productRes, categoryRes] = await Promise.all([
-        getAllProducts(),
-        getAllCategories(),
-      ]);
+        userProductService.getProducts(),
+        categoryService.getCategories(),
+      ]) as [ApiResponse<UserProductsResponse>, ApiResponse<CategoriesResponse>];
       
       console.log('📦 Product response:', productRes);
       console.log('📂 Category response:', categoryRes);

@@ -22,11 +22,7 @@ function ToasterWrapper() {
   }
 
   return (
-    <Toaster
-      position="top-right"
-      duration={4000}
-      richColors
-    />
+    <Toaster />
   );
 }
 

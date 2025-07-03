@@ -12,7 +12,7 @@ import { X, Search, Package, ShoppingCart, CheckCircle, Info } from "lucide-reac
 import { CartItem } from "@/types/cart";
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Product } from "@/types/product";
+import { AdminProduct } from "@/types/product";
 import Image from "next/image";
 
 interface ApiResponse<T> {
@@ -44,7 +44,7 @@ export default function OrderProducts() {
   const { shippingMethod, setShippingMethod } = useShippingMethod();
   const { promoDetails, setPromoDetails } = usePromo();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
@@ -60,7 +60,7 @@ export default function OrderProducts() {
       }
 
       console.log("🔍 [fetchProduct] Tìm sản phẩm với SKU:", productId);
-      const response = await fetchWithAuth<{ product: Product }>(`/products/${productId}`);
+      const response = await fetchWithAuth<{ product: AdminProduct }>(`/products/${productId}`);
       console.log("🔍 [fetchProduct] Kết quả:", response);
       
       if (!response.success || !response.data?.product) {
@@ -103,7 +103,7 @@ export default function OrderProducts() {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: AdminProduct) => {
     if (!size && availableSizes.length > 0) {
       toast.error("Vui lòng chọn kích thước");
       return;
@@ -123,34 +123,38 @@ export default function OrderProducts() {
 
     const cartItem: CartItem = {
       _id: Date.now().toString(),
-      product: {
-        _id: product._id,
-        name: product.name,
-        description: product.description,
-        brand: product.brand,
-        originalPrice: product.originalPrice,
-        salePrice: product.salePrice || product.originalPrice,
-        stock: product.stock,
-        categoryId: product.categoryId,
-        isActive: product.isActive,
-        mainImage: product.mainImage || "/images/placeholder.png",
-        subImages: product.subImages || [],
-        colors: product.colors || [],
-        sizes: product.sizes || [],
-        sku: product.sku,
-        slug: product.sku.toLowerCase(),
-        tags: product.tags || [],
-        rating: product.rating || 0,
-        numReviews: product.numReviews || 0,
-        viewCount: product.viewCount || 0,
-        soldCount: product.soldCount || 0,
-        reviews: (product.reviews || []).map(review => ({
-          ...review,
-          createdAt: new Date(review.createdAt)
-        })),
-        createdAt: new Date(product.createdAt || Date.now()),
-        updatedAt: new Date(product.updatedAt || Date.now())
-      },
+              product: {
+          _id: product._id,
+          name: product.name,
+          description: product.description,
+          brand: product.brand,
+          originalPrice: product.originalPrice,
+          salePrice: product.salePrice || product.originalPrice,
+          stock: product.stock,
+          categoryId: product.categoryId,
+          isActive: product.isActive,
+          mainImage: product.mainImage || "/images/placeholder.png",
+          subImages: product.subImages || [],
+          colors: product.colors || [],
+          sizes: product.sizes || [],
+          sku: product.sku,
+          slug: product.sku.toLowerCase(),
+          tags: product.tags || [],
+          rating: product.rating || 0,
+          numReviews: product.numReviews || 0,
+          viewCount: product.viewCount || 0,
+          soldCount: product.soldCount || 0,
+          reviews: (product.reviews || []).map(review => ({
+            ...review,
+            createdAt: new Date(review.createdAt)
+          })),
+          createdAt: product.createdAt || new Date().toISOString(),
+          updatedAt: product.updatedAt || new Date().toISOString(),
+          ratings: product.ratings || { average: 0, count: 0 },
+          discountPercentage: product.discountPercentage || 0,
+          isOutOfStock: product.isOutOfStock || false,
+          isLowStock: product.isLowStock || false
+        },
       quantity: quantity,
       color: color,
       size: size,
@@ -386,7 +390,7 @@ export default function OrderProducts() {
             )}
 
             <Button 
-              onClick={() => handleAddToCart(selectedProduct as Product)} 
+              onClick={() => handleAddToCart(selectedProduct as AdminProduct)} 
               className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
             >
               Thêm sản phẩm

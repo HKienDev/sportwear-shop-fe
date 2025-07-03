@@ -1,142 +1,121 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cart from '@/components/user/cart/Cart';
-import { CartState } from '@/types/cart';
-import { cartService } from '@/services/cartService';
+import { useCartOptimized } from '@/hooks/useCartOptimized';
+import { useSelectedItems } from '@/hooks/useSelectedItems';
+import { validateCartData } from '@/utils/cartUtils';
+import { validateSelectedItems } from '@/utils/checkoutUtils';
 import { toast } from 'sonner';
 
 export default function CartPage() {
   const router = useRouter();
-  const [cart, setCart] = useState<CartState>({
-    items: [],
-    totalQuantity: 0,
-    cartTotal: 0,
-    loading: false,
-    error: null
-  });
+  const {
+    selectedItems,
+    toggleSelect,
+    toggleSelectAll,
+    removeItem: removeSelectedItem,
+    clearSelection
+  } = useSelectedItems();
+  
+  const {
+    cart,
+    loading,
+    error,
+    cartTotals,
+    fetchCart,
+    updateCartItem,
+    removeFromCart,
+    removeItemsBatch,
+    isEmpty,
+  } = useCartOptimized();
 
-  const fetchCart = async () => {
-    try {
-      setCart(prev => ({ ...prev, loading: true }));
-      const response = await cartService.getCart();
-      if (response.success) {
-        setCart({
-          ...response.data,
-          loading: false,
-          error: null
-        });
-      } else {
-        throw new Error(response.message);
-      }
-    } catch (error) {
-      console.error('Lỗi khi lấy giỏ hàng:', error);
-      if (error instanceof Error && error.message === 'Dữ liệu đã tồn tại') {
-        // Nếu lỗi là "Dữ liệu đã tồn tại", không cần hiển thị lỗi
-        setCart(prev => ({ ...prev, loading: false }));
-      } else {
-        setCart(prev => ({ 
-          ...prev, 
-          error: error instanceof Error ? error.message : 'Không thể lấy thông tin giỏ hàng',
-          loading: false 
-        }));
-      }
-    }
-  };
-
+  // Force refresh cart khi vào trang
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     try {
-      setCart(prev => ({ ...prev, loading: true }));
-      
-      const item = cart.items.find(item => item._id === itemId);
-      if (!item) throw new Error('Không tìm thấy sản phẩm');
-      
-      const response = await cartService.updateCartItemQuantity({
-        sku: item.product.sku,
-        color: item.color || '',
-        size: item.size || '',
-        quantity
-      });
-
-      if (response.success) {
-        // Cập nhật state trực tiếp thay vì gọi lại fetchCart
-        setCart(prev => ({
-          ...prev,
-          items: prev.items.map(i => 
-            i._id === itemId 
-              ? { ...i, quantity: quantity }
-              : i
-          ),
-          loading: false
-        }));
-        toast.success('Đã cập nhật số lượng sản phẩm');
-      } else {
-        throw new Error(response.message);
-      }
+      await updateCartItem(itemId, quantity);
     } catch (error) {
-      console.error('Lỗi khi cập nhật số lượng:', error);
-      setCart(prev => ({ 
-        ...prev, 
-        error: error instanceof Error ? error.message : 'Không thể cập nhật số lượng',
-        loading: false 
-      }));
-      toast.error('Không thể cập nhật số lượng sản phẩm');
+      console.error('Failed to update quantity:', error);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      setCart(prev => ({ ...prev, loading: true }));
-      
-      const item = cart.items.find(item => item._id === itemId);
-      if (!item) throw new Error('Không tìm thấy sản phẩm');
+      const item = cart?.items.find(item => item._id === itemId);
+      if (!item) return;
 
-      const response = await cartService.removeFromCart({
+      await removeFromCart({
         sku: item.product.sku,
         color: item.color,
-        size: item.size
+        size: item.size,
       });
-
-      if (response.success) {
-        // Cập nhật state trực tiếp thay vì gọi lại fetchCart
-        setCart(prev => ({
-          ...prev,
-          items: prev.items.filter(i => i._id !== itemId),
-          loading: false
-        }));
-        toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
-      } else {
-        throw new Error(response.message);
-      }
+      
+      // Xóa item khỏi selectedItems nếu có
+      removeSelectedItem(itemId);
     } catch (error) {
-      console.error('Lỗi khi xóa sản phẩm:', error);
-      setCart(prev => ({ 
-        ...prev, 
-        error: error instanceof Error ? error.message : 'Không thể xóa sản phẩm',
-        loading: false 
-      }));
-      toast.error('Không thể xóa sản phẩm khỏi giỏ hàng');
+      console.error('Failed to remove item:', error);
     }
   };
 
+  const handleToggleSelect = (itemId: string) => {
+    toggleSelect(itemId);
+  };
+
+  const handleSelectAll = () => {
+    const itemIds = cart?.items?.map(item => item._id) || [];
+    toggleSelectAll(itemIds);
+  };
+
   const handleCheckout = () => {
-    if (cart.items.length === 0) {
-      toast.error('Giỏ hàng trống');
+    // Validate selected items
+    const validation = validateSelectedItems(cart?.items || [], selectedItems);
+    if (!validation.isValid) {
+      toast.error(validation.message || 'Vui lòng chọn sản phẩm để thanh toán');
       return;
     }
+
+    // Kiểm tra xem cart có hợp lệ không
+    if (!validateCartData(cart)) {
+      return;
+    }
+
+    // Lọc ra các sản phẩm được chọn
+    const selectedCartItems = cart?.items?.filter(item => selectedItems.includes(item._id)) || [];
+    
+    if (selectedCartItems.length === 0) {
+      toast.error('Không tìm thấy sản phẩm đã chọn');
+      return;
+    }
+
+    // Lưu selectedItems vào localStorage để checkout page có thể sử dụng
+    localStorage.setItem('checkout_selected_items', JSON.stringify(selectedItems));
+    
+    toast.success(`Đang chuyển đến trang thanh toán với ${selectedCartItems.length} sản phẩm`);
     router.push('/user/checkout');
+  };
+
+  // Transform cart data to match CartState interface
+  const cartState = {
+    items: cart?.items || [],
+    totalQuantity: cartTotals?.totalQuantity || 0,
+    cartTotal: cartTotals?.totalPrice || 0,
+    loading,
+    error,
   };
 
   return (
     <Cart
-      cart={cart}
+      cart={cartState}
+      selectedItems={selectedItems}
       onUpdateQuantity={handleUpdateQuantity}
       onRemoveItem={handleRemoveItem}
+      onToggleSelect={handleToggleSelect}
+      onSelectAll={handleSelectAll}
       onCheckout={handleCheckout}
     />
   );

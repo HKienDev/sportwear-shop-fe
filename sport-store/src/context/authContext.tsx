@@ -6,7 +6,7 @@ import { TOKEN_CONFIG } from '@/config/token';
 import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
 import { handleRedirect, setJustLoggedOut, getJustLoggedOut, clearJustLoggedOut } from '@/utils/navigationUtils';
-import axiosInstance from '@/config/axios';
+import { axiosInstance } from '@/config/axios';
 import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';
 import type {
@@ -442,7 +442,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const resendOTP = async (data: { email: string }) => {
         try {
             setLoading(true);
-            const response = await resendOTPService(data.email);
+            const response = await resendOTPService({ email: data.email });
             console.log('Resend OTP response:', response);
             
             if (response.success) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface SizeSelectorProps {
   sizes: string[];
@@ -8,19 +8,19 @@ interface SizeSelectorProps {
 const SizeSelector: React.FC<SizeSelectorProps> = ({ sizes, onSizeSelect }) => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Tự động chọn size đầu tiên khi component được mount
-    if (sizes.length > 0 && !selectedSize) {
-      handleSizeSelect(sizes[0]);
-    }
-  }, [sizes]);
-
-  const handleSizeSelect = (size: string): void => {
+  const handleSizeSelect = useCallback((size: string): void => {
     setSelectedSize(size);
     if (onSizeSelect) {
       onSizeSelect(size);
     }
-  };
+  }, [onSizeSelect]);
+
+  useEffect(() => {
+    // Tự động chọn size đầu tiên khi component được mount
+    if (sizes && sizes.length > 0 && !selectedSize) {
+      handleSizeSelect(sizes[0]);
+    }
+  }, [sizes, selectedSize, handleSizeSelect]);
 
   return (
     <div className="mb-6">
@@ -29,9 +29,9 @@ const SizeSelector: React.FC<SizeSelectorProps> = ({ sizes, onSizeSelect }) => {
         <button className="text-sm text-red-600 hover:text-red-800">Hướng dẫn chọn size</button>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        {sizes.map(size => (
+        {sizes.map((size, index) => (
           <button
-            key={size}
+            key={`${size}-${index}`}
             onClick={() => handleSizeSelect(size)}
             className={`py-3 border rounded-md text-center font-medium transition-colors
               ${selectedSize === size 

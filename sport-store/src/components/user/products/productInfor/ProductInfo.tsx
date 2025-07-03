@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Heart } from "lucide-react";
-import { Product } from "@/types/product";
+import { UserProduct } from "@/types/product";
 import { formatCurrency, calculateDiscountPercentage, getCategoryDisplay, getBrandDisplay } from '@/utils/format';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { useAuth } from '@/context/authContext';
 import { useProductActions } from '@/hooks/useProductActions';
 
 interface ProductInfoProps {
-  product: Product;
+  product: UserProduct;
 }
 
 export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
@@ -18,7 +18,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   
-  const { addToCart, buyNow, toggleFavorite, isLoading } = useProductActions(product._id);
+  const { addToCart, buyNow, toggleFavorite, loading } = useProductActions();
 
   const discountPercentage = calculateDiscountPercentage(product.originalPrice, product.salePrice);
   const categoryDisplay = getCategoryDisplay(product.categoryId);
@@ -182,7 +182,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
               value={quantity}
               onChange={handleQuantityChange}
               className="border rounded p-2"
-              disabled={isLoading}
+              disabled={loading}
             >
               {[...Array(10)].map((_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -200,11 +200,11 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
           <>
             <button
               className={`flex-1 py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors flex items-center justify-center gap-2
-                ${(!selectedSize || !selectedColor || product.stock === 0 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!selectedSize || !selectedColor || product.stock === 0 || isLoading}
+                ${(!selectedSize || !selectedColor || product.stock === 0 || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!selectedSize || !selectedColor || product.stock === 0 || loading}
               onClick={handleBuyNow}
             >
-              {isLoading ? (
+              {loading ? (
                 <span className="animate-spin mr-2">⌛</span>
               ) : (
                 <ShoppingCart className="h-5 w-5 mr-2" />
@@ -213,11 +213,11 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             </button>
             <button 
               className={`flex-1 py-3 px-6 border border-red-600 text-red-600 hover:bg-red-50 font-medium rounded-md transition-colors flex items-center justify-center gap-2
-                ${(!selectedSize || !selectedColor || product.stock === 0 || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!selectedSize || !selectedColor || product.stock === 0 || isLoading}
+                ${(!selectedSize || !selectedColor || product.stock === 0 || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!selectedSize || !selectedColor || product.stock === 0 || loading}
               onClick={handleAddToCart}
             >
-              {isLoading ? (
+              {loading ? (
                 <span className="animate-spin mr-2">⌛</span>
               ) : (
                 <Heart className="h-5 w-5 mr-2" />
@@ -226,11 +226,11 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             </button>
             <button
               className={`p-3 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors
-                ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleToggleFavorite}
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? (
+              {loading ? (
                 <span className="animate-spin">⌛</span>
               ) : (
                 <Heart className="h-6 w-6" />

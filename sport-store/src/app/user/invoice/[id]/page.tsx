@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import axios from 'axios';
 import InvoiceHeader from '@/components/user/invoice/InvoiceHeader';
 import ProductList from '@/components/user/invoice/ProductList';
 import PaymentSummary from '@/components/user/invoice/PaymentSummary';
@@ -10,7 +9,6 @@ import OrderStatusTimeline from '@/components/user/invoice/OrderStatusTimeline';
 import AddressInfo from '@/components/user/invoice/AddressInfo';
 import CancelOrderButton from '@/components/user/invoice/CancelOrderButton';
 import { PaymentMethod } from '@/types/order';
-import { API_URL } from "@/utils/api";
 import { toast } from 'sonner';
 
 interface Product {
@@ -72,6 +70,9 @@ interface ShippingAddress {
 interface ShippingMethod {
   method: string;
   fee: number;
+  expectedDate: string;
+  courier: string;
+  trackingId: string;
 }
 
 interface StatusHistory {
@@ -91,6 +92,7 @@ interface Order {
   couponDiscount: number;
   shippingFee: number;
   totalPrice: number;
+  originalTotal: number;
   paymentMethod: string;
   paymentStatus: string;
   shippingAddress: ShippingAddress;
@@ -103,6 +105,7 @@ interface Order {
   statusHistory: StatusHistory[];
   createdAt: string;
   updatedAt: string;
+  __v: number;
 }
 
 interface ProcessedProduct {
@@ -127,37 +130,53 @@ export default function InvoicePage() {
   const [processedProducts, setProcessedProducts] = useState<ProcessedProduct[]>([]);
 
   const processOrderItems = useCallback((items: OrderItem[]): ProcessedProduct[] => {
-    return items.map(item => ({
-      id: parseInt(item.product._id.slice(-6), 16),
-      name: item.product.name,
-      price: item.product.salePrice,
-      quantity: item.quantity,
-      brand: item.product.brand,
-      image: item.product.mainImage,
-      categoryName: 'Chưa phân loại',
-      color: item.product.colors?.[0] || 'Mặc định',
-      size: item.product.sizes?.[0] || 'N/A'
-    }));
+    return items.map((item, index) => {
+      console.log(`🔍 Processing item ${index}:`, item);
+      return {
+        id: parseInt(item.product._id.slice(-6), 16),
+        name: item.product.name,
+        price: item.product.salePrice,
+        quantity: item.quantity,
+        brand: item.product.brand,
+        image: item.product.mainImage,
+        categoryName: 'Chưa phân loại',
+        color: item.product.colors?.[0] || 'Mặc định',
+        size: item.product.sizes?.[0] || 'N/A'
+      };
+    });
   }, []);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await axios.get(`${API_URL}/orders/my-orders/${params.id}`, {
+        // Lấy token từ localStorage
+        const token = localStorage.getItem('access_token');
+        
+        const response = await fetch(`/api/orders/my-orders/${params.id}`, {
+          method: 'GET',
           headers: {
             'Cache-Control': 'no-cache',
+            ...(token && { 'Authorization': `Bearer ${token}` })
           }
         });
 
-        if (response.data.success) {
-          const orderData = response.data.data;
+        const data = await response.json();
+
+        console.log('🔍 Frontend response:', { success: data.success, hasData: !!data.data });
+        
+        if (data.success && data.data) {
+          const orderData = data.data;
+          console.log('✅ Order data received:', orderData);
+          console.log('📦 Items data:', orderData.items);
           setOrder(orderData);
           const processed = processOrderItems(orderData.items);
+          console.log('🛍️ Processed products:', processed);
           setProcessedProducts(processed);
           setTimeout(() => {
             setAnimateItems(true);
           }, 100);
         } else {
+          console.log('❌ Frontend error:', data.message || 'No data received');
           setError('Không thể tải thông tin đơn hàng');
         }
         setLoading(false);
@@ -236,9 +255,7 @@ export default function InvoicePage() {
             <div className="flex justify-end mt-4 gap-3">
               <CancelOrderButton
                 orderId={order._id}
-                orderStatus={order.status}
-                paymentStatus={order.paymentStatus}
-                onOrderCancelled={handleOrderCancelled}
+                onCancelSuccess={handleOrderCancelled}
               />
             </div>
           </div>
@@ -261,8 +278,9 @@ export default function InvoicePage() {
                 }`,
                 phone: order.shortId,
                 address: [
-                  `Ngày dự kiến giao hàng: ${new Date(order.createdAt).toLocaleDateString('vi-VN')}`,
-                  `Đơn vị vận chuyển: Viettel Post`
+                  `Ngày dự kiến giao hàng: ${new Date(order.shippingMethod.expectedDate).toLocaleDateString('vi-VN')}`,
+                  `Đơn vị vận chuyển: ${order.shippingMethod.courier}`,
+                  `Mã vận đơn: ${order.shippingMethod.trackingId}`
                 ]
               }}
               deliveryAddress={{

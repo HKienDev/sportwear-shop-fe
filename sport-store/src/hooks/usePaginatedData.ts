@@ -44,13 +44,15 @@ export function usePaginatedData<T extends ApiResponseData>() {
                 throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
             }
             
-            if (!response.data.data.items) {
+            if (!response.data.data.items && !response.data.data.products) {
                 setData([]);
                 setTotal(0);
                 return;
             }
             
-            setData(response.data.data.items);
+            // Xử lý cả items và products
+            const dataItems = response.data.data.items || response.data.data.products || [];
+            setData(dataItems);
             setTotal(response.data.data.total || 0);
         } catch (error) {
             console.error('Failed to fetch data:', error);

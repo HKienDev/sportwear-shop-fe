@@ -2,18 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import ProductCard from '../productCard/page';
-import { Product } from '@/types/product';
-import * as productService from '@/services/productService';
+import { UserProduct } from '@/types/product';
+import { userProductService } from '@/services/userProductService';
 
 const ProductList: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<UserProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await productService.getAllProducts();
+        const response = await userProductService.getProducts();
         if (response.success && response.data.products) {
           setProducts(response.data.products);
         } else {

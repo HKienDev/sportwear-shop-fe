@@ -12,57 +12,15 @@ import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order } from "@/types/order";
 import { customerService } from "@/services/customerService";
 import { useAuth } from "@/context/authContext";
-
-interface Location {
-  code: string;
-  name: string;
-}
-
-interface ProvinceApiData {
-  code: number;
-  name: string;
-  districts?: DistrictApiData[];
-}
-
-interface DistrictApiData {
-  code: number;
-  name: string;
-  wards?: WardApiData[];
-}
-
-interface WardApiData {
-  code: number;
-  name: string;
-}
-
-interface Customer {
-  _id: string;
-  fullname: string;
-  avatar: string;
-  phone: string;
-  address: {
-    province: string;
-    district: string;
-    ward: string;
-    street: string;
-  };
-  totalOrders?: number;
-  totalSpent?: number;
-  createdAt: string;
-  isActive: boolean;
-}
-
-type CustomerUpdateField = 
-  | "fullname" 
-  | "phone" 
-  | "avatar" 
-  | "address" 
-  | "isActive";
-
-type CustomerUpdateValue = 
-  | string 
-  | boolean 
-  | { province: string; district: string; ward: string; street: string };
+import { 
+  Location, 
+  ProvinceApiData, 
+  DistrictApiData, 
+  WardApiData, 
+  Customer, 
+  CustomerUpdateField, 
+  CustomerUpdateValue 
+} from "@/types";
 
 export default function CustomerDetail() {
   const params = useParams();

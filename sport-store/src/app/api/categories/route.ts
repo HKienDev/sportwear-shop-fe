@@ -6,17 +6,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export async function GET(request: Request) {
   try {
-    // Lấy access token từ cookie
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME)?.value;
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
@@ -32,7 +21,6 @@ export async function GET(request: Request) {
       `${API_URL}/categories?${queryParams}`,
       {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         }
       }

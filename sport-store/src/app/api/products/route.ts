@@ -83,11 +83,13 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers
     });
 
     if (!response.ok) {

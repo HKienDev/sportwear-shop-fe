@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from "socket.io-client";
+import { ServerMessage } from './types';
 
 const SOCKET_URL = (() => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl: string = process.env.NEXT_PUBLIC_API_URL || '';
   
   if (!apiUrl) {
     console.log('🔌 ChatManagerAdmin - No NEXT_PUBLIC_API_URL found, using default localhost');
@@ -31,7 +32,7 @@ const SOCKET_URL = (() => {
 console.log('🔌 ChatManagerAdmin - Final Socket URL:', SOCKET_URL);
 
 // Tạo hook để quản lý kết nối socket
-export const useSocketConnection = (onMessageReceived?: (message: any) => void) => {
+export const useSocketConnection = (onMessageReceived?: (message: ServerMessage) => void) => {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttempts = useRef(0);

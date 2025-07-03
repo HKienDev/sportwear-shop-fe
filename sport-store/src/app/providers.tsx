@@ -3,7 +3,7 @@
 import React, { memo } from "react";
 import { AuthProvider } from "../context/authContext";
 import { CustomerProvider } from "../context/customerContext";
-import { CartProvider } from "../context/cartContext";
+import CartProvider from "../providers/CartProvider";
 import TokenManager from "../components/TokenManagerFixed";
 
 interface ProvidersProps {

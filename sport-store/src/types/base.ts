@@ -221,6 +221,12 @@ export interface ApiError {
 }
 
 export interface CreateOrderData {
+    items: {
+        sku: string;
+        quantity: number;
+        color: string;
+        size: string;
+    }[];
     totalAmount: number;
     status: Order['status'];
     paymentStatus: Order['paymentStatus'];

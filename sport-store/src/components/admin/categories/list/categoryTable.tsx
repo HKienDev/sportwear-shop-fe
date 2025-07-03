@@ -63,7 +63,7 @@ const CategoryTable = React.memo(
           ...(filters.status && !searchQuery && { isActive: filters.status === "active" }),
           _t: Date.now(),
         };
-        const response = await categoryService.getAllCategories(params);
+        const response = await categoryService.getCategories(params);
         if (response.success) {
           setTotal(response.data.pagination?.total || 0);
         } else {
@@ -150,7 +150,7 @@ const CategoryTable = React.memo(
           prevCategories.filter(category => category._id !== categoryToDelete)
         );
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryToDelete}`, {
+        const response = await fetch(`/api/categories/${categoryToDelete}`, {
           method: "DELETE",
           credentials: "include",
         });

@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.id as string;
-  const { order, loading, error, refreshOrder } = useOrderDetails(orderId);
+  const { order, loading, error, fetchOrderDetails } = useOrderDetails(orderId);
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -36,7 +36,7 @@ export default function OrderDetailsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-red-500 text-center">{error}</div>
-            <button onClick={refreshOrder} className="mt-4 text-blue-500 underline">
+            <button onClick={fetchOrderDetails} className="mt-4 text-blue-500 underline">
               Thử lại
             </button>
           </div>

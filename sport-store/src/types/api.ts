@@ -1,4 +1,5 @@
-import type { User, Product, Order, CartItem } from './base';
+import type { User, Order, CartItem } from './base';
+import type { Product } from './product';
 import type { LoginResponse, AuthCheckResponse, TokenVerifyResponse, ProfileResponse, GoogleAuthResponse, EmptyResponse } from './auth';
 
 export type ApiResponseData = 
@@ -42,7 +43,8 @@ export interface PaginationParams {
 }
 
 export interface PaginatedResponse<T> {
-    items: T[];
+    items?: T[];
+    products?: T[];
     total: number;
     page: number;
     limit: number;
@@ -66,4 +68,5 @@ export interface OrderQueryParams extends PaginationParams {
     phone?: string;
 }
 
-export type { User, Product, Order, CartItem }; 
+export type { User, Order, CartItem } from './base';
+export type { Product } from './product'; 

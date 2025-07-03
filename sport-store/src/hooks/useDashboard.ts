@@ -1,61 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
-import { TOKEN_CONFIG } from '@/config/token';
-import { API_URL } from '@/utils/api';
-import { ENDPOINTS } from '@/config/api';
-
-interface RevenueData {
-  date: string;
-  revenue: number;
-  orderCount: number;
-}
+import { apiClient } from '@/lib/apiClient';
+import { ERROR_MESSAGES } from '@/config/constants';
+import type { RevenueData, BestSellingProduct, RecentOrder, DashboardStats } from '@/types/dashboard';
 
 type TimeRange = 'day' | 'month' | 'year';
 
 interface DashboardData {
-  stats: {
-    totalOrders: number;
-    totalRevenue: number;
-    totalCustomers: number;
-    totalProducts: number;
-    growth: {
-      orders: number;
-      revenue: number;
-      customers: number;
-      products: number;
-    };
-  };
+  stats: DashboardStats;
   revenue: RevenueData[];
-  bestSellingProducts: Array<{
-    _id: string;
-    name: string;
-    category: string;
-    totalSales: number;
-    image: string;
-    sku: string;
-    growthRate: number;
-  }>;
-  recentOrders: {
-    orders: Array<{
-      _id: string;
-      orderNumber: string;
-      customerName: string;
-      customerEmail: string;
-      total: number;
-      status: string;
-      progress: number;
-      createdAt: string;
-      originAddress: string;
-      destinationAddress: string;
-      statusHistory: Array<{
-        status: string;
-        updatedAt: string;
-        updatedBy: string;
-        note: string;
-        _id: string;
-      }>;
-    }>;
-  };
+  bestSellingProducts: BestSellingProduct[];
+  recentOrders: RecentOrder[];
 }
 
 export const useDashboard = (timeRange: TimeRange = 'month') => {
@@ -74,68 +29,24 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
         return;
       }
 
-      // Lấy token từ localStorage
-      const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      
-      if (!accessToken) {
-        setError('No access token found');
-        return;
-      }
-
       // Gọi các API riêng lẻ và kết hợp dữ liệu
       const [statsRes, revenueRes, bestSellingRes, recentOrdersRes] = await Promise.all([
-        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.STATS}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }),
-        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.REVENUE}?period=${timeRange}&limit=${timeRange === 'day' ? 7 : timeRange === 'month' ? 12 : 5}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }),
-        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.BEST_SELLING}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }),
-        fetch(`${API_URL}${ENDPOINTS.DASHBOARD.RECENT_ORDERS}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }),
+        apiClient.getDashboardStats(),
+        apiClient.getRevenueStats({ period: timeRange }),
+        apiClient.getBestSellingProducts(),
+        apiClient.getRecentOrders(),
       ]);
 
       // Kiểm tra response
-      if (!statsRes.ok || !revenueRes.ok || !bestSellingRes.ok || !recentOrdersRes.ok) {
+      if (!statsRes.data.success || !revenueRes.data.success || !bestSellingRes.data.success || !recentOrdersRes.data.success) {
         throw new Error('Failed to fetch dashboard data');
       }
 
-      // Parse response data
-      const [statsData, revenueData, bestSellingData, recentOrdersData] = await Promise.all([
-        statsRes.json(),
-        revenueRes.json(),
-        bestSellingRes.json(),
-        recentOrdersRes.json(),
-      ]);
-
-      // Kiểm tra và trích xuất dữ liệu từ response
-      const stats = statsData.success ? statsData.data : {
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalCustomers: 0,
-        totalProducts: 0,
-        growth: {
-          orders: 0,
-          revenue: 0,
-          customers: 0,
-          products: 0
-        }
-      };
-
-      const revenue = revenueData.success ? revenueData.data.revenue : [];
-      const bestSelling = bestSellingData.success ? bestSellingData.data.products : [];
-      const recentOrders = recentOrdersData.success ? recentOrdersData.data : { orders: [] };
+      // Trích xuất dữ liệu từ response
+      const stats = statsRes.data.data;
+      const revenue = revenueRes.data.data || [];
+      const bestSelling = bestSellingRes.data.data || [];
+      const recentOrders = recentOrdersRes.data.data || [];
 
       // Xử lý dữ liệu doanh thu theo khoảng thời gian
       const processedRevenue = processRevenueData(revenue, timeRange);
@@ -148,7 +59,7 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
       });
     } catch (error) {
       console.error('Dashboard data fetch error:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR);
     } finally {
       setIsLoading(false);
     }
@@ -198,9 +109,9 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
           return date.toISOString().slice(0, 7); // Format: YYYY-MM
         }).reverse();
 
-        filteredData = last12Months.map(month => {
-          const [year, monthNum] = month.split('-');
-          const formattedDate = `${monthNum.padStart(2, '0')}/${year}`;
+        filteredData = last12Months.map(date => {
+          const [year, month] = date.split('-');
+          const formattedDate = `${month.padStart(2, '0')}/${year}`;
           const existingData = data.find(item => item.date === formattedDate);
           return {
             date: formattedDate,
@@ -236,6 +147,6 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
     dashboardData,
     isLoading,
     error,
-    refresh: fetchDashboardData
+    refetch: fetchDashboardData,
   };
 }; 

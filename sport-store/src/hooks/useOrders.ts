@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authContext';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api';
+import { apiClient } from '@/lib/apiClient';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
 import type { Order, OrderQueryParams } from '@/types/api';
 import type { CreateOrderData, UpdateOrderData } from '@/types/base';
@@ -13,40 +13,43 @@ import type { NewOrderEmailProps } from '@/email-templates/NewOrderEmail';
 export function useOrders(options: OrderQueryParams = {}) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [total, setTotal] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { isAuthenticated, user } = useAuth();
 
     const fetchOrders = useCallback(async () => {
         try {
-            setIsLoading(true);
+            setLoading(true);
             setError(null);
 
-            const response = await apiClient.orders.getAll(options);
-            if (response.data.success && response.data.data) {
-                setOrders(response.data.data.items);
-                setTotal(response.data.data.total);
+            const response = await apiClient.getOrders();
+            
+            if (response.data.success) {
+                setOrders(response.data.data as Order[] || []);
+                setTotal(response.data.data.length);
+            } else {
+                throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
             }
-        } catch (error) {
-            console.error('Error fetching orders:', error);
-            setError(ERROR_MESSAGES.NETWORK_ERROR);
-            toast.error(ERROR_MESSAGES.NETWORK_ERROR);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+            setError(errorMessage);
+            console.error('Fetch orders error:', err);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
-    }, [options]);
+    }, []);
 
     useEffect(() => {
         if (isAuthenticated) {
             fetchOrders();
         } else {
-            setIsLoading(false);
+            setLoading(false);
         }
     }, [isAuthenticated, fetchOrders]);
 
     const getOrderById = async (id: string) => {
         try {
-            const response = await apiClient.orders.getById(id);
+            const response = await apiClient.getOrderById(id);
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
@@ -75,7 +78,7 @@ export function useOrders(options: OrderQueryParams = {}) {
                 phone: data.phone
             };
 
-            const response = await apiClient.orders.create(orderData);
+            const response = await apiClient.createOrder(orderData);
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
@@ -147,7 +150,7 @@ export function useOrders(options: OrderQueryParams = {}) {
                 status: OrderStatus.CANCELLED
             };
 
-            const response = await apiClient.orders.update(id, updateData);
+            const response = await apiClient.updateOrderStatus(id, updateData.status as string, updateData);
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
@@ -162,20 +165,23 @@ export function useOrders(options: OrderQueryParams = {}) {
 
     const fetchOrdersByPhone = async (phone: string) => {
         try {
-            setIsLoading(true);
-            const response = await apiClient.orders.getByPhone(phone);
-            setOrders(response.data.data || []);
+            setLoading(true);
+            const response = await apiClient.getOrdersByPhone(phone);
+            setOrders(response.data.data as Order[] || []);
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải đơn hàng');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     const updateOrder = async (id: string, data: UpdateOrderData) => {
         try {
-            const response = await apiClient.orders.update(id, data);
+            if (!data.status) {
+                throw new Error('Order status is required for update');
+            }
+            const response = await apiClient.updateOrderStatus(id, data.status as string, data);
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
@@ -192,7 +198,7 @@ export function useOrders(options: OrderQueryParams = {}) {
     return {
         orders,
         total,
-        isLoading,
+        loading,
         error,
         fetchOrders,
         fetchOrdersByPhone,

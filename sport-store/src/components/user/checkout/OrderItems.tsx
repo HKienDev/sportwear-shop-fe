@@ -1,193 +1,182 @@
 'use client';
 
-import { ShoppingBag, ChevronDown, ChevronUp, Minus, Plus, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import { CartItem as CartItemType } from '@/types/cart';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Trash2, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface CartResponse {
-  success: boolean;
-  message: string;
-  data: {
-    _id: string;
-    userId: string;
-    items: CartItemType[];
-    totalQuantity: number;
-    cartTotal: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-}
+import { ERROR_MESSAGES } from '@/config/constants';
+import type { CartItem } from '@/types/cart';
+import Image from 'next/image';
+import { useCartOptimized } from '@/hooks/useCartOptimized';
 
 interface OrderItemsProps {
-  expandedSection: string | null;
-  toggleSection: (section: string) => void;
-  formatPrice: (price: number) => string;
-  onUpdateQuantity?: (itemId: string, quantity: number) => void;
-  onRemoveItem?: (itemId: string) => void;
+  cartItems: CartItem[];
+  loading?: boolean;
+  onTotalChange?: (total: number) => void;
 }
 
-export default function OrderItems({
-  expandedSection,
-  toggleSection,
-  formatPrice,
-  onUpdateQuantity,
-  onRemoveItem
-}: OrderItemsProps) {
-  const [cartItems, setCartItems] = useState<CartItemType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function OrderItems({ cartItems, loading = false, onTotalChange }: OrderItemsProps) {
+  const [updating, setUpdating] = useState(false);
+  const prevTotalRef = useRef<number>(0);
 
+  // Sử dụng Zustand store actions
+  const { updateCartItem, removeFromCart } = useCartOptimized();
+
+  // Memoize the onTotalChange callback to prevent infinite loops
+  const memoizedOnTotalChange = useCallback((total: number) => {
+    if (onTotalChange) {
+      onTotalChange(total);
+    }
+  }, [onTotalChange]);
+
+  // Tính tổng tiền và cập nhật cho parent component
+  const total = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  
+  // Cập nhật tổng tiền khi cartItems thay đổi, chỉ khi total thực sự thay đổi
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get<CartResponse>('/cart');
-        
-        if (response.data.success) {
-          setCartItems(response.data.data.items);
-        } else {
-          setError('Không thể lấy dữ liệu giỏ hàng');
-          toast.error('Không thể lấy dữ liệu giỏ hàng');
-        }
-      } catch (err) {
-        console.error('Error fetching cart:', err);
-        setError('Đã xảy ra lỗi khi lấy dữ liệu giỏ hàng');
-        toast.error('Đã xảy ra lỗi khi lấy dữ liệu giỏ hàng');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (total !== prevTotalRef.current) {
+      prevTotalRef.current = total;
+      memoizedOnTotalChange(total);
+    }
+  }, [total, memoizedOnTotalChange]);
 
-    fetchCart();
-  }, []);
+  // Update item quantity
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    try {
+      setUpdating(true);
+      const item = cartItems.find(i => i._id === itemId);
+      if (!item) throw new Error('Không tìm thấy sản phẩm');
+      
+      // Sử dụng store action thay vì direct API call
+      await updateCartItem(itemId, newQuantity);
+      
+      toast.success('Giỏ hàng đã được cập nhật');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      toast.error(errorMessage);
+      console.error('Update quantity error:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Remove item from cart
+  const removeItem = async (itemId: string) => {
+    try {
+      setUpdating(true);
+      const item = cartItems.find(i => i._id === itemId);
+      if (!item) throw new Error('Không tìm thấy sản phẩm');
+      
+      // Sử dụng store action thay vì direct API call
+      await removeFromCart({
+        sku: item.product.sku,
+        color: item.color,
+        size: item.size
+      });
+      
+      toast.success('Sản phẩm đã được xóa khỏi giỏ hàng');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      toast.error(errorMessage);
+      console.error('Remove item error:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 text-center">
-          <p className="text-gray-500">Đang tải dữ liệu giỏ hàng...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 text-center">
-          <p className="text-red-500">{error}</p>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Đang tải giỏ hàng...</div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 text-center">
-          <p className="text-gray-500">Giỏ hàng của bạn đang trống</p>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">Giỏ hàng trống</div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div 
-        className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50"
-        onClick={() => toggleSection('items')}
-      >
-        <div className="flex items-center space-x-3">
-          <ShoppingBag className="w-6 h-6 text-red-600" />
-          <h2 className="text-lg font-semibold text-gray-900">CHI TIẾT ĐƠN HÀNG</h2>
-        </div>
-        {expandedSection === 'items' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-      </div>
-      
-      {expandedSection === 'items' && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="divide-y divide-gray-200"
-        >
+    <Card>
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Sản phẩm đặt hàng</h3>
+        
+        <div className="space-y-4">
           {cartItems.map((item, index) => (
-            <motion.div
-              key={item._id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="p-6"
-            >
-              <div className="flex items-center">
-                <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                  <Image
-                    src={item.product.mainImage}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="ml-6 flex-1">
-                  <div className="flex justify-between">
-                    <div>
-                      <h3 className="text-base font-medium text-gray-900">{item.product.name}</h3>
-                      <p className="text-sm text-gray-500">{item.product.brand}</p>
-                      <p className="mt-1 text-sm text-gray-500">
-                        {item.color && <span className="mr-2">Màu: {item.color}</span>}
-                        {item.size && <span>Cỡ: {item.size}</span>}
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-blue-600">
-                        Số lượng: <span className="font-bold">{item.quantity}</span>
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-base font-medium text-red-600">{formatPrice(item.product.salePrice)}</p>
-                      {item.product.originalPrice > item.product.salePrice && (
-                        <p className="text-sm text-gray-500 line-through">{formatPrice(item.product.originalPrice)}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex items-center justify-between">
-                    {onUpdateQuantity && (
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => onUpdateQuantity(item._id, Math.max(1, item.quantity - 1))}
-                          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => onUpdateQuantity(item._id, item.quantity + 1)}
-                          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                    
-                    {onRemoveItem && (
-                      <button
-                        onClick={() => onRemoveItem(item._id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
+            <div key={item._id || `${item.product.sku}-${item.color}-${item.size}-${index}`} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center space-x-4">
+                <Image
+                  src={item.product.mainImage}
+                  alt={item.product.name}
+                  width={64}
+                  height={64}
+                  className="object-cover rounded"
+                />
+                <div>
+                  <h4 className="font-medium">{item.product.name}</h4>
+                  <p className="text-sm text-gray-500">Size: {item.size}</p>
+                  <p className="text-sm text-gray-500">Màu: {item.color}</p>
+                  <p className="font-medium text-primary">
+                    {item.totalPrice.toLocaleString('vi-VN')} VNĐ
+                  </p>
                 </div>
               </div>
-            </motion.div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                  disabled={updating}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                
+                <span className="w-8 text-center">{item.quantity}</span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                  disabled={updating}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeItem(item._id)}
+                  disabled={updating}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           ))}
-        </motion.div>
-      )}
-    </div>
+        </div>
+        
+        <Separator className="my-4" />
+        
+        <div className="flex justify-between items-center">
+          <span className="text-lg font-semibold">Tổng cộng:</span>
+          <span className="text-xl font-bold text-primary">
+            {total.toLocaleString('vi-VN')} VNĐ
+          </span>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

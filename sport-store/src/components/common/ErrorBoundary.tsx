@@ -4,6 +4,13 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+// Extend Window interface to include gtag
+declare global {
+  interface Window {
+    gtag?: (command: string, action: string, params?: Record<string, unknown>) => void;
+  }
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -28,8 +35,8 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     // Log error to analytics or monitoring service
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'exception', {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'exception', {
         description: error.message,
         fatal: false
       });

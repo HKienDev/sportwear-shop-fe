@@ -2,7 +2,6 @@
 
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { CreditCard, Package, Truck, Home } from 'lucide-react';
 
 interface StatusHistory {
   status: string;
@@ -60,22 +59,7 @@ const OrderStatusTimeline = ({
     }
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'text-yellow-500';
-      case 'confirmed':
-        return 'text-blue-500';
-      case 'shipping':
-        return 'text-orange-500';
-      case 'delivered':
-        return 'text-green-500';
-      case 'cancelled':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
+
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {

@@ -1,69 +1,150 @@
-import { useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/authContext';
-import apiClient from '@/lib/api';
-import { useApiCall } from './useApiCall';
-import type { CartItem } from '@/types/base';
-import type { EmptyResponse } from '@/types/auth';
-import { SUCCESS_MESSAGES } from '@/config/constants';
+import { apiClient } from '@/lib/apiClient';
+import { handleCartError, calculateCartTotals, validateCartData } from '@/utils/cartUtils';
+import type { CartItem, Cart } from '@/types/cart';
 
 export function useCart() {
-    const { user } = useAuth();
-    const { execute: executeCartApiCall } = useApiCall<CartItem[]>();
-    const { execute: executeClearCartApiCall } = useApiCall<EmptyResponse['data']>();
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const addToCart = useCallback(async (sku: string, quantity: number = 1, color?: string, size?: string) => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-            return;
-        }
+  // Fetch cart data
+  const fetchCart = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.getCart();
+      
+      if (response.data.success) {
+        setCart(response.data.data as Cart);
+      } else {
+        throw new Error(response.data.message || 'Không thể lấy giỏ hàng');
+      }
+    } catch (err) {
+      const errorMessage = handleCartError(err, 'fetch');
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        return await executeCartApiCall(
-            () => apiClient.cart.addToCart({ sku, quantity, color, size }),
-            { onSuccess: () => toast.success(SUCCESS_MESSAGES.ADD_TO_CART_SUCCESS) }
-        );
-    }, [user, executeCartApiCall]);
+  // Add item to cart
+  const addToCart = useCallback(async (productData: { sku: string; color?: string; size?: string; quantity?: number }) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const updateCartItem = useCallback(async (sku: string, quantity: number, color?: string, size?: string) => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập để cập nhật giỏ hàng');
-            return;
-        }
+      const response = await apiClient.addToCart(productData);
 
-        return await executeCartApiCall(
-            () => apiClient.cart.updateCart({ sku, quantity, color, size }),
-            { onSuccess: () => toast.success(SUCCESS_MESSAGES.UPDATE_CART_SUCCESS) }
-        );
-    }, [user, executeCartApiCall]);
+      if (response.data.success) {
+        setCart(response.data.data as Cart);
+        toast.success('Sản phẩm đã được thêm vào giỏ hàng');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+      }
+    } catch (err) {
+      const errorMessage = handleCartError(err, 'add');
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const removeFromCart = useCallback(async (sku: string, color?: string, size?: string) => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập để xóa khỏi giỏ hàng');
-            return;
-        }
+  // Update cart item
+  const updateCartItem = useCallback(async (productData: { sku: string; color?: string; size?: string; quantity?: number }) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        return await executeCartApiCall(
-            () => apiClient.cart.removeFromCart({ sku, color, size }),
-            { onSuccess: () => toast.success(SUCCESS_MESSAGES.REMOVE_FROM_CART_SUCCESS) }
-        );
-    }, [user, executeCartApiCall]);
+      const response = await apiClient.updateCart(productData);
 
-    const clearCart = useCallback(async () => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập để xóa giỏ hàng');
-            return;
-        }
+      if (response.data.success) {
+        setCart(response.data.data as Cart);
+        toast.success('Giỏ hàng đã được cập nhật');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể cập nhật giỏ hàng');
+      }
+    } catch (err) {
+      const errorMessage = handleCartError(err, 'update');
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        return await executeClearCartApiCall(
-            () => apiClient.cart.clearCart(),
-            { onSuccess: () => toast.success(SUCCESS_MESSAGES.CLEAR_CART_SUCCESS) }
-        );
-    }, [user, executeClearCartApiCall]);
+  // Remove item from cart
+  const removeFromCart = useCallback(async (productData: { sku: string; color?: string; size?: string }) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    return {
-        addToCart,
-        updateCartItem,
-        removeFromCart,
-        clearCart
-    };
+      const response = await apiClient.removeFromCart(productData);
+
+      if (response.data.success) {
+        setCart(response.data.data as Cart);
+        toast.success('Sản phẩm đã được xóa khỏi giỏ hàng');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể xóa sản phẩm khỏi giỏ hàng');
+      }
+    } catch (err) {
+      const errorMessage = handleCartError(err, 'remove');
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Clear cart
+  const clearCart = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiClient.clearCart() as import('axios').AxiosResponse<{ success: boolean; message: string; data?: unknown }>;
+
+      if (response.data.success) {
+        setCart(null);
+        toast.success('Giỏ hàng đã được làm trống');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Không thể xóa giỏ hàng');
+      }
+    } catch (err) {
+      const errorMessage = handleCartError(err, 'clear');
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Calculate cart totals
+  const cartTotals = useCallback(() => {
+    return calculateCartTotals(cart?.items || []);
+  }, [cart?.items]);
+
+  // Load cart on mount
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  return {
+    cart,
+    loading,
+    error,
+    fetchCart,
+    addToCart,
+    updateCartItem,
+    removeFromCart,
+    clearCart,
+    cartTotals: cartTotals()
+  };
 } 

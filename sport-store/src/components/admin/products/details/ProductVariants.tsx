@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Product } from '@/types/product';
+import { AdminProduct } from '@/types/product';
 
 interface ProductVariantsProps {
-  product: Product;
+  product: AdminProduct;
 }
 
 const colorNames: Record<string, string> = {

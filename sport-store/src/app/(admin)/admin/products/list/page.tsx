@@ -6,48 +6,13 @@ import ProductListTable from "@/components/admin/products/list/productListTable"
 import ProductListFilters from "@/components/admin/products/list/productListFilters";
 import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
-
-interface Category {
-  _id: string;
-  categoryId: string;
-  name: string;
-  slug: string;
-  hasProducts?: boolean;
-}
-
-interface Product {
-  _id: string;
-  name: string;
-  description: string;
-  originalPrice: number;
-  salePrice: number;
-  stock: number;
-  categoryId: string;
-  brand: string;
-  mainImage: string;
-  subImages: string[];
-  createdAt: string;
-  isActive: boolean;
-  sku: string;
-  colors: string[];
-  sizes: string[];
-  tags: string[];
-  ratings: {
-    average: number;
-    count: number;
-  };
-  soldCount: number;
-  viewCount: number;
-  discountPercentage: number;
-  isOutOfStock: boolean;
-  isLowStock: boolean;
-}
+import { AdminProduct, AdminCategory } from '@/types/product';
 
 export default function ProductListPage() {
   const router = useRouter();
   const { user, isAuthenticated, loading } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -193,7 +158,7 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${sku}`, {
+      const response = await fetch(`/api/products/${sku}`, {
         method: "DELETE",
         headers
       });
@@ -229,7 +194,7 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${product.sku}/status`, {
+      const response = await fetch(`/api/products/${product.sku}/status`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ isActive })

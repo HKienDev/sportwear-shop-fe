@@ -1,146 +1,40 @@
-import { api } from '@/lib/api';
-import type { AxiosError } from 'axios';
-
-function parseError(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'object' && error !== null && 'message' in error) return String((error as { message: unknown }).message);
-  return 'Unknown error';
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object' && 'response' in error) {
-    const axiosError = error as AxiosError<unknown>;
-    if (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data) {
-      return String((axiosError.response.data as { message: unknown }).message);
-    }
-  }
-  return parseError(error);
-}
-
-export interface CartItem {
-  product: {
-    sku: string;
-    name: string;
-    slug: string;
-    brand: string;
-    mainImage: string;
-    salePrice: number;
-  };
-  quantity: number;
-  color: string;
-  size: string;
-  totalPrice: number;
-}
-
-export interface Cart {
-  userId: string;
-  items: CartItem[];
-  _id: string;
-}
-
-export interface AddToCartRequest {
-  sku: string;
-  color: string;
-  size: string;
-  quantity: number;
-}
-
-export interface UpdateCartItemRequest {
-  sku: string;
-  color: string;
-  size: string;
-  quantity: number;
-}
-
-export interface RemoveFromCartRequest {
-  sku: string;
-  color: string;
-  size: string;
-}
+import { apiClient } from '@/lib/apiClient';
+import type { CartItem, Cart } from '@/types/cart';
+import type { ApiResponse } from '@/types/api';
 
 export const cartService = {
-  // Lấy giỏ hàng
-  getCart: async () => {
-    try {
-      const response = await api.get('/cart');
-      return response.data;
-    } catch (error) {
-      console.error('Error getting cart:', error);
-      throw new Error(getErrorMessage(error));
-    }
+  // Get cart
+  async getCart(): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.getCart();
+    return response.data as ApiResponse<Cart>;
   },
 
-  // Thêm vào giỏ hàng
-  addToCart: async (data: AddToCartRequest) => {
-    try {
-      console.log('🛒 Bắt đầu thêm vào giỏ hàng:', data);
-      
-      if (!data.sku || !data.color || !data.size || !data.quantity) {
-        console.log('❌ Dữ liệu không hợp lệ:', data);
-        throw new Error('Thiếu thông tin sản phẩm');
-      }
-
-      console.log('📤 Gọi API thêm vào giỏ hàng');
-      const response = await api.post('/cart/add', data);
-      console.log('📥 Kết quả API:', response.data);
-      
-      if (!response.data) {
-        console.log('❌ Response không hợp lệ');
-        throw new Error('Không thể thêm sản phẩm vào giỏ hàng');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('❌ Lỗi khi thêm vào giỏ hàng:', error);
-      throw new Error(getErrorMessage(error));
-    }
+  // Add to cart
+  async addToCart(productData: { sku: string; color?: string; size?: string; quantity?: number }): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.addToCart(productData);
+    return response.data as ApiResponse<Cart>;
   },
 
-  // Cập nhật số lượng
-  updateCartItemQuantity: async (data: UpdateCartItemRequest) => {
-    try {
-      const response = await api.put('/cart/update', data);
-      
-      if (!response.data) {
-        throw new Error('Invalid response from server');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error updating cart item:', error);
-      throw new Error(getErrorMessage(error));
-    }
+  // Update cart item
+  async updateCart(productData: { sku: string; color?: string; size?: string; quantity?: number }): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.updateCart(productData);
+    return response.data as ApiResponse<Cart>;
   },
 
-  // Xóa khỏi giỏ hàng
-  removeFromCart: async (data: RemoveFromCartRequest) => {
-    try {
-      const response = await api.delete('/cart/remove', { data });
-      
-      if (!response.data) {
-        throw new Error('Invalid response from server');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      throw new Error(getErrorMessage(error));
-    }
+  // Remove from cart
+  async removeFromCart(productData: { sku: string; color?: string; size?: string }): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.removeFromCart(productData);
+    return response.data as ApiResponse<Cart>;
   },
 
-  // Xóa toàn bộ giỏ hàng
-  clearCart: async () => {
-    try {
-      const response = await api.delete('/cart/clear');
-      
-      if (!response.data) {
-        throw new Error('Invalid response from server');
-      }
+  // Clear cart
+  async clearCart(): Promise<ApiResponse<{ message: string }>> {
+    const response = await apiClient.clearCart();
+    return response.data as ApiResponse<{ message: string }>;
+  },
 
-      return response.data;
-    } catch (error) {
-      console.error('Error clearing cart:', error);
-      throw new Error(getErrorMessage(error));
-    }
+  // Update cart item quantity (alias for updateCart)
+  async updateCartItemQuantity({ sku, color, size, quantity }: { sku: string; color?: string; size?: string; quantity: number }): Promise<ApiResponse<Cart>> {
+    return this.updateCart({ sku, color, size, quantity });
   }
 }; 

@@ -1,5 +1,6 @@
 export * from './api';
 export * from './auth';
+export * from './location';
 export type { 
   BaseEntity, 
   User, 
@@ -26,4 +27,10 @@ export {
   PaymentMethod, 
   ShippingMethod
 } from './base';
-export * from './customer'; 
+export * from './customer';
+export type { 
+  AdminProduct, 
+  UserProduct, 
+  AdminCategory, 
+  ProductWithCategory 
+} from './product'; 

@@ -12,7 +12,7 @@ interface Message {
 
 // Tạo URL WebSocket dựa trên môi trường
 const getSocketUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = String(process.env.NEXT_PUBLIC_API_URL || '');
   
   if (!apiUrl) {
     return "http://localhost:4000";

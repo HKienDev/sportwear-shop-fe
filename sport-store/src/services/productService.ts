@@ -1,173 +1,60 @@
-import { API_URL } from '@/utils/api';
-import { ProductResponse, ProductsResponse } from '@/types/product';
+import { apiClient } from '@/lib/apiClient';
+import type { Product } from '@/types/product';
+import type { ApiResponse } from '@/types/api';
 
-/**
- * Lấy danh sách tất cả sản phẩm
- */
-export const getAllProducts = async (page = 1, limit = 10): Promise<ProductsResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products?page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+export interface ProductsResponse {
+  products: Product[];
+  total?: number;
+  page?: number;
+  limit?: number;
+}
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch products');
+export const productService = {
+  // Get all products
+  async getProducts(params?: any): Promise<ApiResponse<ProductsResponse>> {
+    const response = await apiClient.getProducts(params);
+    // If response.data is an array, wrap it in products property
+    if (Array.isArray(response.data)) {
+      return { success: true, data: { products: response.data } };
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
-  }
-};
-
-/**
- * Lấy chi tiết sản phẩm theo SKU
- */
-export const getProductBySku = async (sku: string): Promise<ProductResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products/sku/${sku}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch product');
+    // If response.data already has products property, return as is
+    if (response.data && (response.data as any).products) {
+      return response.data as ApiResponse<ProductsResponse>;
     }
+    // Fallback
+    return { success: false, data: { products: [] } };
+  },
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    throw error;
-  }
-};
+  // Get product by ID
+  async getProductById(id: string): Promise<ApiResponse<Product>> {
+    const response = await apiClient.getProductById(id);
+    return response.data as ApiResponse<Product>;
+  },
 
-/**
- * Lấy sản phẩm theo danh mục
- */
-export const getProductsByCategory = async (categoryId: string, page = 1, limit = 10): Promise<ProductsResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products/category/${categoryId}?page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  // Create product
+  async createProduct(productData: any): Promise<ApiResponse<Product>> {
+    const response = await apiClient.createProduct(productData);
+    return response.data as ApiResponse<Product>;
+  },
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch products by category');
+  // Update product
+  async updateProduct(id: string, productData: any): Promise<ApiResponse<Product>> {
+    const response = await apiClient.updateProduct(id, productData);
+    return response.data as ApiResponse<Product>;
+  },
+
+  // Delete product
+  async deleteProduct(id: string): Promise<ApiResponse<{ message: string }>> {
+    const response = await apiClient.deleteProduct(id);
+    // Nếu response.data là object có message thì trả về, nếu không thì trả về message mặc định
+    if (response.data && typeof response.data === 'object' && 'message' in response.data) {
+      return response.data as unknown as ApiResponse<{ message: string }>;
     }
+    return { success: true, data: { message: 'Xóa sản phẩm thành công' } };
+  },
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching products by category:', error);
-    throw error;
-  }
-};
-
-/**
- * Xóa một sản phẩm theo SKU
- */
-export const deleteProduct = async (sku: string): Promise<void> => {
-  try {
-    const response = await fetch(`${API_URL}/products/${sku}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete product');
-    }
-
-    window.dispatchEvent(new Event('productDeleted'));
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    throw error;
-  }
-};
-
-/**
- * Cập nhật sản phẩm
- */
-export const updateProduct = async (sku: string, formData: FormData): Promise<ProductResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products/${sku}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update product');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating product:', error);
-    throw error;
-  }
-};
-
-/**
- * Cập nhật trạng thái sản phẩm
- */
-export const updateProductStatus = async (sku: string, status: 'active' | 'inactive'): Promise<ProductResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products/${sku}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update product status');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating product status:', error);
-    throw error;
-  }
-};
-
-/**
- * Cập nhật trạng thái size
- */
-export const updateSizeStatus = async (
-  sku: string, 
-  size: string, 
-  status: 'active' | 'inactive'
-): Promise<ProductResponse> => {
-  try {
-    const response = await fetch(`${API_URL}/products/${sku}/size-status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({ size, status }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update size status');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating size status:', error);
-    throw error;
+  // Get products by category
+  async getProductsByCategory(categoryId: string): Promise<ApiResponse<ProductsResponse>> {
+    return this.getProducts({ categoryId });
   }
 }; 

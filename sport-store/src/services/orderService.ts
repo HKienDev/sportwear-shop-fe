@@ -1,3 +1,6 @@
+import { apiClient } from '@/lib/apiClient';
+import type { Order } from '@/types/order';
+import type { ApiResponse } from '@/types/api';
 import { API_URL } from '@/utils/api';
 
 /**
@@ -50,5 +53,37 @@ export const bulkDeleteOrders = async (orderIds: string[]): Promise<void> => {
   } catch (error) {
     console.error('Error deleting orders:', error);
     throw error;
+  }
+};
+
+export const orderService = {
+  // Get all orders
+  async getOrders(): Promise<ApiResponse<Order[]>> {
+    const response = await apiClient.getOrders();
+    return response.data as ApiResponse<Order[]>;
+  },
+
+  // Get order by ID
+  async getOrderById(id: string): Promise<ApiResponse<Order>> {
+    const response = await apiClient.getOrderById(id);
+    return response.data as ApiResponse<Order>;
+  },
+
+  // Create order
+  async createOrder(orderData: any): Promise<ApiResponse<Order>> {
+    const response = await apiClient.createOrder(orderData);
+    return response.data as ApiResponse<Order>;
+  },
+
+  // Update order status
+  async updateOrderStatus(id: string, status: string): Promise<ApiResponse<Order>> {
+    const response = await apiClient.updateOrderStatus(id, status);
+    return response.data as ApiResponse<Order>;
+  },
+
+  // Get orders by phone
+  async getOrdersByPhone(phone: string): Promise<ApiResponse<Order[]>> {
+    const response = await apiClient.getOrdersByPhone(phone);
+    return response.data as ApiResponse<Order[]>;
   }
 }; 

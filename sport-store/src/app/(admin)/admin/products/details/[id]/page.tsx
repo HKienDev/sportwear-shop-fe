@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Edit2, Clock, Image } from "lucide-react";
-import { Product } from "@/types/product";
+import { AdminProduct } from "@/types/product";
 import { fetchApi } from "@/utils/api";
 import ProductInfo from "@/components/admin/products/details/ProductInfo";
 import ProductImages from "@/components/admin/products/details/ProductImages";
@@ -18,7 +18,7 @@ export default function ProductDetailsPage() {
   const sku = params.id as string;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<AdminProduct | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const { user, isAuthenticated } = useAuth();
 

@@ -7,29 +7,11 @@ import ShippingAddress from "./shippingAddress";
 import ShippingMethod from "./shippingMethod";
 import OrderTable from "./orderTable";
 import { Order, OrderStatus } from "@/types/base";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { AdminProduct } from "@/types/product";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, CreditCard, MapPin } from "lucide-react";
+import { safePromise } from "@/utils/promiseUtils";
 
-type OrderItemProduct = {
-  _id: string;
-  name: string;
-  description: string;
-  originalPrice: number;
-  salePrice: number;
-  mainImage: string;
-  subImages: string[];
-  categoryId: string;
-  stock: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type OrderItemProduct = AdminProduct;
 
 // Mô tả chi tiết từng trạng thái
 export const orderStatusInfo = {
@@ -108,13 +90,33 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
   // Hàm để lấy lại thông tin đơn hàng mới nhất
   const refreshOrderDetails = useCallback(async () => {
     try {
-      const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${orderId}`);
+      console.log('🔄 Refreshing order details:', orderId);
+      
+      const result = await safePromise(
+        fetch(`/api/orders/${orderId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        }),
+        'Không thể cập nhật thông tin đơn hàng'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Không thể cập nhật thông tin đơn hàng');
+      }
+      
+      const response = await result.data!.json();
+      console.log('📥 Refresh response:', response);
       
       if (response.success && response.data?.status) {
         setCurrentStatus(response.data.status);
+        console.log('✅ Status updated:', response.data.status);
       }
     } catch (error) {
-      console.error("Error refreshing order details:", error);
+      console.error("❌ Error refreshing order details:", error);
       toast.error("Không thể cập nhật thông tin đơn hàng");
     }
   }, [orderId]);
@@ -128,10 +130,27 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${orderId}/status`, {
-          method: "PUT",
-          body: JSON.stringify({ status: newStatus }),
-        });
+        console.log('🔄 Updating order status:', orderId, 'to', newStatus);
+        
+        const result = await safePromise(
+          fetch(`/api/orders/${orderId}/status`, {
+            method: "PUT",
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus }),
+            credentials: 'include',
+          }),
+          'Không thể cập nhật trạng thái đơn hàng'
+        );
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Không thể cập nhật trạng thái đơn hàng');
+        }
+        
+        const response = await result.data!.json();
+        console.log('📥 Update status response:', response);
 
         if (response.success) {
           setCurrentStatus(newStatus);
@@ -143,7 +162,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           toast.error("Không thể cập nhật trạng thái đơn hàng");
         }
       } catch (error) {
-        console.error("Error updating order status:", error);
+        console.error("❌ Error updating order status:", error);
         toast.error("Không thể cập nhật trạng thái đơn hàng");
       } finally {
         setIsUpdating(false);
@@ -158,13 +177,30 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     const updateStatus = async () => {
       try {
         setIsUpdating(true);
-        const response = await fetchWithAuth<{ status: OrderStatus }>(`/orders/${id}/status`, {
-          method: "PUT",
-          body: JSON.stringify({ 
-            status: newStatus,
-            note: "Đơn hàng đã bị hủy bởi admin"
+        console.log('🔄 Canceling order:', id, 'to', newStatus);
+        
+        const result = await safePromise(
+          fetch(`/api/orders/${id}/status`, {
+            method: "PUT",
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({ 
+              status: newStatus,
+              note: "Đơn hàng đã bị hủy bởi admin"
+            }),
+            credentials: 'include',
           }),
-        });
+          'Không thể hủy đơn hàng'
+        );
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Không thể hủy đơn hàng');
+        }
+        
+        const response = await result.data!.json();
+        console.log('📥 Cancel order response:', response);
 
         if (response.success) {
           setCurrentStatus(newStatus);
@@ -176,7 +212,7 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           toast.error("Không thể hủy đơn hàng");
         }
       } catch (error) {
-        console.error("Error canceling order:", error);
+        console.error("❌ Error canceling order:", error);
         toast.error("Không thể hủy đơn hàng");
       } finally {
         setIsUpdating(false);
@@ -244,8 +280,19 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               categoryId: '',
               stock: 0,
               isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              brand: '',
+              sku: '',
+              colors: [],
+              sizes: [],
+              tags: [],
+              ratings: { average: 0, count: 0 },
+              soldCount: 0,
+              viewCount: 0,
+              discountPercentage: 0,
+              isOutOfStock: false,
+              isLowStock: false
             } : {
               _id: item.product._id,
               name: item.product.name,
@@ -257,8 +304,19 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               categoryId: item.product.categoryId || '',
               stock: item.product.stock || 0,
               isActive: item.product.isActive || true,
-              createdAt: item.product.createdAt || new Date(),
-              updatedAt: item.product.updatedAt || new Date()
+              createdAt: item.product.createdAt || new Date().toISOString(),
+              updatedAt: item.product.updatedAt || new Date().toISOString(),
+              brand: item.product.brand || '',
+              sku: item.product.sku || '',
+              colors: item.product.colors || [],
+              sizes: item.product.sizes || [],
+              tags: item.product.tags || [],
+              ratings: item.product.ratings || { average: 0, count: 0 },
+              soldCount: item.product.soldCount || 0,
+              viewCount: item.product.viewCount || 0,
+              discountPercentage: item.product.discountPercentage || 0,
+              isOutOfStock: item.product.isOutOfStock || false,
+              isLowStock: item.product.isLowStock || false
             };
             return {
               product: productData,

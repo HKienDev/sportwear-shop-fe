@@ -1,38 +1,76 @@
 import { useState, useEffect, useCallback } from 'react';
-import apiClient from '@/lib/api';
-import type { Order } from '@/types/base';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/apiClient';
+import { ERROR_MESSAGES } from '@/config/constants';
+import type { Order } from '@/types/order';
 
-export const useOrderDetails = (orderId: string) => {
+export function useOrderDetails(orderId: string) {
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch order details
   const fetchOrderDetails = useCallback(async () => {
+    if (!orderId) return;
+
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.orders.getById(orderId);
-      
-      // Đảm bảo dữ liệu trả về có đầy đủ các trường bắt buộc
-      const orderData = response.data.data;
-      if (!orderData.items?.length || !orderData.totalPrice) {
-        throw new Error('Dữ liệu đơn hàng không hợp lệ');
+
+      const response = await apiClient.getOrderById(orderId);
+
+      if (response.data.success) {
+        setOrder(response.data.data as Order);
+      } else {
+        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
       }
-      
-      setOrder(orderData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải thông tin đơn hàng');
-      setOrder(null);
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      setError(errorMessage);
+      console.error('Fetch order details error:', err);
     } finally {
       setLoading(false);
     }
   }, [orderId]);
 
-  useEffect(() => {
-    if (orderId) {
-      fetchOrderDetails();
-    }
-  }, [fetchOrderDetails, orderId]);
+  // Update order status
+  const updateOrderStatus = useCallback(async (status: string) => {
+    if (!orderId) return;
 
-  return { order, loading, error, refreshOrder: fetchOrderDetails };
-};
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiClient.updateOrderStatus(orderId, status);
+
+      if (response.data.success) {
+        setOrder(response.data.data as Order);
+        toast.success('Trạng thái đơn hàng đã được cập nhật');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error('Update order status error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  // Load order details on mount
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [fetchOrderDetails]);
+
+  return {
+    order,
+    loading,
+    error,
+    fetchOrderDetails,
+    updateOrderStatus
+  };
+}

@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/authContext';
-import apiClient from '@/lib/api';
+import { apiClient } from '@/lib/apiClient';
+import { safePromise } from '@/utils/promiseUtils';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
+import type { Product, ProductFormData } from '@/types/product';
 
 interface CartData {
   sku: string;
@@ -11,36 +14,122 @@ interface CartData {
   quantity: number;
 }
 
-export const useProductActions = (productId: string) => {
+export function useProductActions(productId?: string) {
   const router = useRouter();
   const { isAuthenticated, checkAuthStatus } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Create product
+  const createProduct = useCallback(async (productData: ProductFormData) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiClient.createProduct(productData);
+      
+      if (response.data.success) {
+        toast.success(SUCCESS_MESSAGES.PRODUCT_CREATED);
+        return response.data.data as Product;
+      } else {
+        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      toast.error(errorMessage);
+      console.error('Create product error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Update product
+  const updateProduct = useCallback(async (id: string, productData: ProductFormData) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiClient.updateProduct(id, productData);
+      
+      if (response.data.success) {
+        toast.success(SUCCESS_MESSAGES.PRODUCT_UPDATED);
+        return response.data.data as Product;
+      } else {
+        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      toast.error(errorMessage);
+      console.error('Update product error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Delete product
+  const deleteProduct = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiClient.deleteProduct(id);
+      
+      if (response.data.success) {
+        toast.success(SUCCESS_MESSAGES.PRODUCT_DELETED);
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
+      toast.error(errorMessage);
+      console.error('Delete product error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const addToCart = async (data: CartData) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
+
+      console.log('🛒 Bắt đầu thêm vào giỏ hàng:', data);
 
       // Kiểm tra và refresh token nếu cần
       await checkAuthStatus();
       
-      const response = await apiClient.cart.addToCart(data);
+      console.log('🔐 Token đã được kiểm tra');
       
-      if (response.data.success) {
+      const result = await safePromise(
+        apiClient.addToCart(data),
+        'Không thể thêm sản phẩm vào giỏ hàng'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Không thể thêm sản phẩm vào giỏ hàng');
+      }
+      
+      const response = result.data;
+      
+      if (!response) {
+        throw new Error('Response không hợp lệ từ server');
+      }
+      
+      if (response.data && response.data.success) {
         toast.success('Đã thêm sản phẩm vào giỏ hàng');
         return { success: true, data: response.data };
       } else {
-        throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+        throw new Error(response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('❌ Error adding to cart:', error);
       const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
       setError(errorMessage);
       toast.error(errorMessage);
       return { success: false, message: errorMessage };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -52,17 +141,30 @@ export const useProductActions = (productId: string) => {
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
 
-      const response = await apiClient.cart.addToCart(data);
+      const result = await safePromise(
+        apiClient.addToCart(data),
+        'Không thể thêm sản phẩm vào giỏ hàng'
+      );
       
-      if (response.data.success) {
+      if (!result.success) {
+        throw new Error(result.error || 'Không thể thêm sản phẩm vào giỏ hàng');
+      }
+      
+      const response = result.data;
+      
+      if (!response) {
+        throw new Error('Response không hợp lệ từ server');
+      }
+      
+      if (response.data && response.data.success) {
         toast.success('Đã thêm sản phẩm vào giỏ hàng');
         router.push('/user/cart');
         return { success: true, data: response.data };
       } else {
-        throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+        throw new Error(response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
     } catch (error) {
       console.error('Error buying now:', error);
@@ -71,7 +173,7 @@ export const useProductActions = (productId: string) => {
       toast.error(errorMessage);
       return { success: false, message: errorMessage };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -83,23 +185,36 @@ export const useProductActions = (productId: string) => {
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/favorites/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId
+      const result = await safePromise(
+        fetch('/api/favorites/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId
+          }),
+          credentials: 'include'
         }),
-        credentials: 'include'
-      });
+        'Không thể thêm sản phẩm vào danh sách yêu thích'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Không thể thêm sản phẩm vào danh sách yêu thích');
+      }
+      
+      const response = result.data;
+      
+      if (!response) {
+        throw new Error('Response không hợp lệ từ server');
+      }
       
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.success) {
         throw new Error(data.message || 'Không thể thêm sản phẩm vào danh sách yêu thích');
       }
       
@@ -112,15 +227,18 @@ export const useProductActions = (productId: string) => {
       toast.error(errorMessage);
       return { success: false, message: errorMessage };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return {
+    loading,
+    createProduct,
+    updateProduct,
+    deleteProduct,
     addToCart,
     buyNow,
     toggleFavorite,
-    isLoading,
     error
   };
-}; 
+} 

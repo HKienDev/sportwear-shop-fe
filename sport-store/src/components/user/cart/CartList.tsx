@@ -51,7 +51,7 @@ export default function CartList({
     >
       {items.map((item, index) => (
         <motion.div
-          key={item._id}
+          key={item._id || `${item.product.sku}-${item.color}-${item.size}-${index}`}
           initial={showAnimation ? { opacity: 0, x: -20 } : false}
           animate={showAnimation ? { opacity: 1, x: 0 } : false}
           transition={{ duration: 0.3, delay: index * 0.1 }}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Socket } from 'socket.io-client';
 import {
   Conversation,
   Message,
@@ -15,6 +14,18 @@ import {
   MessageInput,
   ThemeSelector
 } from './index';
+
+// Define proper types for socket events
+interface NewConversationData {
+  conversationId: string;
+  userId: string;
+  userName: string;
+}
+
+interface StatusUpdateData {
+  userId: string;
+  status: 'online' | 'offline' | 'away';
+}
 
 const ChatManagerAdmin: React.FC = () => {
   // State management
@@ -42,12 +53,47 @@ const ChatManagerAdmin: React.FC = () => {
     setIsClient(true);
   }, []);
 
+  // Load conversations
+  const loadConversations = useCallback(async () => {
+    console.log('📡 ChatManagerAdmin - Loading conversations...');
+    const fetchedConversations = await fetchConversations();
+    setConversations(fetchedConversations);
+    
+    // Load conversations from localStorage as fallback
+    const savedConversations = localStorage.getItem('adminConversations');
+    if (savedConversations && fetchedConversations.length === 0) {
+      try {
+        const parsed = JSON.parse(savedConversations);
+        setConversations(parsed);
+        console.log('📡 ChatManagerAdmin - Loaded conversations from localStorage:', parsed);
+      } catch (error) {
+        console.error('❌ ChatManagerAdmin - Error parsing localStorage conversations:', error);
+      }
+    }
+  }, [fetchConversations]);
+
+  // Update conversation last message
+  const updateConversationLastMessage = useCallback((conversationId: string, message: string) => {
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === conversationId 
+          ? { 
+              ...conv, 
+              lastMessage: message, 
+              lastMessageTime: new Date().toISOString(),
+              unread: conv.id === selectedConversation?.id ? 0 : conv.unread
+            }
+          : conv
+      )
+    );
+  }, [selectedConversation]);
+
   // Load conversations on mount
   useEffect(() => {
     if (isClient) {
       loadConversations();
     }
-  }, [isClient]);
+  }, [isClient, loadConversations]);
 
   // Socket event listeners
   useEffect(() => {
@@ -79,13 +125,13 @@ const ChatManagerAdmin: React.FC = () => {
     };
 
     // Lắng nghe cuộc trò chuyện mới
-    const handleNewConversation = (data: any) => {
+    const handleNewConversation = (data: NewConversationData) => {
       console.log('💬 ChatManagerAdmin - New conversation received:', data);
       loadConversations();
     };
 
     // Lắng nghe cập nhật trạng thái
-    const handleStatusUpdate = (data: any) => {
+    const handleStatusUpdate = (data: StatusUpdateData) => {
       console.log('🔄 ChatManagerAdmin - Status update received:', data);
       loadConversations();
     };
@@ -99,26 +145,7 @@ const ChatManagerAdmin: React.FC = () => {
       socket.off('newConversation', handleNewConversation);
       socket.off('statusUpdate', handleStatusUpdate);
     };
-  }, [socket, selectedConversation]);
-
-  // Load conversations
-  const loadConversations = useCallback(async () => {
-    console.log('📡 ChatManagerAdmin - Loading conversations...');
-    const fetchedConversations = await fetchConversations();
-    setConversations(fetchedConversations);
-    
-    // Load conversations from localStorage as fallback
-    const savedConversations = localStorage.getItem('adminConversations');
-    if (savedConversations && fetchedConversations.length === 0) {
-      try {
-        const parsed = JSON.parse(savedConversations);
-        setConversations(parsed);
-        console.log('📡 ChatManagerAdmin - Loaded conversations from localStorage:', parsed);
-      } catch (error) {
-        console.error('❌ ChatManagerAdmin - Error parsing localStorage conversations:', error);
-      }
-    }
-  }, [fetchConversations]);
+  }, [socket, selectedConversation, loadConversations, updateConversationLastMessage]);
 
   // Load messages for selected conversation
   const loadMessages = useCallback(async (conversationId: string) => {
@@ -189,23 +216,7 @@ const ChatManagerAdmin: React.FC = () => {
       // Remove message if failed
       setMessages(prev => prev.filter(msg => msg.messageId !== newMessage.messageId));
     }
-  }, [selectedConversation, socket, sendMessage]);
-
-  // Update conversation last message
-  const updateConversationLastMessage = useCallback((conversationId: string, message: string) => {
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === conversationId 
-          ? { 
-              ...conv, 
-              lastMessage: message, 
-              lastMessageTime: new Date().toISOString(),
-              unread: conv.id === selectedConversation?.id ? 0 : conv.unread
-            }
-          : conv
-      )
-    );
-  }, [selectedConversation]);
+  }, [selectedConversation, socket, sendMessage, updateConversationLastMessage]);
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
@@ -301,7 +312,6 @@ const ChatManagerAdmin: React.FC = () => {
         <ThemeSelector
           currentTheme={currentTheme}
           onThemeChange={changeTheme}
-          themeColors={themeColors}
           isOpen={showThemeSelector}
           onToggle={() => setShowThemeSelector(!showThemeSelector)}
         />

@@ -44,7 +44,7 @@ export default function CategoryForm() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await categoryService.getAllCategories();
+        const response = await categoryService.getCategories();
         if (response.success && response.data.categories) {
           setCategories(response.data.categories);
         }
@@ -129,6 +129,8 @@ export default function CategoryForm() {
       // Upload ảnh lên Cloudinary
       let imageUrl = '';
       try {
+        console.log('🖼️ Bắt đầu xử lý ảnh...');
+        
         // Chuyển base64 thành file
         const base64Data = data.image.split(',')[1];
         const byteCharacters = atob(base64Data);
@@ -142,15 +144,20 @@ export default function CategoryForm() {
         const blob = new Blob([byteArray], { type: 'image/jpeg' });
         const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
         
+        console.log('📤 Bắt đầu upload lên Cloudinary...');
+        
         // Upload lên Cloudinary
         imageUrl = await uploadToCloudinary(file);
+        
+        console.log('✅ Upload thành công:', imageUrl);
       } catch (error) {
-        console.error("Error uploading image:", error);
+        console.error("❌ Error uploading image:", error);
+        const errorMessage = error instanceof Error ? error.message : "Lỗi khi upload ảnh lên Cloudinary";
         form.setError("image", {
           type: "manual",
-          message: "Lỗi khi upload ảnh lên Cloudinary"
+          message: errorMessage
         });
-        toast.error("Lỗi khi upload ảnh lên Cloudinary");
+        toast.error(errorMessage);
         return;
       }
 

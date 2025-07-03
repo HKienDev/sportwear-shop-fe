@@ -13,8 +13,8 @@ type OrderItemProduct = {
   categoryId: string;
   stock: number;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 };
 
 interface OrderItem {

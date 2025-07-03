@@ -1,5 +1,5 @@
 import { User } from './base';
-import { Product } from './product';
+import { AdminProduct } from './product';
 
 export enum OrderStatus {
   PENDING = "pending",
@@ -27,7 +27,7 @@ export enum ShippingMethod {
 }
 
 export interface OrderItem {
-  product: string | Product;
+  product: string | AdminProduct;
   quantity: number;
   price: number;
   name: string;
@@ -94,6 +94,9 @@ export interface Order {
   isTotalSpentUpdated: boolean;
   createdAt: Date;
   updatedAt: Date;
+  subtotal?: number;
+  directDiscount?: number;
+  couponDiscount?: number;
 }
 
 export interface CreateOrderInput {

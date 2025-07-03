@@ -4,6 +4,7 @@ import { Image as ImageIcon, Upload, X, Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { ProductFormData } from "@/types/product";
 import { toast } from "sonner";
+import { safePromiseAll } from "@/utils/promiseUtils";
 
 interface ImageUploadProps {
   formData: ProductFormData;
@@ -37,10 +38,14 @@ export default function ImageUpload({
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
     try {
+      console.log('🖼️ Bắt đầu upload lên Cloudinary:', file.name);
+      
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
+      console.log('📤 Gửi request đến Cloudinary...');
+      
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
@@ -49,30 +54,29 @@ export default function ImageUpload({
         }
       );
 
+      console.log('📥 Response status:', response.status);
+
       if (!response.ok) {
         let errorMsg = 'Không thể tải ảnh lên Cloudinary';
         try {
           const errorData = await response.json();
-          console.error('Cloudinary error:', errorData);
+          console.error('❌ Cloudinary error:', errorData);
           errorMsg = errorData.error?.message
             ? `Lỗi Cloudinary: ${errorData.error.message}`
             : errorMsg;
-          toast.error(errorMsg);
         } catch {
-          toast.error('Lỗi mạng hoặc Cloudinary không phản hồi');
+          console.error('❌ Không thể parse error response');
+          errorMsg = 'Lỗi mạng hoặc Cloudinary không phản hồi';
         }
         throw new Error(errorMsg);
       }
 
       const data = await response.json();
-      console.log('Upload successful:', data);
+      console.log('✅ Upload successful:', data);
       return data.secure_url;
     } catch (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Không thể tải ảnh lên Cloudinary'
-      );
-      throw new Error('Không thể tải ảnh lên Cloudinary');
+      console.error('❌ Error uploading to Cloudinary:', error);
+      throw error;
     }
   };
 
@@ -85,12 +89,17 @@ export default function ImageUpload({
     try {
       setIsUploading(true);
       toast.info('Đang tải ảnh lên...');
+      
+      console.log('🔄 Bắt đầu upload ảnh chính...');
       const imageUrl = await uploadToCloudinary(file);
+      
+      console.log('✅ Upload ảnh chính thành công:', imageUrl);
       onFieldChange('mainImage', imageUrl);
       toast.success('Tải ảnh lên thành công');
     } catch (err) {
-      console.error('Lỗi khi tải ảnh lên:', err);
-      toast.error('Đã xảy ra lỗi khi tải ảnh lên');
+      console.error('❌ Lỗi khi tải ảnh lên:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi khi tải ảnh lên';
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -109,20 +118,35 @@ export default function ImageUpload({
       setIsUploading(true);
       toast.info('Đang tải ảnh lên...');
       
-      const uploadPromises = Array.from(files).map(async (file) => {
-        if (!validateFile(file)) return null;
+      console.log('🔄 Bắt đầu upload ảnh phụ...');
+      
+      const uploadPromises = Array.from(files).map(async (file, index) => {
+        if (!validateFile(file)) {
+          console.log(`❌ File ${index + 1} không hợp lệ:`, file.name);
+          return null;
+        }
+        console.log(`📤 Uploading file ${index + 1}:`, file.name);
         return uploadToCloudinary(file);
       });
 
-      const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+      const result = await safePromiseAll(uploadPromises, 'Lỗi khi upload ảnh phụ');
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Lỗi khi upload ảnh phụ');
+      }
+      
+      const uploadedUrls = (result.data || []).filter(Boolean) as string[];
+      
+      console.log('✅ Upload ảnh phụ thành công:', uploadedUrls);
       onFieldChange('subImages', [...formData.subImages, ...uploadedUrls]);
       
       if (uploadedUrls.length > 0) {
         toast.success(`Đã tải lên ${uploadedUrls.length} ảnh thành công`);
       }
     } catch (err) {
-      console.error('Lỗi khi tải ảnh lên:', err);
-      toast.error('Đã xảy ra lỗi khi tải ảnh lên');
+      console.error('❌ Lỗi khi tải ảnh lên:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi khi tải ảnh lên';
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }

@@ -5,8 +5,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { sku, color, size, quantity = 1 } = body;
     
-    // Lấy token từ cookie của request
-    const token = request.cookies.get('token')?.value;
+    // Lấy token từ Authorization header
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
     
     if (!token) {
       return NextResponse.json(

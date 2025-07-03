@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/authContext';
 import { toast } from 'sonner';
-import apiClient from '@/lib/api';
+import { apiClient } from '@/lib/apiClient';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
-import type { Product, ProductQueryParams } from '@/types/api';
-import type { CreateProductData, UpdateProductData } from '@/types/base';
-import { usePaginatedData } from './usePaginatedData';
-import { useApiCall } from './useApiCall';
-import { ProductFormData, ProductFormErrors, ProductFormState, Category as ProductCategory } from '@/types/product';
+import type { AdminProduct, ProductQueryParams } from '@/types/product';
+import { ProductFormData, ProductFormErrors, ProductFormState, AdminCategory as ProductCategory } from '@/types/product';
 import { TOKEN_CONFIG } from '@/config/token';
+import { adminProductService } from '@/services/adminProductService';
 
 // Initial form data
 const initialFormData: ProductFormData = {
   name: '',
+  slug: '',
+  sku: '',
   description: '',
   brand: '',
   originalPrice: 0,
@@ -32,18 +32,10 @@ const initialErrors: ProductFormErrors = {};
 export function useProducts(options: ProductQueryParams = {}) {
     const [isLoading, setIsLoading] = useState(false);
     const { isAuthenticated, user } = useAuth();
-    const { data: products, total, fetchData: fetchProducts } = usePaginatedData<Product>();
-    const { execute: executeApiCall } = useApiCall<Product>();
-    
-    // Sử dụng useRef để theo dõi options
+    const [products, setProducts] = useState<AdminProduct[]>([]);
+    const [total, setTotal] = useState(0);
     const optionsRef = useRef(options);
-    
-    // Cập nhật optionsRef khi options thay đổi
-    useEffect(() => {
-        optionsRef.current = options;
-    }, [options]);
-    
-    // Form state
+    useEffect(() => { optionsRef.current = options; }, [options]);
     const [formState, setFormState] = useState<ProductFormState>({
         data: { ...initialFormData },
         errors: { ...initialErrors },
@@ -53,19 +45,33 @@ export function useProducts(options: ProductQueryParams = {}) {
     });
 
     // Fetch products
+    const fetchProducts = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await adminProductService.getProducts(optionsRef.current);
+            if (res.success && res.data) {
+                setProducts(res.data.products);
+                setTotal(res.data.total || 0);
+            } else {
+                setProducts([]);
+                setTotal(0);
+            }
+        } catch (error) {
+            setProducts([]);
+            setTotal(0);
+            toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (isAuthenticated) {
-            try {
-                // Sử dụng optionsRef.current thay vì options trực tiếp
-                fetchProducts(() => apiClient.products.getAll(optionsRef.current));
-            } catch (error) {
-                console.error('Error fetching products:', error);
-                toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
-            }
+            fetchProducts();
         } else {
             setIsLoading(false);
         }
-    }, [isAuthenticated, fetchProducts]); // Bỏ options khỏi dependencies
+    }, [isAuthenticated, fetchProducts]);
 
     // Fetch categories
     const fetchCategories = useCallback(async () => {
@@ -85,10 +91,7 @@ export function useProducts(options: ProductQueryParams = {}) {
             
             // Sử dụng apiClient thay vì fetch trực tiếp
             console.log('Calling API to fetch categories...');
-            const response = await apiClient.categories.getAll({
-                page: '1',
-                limit: '100' // Lấy tất cả categories
-            });
+            const response = await apiClient.getCategories();
             console.log('API response for categories:', response);
             console.log('API response data structure:', JSON.stringify(response.data, null, 2));
             
@@ -147,7 +150,7 @@ export function useProducts(options: ProductQueryParams = {}) {
             toast.error('Có lỗi xảy ra khi lấy danh mục');
             setFormState(prev => ({ ...prev, isLoading: false }));
         }
-    }, []); // Không cần dependencies vì không sử dụng bất kỳ giá trị nào từ bên ngoài
+    }, []);
 
     // Validate form
     const validateForm = useCallback((): boolean => {
@@ -295,7 +298,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                 
                 console.log('Uploading main image...');
                 try {
-                    const uploadResponse = await apiClient.upload.uploadFile(formState.data.mainImage);
+                    const uploadResponse = await apiClient.uploadFile(formState.data.mainImage);
                     console.log('Main image upload response:', uploadResponse);
                     
                     if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
@@ -322,7 +325,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                     if (image && typeof image !== 'string') {
                         console.log('Uploading sub image...');
                         try {
-                            const uploadResponse = await apiClient.upload.uploadFile(image);
+                            const uploadResponse = await apiClient.uploadFile(image);
                             console.log('Sub image upload response:', uploadResponse);
                             
                             if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
@@ -352,8 +355,8 @@ export function useProducts(options: ProductQueryParams = {}) {
             
             console.log('Generated slug:', slug);
 
-            // Chuyển đổi ProductFormData thành CreateProductData
-            const createProductData: CreateProductData = {
+            // Chuyển đổi ProductFormData thành ProductFormData
+            const createProductData: ProductFormData = {
                 name: formState.data.name,
                 slug: slug,
                 description: formState.data.description,
@@ -400,21 +403,21 @@ export function useProducts(options: ProductQueryParams = {}) {
             // Gửi request tạo sản phẩm
             console.log('Creating product with token:', token);
             try {
-                const response = await apiClient.products.create(createProductData);
+                const response = await adminProductService.createProduct(createProductData);
                 console.log('Create product response:', response);
 
-                if (response.data.success) {
+                if (response.success) {
                     console.log('Product created successfully');
                     toast.success('Thêm sản phẩm thành công');
                     // Reset form
                     resetForm();
                     // Refresh products list
-                    fetchProducts(() => apiClient.products.getAll(optionsRef.current));
+                    fetchProducts();
                     return true;
                 } else {
                     // Nếu BE trả về lỗi chi tiết
-                    if (response.data.message) {
-                        toast.error(response.data.message);
+                    if (response.message) {
+                        toast.error(response.message);
                     }
                     return false;
                 }
@@ -447,9 +450,9 @@ export function useProducts(options: ProductQueryParams = {}) {
     }, [formState, validateForm, resetForm, fetchProducts, isAuthenticated]);
 
     // Get product by ID
-    const getProductById = async (id: string) => {
+    const getProductById = useCallback(async (id: string) => {
         try {
-            const response = await apiClient.products.getById(id);
+            const response = await apiClient.getProductById(id);
             if (!response.data.data) {
                 throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
             }
@@ -459,10 +462,10 @@ export function useProducts(options: ProductQueryParams = {}) {
             toast.error(ERROR_MESSAGES.NETWORK_ERROR);
             throw error;
         }
-    };
+    }, []);
 
     // Create product
-    const createProduct = async (data: CreateProductData) => {
+    const createProduct = useCallback(async (data: ProductFormData) => {
         try {
             if (!user) {
                 throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
@@ -473,16 +476,16 @@ export function useProducts(options: ProductQueryParams = {}) {
             // Hiển thị toast đang tạo sản phẩm
             toast.loading('Đang tạo sản phẩm...', { id: 'createProduct' });
 
-            const response = await apiClient.products.create(data);
+            const response = await adminProductService.createProduct(data);
             console.log('Create product response:', response);
 
-            if (!response.data.success) {
-                throw new Error(response.data.message || ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+            if (!response.success) {
+                throw new Error(response.message || ERROR_MESSAGES.PRODUCT_NOT_FOUND);
             }
 
             toast.success(SUCCESS_MESSAGES.PRODUCT_CREATED, { id: 'createProduct' });
-            await fetchProducts(() => apiClient.products.getAll(optionsRef.current));
-            return response.data.data;
+            await fetchProducts();
+            return response.data;
         } catch (error) {
             console.error('Failed to create product:', error);
             if (error instanceof Error) {
@@ -492,50 +495,39 @@ export function useProducts(options: ProductQueryParams = {}) {
             }
             throw error;
         }
-    };
+    }, [user, fetchProducts]);
 
     // Update product
-    const updateProduct = async (id: string, data: UpdateProductData) => {
+    const updateProduct = useCallback(async (id: string, data: ProductFormData) => {
         try {
             if (!user) {
                 throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
             }
 
-            return await executeApiCall(() => apiClient.products.update(id, data), {
-                onSuccess: () => {
-                    toast.success(SUCCESS_MESSAGES.PRODUCT_UPDATED);
-                    fetchProducts(() => apiClient.products.getAll(optionsRef.current));
-                }
-            });
+            return await adminProductService.updateProduct(id, data);
         } catch (error) {
             console.error('Failed to update product:', error);
             toast.error(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
             throw error;
         }
-    };
+    }, [user]);
 
     // Delete product
-    const deleteProduct = async (id: string) => {
+    const deleteProduct = useCallback(async (id: string) => {
         try {
             if (!user) {
                 throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
             }
 
-            await executeApiCall(() => apiClient.products.delete(id), {
-                onSuccess: () => {
-                    toast.success(SUCCESS_MESSAGES.PRODUCT_DELETED);
-                    fetchProducts(() => apiClient.products.getAll(optionsRef.current));
-                }
-            });
+            return await adminProductService.deleteProduct(id);
         } catch (error) {
             console.error('Failed to delete product:', error);
             toast.error(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
             throw error;
         }
-    };
+    }, [user]);
 
     return {
-        // Products data
         products,
         total,
         isLoading,
@@ -544,9 +536,8 @@ export function useProducts(options: ProductQueryParams = {}) {
         createProduct,
         updateProduct,
         deleteProduct,
-        
-        // Form state and methods
         formState,
+        setFormState,
         updateFormData,
         handleSubmit,
         validateForm,

@@ -2,31 +2,31 @@ import { CartState } from '@/types/cart';
 import CartList from './CartList';
 import CartSummary from './CartSummary';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { ArrowLeft, ShoppingBag, ArrowRight } from 'lucide-react';
 
 interface CartProps {
   cart: CartState;
+  selectedItems: string[];
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
+  onToggleSelect: (itemId: string) => void;
+  onSelectAll: () => void;
   onCheckout: () => void;
 }
 
-export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) {
+export default function Cart({ 
+  cart, 
+  selectedItems, 
+  onUpdateQuantity, 
+  onRemoveItem, 
+  onToggleSelect, 
+  onSelectAll, 
+  onCheckout 
+}: CartProps) {
   const router = useRouter();
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  const handleToggleSelect = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
 
   const handleRemoveSelected = () => {
     selectedItems.forEach(id => onRemoveItem(id));
-    setSelectedItems([]);
   };
 
   const handleGoBack = () => {
@@ -116,7 +116,15 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Sản phẩm ({cart.items.length})</h2>
+            <div className="flex items-center space-x-4">
+              <h2 className="text-lg font-medium">Sản phẩm ({cart.items.length})</h2>
+              <button
+                onClick={onSelectAll}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                {selectedItems.length === cart.items.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+              </button>
+            </div>
             {selectedItems.length > 0 && (
               <button
                 onClick={handleRemoveSelected}
@@ -131,12 +139,13 @@ export default function Cart({ cart, onUpdateQuantity, onRemoveItem, onCheckout 
             selectedItems={selectedItems}
             onUpdateQuantity={onUpdateQuantity}
             onRemoveItem={onRemoveItem}
-            onToggleSelect={handleToggleSelect}
+            onToggleSelect={onToggleSelect}
           />
         </div>
         <div>
           <CartSummary 
             items={cart.items}
+            selectedItems={selectedItems}
             totalQuantity={cart.totalQuantity}
             cartTotal={cart.cartTotal}
             onCheckout={onCheckout}

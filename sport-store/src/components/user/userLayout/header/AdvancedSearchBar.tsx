@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Search, Filter, Clock, TrendingUp, Star, Eye, ShoppingBag, ImageIcon } from "lucide-react";
 import { debounce } from "lodash";
 import Image from "next/image";
@@ -8,6 +8,13 @@ import Link from "next/link";
 import { API_URL } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+
+// Extend Window interface to include gtag
+declare global {
+  interface Window {
+    gtag?: (command: string, action: string, params?: Record<string, unknown>) => void;
+  }
+}
 
 interface Category {
   _id: string;
@@ -78,7 +85,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
   }, []);
 
   // Generate search suggestions
-  const generateSuggestions = (query: string): SearchSuggestion[] => {
+  const generateSuggestions = useCallback((query: string): SearchSuggestion[] => {
     if (!query.trim()) return [];
     
     const suggestions: SearchSuggestion[] = [];
@@ -108,7 +115,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     });
     
     return suggestions.slice(0, 8);
-  };
+  }, [categories]);
 
   // Debounced search handler
   const debouncedHandler = useMemo(() => {
@@ -147,7 +154,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
         setIsSearching(false);
       }
     }, 300);
-  }, [categories]);
+  }, [generateSuggestions]);
 
   // Track search for SEO and analytics
   const trackSearch = (query: string, resultCount: number) => {
@@ -162,8 +169,8 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
       localStorage.setItem('searchAnalytics', JSON.stringify(searchAnalytics));
       
       // Track in Google Analytics (if available)
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'search', {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'search', {
           search_term: query,
           results_count: resultCount
         });

@@ -4,7 +4,6 @@ import { ThemeType, ThemeColors } from './types';
 interface ThemeSelectorProps {
   currentTheme: ThemeType;
   onThemeChange: (theme: ThemeType) => void;
-  themeColors: ThemeColors;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -12,7 +11,6 @@ interface ThemeSelectorProps {
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   currentTheme,
   onThemeChange,
-  themeColors,
   isOpen,
   onToggle
 }) => {

@@ -148,7 +148,7 @@ const CouponEditForm: React.FC<CouponEditFormProps> = ({ coupon, onSuccess, onCa
       };
 
       console.log('Submitting form with data:', formattedData);
-      const response = await couponService.updateCoupon(formattedData);
+      const response = await couponService.updateCoupon(formattedData._id, formattedData);
       console.log('Response from server:', response);
       
       if (response.success && response.data) {

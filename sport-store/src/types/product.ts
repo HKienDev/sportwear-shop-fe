@@ -1,32 +1,100 @@
+import type { Category as BaseCategory } from './base';
+
+// Basic Product interface (from base.ts)
 export interface Product {
   _id: string;
   name: string;
-  slug: string;
-  sku: string;
-  categoryId: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  stock: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Extended Product interface for admin
+export interface AdminProduct {
+  _id: string;
+  name: string;
+  description: string;
   originalPrice: number;
   salePrice: number;
-  description: string;
-  mainImage: string;
-  subImages?: string[];
   stock: number;
+  categoryId: string;
   brand: string;
+  mainImage: string;
+  subImages: string[];
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+  sku: string;
   colors: string[];
   sizes: string[];
-  tags?: string[];
+  tags: string[];
+  ratings: {
+    average: number;
+    count: number;
+  };
+  soldCount: number;
+  viewCount: number;
+  discountPercentage: number;
+  isOutOfStock: boolean;
+  isLowStock: boolean;
+  status?: string;
   rating?: number;
   numReviews?: number;
-  viewCount?: number;
-  soldCount?: number;
+  reviews?: any[];
+  slug?: string;
+}
+
+// Extended Product interface for user-facing components
+export interface UserProduct {
+  _id: string;
+  name: string;
+  description: string;
+  originalPrice: number;
+  salePrice: number;
+  stock: number;
+  categoryId: string;
+  brand: string;
+  mainImage: string;
+  subImages: string[];
+  createdAt: string;
+  updatedAt: string;
   isActive: boolean;
-  status?: string;
-  images?: string[];
-  inventory?: number;
-  reviews?: Review[];
-  createdBy?: string;
-  updatedBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  sku: string;
+  colors: string[];
+  sizes: string[];
+  tags: string[];
+  ratings: {
+    average: number;
+    count: number;
+  };
+  soldCount: number;
+  viewCount: number;
+  discountPercentage: number;
+  isOutOfStock: boolean;
+  isLowStock: boolean;
+  rating?: number;
+  numReviews?: number;
+  reviews?: any[];
+  slug?: string;
+}
+
+// Extended Category interface for admin
+export interface AdminCategory {
+  _id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  hasProducts?: boolean;
+}
+
+export interface ProductWithCategory extends UserProduct {
+  category: BaseCategory;
 }
 
 export interface Review {
@@ -75,6 +143,8 @@ export interface SingleProductResponse {
 
 export interface ProductFormData {
   name: string;
+  slug: string;
+  sku: string;
   description: string;
   brand: string;
   originalPrice: number;
@@ -117,7 +187,7 @@ export interface ProductFormState {
   errors: ProductFormErrors;
   isLoading: boolean;
   isSubmitting: boolean;
-  categories: Category[];
+  categories: AdminCategory[];
 }
 
 export interface ApiResponse<T> {

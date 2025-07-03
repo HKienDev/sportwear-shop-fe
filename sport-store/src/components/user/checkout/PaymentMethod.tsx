@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { PaymentMethod } from '@/types/order';
 import { FaMoneyBillWave } from 'react-icons/fa';
 
 interface PaymentMethodProps {
-  amount: number;
   expandedSection: string | null;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (method: PaymentMethod) => void;
@@ -22,7 +20,6 @@ const paymentMethods = [
 ];
 
 export default function PaymentMethodComponent({
-  amount,
   expandedSection,
   paymentMethod,
   setPaymentMethod,
