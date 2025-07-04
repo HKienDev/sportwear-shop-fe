@@ -91,7 +91,7 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           <div className="text-center">Đang tải giỏ hàng...</div>
         </CardContent>
       </Card>
@@ -101,7 +101,7 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
   if (cartItems.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           <div className="text-center text-gray-500">Giỏ hàng trống</div>
         </CardContent>
       </Card>
@@ -110,58 +110,63 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Sản phẩm đặt hàng</h3>
+      <CardContent className="p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold mb-4">Sản phẩm đặt hàng</h3>
         
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {cartItems.map((item, index) => (
-            <div key={item._id || `${item.product.sku}-${item.color}-${item.size}-${index}`} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
+            <div key={item._id || `${item.product.sku}-${item.color}-${item.size}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-3 md:p-4 border rounded-lg gap-3 md:gap-4">
+              <div className="flex items-center space-x-3 md:space-x-4 w-full md:w-auto">
                 <Image
                   src={item.product.mainImage}
                   alt={item.product.name}
                   width={64}
                   height={64}
-                  className="object-cover rounded"
+                  className="object-cover rounded flex-shrink-0"
                 />
-                <div>
-                  <h4 className="font-medium">{item.product.name}</h4>
-                  <p className="text-sm text-gray-500">Size: {item.size}</p>
-                  <p className="text-sm text-gray-500">Màu: {item.color}</p>
-                  <p className="font-medium text-primary">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-sm md:text-base text-gray-900 truncate">{item.product.name}</h4>
+                  <p className="text-xs md:text-sm text-gray-500">Size: {item.size}</p>
+                  <p className="text-xs md:text-sm text-gray-500">Màu: {item.color}</p>
+                  <p className="font-medium text-primary text-sm md:text-base mt-1">
                     {item.totalPrice.toLocaleString('vi-VN')} VNĐ
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                  disabled={updating}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                
-                <span className="w-8 text-center">{item.quantity}</span>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                  disabled={updating}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center space-x-2 w-full md:w-auto justify-between md:justify-end">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                    disabled={updating}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  
+                  <span className="w-8 text-center text-sm">{item.quantity}</span>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                    disabled={updating}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
                 
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => removeItem(item._id)}
                   disabled={updating}
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -171,8 +176,8 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
         <Separator className="my-4" />
         
         <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold">Tổng cộng:</span>
-          <span className="text-xl font-bold text-primary">
+          <span className="text-base md:text-lg font-semibold">Tổng cộng:</span>
+          <span className="text-lg md:text-xl font-bold text-primary">
             {total.toLocaleString('vi-VN')} VNĐ
           </span>
         </div>

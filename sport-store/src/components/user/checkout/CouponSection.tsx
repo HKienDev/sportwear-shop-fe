@@ -135,45 +135,45 @@ export default function CouponSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">MÃ GIẢM GIÁ</h2>
+        <h2 className="text-base md:text-lg font-semibold text-gray-900">MÃ GIẢM GIÁ</h2>
         <button
           type="button"
           onClick={() => setShowCouponOptions(!showCouponOptions)}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+          className="flex items-center text-xs md:text-sm text-gray-600 hover:text-gray-900"
         >
           {showCouponOptions ? (
             <>
               <span className="mr-1">Ẩn mã phổ biến</span>
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-3 h-3 md:w-4 md:h-4" />
             </>
           ) : (
             <>
               <span className="mr-1">Xem mã phổ biến</span>
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3 h-3 md:w-4 md:h-4" />
             </>
           )}
         </button>
       </div>
 
       <form onSubmit={handleApplyCoupon} className="flex flex-col">
-        <div className="flex">
+        <div className="flex flex-col sm:flex-row">
           <input
             type="text"
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value)}
             placeholder="Nhập mã giảm giá (Chỉ áp dụng 1 lần)"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="flex-1 px-3 md:px-4 py-2 border border-gray-300 rounded-t-lg sm:rounded-l-lg sm:rounded-t-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
           />
           <button
             type="submit"
             disabled={applyingCoupon}
-            className="px-6 py-2 bg-red-600 text-white font-medium rounded-r-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:bg-red-400 disabled:cursor-not-allowed"
+            className="px-4 md:px-6 py-2 bg-red-600 text-white font-medium rounded-b-lg sm:rounded-r-lg sm:rounded-b-none hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:bg-red-400 disabled:cursor-not-allowed text-xs md:text-sm"
           >
             {applyingCoupon ? (
-              <div className="flex items-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              <div className="flex items-center justify-center">
+                <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1 md:mr-2"></div>
                 <span>Đang xử lý...</span>
               </div>
             ) : (
@@ -183,42 +183,42 @@ export default function CouponSection({
         </div>
         
         {applyError && (
-          <p className="mt-2 text-sm text-red-500">{applyError}</p>
+          <p className="mt-2 text-xs md:text-sm text-red-500">{applyError}</p>
         )}
       </form>
 
       {showCouponOptions && (
         <div className="mt-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">Mã giảm giá phổ biến:</p>
+          <p className="text-xs md:text-sm font-medium text-gray-700 mb-2">Mã giảm giá phổ biến:</p>
           
           {loading ? (
             <div className="text-center py-4">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+              <div className="inline-block h-5 w-5 md:h-6 md:w-6 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
                 <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Đang tải...</span>
               </div>
-              <p className="text-sm text-gray-500 mt-2">Đang tải mã giảm giá...</p>
+              <p className="text-xs md:text-sm text-gray-500 mt-2">Đang tải mã giảm giá...</p>
             </div>
           ) : error ? (
             <div className="text-center py-4">
-              <p className="text-sm text-red-500">{error}</p>
+              <p className="text-xs md:text-sm text-red-500">{error}</p>
             </div>
           ) : coupons.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-sm text-gray-500">Không có mã giảm giá nào khả dụng</p>
+              <p className="text-xs md:text-sm text-gray-500">Không có mã giảm giá nào khả dụng</p>
             </div>
           ) : (
-            <div className={`space-y-2 ${coupons.length > 3 ? 'max-h-60 overflow-y-auto pr-2' : ''}`}>
+            <div className={`space-y-2 ${coupons.length > 3 ? 'max-h-48 md:max-h-60 overflow-y-auto pr-2' : ''}`}>
               {coupons.map((coupon) => (
                 <button
                   key={coupon._id}
                   onClick={() => setCouponCode(coupon.code)}
-                  className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="w-full text-left p-2 md:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-red-600">{coupon.code}</span>
-                    <span className="text-sm text-gray-500">{formatCouponValue(coupon)}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+                    <span className="font-medium text-red-600 text-sm md:text-base">{coupon.code}</span>
+                    <span className="text-xs md:text-sm text-gray-500">{formatCouponValue(coupon)}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{formatCouponDescription(coupon)}</p>
+                  <p className="text-xs md:text-sm text-gray-500 mt-1">{formatCouponDescription(coupon)}</p>
                 </button>
               ))}
             </div>

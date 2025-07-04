@@ -318,15 +318,15 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     !user.address.ward;
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">GIAO TỚI</h2>
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">GIAO TỚI</h2>
       {loading && (
         <div className="flex items-center justify-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-3 md:px-4 py-3 rounded relative mb-4 text-sm">
           {error}
         </div>
       )}
@@ -334,11 +334,11 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
         <div className="border-b border-gray-200 pb-4">
           {user ? (
             <>
-              <div className="flex justify-between items-start">
-                <h3 className="text-base font-medium text-gray-900">{user.fullname || ''}</h3>
-                <span className="text-gray-600">{user.phone || ''}</span>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-1 md:gap-0">
+                <h3 className="text-sm md:text-base font-medium text-gray-900">{user.fullname || ''}</h3>
+                <span className="text-sm text-gray-600">{user.phone || ''}</span>
               </div>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-xs md:text-sm text-gray-500">
                 {isAddressEmpty
                   ? 'Chưa có địa chỉ giao hàng'
                   : `${user.address.street ? `${user.address.street}, ` : ''}${user.address.ward}, ${user.address.district}, ${user.address.province}`
@@ -346,13 +346,13 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-500">Đang tải thông tin người dùng...</p>
+            <p className="text-xs md:text-sm text-gray-500">Đang tải thông tin người dùng...</p>
           )}
         </div>
       ) : (
-        <form className="space-y-4 border-b border-gray-200 pb-4" onSubmit={handleSubmit}>
+        <form className="space-y-3 md:space-y-4 border-b border-gray-200 pb-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Họ tên *</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Họ tên *</label>
             <input
               type="text"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
@@ -362,7 +362,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Số điện thoại *</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Số điện thoại *</label>
             <input
               type="text"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
@@ -372,7 +372,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tỉnh/Thành phố *</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Tỉnh/Thành phố *</label>
             <select
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
               value={form.province}
@@ -388,7 +388,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Quận/Huyện *</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Quận/Huyện *</label>
             <select
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
               value={form.district}
@@ -405,7 +405,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phường/Xã *</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Phường/Xã *</label>
             <select
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
               value={form.ward}
@@ -422,7 +422,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
             <input
               type="text"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm"
@@ -431,17 +431,17 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
               placeholder="Số nhà, tên đường..."
             />
           </div>
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               type="button"
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               onClick={() => setShowForm(false)}
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+              className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
             >
               Xác nhận
             </button>
@@ -451,7 +451,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
       {!showForm && (
         <button
           type="button"
-          className="mt-4 text-sm font-medium text-red-600 hover:text-red-500"
+          className="mt-4 text-xs md:text-sm font-medium text-red-600 hover:text-red-500"
           onClick={() => setShowForm(true)}
         >
           {isAddressEmpty ? 'Thêm địa chỉ giao hàng' : 'Thay đổi địa chỉ giao hàng'}

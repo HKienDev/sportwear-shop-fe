@@ -448,21 +448,21 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="flex items-center mb-6 md:mb-8">
           <button 
             onClick={handleGoBack}
-            className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
+            className="flex items-center text-gray-500 hover:text-gray-700 mr-4 md:mr-6"
           >
             <ArrowLeft size={18} className="mr-1" />
-            <span>Quay lại</span>
+            <span className="text-sm md:text-base">Quay lại</span>
           </button>
-          <h1 className="text-2xl font-bold">Thanh toán</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Thanh toán</h1>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
           {/* Cột bên trái - 8/12 */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 md:space-y-6">
             <DeliveryMethod
               expandedSection={expandedSection}
               deliveryMethod={selectedShippingMethod}
@@ -486,7 +486,7 @@ export default function Checkout() {
           </div>
 
           {/* Cột bên phải - 4/12 */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-4 md:space-y-6">
             <DeliveryInfo 
               onAddressChange={setShippingAddress}
             />

@@ -92,23 +92,23 @@ export default function DeliveryMethod({
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div 
-        className="flex items-center justify-between px-6 py-4 cursor-pointer bg-gray-50"
+        className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 cursor-pointer bg-gray-50"
         onClick={() => toggleSection('delivery')}
       >
-        <div className="flex items-center space-x-3">
-          <Truck className="w-6 h-6 text-red-600" />
-          <h2 className="text-lg font-semibold text-gray-900">HÌNH THỨC GIAO HÀNG</h2>
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <Truck className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
+          <h2 className="text-base md:text-lg font-semibold text-gray-900">HÌNH THỨC GIAO HÀNG</h2>
         </div>
-        {expandedSection === 'delivery' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        {expandedSection === 'delivery' ? <ChevronUp className="w-4 h-4 md:w-5 md:h-5" /> : <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />}
       </div>
       
       {expandedSection === 'delivery' && (
-        <div className="p-6 border-t border-gray-200">
-          <div className="space-y-4">
+        <div className="p-4 md:p-6 border-t border-gray-200">
+          <div className="space-y-3 md:space-y-4">
             {SHIPPING_FEES.map((shipping) => (
               <label 
                 key={shipping.method}
-                className={`flex items-center p-4 ${
+                className={`flex items-start md:items-center p-3 md:p-4 ${
                   deliveryMethod === shipping.method 
                     ? 'bg-blue-50 border border-blue-200' 
                     : 'border border-gray-200'
@@ -120,32 +120,34 @@ export default function DeliveryMethod({
                   value={shipping.method}
                   checked={deliveryMethod === shipping.method}
                   onChange={() => setDeliveryMethod(shipping.method)}
-                  className="h-5 w-5 text-red-600"
+                  className="h-4 w-4 md:h-5 md:w-5 text-red-600 mt-1 md:mt-0"
                 />
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-900">
+                <div className="ml-3 md:ml-4 flex-1 min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-0">
+                    <span className="font-medium text-gray-900 text-sm md:text-base">
                       {shipping.method === ShippingMethod.STANDARD && 'GIAO HÀNG TIẾT KIỆM'}
                       {shipping.method === ShippingMethod.EXPRESS && 'GIAO HÀNG NHANH'}
                       {shipping.method === ShippingMethod.SAME_DAY && 'GIAO HÀNG HỎA TỐC'}
                     </span>
-                    <span className="ml-auto text-gray-700">{formatPrice(shipping.fee)}</span>
+                    <span className="text-gray-700 text-sm md:text-base md:ml-auto">{formatPrice(shipping.fee)}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{shipping.description}</p>
+                  <p className="text-xs md:text-sm text-gray-500 mt-1">{shipping.description}</p>
                 </div>
               </label>
             ))}
           </div>
           
-          <div className="mt-6 bg-green-50 p-4 rounded-lg border border-green-200">
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 text-green-600" />
-              <p className="ml-2 text-sm text-green-800">
-                Giao hàng vào lúc: <span className="font-semibold">{formatDeliveryDate(getDeliveryDate())}</span>
-              </p>
-            </div>
-            <div className="mt-2 text-sm text-green-800">
-              Được giao bởi {currentShipping.carrier}
+          <div className="mt-4 md:mt-6 bg-green-50 p-3 md:p-4 rounded-lg border border-green-200">
+            <div className="flex items-start md:items-center">
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 md:mt-0 flex-shrink-0" />
+              <div className="ml-2 md:ml-2">
+                <p className="text-xs md:text-sm text-green-800">
+                  Giao hàng vào lúc: <span className="font-semibold">{formatDeliveryDate(getDeliveryDate())}</span>
+                </p>
+                <div className="mt-1 md:mt-2 text-xs md:text-sm text-green-800">
+                  Được giao bởi {currentShipping.carrier}
+                </div>
+              </div>
             </div>
           </div>
         </div>

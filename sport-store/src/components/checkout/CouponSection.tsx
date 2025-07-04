@@ -43,24 +43,27 @@ export default function CouponSection({ onApplyCoupon }: CouponSectionProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Nhập mã giảm giá"
-          value={couponCode}
-          onChange={(e) => setCouponCode(e.target.value)}
-          className="flex-1"
-        />
-        <Button
-          onClick={handleApplyCoupon}
-          disabled={isLoading}
-          className="whitespace-nowrap"
-        >
-          {isLoading ? "Đang xử lý..." : "Áp dụng"}
-        </Button>
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">MÃ GIẢM GIÁ</h2>
+      <div className="space-y-3 md:space-y-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            type="text"
+            placeholder="Nhập mã giảm giá"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            className="flex-1 text-sm"
+          />
+          <Button
+            onClick={handleApplyCoupon}
+            disabled={isLoading}
+            className="whitespace-nowrap text-xs md:text-sm"
+          >
+            {isLoading ? "Đang xử lý..." : "Áp dụng"}
+          </Button>
+        </div>
+        {error && <p className="text-xs md:text-sm text-red-500">{error}</p>}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 } 
