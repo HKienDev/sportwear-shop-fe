@@ -55,37 +55,42 @@ export default function CancelOrderButton({ orderId, onCancelSuccess, disabled =
           variant="destructive" 
           size="sm"
           disabled={disabled}
+          className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-auto"
         >
           Hủy đơn hàng
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-auto">
         <DialogHeader>
-          <DialogTitle>Hủy đơn hàng</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-base sm:text-lg">Hủy đơn hàng</DialogTitle>
+          <DialogDescription className="text-sm">
             Vui lòng nhập lý do hủy đơn hàng. Hành động này không thể hoàn tác.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="reason" className="text-right">
+        <div className="grid gap-3 sm:gap-4 py-3 sm:py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-3 sm:gap-4">
+            <Label htmlFor="reason" className="text-right text-sm hidden sm:block">
               Lý do
+            </Label>
+            <Label htmlFor="reason" className="text-sm sm:hidden">
+              Lý do hủy đơn hàng
             </Label>
             <Textarea
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Nhập lý do hủy đơn hàng..."
-              className="col-span-3"
+              className="col-span-1 sm:col-span-3 text-sm"
               rows={3}
             />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
           <Button 
             variant="outline" 
             onClick={() => setOpen(false)}
             disabled={loading}
+            className="w-full sm:w-auto text-sm"
           >
             Hủy
           </Button>
@@ -93,6 +98,7 @@ export default function CancelOrderButton({ orderId, onCancelSuccess, disabled =
             variant="destructive" 
             onClick={handleCancelOrder}
             disabled={loading || !reason.trim()}
+            className="w-full sm:w-auto text-sm"
           >
             {loading ? 'Đang xử lý...' : 'Xác nhận hủy'}
           </Button>

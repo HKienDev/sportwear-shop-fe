@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
-import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
-import { API_URL } from "@/utils/api";
+import { TOKEN_CONFIG } from '@/config/token';
 
 interface OrderItem {
   product: string;
@@ -48,22 +47,45 @@ export default function OrderUserPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/orders/my-orders?page=${currentPage}&limit=${limit}`);
+      
+      // Lấy token từ localStorage
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      
+      if (!token) {
+        setError('Vui lòng đăng nhập để xem đơn hàng');
+        return;
+      }
+      
+      console.log('🔍 Fetching orders with token length:', token.length);
+      
+      const response = await fetch(`/api/orders/my-orders?page=${currentPage}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (response.data.success) {
-        setOrders(response.data.data);
+      console.log('🔍 Response status:', response.status);
+      
+      const data = await response.json();
+      console.log('🔍 Response data:', data);
+
+      if (data.success) {
+        setOrders(data.data);
         
         // Cập nhật thông tin phân trang
-        if (response.data.pagination) {
-          setTotalPages(response.data.pagination.totalPages);
-          setTotalOrders(response.data.pagination.total);
-          setHasNextPage(response.data.pagination.hasNextPage);
-          setHasPrevPage(response.data.pagination.hasPrevPage);
+        if (data.pagination) {
+          setTotalPages(data.pagination.totalPages);
+          setTotalOrders(data.pagination.total);
+          setHasNextPage(data.pagination.hasNextPage);
+          setHasPrevPage(data.pagination.hasPrevPage);
         }
       } else {
-        setError('Không thể tải danh sách đơn hàng');
+        setError(data.message || 'Không thể tải danh sách đơn hàng');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error fetching orders:', error);
       setError('Đã có lỗi xảy ra khi tải đơn hàng');
     } finally {
       setLoading(false);
@@ -162,83 +184,188 @@ export default function OrderUserPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Đơn hàng của bạn</h2>
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">Đơn hàng của bạn</h2>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b">
+        {/* Tab Navigation - Mobile Friendly */}
+        <div className="flex border-b overflow-x-auto scrollbar-hide">
           <button
-            className={`px-6 py-4 font-medium text-sm ${activeTab === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+            className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm flex-shrink-0 whitespace-nowrap transition-colors ${
+              activeTab === 'all' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
             onClick={() => setActiveTab('all')}
           >
             Tất cả
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${activeTab === 'shipping' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+            className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm flex-shrink-0 whitespace-nowrap transition-colors ${
+              activeTab === 'shipping' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
             onClick={() => setActiveTab('shipping')}
           >
             Đang giao
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${activeTab === 'delivered' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+            className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm flex-shrink-0 whitespace-nowrap transition-colors ${
+              activeTab === 'delivered' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
             onClick={() => setActiveTab('delivered')}
           >
             Đã giao
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Mã đơn hàng</th>
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đặt</th>
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+        {/* Mobile Card View */}
+        <div className="block sm:hidden">
+          {filteredOrders.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <p className="text-sm">Không có đơn hàng nào</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
               {filteredOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50">
-                  <td 
-                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                    onClick={() => handleViewOrderDetail(order._id)}
-                  >
-                    #{order.shortId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.createdAt)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatPrice(order.totalPrice)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(order.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div key={order._id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        #{order.shortId}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatDate(order.createdAt)}
+                      </p>
+                    </div>
+                    <div className="ml-3">
+                      {getStatusBadge(order.status)}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatPrice(order.totalPrice)}
+                    </span>
                     <button 
-                      className="text-blue-600 hover:text-blue-800"
+                      className="px-3 py-1.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                       onClick={() => handleViewOrderDetail(order._id)}
                     >
                       Xem chi tiết
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                  
+                  {/* Order Items Preview */}
+                  <div className="text-xs text-gray-500">
+                    {order.items.length} sản phẩm
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
 
-        {/* Thêm phần phân trang */}
+        {/* Desktop Table View */}
+        <div className="hidden sm:block">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-left">
+                  <th className="px-3 sm:px-4 md:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Mã đơn hàng</th>
+                  <th className="px-3 sm:px-4 md:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đặt</th>
+                  <th className="px-3 sm:px-4 md:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
+                  <th className="px-3 sm:px-4 md:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-3 sm:px-4 md:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <p className="text-sm">Không có đơn hàng nào</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <tr key={order._id} className="hover:bg-gray-50">
+                      <td 
+                        className="px-3 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                        onClick={() => handleViewOrderDetail(order._id)}
+                      >
+                        #{order.shortId}
+                      </td>
+                      <td className="px-3 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.createdAt)}</td>
+                      <td className="px-3 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatPrice(order.totalPrice)}</td>
+                      <td className="px-3 sm:px-4 md:px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(order.status)}
+                      </td>
+                      <td className="px-3 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button 
+                          className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 text-xs sm:text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                          onClick={() => handleViewOrderDetail(order._id)}
+                        >
+                          Xem chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pagination - Responsive */}
         {orders.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-            <div className="text-sm text-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-gray-200 gap-3 sm:gap-0">
+            <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
               Hiển thị <span className="font-medium">{orders.length}</span> trong tổng số <span className="font-medium">{totalOrders}</span> đơn hàng
             </div>
-            <div className="flex items-center space-x-2">
+            
+            {/* Mobile Pagination */}
+            <div className="flex items-center justify-center sm:hidden">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={!hasPrevPage}
+                  className={`p-2 rounded-md ${
+                    hasPrevPage
+                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <span className="px-3 py-1 text-sm font-medium">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={!hasNextPage}
+                  className={`p-2 rounded-md ${
+                    hasNextPage
+                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Desktop Pagination */}
+            <div className="hidden sm:flex items-center space-x-2">
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={!hasPrevPage}
-                className={`px-3 py-1 rounded-md ${
+                className={`px-3 py-1 rounded-md text-sm ${
                   hasPrevPage
                     ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     : 'bg-gray-50 text-gray-400 cursor-not-allowed'
@@ -247,24 +374,37 @@ export default function OrderUserPage() {
                 <ChevronLeft size={16} />
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => goToPage(page)}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let page;
+                if (totalPages <= 5) {
+                  page = i + 1;
+                } else if (currentPage <= 3) {
+                  page = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  page = totalPages - 4 + i;
+                } else {
+                  page = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
               
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={!hasNextPage}
-                className={`px-3 py-1 rounded-md ${
+                className={`px-3 py-1 rounded-md text-sm ${
                   hasNextPage
                     ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     : 'bg-gray-50 text-gray-400 cursor-not-allowed'

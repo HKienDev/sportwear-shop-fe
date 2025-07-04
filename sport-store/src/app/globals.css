@@ -261,3 +261,489 @@ select:focus-visible {
     padding-right: 2rem;
   }
 }
+
+/* Invoice Responsive Styles */
+@media (max-width: 767px) {
+  .invoice-container { padding: 0.75rem; }
+  .invoice-header { padding: 1rem; }
+  .invoice-title { font-size: 1.25rem; line-height: 1.5; }
+  .invoice-subtitle { font-size: 0.75rem; }
+  .invoice-order-id { font-size: 0.875rem; }
+  .invoice-date { font-size: 0.75rem; }
+  .timeline-container { padding: 0.75rem; }
+  .timeline-item { min-width: 0; }
+  .timeline-circle { width: 1.5rem; height: 1.5rem; font-size: 0.75rem; }
+  .timeline-label { font-size: 0.75rem; text-align: center; }
+  .timeline-date { font-size: 0.625rem; }
+  .payment-info { flex-direction: column; gap: 0.5rem; }
+  .product-item { flex-direction: column; }
+  .product-image { width: 100%; height: 5rem; }
+  .product-details { padding: 0.75rem; }
+  .product-name { font-size: 0.875rem; line-height: 1.4; }
+  .product-meta { font-size: 0.75rem; }
+  .product-price { font-size: 0.875rem; }
+  .product-quantity { font-size: 0.75rem; }
+  .address-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .address-card { padding: 0.75rem; }
+  .address-title { font-size: 0.75rem; }
+  .address-content { font-size: 0.75rem; }
+  .payment-summary { padding-top: 1rem; }
+  .payment-row { font-size: 0.875rem; }
+  .payment-total { font-size: 1rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .invoice-container { padding: 1rem; }
+  .invoice-header { padding: 1.25rem; }
+  .invoice-title { font-size: 1.5rem; }
+  .invoice-subtitle { font-size: 0.875rem; }
+  .invoice-order-id { font-size: 1rem; }
+  .invoice-date { font-size: 0.875rem; }
+  .timeline-container { padding: 1rem; }
+  .timeline-circle { width: 2rem; height: 2rem; font-size: 0.875rem; }
+  .timeline-label { font-size: 0.875rem; }
+  .timeline-date { font-size: 0.75rem; }
+  .product-image { width: 5rem; height: 5rem; }
+  .product-details { padding: 1rem; }
+  .product-name { font-size: 1rem; }
+  .product-meta { font-size: 0.875rem; }
+  .product-price { font-size: 1rem; }
+  .product-quantity { font-size: 0.875rem; }
+  .address-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .address-card { padding: 1rem; }
+  .address-title { font-size: 0.875rem; }
+  .address-content { font-size: 0.875rem; }
+  .payment-summary { padding-top: 1.5rem; }
+  .payment-row { font-size: 1rem; }
+  .payment-total { font-size: 1.125rem; }
+}
+
+@media (min-width: 1024px) {
+  .invoice-container { padding: 1.5rem; }
+  .invoice-header { padding: 1.5rem; }
+  .invoice-title { font-size: 1.875rem; }
+  .invoice-subtitle { font-size: 1rem; }
+  .invoice-order-id { font-size: 1.125rem; }
+  .invoice-date { font-size: 1rem; }
+  .timeline-container { padding: 1.5rem; }
+  .timeline-circle { width: 2rem; height: 2rem; font-size: 1rem; }
+  .timeline-label { font-size: 1rem; }
+  .timeline-date { font-size: 0.875rem; }
+  .product-image { width: 6rem; height: 6rem; }
+  .product-details { padding: 1.5rem; }
+  .product-name { font-size: 1.125rem; }
+  .product-meta { font-size: 1rem; }
+  .product-price { font-size: 1.125rem; }
+  .product-quantity { font-size: 1rem; }
+  .address-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .address-card { padding: 1.5rem; }
+  .address-title { font-size: 1rem; }
+  .address-content { font-size: 1rem; }
+  .payment-summary { padding-top: 2rem; }
+  .payment-row { font-size: 1.125rem; }
+  .payment-total { font-size: 1.25rem; }
+}
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+  .receipt-card { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  .print-mt-0 { margin-top: 0 !important; }
+  .print-break-avoid { break-inside: avoid; }
+  .animated-scale { transform: none !important; }
+  .invoice-container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+  .invoice-header { background: #dc2626 !important; color: white !important; }
+  .timeline-container { border-top: 1px solid #e5e7eb !important; border-bottom: 1px solid #e5e7eb !important; }
+  .address-card { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+  .product-item { border: 1px solid #e5e7eb !important; }
+  .payment-summary { border-top: 1px solid #e5e7eb !important; }
+}
+
+/* Utility classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.break-words {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.transition-colors {
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+/* Smooth animations */
+.animated-fade-in {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animated-scale {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.97);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Responsive text utilities */
+.text-responsive-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-xs {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-responsive-xs {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Responsive spacing utilities */
+.space-responsive {
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .space-responsive {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .space-responsive {
+    gap: 1.5rem;
+  }
+}
+
+/* Mobile-first responsive containers */
+.container-responsive {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    max-width: 640px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-responsive {
+    max-width: 768px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    max-width: 1024px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-responsive {
+    max-width: 1280px;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Responsive grid utilities */
+.grid-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* Touch-friendly button sizes for mobile */
+@media (max-width: 640px) {
+  .touch-friendly {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-friendly-text {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Improved mobile navigation */
+@media (max-width: 768px) {
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    z-index: 50;
+    padding: 0.5rem;
+  }
+  
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-decoration: none;
+  }
+  
+  .mobile-nav-item.active {
+    color: #3b82f6;
+  }
+}
+
+/* Responsive card layouts */
+.card-responsive {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .card-responsive {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card-responsive {
+    border-radius: 1rem;
+    padding: 2rem;
+  }
+}
+
+/* Responsive form elements */
+.form-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .form-responsive {
+    gap: 1.5rem;
+  }
+}
+
+.form-group-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .form-group-responsive {
+    gap: 0.75rem;
+  }
+}
+
+/* Responsive table improvements */
+.table-responsive {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .table-responsive thead {
+    display: none;
+  }
+  
+  .table-responsive tbody {
+    display: block;
+  }
+  
+  .table-responsive tr {
+    display: block;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .table-responsive td {
+    display: block;
+    text-align: left;
+    padding: 0.5rem 0;
+    border: none;
+  }
+  
+  .table-responsive td:before {
+    content: attr(data-label) ": ";
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+/* Responsive modal improvements */
+.modal-responsive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .modal-responsive {
+    padding: 2rem;
+  }
+}
+
+.modal-content-responsive {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .modal-content-responsive {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    max-width: 28rem;
+  }
+}
+
+/* Responsive typography */
+.text-responsive-h1 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-h1 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-h1 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+.text-responsive-h2 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-h2 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+/* Responsive spacing */
+.space-y-responsive > * + * {
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .space-y-responsive > * + * {
+    margin-top: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .space-y-responsive > * + * {
+    margin-top: 1.5rem;
+  }
+}
+
+.space-x-responsive > * + * {
+  margin-left: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .space-x-responsive > * + * {
+    margin-left: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .space-x-responsive > * + * {
+    margin-left: 1.5rem;
+  }
+}

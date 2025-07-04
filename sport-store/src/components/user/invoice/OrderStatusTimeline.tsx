@@ -59,8 +59,6 @@ const OrderStatusTimeline = ({
     }
   });
 
-
-
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
@@ -84,17 +82,18 @@ const OrderStatusTimeline = ({
   };
 
   return (
-    <div className="p-6 border-t border-b">
-      <div className="flex items-center justify-between mb-6">
+    <div className="timeline-container border-t border-b">
+      {/* Timeline - Responsive */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6 overflow-x-auto">
         {statuses.map((status, index) => (
           <div
             key={status.status}
-            className={`flex flex-col items-center flex-1 relative ${
-              index < statuses.length - 1 ? 'after:content-[""] after:h-[2px] after:w-full after:absolute after:top-4 after:left-1/2 after:bg-gray-200' : ''
+            className={`timeline-item flex flex-col items-center flex-1 relative min-w-0 ${
+              index < statuses.length - 1 ? 'after:content-[""] after:h-[2px] after:w-full after:absolute after:top-3 sm:after:top-4 after:left-1/2 after:bg-gray-200' : ''
             }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+              className={`timeline-circle rounded-full flex items-center justify-center z-10 ${
                 currentStatus === status.status
                   ? 'bg-red-500 text-white'
                   : statuses.findIndex(s => s.status === currentStatus) > index
@@ -104,9 +103,11 @@ const OrderStatusTimeline = ({
             >
               {statuses.findIndex(s => s.status === currentStatus) > index ? '✓' : index + 1}
             </div>
-            <div className="text-sm font-medium mt-2">{status.label}</div>
+            <div className="timeline-label font-medium mt-1 sm:mt-2 text-center break-words">
+              {status.label}
+            </div>
             {status.date && (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="timeline-date text-gray-500 mt-1 text-center break-words">
                 {format(status.date, 'HH:mm dd/M/yyyy', { locale: vi })}
               </div>
             )}
@@ -114,15 +115,17 @@ const OrderStatusTimeline = ({
         ))}
       </div>
 
-      {/* Hiển thị trạng thái thanh toán */}
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <div>
+      {/* Payment Info - Responsive */}
+      <div className="payment-info mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+        <div className="text-center sm:text-left">
           <span className="font-medium">Phương thức thanh toán: </span>
-          <span>{paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'Thanh toán qua thẻ'}</span>
+          <span className="break-words">
+            {paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'Thanh toán qua thẻ'}
+          </span>
         </div>
-        <div>
+        <div className="text-center sm:text-right">
           <span className="font-medium">Trạng thái thanh toán: </span>
-          <span className={getPaymentStatusColor(paymentStatus)}>
+          <span className={`break-words ${getPaymentStatusColor(paymentStatus)}`}>
             {getPaymentStatusText(paymentStatus)}
           </span>
         </div>

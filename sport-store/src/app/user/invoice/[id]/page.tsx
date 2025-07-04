@@ -205,54 +205,61 @@ export default function InvoicePage() {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">
-      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
-    </div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 sm:h-32 sm:w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center py-8">{error}</div>;
+    return (
+      <div className="text-red-500 text-center py-8 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-lg font-medium mb-2">Lỗi</div>
+          <div className="text-sm">{error}</div>
+        </div>
+      </div>
+    );
   }
 
   if (!order) {
-    return <div className="text-center py-8">Không tìm thấy thông tin đơn hàng</div>;
+    return (
+      <div className="text-center py-8 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-lg font-medium mb-2">Không tìm thấy</div>
+          <div className="text-sm text-gray-600">Không tìm thấy thông tin đơn hàng</div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isPrinting ? 'print-mode' : ''}`}>
-      <style jsx global>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: white; }
-          .receipt-card { box-shadow: none !important; }
-          .print-mt-0 { margin-top: 0 !important; }
-          .print-break-avoid { break-inside: avoid; }
-          .animated-scale { transform: none !important; }
-        }
-      `}</style>
       
       <InvoiceHeader 
         handlePrint={handlePrint}
       />
 
-      <main className="max-w-7xl mx-auto px-4 py-8 print-mt-0">
-        <div className={`receipt-card bg-white rounded-2xl shadow-lg overflow-hidden mb-6 ${animateItems ? 'animated-scale' : ''} transition-transform duration-500 print-break-avoid`}
+      <main className="invoice-container max-w-7xl mx-auto print-mt-0">
+        <div className={`receipt-card bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6 ${animateItems ? 'animated-scale' : ''} transition-transform duration-500 print-break-avoid`}
              style={{transformOrigin: 'center top', transform: animateItems ? 'scale(1)' : 'scale(0.97)'}}>
           
-          <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-5">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-3xl font-bold">HÓA ĐƠN</div>
-                <div className="text-sm mt-1 text-red-100">Cảm ơn bạn đã mua hàng tại VJU SPORT</div>
+          {/* Header Section - Responsive */}
+          <div className="invoice-header bg-gradient-to-r from-red-600 to-red-500 text-white">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
+              <div className="text-center sm:text-left">
+                <div className="invoice-title font-bold">HÓA ĐƠN</div>
+                <div className="invoice-subtitle mt-1 text-red-100">Cảm ơn bạn đã mua hàng tại VJU SPORT</div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-lg">#{order.shortId}</div>
-                <div className="text-sm mt-1 text-red-100">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
+              <div className="text-center sm:text-right">
+                <div className="invoice-order-id font-bold">#{order.shortId}</div>
+                <div className="invoice-date mt-1 text-red-100">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
               </div>
             </div>
             
-            {/* Action buttons */}
-            <div className="flex justify-end mt-4 gap-3">
+            {/* Action buttons - Responsive */}
+            <div className="flex justify-center sm:justify-end mt-4 gap-2 sm:gap-3">
               <CancelOrderButton
                 orderId={order._id}
                 onCancelSuccess={handleOrderCancelled}
@@ -260,6 +267,7 @@ export default function InvoicePage() {
             </div>
           </div>
           
+          {/* Order Status Timeline */}
           <OrderStatusTimeline 
             currentStatus={order.status}
             paymentStatus={order.paymentStatus}
@@ -268,7 +276,8 @@ export default function InvoicePage() {
             statusHistory={order.statusHistory}
           />
           
-          <div className="p-6">
+          {/* Content Section - Responsive padding */}
+          <div className="p-3 sm:p-4 lg:p-6">
             <AddressInfo 
               storeAddress={{
                 name: `Phương thức: ${

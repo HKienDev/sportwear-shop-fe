@@ -50,14 +50,14 @@ const InfoField = ({ label, name, value, isEditing, onChange, type = "text", opt
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{label}</label>
       {isEditing ? (
         type === "select" ? (
           <select
             name={name}
             value={value}
             onChange={onChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
           >
             {options?.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -69,7 +69,7 @@ const InfoField = ({ label, name, value, isEditing, onChange, type = "text", opt
             name={name}
             value={value}
             onChange={onChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
           />
         )
       ) : (
@@ -436,53 +436,55 @@ const UserProfileForm = () => {
   if (!user) return <p className="text-red-500">Không thể tải hồ sơ người dùng.</p>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 relative">
+    <div className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6 relative">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 mb-6 shadow-lg text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-5 rounded-full transform -translate-x-1/2 translate-y-1/2"></div>
-        <div className="flex items-center space-x-6 relative z-10">
-          <div className="bg-white/20 backdrop-blur-sm rounded-full p-4 shadow-inner">
-            <UserCheck size={48} />
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 sm:w-48 md:w-64 h-32 sm:h-48 md:h-64 bg-white opacity-5 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-20 sm:w-32 md:w-40 h-20 sm:h-32 md:h-40 bg-black opacity-10 rounded-full transform -translate-x-1/2 translate-y-1/2"></div>
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 relative z-10">
+          <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 sm:p-4 shadow-inner self-start sm:self-auto">
+            <UserCheck size={32} className="sm:w-10 sm:h-10 md:w-12 md:h-12" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">{user?.fullname}</h1>
-            <div className="flex items-center space-x-4 mt-2">
-              <span className="flex items-center">
-                <User size={16} className="mr-1" />
+          <div className="flex-1">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold leading-tight">{user?.fullname}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mt-2">
+              <span className="flex items-center text-sm">
+                <User size={14} className="mr-1" />
+                <span className="hidden sm:inline">Thành viên</span>
               </span>
-              <span className="flex items-center">
-                <Mail size={16} className="mr-1" /> {user?.email}
+              <span className="flex items-center text-sm">
+                <Mail size={14} className="mr-1" /> 
+                <span className="truncate">{user?.email}</span>
               </span>
             </div>
-            <div className="mt-2 text-sm">
+            <div className="mt-2 text-xs sm:text-sm">
               Thành viên từ {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Main Content - 6/12 width */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
           {/* Personal Information Card */}
           <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-lg font-semibold flex items-center">
-                <User className="mr-2 text-blue-500" size={20} />
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <User className="mr-2 text-blue-500" size={18} />
                 Thông tin cá nhân
               </h2>
               {!isEditing && (
                 <button 
-                  className="text-blue-500 hover:text-blue-700 transition-colors flex items-center text-sm font-medium"
+                  className="text-blue-500 hover:text-blue-700 transition-colors flex items-center text-xs sm:text-sm font-medium self-start sm:self-auto"
                   onClick={() => setIsEditing(true)}
                 >
-                  <Edit3 size={16} className="mr-1" /> Chỉnh sửa
+                  <Edit3 size={14} className="mr-1" /> Chỉnh sửa
                 </button>
               )}
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <InfoField
                   label="Họ và tên"
                   name="fullname"
@@ -525,31 +527,31 @@ const UserProfileForm = () => {
 
           {/* Address Card */}
           <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-lg font-semibold flex items-center">
-                <MapPin className="mr-2 text-blue-500" size={20} />
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <MapPin className="mr-2 text-blue-500" size={18} />
                 Địa chỉ
               </h2>
               {!isEditing && (
                 <button 
-                  className="text-blue-500 hover:text-blue-700 transition-colors flex items-center text-sm font-medium"
+                  className="text-blue-500 hover:text-blue-700 transition-colors flex items-center text-xs sm:text-sm font-medium self-start sm:self-auto"
                   onClick={() => setIsEditing(true)}
                 >
-                  <Edit3 size={16} className="mr-1" /> Chỉnh sửa
+                  <Edit3 size={14} className="mr-1" /> Chỉnh sửa
                 </button>
               )}
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
               {isEditing ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                   {/* Province */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
                     <select
                       name="address.province"
                       value={tempUser?.address?.province || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
                     >
                       <option value="">Chọn Tỉnh/Thành phố</option>
                       {provinces.map(province => (
@@ -558,13 +560,13 @@ const UserProfileForm = () => {
                     </select>
                   </div>
                   {/* District */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
                     <select
                       name="address.district"
                       value={tempUser?.address?.district || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
                     >
                       <option value="">Chọn Quận/Huyện</option>
                       {districts.map(district => (
@@ -573,13 +575,13 @@ const UserProfileForm = () => {
                     </select>
                   </div>
                   {/* Ward */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
                     <select
                       name="address.ward"
                       value={tempUser?.address?.ward || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
                     >
                       <option value="">Chọn Phường/Xã</option>
                       {wards.map(ward => (
@@ -588,28 +590,28 @@ const UserProfileForm = () => {
                     </select>
                   </div>
                   {/* Street */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
                     <input
                       type="text"
                       name="address.street"
                       value={tempUser?.address?.street || ""}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm"
                       placeholder="Số nhà, tên đường..."
                     />
                   </div>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-md border border-gray-200 p-4">
+                <div className="bg-gray-50 rounded-md border border-gray-200 p-3 sm:p-4">
                   {user?.address?.street || user?.address?.ward || user?.address?.district || user?.address?.province ? (
                     <div className="flex items-start">
-                      <MapPin className="mt-1 mr-2 text-gray-500" size={16} />
-                      <div>
+                      <MapPin className="mt-1 mr-2 text-gray-500 flex-shrink-0" size={16} />
+                      <div className="min-w-0 flex-1">
                         {user.address.street && (
-                          <p className="font-medium">{user.address.street}</p>
+                          <p className="font-medium text-sm truncate">{user.address.street}</p>
                         )}
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                           {[
                             user.address.ward,
                             user.address.district,
@@ -619,7 +621,7 @@ const UserProfileForm = () => {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-500 italic">Chưa có thông tin địa chỉ</p>
+                    <p className="text-gray-500 italic text-sm">Chưa có thông tin địa chỉ</p>
                   )}
                 </div>
               )}
@@ -628,35 +630,29 @@ const UserProfileForm = () => {
 
           {/* Actions Card */}
           {isEditing && (
-            <div className="mt-8 relative overflow-hidden">
+            <div className="mt-6 sm:mt-8 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 animate-gradient-x"></div>
-              <div className="relative p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative p-4 sm:p-6 space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
                     onClick={handleRequestUpdate}
                     disabled={loading}
-                    className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
+                    className="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent group-hover:from-blue-400/30 transition-all duration-300"></div>
-                    <div className="relative flex items-center">
-                      {loading ? (
-                        <Loader2 className="animate-spin mr-2" size={20} />
-                      ) : (
-                        <Check className="mr-2" size={20} />
-                      )}
-                      <span className="font-medium">Lưu thay đổi</span>
-                    </div>
+                    {loading ? (
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                    ) : (
+                      <Check className="mr-2" size={16} />
+                    )}
+                    Lưu thay đổi
                   </button>
                   <button
                     onClick={handleCancel}
                     disabled={loading}
-                    className="group relative overflow-hidden bg-white hover:bg-gray-50 text-gray-700 py-3 px-6 rounded-lg border border-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
+                    className="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm rounded-md font-medium bg-white hover:bg-gray-50 text-gray-700 transition-colors flex items-center justify-center"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-100/20 to-transparent group-hover:from-gray-200/30 transition-all duration-300"></div>
-                    <div className="relative flex items-center">
-                      <X className="mr-2" size={20} />
-                      <span className="font-medium">Hủy</span>
-                    </div>
+                    <X className="mr-2" size={16} />
+                    Hủy
                   </button>
                 </div>
               </div>
@@ -665,16 +661,16 @@ const UserProfileForm = () => {
         </div>
 
         {/* Sidebar - 6/12 width */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
           {/* Membership Card */}
           <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold flex items-center">
-                <Award className="mr-2 text-blue-500" size={20} />
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <Award className="mr-2 text-blue-500" size={18} />
                 Thông tin thành viên
               </h2>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <MembershipTier totalSpent={user?.totalSpent || 0} />
             </div>
           </Card>
@@ -683,21 +679,21 @@ const UserProfileForm = () => {
 
       {/* OTP Modal */}
       {showOtpModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-fadeIn">
-            <h3 className="text-xl font-semibold mb-4">Xác thực OTP</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-6 animate-fadeIn">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Xác thực OTP</h3>
+            <p className="text-gray-600 mb-4 sm:mb-6 text-sm leading-relaxed">
               Mã xác thực đã được gửi đến email của bạn. Vui lòng nhập mã để hoàn tất cập nhật.
             </p>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nhập mã OTP</label>
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Nhập mã OTP</label>
               <div className="flex space-x-2">
                 {[...Array(6)].map((_, index) => (
                   <input
                     key={index}
                     type="text"
                     maxLength={1}
-                    className="w-full aspect-square text-center text-xl font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full aspect-square text-center text-lg sm:text-xl font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     value={otpInput[index] || ""}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -722,27 +718,27 @@ const UserProfileForm = () => {
                 ))}
               </div>
               <div className="text-right mt-2">
-                <button className="text-sm text-blue-600 hover:text-blue-800">
+                <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-800">
                   Gửi lại mã (60s)
                 </button>
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={handleVerifyOtp}
                 disabled={loading || otpInput.length !== 6}
-                className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center ${(loading || otpInput.length !== 6) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center text-sm ${(loading || otpInput.length !== 6) ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {loading ? (
-                  <Loader2 className="animate-spin mr-2" size={18} />
+                  <Loader2 className="animate-spin mr-2" size={16} />
                 ) : (
-                  <Check className="mr-2" size={18} />
+                  <Check className="mr-2" size={16} />
                 )}
                 Xác nhận
               </button>
               <button
                 onClick={() => setShowOtpModal(false)}
-                className="flex-1 bg-white hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-md border border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                className="flex-1 bg-white hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-md border border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-sm"
               >
                 Hủy
               </button>
