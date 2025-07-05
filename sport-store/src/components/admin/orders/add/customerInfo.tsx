@@ -246,7 +246,7 @@ export default function CustomerInfo() {
         };
 
         const provinceCode = customer.province?.code;
-        const districtsData = staticDistricts[provinceCode] || [];
+        const districtsData = provinceCode ? staticDistricts[provinceCode] || [] : [];
         setDistricts(districtsData);
         
       } catch (err) {
@@ -330,7 +330,7 @@ export default function CustomerInfo() {
         };
 
         const districtCode = customer.district?.code;
-        const wardsData = staticWards[districtCode] || [];
+        const wardsData = districtCode ? staticWards[districtCode] || [] : [];
         setWards(wardsData);
         
       } catch (err) {

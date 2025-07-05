@@ -163,7 +163,7 @@ export default function CustomerDetail() {
         { code: "26746", name: "Nguyễn Thái Bình" }
       ]
     };
-    setWards(staticWards[districtCode] || []);
+    setWards(districtCode ? staticWards[districtCode] || [] : []);
   }, []);
 
   // Fetch customer data
