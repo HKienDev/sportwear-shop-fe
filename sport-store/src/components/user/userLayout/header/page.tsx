@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Package, Menu, X } from "lucide-react";
+import { Package, Menu, X } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import AuthButtons from "./authButtons/page";
@@ -62,46 +62,52 @@ const Header = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const fetchData = async () => {
       try {
-        // Fetch categories
-        const categoriesUrl = `${API_URL}/categories`;
-        
-        const categoriesResponse = await fetch(categoriesUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        });
-
-        if (!categoriesResponse.ok) {
-          console.error("Categories API Error:", {
-            status: categoriesResponse.status,
-            statusText: categoriesResponse.statusText,
-            url: categoriesUrl,
-            headers: Object.fromEntries(categoriesResponse.headers.entries())
+        // Debounce API calls
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(async () => {
+          const categoriesUrl = `${API_URL}/categories`;
+          
+          const categoriesResponse = await fetch(categoriesUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Cache-Control': 'max-age=300' // Cache for 5 minutes
+            }
           });
-          throw new Error(`HTTP error! Status: ${categoriesResponse.status}`);
-        }
-        const categoriesData = await categoriesResponse.json();
-        
-        if (isMounted && categoriesData.success && Array.isArray(categoriesData.data.categories)) {
-          setCategories(categoriesData.data.categories);
-        }
+
+          if (!categoriesResponse.ok) {
+            console.error("Categories API Error:", {
+              status: categoriesResponse.status,
+              statusText: categoriesResponse.statusText,
+              url: categoriesUrl
+            });
+            throw new Error(`HTTP error! Status: ${categoriesResponse.status}`);
+          }
+          
+          const categoriesData = await categoriesResponse.json();
+          
+          if (isMounted && categoriesData.success && Array.isArray(categoriesData.data.categories)) {
+            setCategories(categoriesData.data.categories);
+          }
+        }, 100); // Debounce 100ms
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
       }
     };
 
-    // Only fetch on client side
+    // Only fetch on client side with error handling
     if (typeof window !== 'undefined') {
       fetchData();
     }
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -198,50 +204,119 @@ const Header = () => {
                 Trang chủ
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
               </Link>
-              <div className="relative" ref={categoriesDropdownRef}>
+              
+              <Link
+                href="/promotions"
+                className="py-2.5 sm:py-3 lg:py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group text-sm lg:text-base"
+              >
+                Khuyến mãi
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+              </Link>
+              
+              <Link
+                href="/brands"
+                className="py-2.5 sm:py-3 lg:py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group text-sm lg:text-base"
+              >
+                Thương hiệu
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+              </Link>
+              
+              <Link
+                href="/contact"
+                className="py-2.5 sm:py-3 lg:py-4 text-gray-700 hover:text-red-600 transition-colors font-medium relative group text-sm lg:text-base"
+              >
+                Liên hệ
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+              </Link>
+              <div 
+                className="relative" 
+                ref={categoriesDropdownRef}
+                onMouseEnter={() => setIsCategoriesOpen(true)}
+                onMouseLeave={() => setIsCategoriesOpen(false)}
+              >
                 <button
-                  className="flex items-center py-2.5 sm:py-3 lg:py-4 text-gray-700 hover:text-red-600 transition-colors font-medium group text-sm lg:text-base"
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                  className="flex items-center py-2.5 sm:py-3 lg:py-4 text-gray-700 hover:text-red-600 transition-colors font-medium group text-sm lg:text-base relative"
                 >
-                  <span className="mr-1">Danh mục sản phẩm</span>
-                  <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180' : ''}`} />
+                  <span>Danh mục sản phẩm</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                 </button>
 
-                {/* Categories Dropdown Menu - Enhanced Responsive */}
+                {/* Categories Dropdown Menu - E-commerce 2025+ Design */}
                 {isCategoriesOpen && (
-                  <div className="absolute top-full left-0 w-64 sm:w-72 lg:w-80 xl:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-200 ease-in-out animate-fadeIn">
-                    <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-100">
-                      <h3 className="font-medium text-gray-900 text-sm lg:text-base">Danh mục sản phẩm</h3>
-                    </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 sm:gap-2 p-2 max-h-80 sm:max-h-96 overflow-y-auto">
+                  <div className="absolute top-full left-0 w-80 sm:w-96 lg:w-[500px] xl:w-[600px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 py-4 z-50 transform transition-all duration-300 ease-out animate-fadeIn">
+
+                    
+                    {/* Categories Grid - Modern Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 max-h-[400px] overflow-y-auto custom-scrollbar">
                       {categories.map((category) => (
                         <Link
                           key={category._id}
                           href={`/categories/${category.slug}`}
-                          className="flex items-center p-2 sm:p-2 lg:p-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-150 rounded-xl group"
+                          className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-white hover:from-red-50 hover:to-red-100/50 transition-all duration-300 border border-gray-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-100/50"
                           onClick={() => setIsCategoriesOpen(false)}
                         >
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-lg overflow-hidden flex-shrink-0 mr-2 lg:mr-3">
-                            {category.image ? (
-                              <Image
-                                src={category.image}
-                                alt={category.name}
-                                width={40}
-                                height={40}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-red-50 flex items-center justify-center">
-                                <Package className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-red-600" />
+                          <div className="p-4 flex items-center space-x-4">
+                            {/* Category Image with Modern Frame */}
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-red-100 group-hover:to-red-200 transition-all duration-300 flex-shrink-0">
+                              {category.image ? (
+                                <Image
+                                  src={category.image}
+                                  alt={category.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-red-600" />
+                                </div>
+                              )}
+                              {/* Hover Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </div>
+                            
+                            {/* Category Info */}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 group-hover:text-red-700 transition-colors duration-200 text-sm lg:text-base truncate">
+                                {category.name}
+                              </h4>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs text-gray-500 group-hover:text-red-600 transition-colors duration-200">
+                                  {category.productCount} sản phẩm
+                                </span>
+                                <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-red-400 transition-colors duration-200"></div>
+                                <span className="text-xs text-gray-400 group-hover:text-red-500 transition-colors duration-200">
+                                  Khám phá ngay
+                                </span>
                               </div>
-                            )}
+                            </div>
+                            
+                            {/* Arrow Icon */}
+                            <div className="w-6 h-6 rounded-full bg-gray-100 group-hover:bg-red-100 flex items-center justify-center transition-all duration-200 group-hover:scale-110">
+                              <svg className="w-3 h-3 text-gray-400 group-hover:text-red-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-xs sm:text-sm lg:text-base truncate">{category.name}</p>
-                            <p className="text-xs lg:text-sm text-gray-500">{category.productCount} sản phẩm</p>
-                          </div>
+                          
+                          {/* Hover Border Effect */}
+                          <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-red-200/50 transition-all duration-300"></div>
                         </Link>
                       ))}
+                    </div>
+                    
+                    {/* Footer with CTA */}
+                    <div className="px-6 py-3 border-t border-gray-100/50 bg-gradient-to-r from-gray-50/50 to-white/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Tổng cộng {categories.length} danh mục</span>
+                        <Link 
+                          href="/categories" 
+                          className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
+                          onClick={() => setIsCategoriesOpen(false)}
+                        >
+                          Xem tất cả →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -293,6 +368,30 @@ const Header = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Trang chủ
+              </Link>
+              
+              <Link 
+                href="/promotions" 
+                className="text-gray-700 font-medium hover:text-red-600 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Khuyến mãi
+              </Link>
+              
+              <Link 
+                href="/brands" 
+                className="text-gray-700 font-medium hover:text-red-600 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Thương hiệu
+              </Link>
+              
+              <Link 
+                href="/contact" 
+                className="text-gray-700 font-medium hover:text-red-600 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Liên hệ
               </Link>
               
               {/* Mobile Categories */}
