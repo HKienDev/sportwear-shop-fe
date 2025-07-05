@@ -22,13 +22,19 @@ const LoginPage = () => {
 
     // Kiểm tra flag trước khi redirect
     if (isAuthenticated && user && !getJustLoggedOut()) {
-      console.log('🔄 Login page - User authenticated, redirecting...');
+      console.log('🔄 Login page - User authenticated, redirecting...', {
+        userRole: user.role,
+        isAuthenticated,
+        hasUser: !!user
+      });
       // Thêm delay để đảm bảo state được cập nhật hoàn toàn
       setTimeout(() => {
         // Sử dụng router.replace thay vì handleRedirect để tránh conflict
         if (user.role === 'admin') {
+          console.log('👑 Login page - Redirecting admin to dashboard');
           router.replace('/admin/dashboard');
         } else {
+          console.log('👤 Login page - Redirecting user to user page');
           router.replace('/user');
         }
       }, 300);

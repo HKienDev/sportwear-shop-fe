@@ -312,6 +312,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     console.log('🍪 Auth context - Setting user cookie for middleware...');
                     const userCookieValue = encodeURIComponent(JSON.stringify(user));
                     document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+                    
+                    // Verify cookie đã được set
+                    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                        const [key, value] = cookie.trim().split('=');
+                        acc[key] = value;
+                        return acc;
+                    }, {} as Record<string, string>);
+                    
+                    console.log('🔍 Auth context - Cookies after setting:', {
+                        userCookie: cookies[TOKEN_CONFIG.USER.COOKIE_NAME] ? 'present' : 'missing',
+                        accessTokenCookie: cookies[TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME] ? 'present' : 'missing',
+                        allCookies: Object.keys(cookies)
+                    });
+                    
                     const savedUser = getUserData();
                     console.log('🔍 Auth context - User data saved:', {
                         hasUser: !!savedUser,
@@ -328,7 +342,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     console.log('✅ Auth context - Auth state updated:', {
                         user: !!user,
                         isAuthenticated: true,
-                        userRole: user.role
+                        userRole: user.role,
+                        userData: {
+                            id: user._id,
+                            email: user.email,
+                            fullname: user.fullname,
+                            role: user.role,
+                            authStatus: user.authStatus
+                        }
                     });
                     
                     // Clear justLoggedOut flag khi login thành công

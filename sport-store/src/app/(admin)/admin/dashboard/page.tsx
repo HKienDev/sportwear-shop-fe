@@ -1,6 +1,6 @@
 'use client'
 
-import { SafeIcons } from '@/utils/safeIcons';
+import { FileText, DollarSign, Users, Package } from 'lucide-react';
 import { AnalyticsCard } from '@/components/admin/dashboard/analyticsCard';
 import { RevenueChart } from '@/components/admin/dashboard/revenueChart';
 import BestSellingProducts from '@/components/admin/dashboard/bestSellingProducts';
@@ -11,10 +11,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 
+
 type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState<TimeRange>('day');
+  const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const { dashboardData, isLoading, error, refetch } = useDashboard(timeRange);
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function Dashboard() {
           <AnalyticsCard
             title="Tổng Đơn Hàng"
             value={stats.totalOrders}
-            icon={<SafeIcons.FileText className="h-6 w-6 text-blue-500" />}
+            icon={<FileText className="h-6 w-6 text-blue-500" />}
             percentage={stats.growth.orders}
             isPositive={stats.growth.orders >= 0}
             compareText="So với tháng trước"
@@ -96,7 +97,7 @@ export default function Dashboard() {
           <AnalyticsCard
             title="Tổng Doanh Thu"
             value={formatCurrency(stats.totalRevenue)}
-            icon={<SafeIcons.DollarSign className="h-6 w-6 text-green-500" />}
+            icon={<DollarSign className="h-6 w-6 text-green-500" />}
             percentage={stats.growth.revenue}
             isPositive={stats.growth.revenue >= 0}
             compareText="So với tháng trước"
@@ -104,7 +105,7 @@ export default function Dashboard() {
           <AnalyticsCard
             title="Tổng Khách Hàng"
             value={stats.totalCustomers}
-            icon={<SafeIcons.Users className="h-6 w-6 text-purple-500" />}
+            icon={<Users className="h-6 w-6 text-purple-500" />}
             percentage={stats.growth.customers}
             isPositive={stats.growth.customers >= 0}
             compareText="So với tháng trước"
@@ -112,7 +113,7 @@ export default function Dashboard() {
           <AnalyticsCard
             title="Tổng Sản Phẩm"
             value={stats.totalProducts}
-            icon={<SafeIcons.Package className="h-6 w-6 text-orange-500" />}
+            icon={<Package className="h-6 w-6 text-orange-500" />}
             percentage={stats.growth.products}
             isPositive={stats.growth.products >= 0}
             compareText="So với tháng trước"
@@ -141,7 +142,7 @@ export default function Dashboard() {
           ) : (
             <>
               <BestSellingProducts />
-              <ActiveDeliveries deliveries={recentOrders || []} />
+              <ActiveDeliveries deliveries={recentOrders?.orders || []} />
             </>
           )}
         </div>

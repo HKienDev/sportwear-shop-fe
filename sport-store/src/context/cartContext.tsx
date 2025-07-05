@@ -15,20 +15,55 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Helper function to safely access localStorage
+const getLocalStorage = (key: string) => {
+  try {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
+};
+
+const setLocalStorage = (key: string, value: string) => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch (error) {
+    console.error('Error setting localStorage:', error);
+  }
+};
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setItems(JSON.parse(savedCart));
+    try {
+      const savedCart = getLocalStorage("cart");
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (Array.isArray(parsedCart)) {
+          setItems(parsedCart);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      setItems([]);
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
+    try {
+      setLocalStorage("cart", JSON.stringify(items));
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
   }, [items]);
 
   const addItem = (item: CartItem) => {
@@ -44,7 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ? { 
                 ...i, 
                 quantity: i.quantity + item.quantity,
-                totalPrice: (i.quantity + item.quantity) * i.product.salePrice
+                totalPrice: (i.quantity + item.quantity) * (i.product.salePrice || i.product.originalPrice)
               }
             : i
         );
@@ -64,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ? { 
               ...item, 
               quantity,
-              totalPrice: quantity * item.product.salePrice
+              totalPrice: quantity * (item.product.salePrice || item.product.originalPrice)
             } 
           : item
       )

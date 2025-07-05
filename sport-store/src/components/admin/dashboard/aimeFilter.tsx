@@ -1,6 +1,8 @@
+type TimeRange = 'day' | 'month' | 'year';
+
 interface TimeFilterProps {
-  timeFilter: string;
-  setTimeFilter: (filter: string) => void;
+  timeFilter: TimeRange;
+  setTimeFilter: (filter: TimeRange) => void;
 }
 
 export function TimeFilter({ timeFilter, setTimeFilter }: TimeFilterProps) {

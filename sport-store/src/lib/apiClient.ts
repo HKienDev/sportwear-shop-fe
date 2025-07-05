@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { CategoryListResponse, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/category';
-import type { DashboardStats, RevenueData, BestSellingProduct, RecentOrder } from '@/types/dashboard';
+import type { DashboardStats, RevenueData, BestSellingProduct, RecentOrder, BestSellingProductsResponse } from '@/types/dashboard';
 import type { Order } from '@/types/order';
 import type { CreateOrderData, OrderData, User } from '@/types/base';
 import type { Product, ProductFormData, ProductQueryParams } from '@/types/product';
@@ -261,7 +261,7 @@ class ApiClient {
     return this.get('/api/dashboard/recent-orders');
   }
 
-  async getBestSellingProducts(): Promise<import('axios').AxiosResponse<{ success: boolean; message: string; data: BestSellingProduct[] }>> {
+  async getBestSellingProducts(): Promise<import('axios').AxiosResponse<{ success: boolean; message: string; data: BestSellingProductsResponse }>> {
     return this.get('/api/dashboard/best-selling');
   }
 

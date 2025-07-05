@@ -1,27 +1,13 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { NextRequest, NextResponse } from 'next/server';
+import { callBackendAPI } from '@/utils/apiAuth';
 
 // GET /api/dashboard/revenue
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'day';
     
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const response = await fetch(`${API_URL}/dashboard/revenue`, {
-      headers: {
-        'Authorization': `Bearer ${session.user.accessToken}`,
-      },
-    });
-
+    const response = await callBackendAPI(`/dashboard/revenue?period=${period}`);
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {

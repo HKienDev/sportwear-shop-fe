@@ -38,6 +38,19 @@ axiosInstance.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `${TOKEN_CONFIG.ACCESS_TOKEN.PREFIX} ${token}`;
+      
+      // Đảm bảo cookie cũng được cập nhật
+      const userData = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          const userCookieValue = encodeURIComponent(JSON.stringify(user));
+          document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${token}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+          document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
+        } catch (error) {
+          console.error('Error updating cookies in axios interceptor:', error);
+        }
+      }
     }
 
     return config;

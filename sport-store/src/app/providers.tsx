@@ -3,7 +3,10 @@
 import React, { memo } from "react";
 import { AuthProvider } from "../context/authContext";
 import { CustomerProvider } from "../context/customerContext";
-import CartProvider from "../providers/CartProvider";
+import { PaymentMethodProvider } from "../context/paymentMethodContext";
+import { ShippingMethodProvider } from "../context/shippingMethodContext";
+import { PromoProvider } from "../context/promoContext";
+import { CartProvider } from "../context/cartContext";
 import TokenManager from "../components/TokenManagerFixed";
 
 interface ProvidersProps {
@@ -15,9 +18,15 @@ const Providers = memo(function Providers({ children }: ProvidersProps) {
     <AuthProvider>
       <TokenManager>
         <CustomerProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <PaymentMethodProvider>
+            <ShippingMethodProvider>
+              <PromoProvider>
+                <CartProvider>
+                  {children}
+                </CartProvider>
+              </PromoProvider>
+            </ShippingMethodProvider>
+          </PaymentMethodProvider>
         </CustomerProvider>
       </TokenManager>
     </AuthProvider>

@@ -4,8 +4,7 @@ import { hasAdminAccess } from '@/utils/roleUtils';
 import { AUTH_CONFIG } from '@/config/auth';
 import { TOKEN_CONFIG } from '@/config/token';
 import { RATE_LIMIT_CONFIG } from '@/config/rateLimit';
-import { AuthStatus } from '@/types/base';
-import { UserRole } from '@/types/base';
+import { AuthStatus, UserRole } from '@/types/base';
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
@@ -32,6 +31,7 @@ export async function middleware(request: NextRequest) {
     const userCookie = request.cookies.get(TOKEN_CONFIG.USER.COOKIE_NAME)?.value;
     console.log('🔑 Middleware - Access token present:', !!accessToken);
     console.log("👤 Middleware - User cookie present:", !!userCookie);
+    console.log('🔍 Middleware - Cookie names:', Array.from(request.cookies.getAll()).map(cookie => cookie.name));
 
     // Kiểm tra các route cần auth
     if (pathname.startsWith('/admin')) {
@@ -43,17 +43,25 @@ export async function middleware(request: NextRequest) {
         try {
             // Decode user cookie
             const decodedUserCookie = decodeURIComponent(userCookie);
+            console.log('🔍 Middleware - Decoded user cookie:', decodedUserCookie.substring(0, 100) + '...');
+            
             const user = JSON.parse(decodedUserCookie);
             
-            console.log('👤 Middleware - User role:', user.role);
+            console.log('👤 Middleware - User data:', {
+                role: user.role,
+                id: user._id,
+                email: user.email,
+                fullname: user.fullname,
+                authStatus: user.authStatus
+            });
             
-            if (user.role !== UserRole.ADMIN) {
+            if (user.role !== 'admin') {
                 console.log("❌ Middleware - User is not admin, redirecting to unauthorized");
                 return NextResponse.redirect(new URL('/error-pages/unauthorized', request.url));
             }
 
             // Kiểm tra trạng thái xác thực
-            if (user.authStatus !== AuthStatus.VERIFIED) {
+            if (user.authStatus !== 'verified') {
                 console.log('❌ Middleware - User not verified, redirecting to login');
                 return NextResponse.redirect(new URL('/auth/login', request.url));
             }
@@ -96,7 +104,7 @@ export async function middleware(request: NextRequest) {
             const user = JSON.parse(decodedUserCookie);
             
             // Kiểm tra trạng thái xác thực
-            if (user.authStatus !== AuthStatus.VERIFIED) {
+            if (user.authStatus !== 'verified') {
                 console.log('❌ Middleware - User not verified, redirecting to login');
                 return NextResponse.redirect(new URL('/auth/login', request.url));
             }

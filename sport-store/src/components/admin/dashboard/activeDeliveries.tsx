@@ -1,25 +1,6 @@
 import { Clock, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
-interface RecentOrder {
-  _id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  total: number;
-  status: string;
-  progress: number;
-  createdAt: string;
-  originAddress: string;
-  destinationAddress: string;
-  statusHistory: Array<{
-    status: string;
-    updatedAt: string;
-    updatedBy: string;
-    note: string;
-    _id: string;
-  }>;
-}
+import type { RecentOrder } from '@/types/dashboard';
 
 interface Delivery {
   id: string;

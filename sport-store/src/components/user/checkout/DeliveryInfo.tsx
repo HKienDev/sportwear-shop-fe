@@ -90,14 +90,88 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
   const fetchWithRetry = async (url: string, retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
       } catch (error) {
-        if (i === retries - 1) throw error;
+        if (i === retries - 1) {
+          // Nếu tất cả retry đều thất bại, sử dụng dữ liệu tĩnh
+          console.warn("API không khả dụng, sử dụng dữ liệu tĩnh:", url);
+          return getStaticLocationData(url);
+        }
         await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
       }
     }
+  };
+
+  // Function để lấy dữ liệu tĩnh
+  const getStaticLocationData = (url: string) => {
+    if (url.includes('/api/p/') && !url.includes('depth=2')) {
+      // Danh sách tỉnh/thành phố
+      return [
+        { code: "01", name: "Hà Nội" },
+        { code: "79", name: "Hồ Chí Minh" },
+        { code: "48", name: "Đà Nẵng" },
+        { code: "92", name: "Cần Thơ" },
+        { code: "95", name: "Bạc Liêu" }
+      ];
+    } else if (url.includes('/api/p/') && url.includes('depth=2')) {
+      // Districts cho tỉnh
+      const provinceCode = url.match(/\/p\/(\d+)/)?.[1];
+      if (provinceCode === "01") { // Hà Nội
+        return {
+          districts: [
+            { code: "001", name: "Ba Đình" },
+            { code: "002", name: "Hoàn Kiếm" },
+            { code: "003", name: "Tây Hồ" },
+            { code: "004", name: "Long Biên" },
+            { code: "005", name: "Cầu Giấy" }
+          ]
+        };
+      } else if (provinceCode === "79") { // Hồ Chí Minh
+        return {
+          districts: [
+            { code: "760", name: "Quận 1" },
+            { code: "761", name: "Quận 12" },
+            { code: "762", name: "Quận Thủ Đức" },
+            { code: "763", name: "Quận 9" },
+            { code: "764", name: "Quận Gò Vấp" }
+          ]
+        };
+      }
+      return { districts: [] };
+    } else if (url.includes('/api/d/') && url.includes('depth=2')) {
+      // Wards cho district
+      const districtCode = url.match(/\/d\/(\d+)/)?.[1];
+      if (districtCode === "001") { // Ba Đình
+        return {
+          wards: [
+            { code: "00001", name: "Phúc Xá" },
+            { code: "00004", name: "Trúc Bạch" },
+            { code: "00006", name: "Vĩnh Phúc" },
+            { code: "00007", name: "Cống Vị" },
+            { code: "00008", name: "Liễu Giai" }
+          ]
+        };
+      } else if (districtCode === "760") { // Quận 1
+        return {
+          wards: [
+            { code: "26734", name: "Tân Định" },
+            { code: "26737", name: "Đa Kao" },
+            { code: "26740", name: "Bến Nghé" },
+            { code: "26743", name: "Bến Thành" },
+            { code: "26746", name: "Nguyễn Thái Bình" }
+          ]
+        };
+      }
+      return { wards: [] };
+    }
+    return [];
   };
 
   // Khi user thay đổi, cập nhật form nếu có address

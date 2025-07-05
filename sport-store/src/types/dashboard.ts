@@ -47,7 +47,22 @@ export interface RecentOrder {
   }>;
 }
 
+export interface RecentOrdersResponse {
+  orders: RecentOrder[];
+  pagination?: {
+    totalPages: number;
+    totalOrders: number;
+    hasMore: boolean;
+  };
+}
+
+export interface BestSellingProductsResponse {
+  products: BestSellingProduct[];
+}
+
 export interface DashboardData {
+  stats: DashboardStats;
+  revenue: RevenueData[];
   bestSellingProducts: BestSellingProduct[];
-  // ... other dashboard data
+  recentOrders: RecentOrdersResponse;
 } 

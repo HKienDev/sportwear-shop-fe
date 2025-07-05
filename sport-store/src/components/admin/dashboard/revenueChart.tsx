@@ -18,7 +18,7 @@ interface TooltipData {
 type TimeRange = 'day' | 'month' | 'year';
 
 interface RevenueChartProps {
-  chartData?: ChartData[] | Record<string, number> | { data: ChartData[] } | null;
+  chartData?: ChartData[] | null;
   formatCurrency: (value: number) => string;
   timeRange: TimeRange;
   onTimeRangeChange: Dispatch<SetStateAction<TimeRange>>;
@@ -31,18 +31,6 @@ export function RevenueChart({ chartData, formatCurrency, timeRange, onTimeRange
     
     if (Array.isArray(data)) {
       return data;
-    }
-    
-    if ('data' in data && Array.isArray(data.data)) {
-      return data.data;
-    }
-    
-    if (typeof data === 'object') {
-      return Object.entries(data).map(([date, revenue]) => ({
-        date,
-        revenue: typeof revenue === 'number' ? revenue : 0,
-        orderCount: 0
-      }));
     }
     
     return [];

@@ -1,27 +1,14 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { NextRequest, NextResponse } from 'next/server';
+import { callBackendAPI } from '@/utils/apiAuth';
 
 // GET /api/dashboard/best-selling
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const response = await fetch(`${API_URL}/dashboard/best-selling`, {
-      headers: {
-        'Authorization': `Bearer ${session.user.accessToken}`,
-      },
-    });
-
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get('limit') || '6';
+    const days = searchParams.get('days') || '30';
+    const endpoint = `/dashboard/best-selling-products?limit=${limit}&days=${days}`;
+    const response = await callBackendAPI(endpoint);
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {

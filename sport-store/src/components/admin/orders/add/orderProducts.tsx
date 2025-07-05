@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useCart } from "@/context/cartContext";
 import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import { usePaymentMethod } from "@/context/paymentMethodContext";
@@ -52,8 +52,10 @@ export default function OrderProducts() {
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [promoCode, setPromoCode] = useState("");
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
+  const [isLoadingPromo, setIsLoadingPromo] = useState(false);
 
-  const fetchProduct = async (productId: string) => {
+  const fetchProduct = useCallback(async (productId: string) => {
     try {
       if (!productId) {
         throw new Error('Vui lòng nhập mã sản phẩm');
@@ -75,9 +77,9 @@ export default function OrderProducts() {
       }
       throw new Error('Không thể tìm thấy sản phẩm');
     }
-  };
+  }, []);
 
-  const handleProductIdChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProductIdChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newProductId = e.target.value.trim();
     setSearchTerm(newProductId);
     setSize("");
@@ -89,6 +91,7 @@ export default function OrderProducts() {
 
     if (newProductId) {
       try {
+        setIsLoadingProduct(true);
         const product = await fetchProduct(newProductId);
         setSelectedProduct(product);
         setAvailableSizes(product.sizes || []);
@@ -99,11 +102,13 @@ export default function OrderProducts() {
         setSelectedProduct(null);
         setAvailableSizes([]);
         setAvailableColors([]);
+      } finally {
+        setIsLoadingProduct(false);
       }
     }
-  };
+  }, [fetchProduct]);
 
-  const handleAddToCart = (product: AdminProduct) => {
+  const handleAddToCart = useCallback((product: AdminProduct) => {
     if (!size && availableSizes.length > 0) {
       toast.error("Vui lòng chọn kích thước");
       return;
@@ -123,38 +128,38 @@ export default function OrderProducts() {
 
     const cartItem: CartItem = {
       _id: Date.now().toString(),
-              product: {
-          _id: product._id,
-          name: product.name,
-          description: product.description,
-          brand: product.brand,
-          originalPrice: product.originalPrice,
-          salePrice: product.salePrice || product.originalPrice,
-          stock: product.stock,
-          categoryId: product.categoryId,
-          isActive: product.isActive,
-          mainImage: product.mainImage || "/images/placeholder.png",
-          subImages: product.subImages || [],
-          colors: product.colors || [],
-          sizes: product.sizes || [],
-          sku: product.sku,
-          slug: product.sku.toLowerCase(),
-          tags: product.tags || [],
-          rating: product.rating || 0,
-          numReviews: product.numReviews || 0,
-          viewCount: product.viewCount || 0,
-          soldCount: product.soldCount || 0,
-          reviews: (product.reviews || []).map(review => ({
-            ...review,
-            createdAt: new Date(review.createdAt)
-          })),
-          createdAt: product.createdAt || new Date().toISOString(),
-          updatedAt: product.updatedAt || new Date().toISOString(),
-          ratings: product.ratings || { average: 0, count: 0 },
-          discountPercentage: product.discountPercentage || 0,
-          isOutOfStock: product.isOutOfStock || false,
-          isLowStock: product.isLowStock || false
-        },
+      product: {
+        _id: product._id,
+        name: product.name,
+        description: product.description,
+        brand: product.brand,
+        originalPrice: product.originalPrice,
+        salePrice: product.salePrice || product.originalPrice,
+        stock: product.stock,
+        categoryId: product.categoryId,
+        isActive: product.isActive,
+        mainImage: product.mainImage || "/images/placeholder.png",
+        subImages: product.subImages || [],
+        colors: product.colors || [],
+        sizes: product.sizes || [],
+        sku: product.sku,
+        slug: product.sku.toLowerCase(),
+        tags: product.tags || [],
+        rating: product.rating || 0,
+        numReviews: product.numReviews || 0,
+        viewCount: product.viewCount || 0,
+        soldCount: product.soldCount || 0,
+        reviews: (product.reviews || []).map(review => ({
+          ...review,
+          createdAt: new Date(review.createdAt)
+        })),
+        createdAt: product.createdAt || new Date().toISOString(),
+        updatedAt: product.updatedAt || new Date().toISOString(),
+        ratings: product.ratings || { average: 0, count: 0 },
+        discountPercentage: product.discountPercentage || 0,
+        isOutOfStock: product.isOutOfStock || false,
+        isLowStock: product.isLowStock || false
+      },
       quantity: quantity,
       color: color,
       size: size,
@@ -163,9 +168,9 @@ export default function OrderProducts() {
 
     addItem(cartItem);
     toast.success("Đã thêm sản phẩm vào giỏ hàng");
-  };
+  }, [addItem, availableSizes.length, availableColors.length, quantity, size, color]);
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = useCallback((productId: string, newQuantity: number) => {
     const item = cartItems.find(item => item.product._id === productId);
     if (!item) return;
 
@@ -186,10 +191,10 @@ export default function OrderProducts() {
 
     removeItem(productId);
     addItem(updatedItem);
-  };
+  }, [cartItems, removeItem, addItem]);
 
   // Tính tổng tiền
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     // Tính tổng tiền sản phẩm
     const subtotal = cartItems.reduce((total, item) => total + item.totalPrice, 0);
     
@@ -210,18 +215,23 @@ export default function OrderProducts() {
     
     // Tổng cộng = (Giá sản phẩm - Giảm giá) + Phí vận chuyển
     return (subtotal - discountAmount) + shippingFee;
-  };
+  }, [cartItems, shippingMethod, promoDetails]);
 
-  const total = calculateTotal();
+  const total = useMemo(() => calculateTotal(), [calculateTotal]);
+  const subtotal = useMemo(() => cartItems.reduce((total, item) => total + item.totalPrice, 0), [cartItems]);
+  const shippingFee = useMemo(() => 
+    shippingMethod === ShippingMethod.EXPRESS ? 45000 : 
+    shippingMethod === ShippingMethod.SAME_DAY ? 60000 : 
+    30000, [shippingMethod]);
 
-  const handleApplyPromoCode = async () => {
+  const handleApplyPromoCode = useCallback(async () => {
     if (!promoCode) {
       toast.error("Vui lòng nhập mã giảm giá");
       return;
     }
 
     try {
-      const subtotal = cartItems.reduce((total, item) => total + item.totalPrice, 0);
+      setIsLoadingPromo(true);
       const response = await fetchWithAuth<ApiResponse<Coupon>>(`/coupons/code/${promoCode}`);
 
       if (!response.success || !response.data) {
@@ -269,14 +279,21 @@ export default function OrderProducts() {
       } else {
         toast.error("Không thể áp dụng mã giảm giá");
       }
+    } finally {
+      setIsLoadingPromo(false);
     }
-  };
+  }, [promoCode, subtotal, setPromoDetails]);
 
-  const handleRemovePromoCode = () => {
+  const handleRemovePromoCode = useCallback(() => {
     setPromoDetails(null);
     setPromoCode("");
     toast.success("Đã xóa mã giảm giá");
-  };
+  }, [setPromoDetails]);
+
+  const handleRemoveFromCart = useCallback((productId: string) => {
+    removeItem(productId);
+    toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+  }, [removeItem]);
 
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -305,6 +322,7 @@ export default function OrderProducts() {
                   onChange={handleProductIdChange}
                   placeholder="Nhập tên sản phẩm"
                   className="w-full"
+                  disabled={isLoadingProduct}
                 />
               </div>
               
@@ -390,10 +408,11 @@ export default function OrderProducts() {
             )}
 
             <Button 
-              onClick={() => handleAddToCart(selectedProduct as AdminProduct)} 
+              onClick={() => selectedProduct && handleAddToCart(selectedProduct)} 
               className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
+              disabled={!selectedProduct || isLoadingProduct}
             >
-              Thêm sản phẩm
+              {isLoadingProduct ? "Đang tìm..." : "Thêm sản phẩm"}
             </Button>
           </div>
 
@@ -435,7 +454,7 @@ export default function OrderProducts() {
                           </p>
                         </div>
                         <button
-                          onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                          onClick={() => handleRemoveFromCart(item.product._id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <X size={18} />
@@ -444,8 +463,17 @@ export default function OrderProducts() {
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center space-x-2">
                           <button
+                            onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                            disabled={item.quantity <= 1}
+                          >
+                            -
+                          </button>
+                          <span className="w-12 text-center font-medium">{item.quantity}</span>
+                          <button
                             onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                            disabled={item.quantity >= item.product.stock}
                           >
                             +
                           </button>
@@ -508,7 +536,7 @@ export default function OrderProducts() {
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   placeholder="Nhập mã giảm giá"
-                  disabled={!!promoDetails}
+                  disabled={!!promoDetails || isLoadingPromo}
                   className="w-full"
                 />
               </div>
@@ -517,6 +545,7 @@ export default function OrderProducts() {
                   onClick={handleRemovePromoCode} 
                   variant="destructive"
                   className="bg-red-500 hover:bg-red-600"
+                  disabled={isLoadingPromo}
                 >
                   Xóa
                 </Button>
@@ -524,8 +553,9 @@ export default function OrderProducts() {
                 <Button 
                   onClick={handleApplyPromoCode}
                   className="bg-orange-500 hover:bg-orange-600"
+                  disabled={isLoadingPromo || !promoCode.trim()}
                 >
-                  Áp dụng
+                  {isLoadingPromo ? "Đang xử lý..." : "Áp dụng"}
                 </Button>
               )}
             </div>
@@ -555,14 +585,12 @@ export default function OrderProducts() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 space-y-3">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Tạm tính:</span>
-                <span>{cartItems.reduce((total, item) => total + item.totalPrice, 0).toLocaleString("vi-VN")}đ</span>
+                <span>{subtotal.toLocaleString("vi-VN")}đ</span>
               </div>
               
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Phí vận chuyển ({shippingMethod === ShippingMethod.EXPRESS ? "Nhanh" : shippingMethod === ShippingMethod.SAME_DAY ? "Trong ngày" : "Thường"}):</span>
-                <span>{(shippingMethod === ShippingMethod.EXPRESS ? 45000 : 
-                       shippingMethod === ShippingMethod.SAME_DAY ? 60000 : 
-                       30000).toLocaleString("vi-VN")}đ</span>
+                <span>{shippingFee.toLocaleString("vi-VN")}đ</span>
               </div>
               
               {promoDetails && (

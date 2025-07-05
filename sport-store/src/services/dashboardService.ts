@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { DashboardStats, RecentOrder, BestSellingProduct } from '@/types/dashboard';
+import type { DashboardStats, RecentOrder, BestSellingProduct, BestSellingProductsResponse } from '@/types/dashboard';
 import type { ApiResponse } from '@/types/api';
 
 export const dashboardService = {
@@ -18,23 +18,28 @@ export const dashboardService = {
   // Get best selling products
   async getBestSellingProducts(): Promise<ApiResponse<BestSellingProduct[]>> {
     const response = await apiClient.getBestSellingProducts();
-    return response.data as ApiResponse<BestSellingProduct[]>;
+    const responseData = response.data as ApiResponse<BestSellingProductsResponse>;
+    return {
+      success: responseData.success,
+      message: responseData.message,
+      data: responseData.data.products
+    };
   },
 
   // Get product stats
-  async getProductStats(): Promise<ApiResponse<any>> {
+  async getProductStats(): Promise<ApiResponse<unknown>> {
     const response = await apiClient.getProductStats();
-    return response.data as ApiResponse<any>;
+    return response.data as ApiResponse<unknown>;
   },
 
   // Get revenue stats
-  async getRevenueStats(): Promise<ApiResponse<any>> {
+  async getRevenueStats(): Promise<ApiResponse<unknown>> {
     const response = await apiClient.getRevenueStats();
-    return response.data as ApiResponse<any>;
+    return response.data as ApiResponse<unknown>;
   },
 
   // Lấy thống kê đơn hàng theo trạng thái
-  getOrderStats: async (): Promise<ApiResponse<any>> => {
+  getOrderStats: async (): Promise<ApiResponse<unknown>> => {
     try {
       const response = await apiClient.get("/admin/dashboard/orders");
       return {
@@ -49,7 +54,7 @@ export const dashboardService = {
   },
 
   // Lấy thống kê sản phẩm bán chạy
-  getTopProducts: async (limit: number = 5): Promise<ApiResponse<any>> => {
+  getTopProducts: async (limit: number = 5): Promise<ApiResponse<unknown>> => {
     try {
       const response = await apiClient.get(`/admin/dashboard/top-products?limit=${limit}`);
       return {
@@ -64,7 +69,7 @@ export const dashboardService = {
   },
 
   // Lấy thống kê khách hàng mới
-  getNewCustomers: async (limit: number = 5): Promise<ApiResponse<any>> => {
+  getNewCustomers: async (limit: number = 5): Promise<ApiResponse<unknown>> => {
     try {
       const response = await apiClient.get(`/admin/dashboard/new-customers?limit=${limit}`);
       return {

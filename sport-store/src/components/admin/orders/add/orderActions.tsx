@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/utils/fetchWithAuth';
@@ -19,7 +19,7 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateOrder = async (orderData: OrderData) => {
+  const handleCreateOrder = useCallback(async (orderData: OrderData) => {
     try {
       setIsLoading(true);
       
@@ -64,34 +64,40 @@ export default function OrderActions({ onClose, onResetForm }: OrderActionsProps
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onResetForm, router]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const orderData: OrderData = {
-      items: JSON.parse(formData.get('items') as string),
-      shippingAddress: JSON.parse(formData.get('shippingAddress') as string),
-      paymentMethod: formData.get('paymentMethod') as PaymentMethod,
-      shippingMethod: formData.get('shippingMethod') as ShippingMethod,
-      note: formData.get('note') as string
-    };
-    handleCreateOrder(orderData);
-  };
+    
+    try {
+      const orderData: OrderData = {
+        items: JSON.parse(formData.get('items') as string),
+        shippingAddress: JSON.parse(formData.get('shippingAddress') as string),
+        paymentMethod: formData.get('paymentMethod') as PaymentMethod,
+        shippingMethod: formData.get('shippingMethod') as ShippingMethod,
+        note: formData.get('note') as string
+      };
+      handleCreateOrder(orderData);
+    } catch (error) {
+      console.error('Error parsing form data:', error);
+      toast.error('Có lỗi xảy ra khi xử lý dữ liệu form');
+    }
+  }, [handleCreateOrder]);
 
   return (
     <form onSubmit={handleSubmit} className="flex justify-end gap-2 mt-4">
       <button
         type="button"
         onClick={onClose}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
       >
         Hủy
       </button>
       <button
         type="submit"
         disabled={isLoading}
-        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isLoading ? 'Đang xử lý...' : 'Tạo đơn hàng'}
       </button>

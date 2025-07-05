@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const { conversationId } = params;
+    const { conversationId } = await params;
     console.log('🔍 Chat Messages API called for conversation:', conversationId);
     
     // Lấy token từ header

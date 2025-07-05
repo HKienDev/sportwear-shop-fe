@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Đảm bảo params.id được xử lý đúng cách
-    const { id } = params;
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json(

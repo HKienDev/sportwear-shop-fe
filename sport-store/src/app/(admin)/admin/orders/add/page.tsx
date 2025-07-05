@@ -11,8 +11,8 @@ import { usePaymentMethod, PaymentMethod } from "@/context/paymentMethodContext"
 import { useShippingMethod, ShippingMethod } from "@/context/shippingMethodContext";
 import { usePromo } from "@/context/promoContext";
 import { toast } from "sonner";
-import { useEffect, useRef } from "react";
-import { RefreshCw, X, CheckCircle, ShoppingBag} from "lucide-react";
+import { useEffect, useRef, useCallback } from "react";
+import { RefreshCw, X, CheckCircle, ShoppingBag } from "lucide-react";
 
 export default function AddOrderPage() {
   const router = useRouter();
@@ -44,25 +44,24 @@ export default function AddOrderPage() {
     return null;
   }
 
-  const resetAllData = () => {
+  const resetAllData = useCallback(() => {
     resetCustomer();
     clearCart();
     setPaymentMethod(PaymentMethod.COD);
     setShippingMethod(ShippingMethod.STANDARD);
     setPromoDetails(null);
-  };
+  }, [resetCustomer, clearCart, setPaymentMethod, setShippingMethod, setPromoDetails]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     router.back();
-  };
+  }, [router]);
 
-  const handleResetForm = () => {
+  const handleResetForm = useCallback(() => {
     resetAllData();
     toast.success("Đã reset form thành công");
-  };
+  }, [resetAllData]);
 
-  const handleConfirmOrder = () => {
-    
+  const handleConfirmOrder = useCallback(() => {
     // Giả lập gửi dữ liệu
     setTimeout(() => {
       // Xử lý sau khi xác nhận đơn hàng
@@ -70,7 +69,7 @@ export default function AddOrderPage() {
       resetAllData();
       router.push('/admin/orders/list');
     }, 800);
-  };
+  }, [resetAllData, router]);
 
   return (
     <div className="min-h-screen bg-white p-6">

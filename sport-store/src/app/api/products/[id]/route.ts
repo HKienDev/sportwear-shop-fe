@@ -3,11 +3,11 @@ import { API_URL } from "@/utils/api";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Đảm bảo params.id được xử lý đúng cách
-    const id = await Promise.resolve(params.id);
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json(
