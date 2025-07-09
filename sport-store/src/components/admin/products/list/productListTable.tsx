@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, ChevronLeft, ChevronRight, Star, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import ProductStatusBadge from "./productStatusBadge";
+import FeaturedProductModal, { FeaturedProductConfig } from "../featuredProductModal";
 
 interface Category {
   _id: string;
@@ -33,14 +34,13 @@ interface Product {
   subImages: string[];
   createdAt: string;
   isActive: boolean;
+  isFeatured: boolean;
   sku: string;
   colors: string[];
   sizes: string[];
   tags: string[];
-  ratings: {
-    average: number;
-    count: number;
-  };
+  rating: number;
+  numReviews: number;
   soldCount: number;
   viewCount: number;
   discountPercentage: number;
@@ -56,6 +56,8 @@ interface ProductListTableProps {
   onEdit: (id: string) => void;
   onDelete: (sku: string) => void;
   onToggleStatus: (id: string, isActive: boolean) => void;
+  onToggleFeatured: (sku: string, isFeatured: boolean) => void;
+  onSetupFeatured: (sku: string, config: FeaturedProductConfig) => void;
   categories: Category[];
 }
 
@@ -68,9 +70,13 @@ const ProductListTable = React.memo(
     onEdit,
     onDelete,
     onToggleStatus,
+    onToggleFeatured,
+    onSetupFeatured,
     categories
   }: ProductListTableProps) => {
     const [currentPage, setCurrentPage] = React.useState(1);
+    const [isFeaturedModalOpen, setIsFeaturedModalOpen] = React.useState(false);
+    const [selectedProductForSetup, setSelectedProductForSetup] = React.useState<Product | null>(null);
     const productsPerPage = 10;
 
     // Pagination logic
@@ -221,10 +227,18 @@ const ProductListTable = React.memo(
                                 className="object-cover"
                                 sizes="40px"
                               />
+                              {product.isFeatured && (
+                                <div className="absolute top-0 right-0 bg-yellow-500 text-white p-1 rounded-bl-lg">
+                                  <Star size={12} className="fill-current" />
+                                </div>
+                              )}
                             </div>
                             <div className="ml-2 min-w-0">
-                              <div className="font-medium text-slate-800 truncate text-sm">
+                              <div className="font-medium text-slate-800 truncate text-sm flex items-center gap-1">
                                 {product.name || "Sản phẩm chưa thêm"}
+                                {product.isFeatured && (
+                                  <Star size={14} className="text-yellow-500 fill-current" />
+                                )}
                               </div>
                               <div className="text-slate-500 text-xs">
                                 {new Date(product.createdAt).toLocaleDateString() || "Chưa có ngày tạo"}
@@ -279,6 +293,25 @@ const ProductListTable = React.memo(
                                 <Power className="mr-2 h-4 w-4" />
                                 <span>{product.isActive ? "Ngừng bán" : "Kích hoạt"}</span>
                               </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => onToggleFeatured(product.sku, !product.isFeatured)}
+                                className={`cursor-pointer ${product.isFeatured ? "text-yellow-600" : "text-green-600"}`}
+                              >
+                                <Star className="mr-2 h-4 w-4" />
+                                <span>{product.isFeatured ? "Hủy đặt làm nổi bật" : "Đặt làm nổi bật"}</span>
+                              </DropdownMenuItem>
+                              {product.isFeatured && (
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setSelectedProductForSetup(product);
+                                    setIsFeaturedModalOpen(true);
+                                  }}
+                                  className="cursor-pointer text-blue-600"
+                                >
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  <span>Setup countdown</span>
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 className="text-red-600 cursor-pointer"
@@ -368,6 +401,21 @@ const ProductListTable = React.memo(
             </div>
           )}
         </div>
+
+        {/* Featured Product Setup Modal */}
+        <FeaturedProductModal
+          product={selectedProductForSetup}
+          isOpen={isFeaturedModalOpen}
+          onClose={() => {
+            setIsFeaturedModalOpen(false);
+            setSelectedProductForSetup(null);
+          }}
+          onSave={(config) => {
+            if (selectedProductForSetup) {
+              onSetupFeatured(selectedProductForSetup.sku, config);
+            }
+          }}
+        />
       </div>
     );
   }

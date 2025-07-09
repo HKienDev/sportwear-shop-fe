@@ -29,24 +29,19 @@ export interface AdminProduct {
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
+  isFeatured: boolean;
   sku: string;
   colors: string[];
   sizes: string[];
   tags: string[];
-  ratings: {
-    average: number;
-    count: number;
-  };
-  soldCount: number;
+  rating: number;
+  numReviews: number;
   viewCount: number;
+  soldCount: number;
   discountPercentage: number;
   isOutOfStock: boolean;
   isLowStock: boolean;
   status?: string;
-  rating?: number;
-  numReviews?: number;
-  reviews?: any[];
-  slug?: string;
 }
 
 // Extended Product interface for user-facing components
@@ -54,33 +49,27 @@ export interface UserProduct {
   _id: string;
   name: string;
   description: string;
+  brand: string;
   originalPrice: number;
   salePrice: number;
   stock: number;
   categoryId: string;
-  brand: string;
+  isActive: boolean;
   mainImage: string;
   subImages: string[];
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
-  sku: string;
   colors: string[];
   sizes: string[];
+  sku: string;
   tags: string[];
-  ratings: {
-    average: number;
-    count: number;
-  };
-  soldCount: number;
+  rating: number;
+  numReviews: number;
   viewCount: number;
-  discountPercentage: number;
-  isOutOfStock: boolean;
-  isLowStock: boolean;
-  rating?: number;
-  numReviews?: number;
-  reviews?: any[];
-  slug?: string;
+  soldCount: number;
+  createdAt: string;
+  updatedAt: string;
+  discountPercentage?: number;
+  isOutOfStock?: boolean;
+  isLowStock?: boolean;
 }
 
 // Extended Category interface for admin
@@ -194,4 +183,18 @@ export interface ApiResponse<T> {
   message: string;
   data?: T;
   error?: string;
+}
+
+export interface FeaturedProduct {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  sold: number;
+  total: number;
+  rating: number;
+  image?: string;
+  sku: string;
+  brand: string;
+  category: string;
 } 

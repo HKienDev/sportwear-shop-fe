@@ -14,6 +14,13 @@ const nextConfig = {
                 pathname: '/uploads/**',
             },
         ],
+        // Tăng timeout cho images
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+        formats: ['image/webp'],
+        minimumCacheTTL: 60,
+        dangerouslyAllowSVG: true,
+        contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     },
     // Thêm cấu hình để tối ưu hiệu suất
     reactStrictMode: true,
@@ -36,6 +43,12 @@ const nextConfig = {
                 aggregateTimeout: 300,
             };
         }
+        
+        // Thêm cấu hình timeout cho fetch
+        config.experiments = {
+            ...config.experiments,
+            topLevelAwait: true,
+        };
         
         return config;
     },

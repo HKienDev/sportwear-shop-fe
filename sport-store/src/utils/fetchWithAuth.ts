@@ -4,7 +4,8 @@ import { API_URL } from "@/utils/api";
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
-  data?: T;
+  data: T;
+  error?: string;
   user?: {
     id: string;
     email: string;
@@ -29,21 +30,41 @@ const REQUEST_TIMEOUT = 30000;
 
 // Lấy token từ cookie
 function getTokenFromCookie(): string | null {
-  return document.cookie
+  const token = document.cookie
     .split('; ')
     .find(row => row.startsWith(`${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=`))
     ?.split('=')[1] || null;
+  
+  console.log('🔍 fetchWithAuth - Token from cookie:', {
+    cookieName: TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME,
+    hasToken: !!token,
+    tokenLength: token?.length,
+    allCookies: document.cookie.split('; ').map(c => c.split('=')[0])
+  });
+  
+  return token;
 }
 
 // Lấy token từ localStorage
 function getTokenFromStorage(): string | null {
-  return localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+  const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+  console.log('🔍 fetchWithAuth - Token from storage:', {
+    key: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
+    hasToken: !!token,
+    tokenLength: token?.length
+  });
+  return token;
 }
 
 // Cập nhật token vào cả cookie và localStorage
 function updateToken(token: string): void {
   localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
   document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${token}; path=/; max-age=86400; SameSite=Lax; Secure`;
+  console.log('💾 fetchWithAuth - Token updated:', {
+    storageKey: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
+    cookieName: TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME,
+    tokenLength: token.length
+  });
 }
 
 // Xóa token khỏi cả cookie và localStorage
@@ -117,9 +138,30 @@ export const fetchWithAuth = async <T = unknown>(
       ...options.headers,
     };
 
-    // Thêm base URL vào endpoint
-    const baseUrl = API_URL;
-    const fullUrl = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
+    // Xử lý URL: nếu endpoint bắt đầu bằng /api thì gọi Next.js API routes
+    // Nếu không thì gọi backend API
+    let fullUrl: string;
+    if (endpoint.startsWith('/api')) {
+      // Next.js API routes - không thêm base URL
+      fullUrl = endpoint;
+    } else if (endpoint.startsWith('http')) {
+      // Absolute URL
+      fullUrl = endpoint;
+    } else {
+      // Backend API - thêm API_URL
+      fullUrl = `${API_URL}${endpoint}`;
+    }
+
+    console.log('🔍 fetchWithAuth - Request details:', {
+      endpoint,
+      fullUrl,
+      method: options.method || 'GET',
+      hasToken: !!token,
+      tokenLength: token?.length,
+      headers: Object.keys(headers),
+      isNextJSAPI: endpoint.startsWith('/api'),
+      isBackendAPI: !endpoint.startsWith('/api') && !endpoint.startsWith('http')
+    });
 
     // Gọi API với timeout
     const response = await fetch(fullUrl, {

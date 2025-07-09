@@ -7,6 +7,7 @@ import ProductListFilters from "@/components/admin/products/list/productListFilt
 import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
 import { AdminProduct, AdminCategory } from '@/types/product';
+import { FeaturedProductConfig } from "@/components/admin/products/featuredProductModal";
 
 export default function ProductListPage() {
   const router = useRouter();
@@ -216,6 +217,85 @@ export default function ProductListPage() {
     }
   }, [fetchProducts, products]);
 
+  const handleToggleFeatured = useCallback(async (sku: string, isFeatured: boolean) => {
+    try {
+      const product = products.find(p => p.sku === sku);
+      if (!product) {
+        toast.error("Không tìm thấy sản phẩm");
+        return;
+      }
+      const toastId = toast.loading(`Đang ${isFeatured ? 'đặt làm nổi bật' : 'hủy nổi bật'} sản phẩm "${product.name}"...`);
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`/api/products/sku/${sku}/featured`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ isFeatured })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái nổi bật");
+      }
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Đã ${isFeatured ? 'đặt làm nổi bật' : 'hủy nổi bật'} sản phẩm "${product.name}" thành công`, { id: toastId });
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái nổi bật", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái nổi bật:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái nổi bật");
+    }
+  }, [fetchProducts, products]);
+
+  const handleSetupFeatured = useCallback(async (sku: string, config: FeaturedProductConfig) => {
+    try {
+      const product = products.find(p => p.sku === sku);
+      if (!product) {
+        toast.error("Không tìm thấy sản phẩm");
+        return;
+      }
+      
+      const toastId = toast.loading(`Đang setup countdown cho sản phẩm "${product.name}"...`);
+      
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`/api/products/sku/${sku}/featured-config`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(config)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi setup countdown");
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Đã setup countdown cho sản phẩm "${product.name}" thành công`, { id: toastId });
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi setup countdown", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Lỗi khi setup countdown:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi setup countdown");
+    }
+  }, [fetchProducts, products]);
+
   // Check if should redirect after all hooks are defined
   const shouldRedirect = !loading && (!isAuthenticated || user?.role !== 'admin');
 
@@ -354,6 +434,8 @@ export default function ProductListPage() {
                     onEdit={handleEditProduct}
                     onDelete={handleDeleteProduct}
                     onToggleStatus={handleToggleStatus}
+                    onToggleFeatured={handleToggleFeatured}
+                    onSetupFeatured={handleSetupFeatured}
                     categories={categories}
                   />
                 </div>

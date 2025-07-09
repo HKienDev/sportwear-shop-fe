@@ -1,94 +1,105 @@
 "use client";
 
-import React, { useCallback, memo, useEffect, useMemo } from "react";
+import React, { useCallback, memo, useEffect, useMemo, useState } from "react";
 import ProductCardWithTimer from "../ProductCardWithTimer/page";
-
-interface FeaturedProduct {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  sold: number;
-  total: number;
-  rating: number;
-  image?: string;
-}
+import { FeaturedProduct } from "@/types/product";
+import { featuredProductService } from "@/services/featuredProductService";
+import { toast } from "sonner";
 
 interface FeaturedProductsCarouselProps {
   products?: FeaturedProduct[];
 }
 
 const FeaturedProductsCarousel = ({ 
-  products = [
-    {
-      id: "1",
-      name: "SHAMPOO, CONDITIONER & FACEWASH PACKS",
-      price: 100000,
-      originalPrice: 2000000,
-      sold: 20,
-      total: 60,
-      rating: 4
-    },
-    {
-      id: "2", 
-      name: "SPORTS SHOES COLLECTION",
-      price: 500000,
-      originalPrice: 1200000,
-      sold: 15,
-      total: 50,
-      rating: 5
-    },
-    {
-      id: "3",
-      name: "ATHLETIC WEAR SET",
-      price: 300000,
-      originalPrice: 800000,
-      sold: 25,
-      total: 80,
-      rating: 4
-    },
-    {
-      id: "4",
-      name: "FITNESS EQUIPMENT PACK",
-      price: 800000,
-      originalPrice: 1500000,
-      sold: 10,
-      total: 30,
-      rating: 5
-    },
-    {
-      id: "5",
-      name: "YOGA MAT & ACCESSORIES",
-      price: 150000,
-      originalPrice: 400000,
-      sold: 30,
-      total: 100,
-      rating: 4
-    },
-    {
-      id: "6",
-      name: "RUNNING SHOES PREMIUM",
-      price: 1200000,
-      originalPrice: 2500000,
-      sold: 8,
-      total: 25,
-      rating: 5
-    }
-  ]
+  products: initialProducts
 }: FeaturedProductsCarouselProps) => {
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch featured products from API
+  const fetchFeaturedProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔄 Fetching featured products...');
+      const response = await featuredProductService.getFeaturedProducts(6);
+      
+      if (response.success && response.data?.products) {
+        console.log('✅ Featured products loaded:', response.data.products.length);
+        setProducts(response.data.products);
+      } else {
+        throw new Error(response.message || 'Không thể tải sản phẩm nổi bật');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching featured products:', error);
+      setError(error instanceof Error ? error.message : 'Lỗi khi tải sản phẩm nổi bật');
+      toast.error('Không thể tải sản phẩm nổi bật');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Nếu có initialProducts được truyền vào, sử dụng chúng
+    if (initialProducts && initialProducts.length > 0) {
+      setProducts(initialProducts);
+      setLoading(false);
+    } else {
+      // Nếu không có, fetch từ API
+      fetchFeaturedProducts();
+    }
+  }, [initialProducts, fetchFeaturedProducts]);
+
   const displayProducts = useMemo(() => products || [], [products]);
   const count = displayProducts.length;
 
-  // Tạo infinite loop bằng cách duplicate products
+  // Logic thông minh cho UI đẹp và responsive
   const infiniteProducts = useMemo(() => {
     if (count === 0) return [];
-    // Duplicate 3 lần để tạo hiệu ứng infinite
-    return [...displayProducts, ...displayProducts, ...displayProducts];
+    
+    // Nếu có 1-3 sản phẩm, không duplicate để giữ UI đẹp
+    if (count <= 3) {
+      return displayProducts;
+    }
+    
+    // Nếu có nhiều sản phẩm (>3), duplicate 2 lần để tạo hiệu ứng infinite
+    return [...displayProducts, ...displayProducts];
   }, [displayProducts, count]);
 
-  // Auto scroll effect
+  // Tính toán layout dựa trên số lượng sản phẩm
+  const getLayoutConfig = useMemo(() => {
+    if (count === 1) {
+      return {
+        desktop: 'justify-center', // Căn giữa 1 sản phẩm
+        tablet: 'justify-center',
+        mobile: 'justify-center'
+      };
+    } else if (count === 2) {
+      return {
+        desktop: 'justify-center', // Căn giữa 2 sản phẩm
+        tablet: 'justify-center',
+        mobile: 'justify-start'
+      };
+    } else if (count === 3) {
+      return {
+        desktop: 'justify-center', // Căn giữa 3 sản phẩm
+        tablet: 'justify-start',
+        mobile: 'justify-start'
+      };
+    } else {
+      return {
+        desktop: 'justify-start', // Nhiều sản phẩm thì scroll
+        tablet: 'justify-start',
+        mobile: 'justify-start'
+      };
+    }
+  }, [count]);
+
+  // Auto scroll effect - chỉ hoạt động khi có nhiều sản phẩm
   useEffect(() => {
-    if (count === 0) return;
+    if (count === 0 || count <= 3) return; // Không auto scroll khi có ít sản phẩm
 
     const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
     if (!container) return;
@@ -144,82 +155,90 @@ const FeaturedProductsCarousel = ({
     }
   }, []);
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="relative w-full overflow-hidden">
+        <div className="flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 min-w-max px-4 sm:px-6 md:px-8">
+          {[1, 2, 3, 4].map((index) => (
+            <div key={index} className="flex-shrink-0">
+              <div className="bg-gray-200 rounded-lg h-56 w-64 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button 
+          onClick={fetchFeaturedProducts}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (count === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Chưa có sản phẩm nổi bật</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Gradient Overlays for Scroll Indicators - Mobile-first */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
+      {/* Gradient Overlays for Scroll Indicators - chỉ hiển thị khi có nhiều sản phẩm */}
+      {count > 3 && (
+        <>
+          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
+        </>
+      )}
       
       {/* Responsive Carousel Container - Mobile-first */}
       <div 
-        className="featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth"
+        className={`featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth ${
+          count <= 3 ? 'lg:overflow-x-visible' : ''
+        }`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 min-w-max px-4 sm:px-6 md:px-8">
-          {/* Mobile: 1 card, Tablet: 2 cards, Desktop: 4 cards */}
+        <div className={`flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 px-4 sm:px-6 md:px-8 ${
+          count <= 3 ? 'lg:justify-center lg:mx-auto lg:max-w-fit' : 'min-w-max'
+        }`}
+        style={{
+          ...(count <= 3 && {
+            display: 'flex',
+            justifyContent: 'center',
+            margin: '0 auto',
+            maxWidth: 'fit-content'
+          })
+        }}>
+          {/* Render từng sản phẩm với responsive design */}
           {infiniteProducts.map((product, index) => (
             <div 
               key={`${product.id}-${index}`}
               className="flex-shrink-0"
               style={{
-                width: 'calc(100vw - 2rem)', // Mobile: full width minus padding
-                minWidth: 'calc(100vw - 2rem)',
-                maxWidth: 'calc(100vw - 2rem)',
+                width: '280px', // Fixed width cho mỗi card
+                minWidth: '280px',
+                maxWidth: '280px',
               }}
             >
-              {/* Mobile: 1 card per slide */}
-              <div className="block sm:hidden">
-                <ProductCardWithTimer 
-                  product={product}
-                  isCompact={true}
-                />
-              </div>
-              
-              {/* Tablet: 2 cards per slide */}
-              <div className="hidden sm:block lg:hidden">
-                <div className="grid grid-cols-2 gap-4">
-                  <ProductCardWithTimer 
-                    product={product}
-                    isCompact={true}
-                  />
-                  {infiniteProducts[index + 1] && (
-                    <ProductCardWithTimer 
-                      product={infiniteProducts[index + 1]}
-                      isCompact={true}
-                    />
-                  )}
-                </div>
-              </div>
-              
-              {/* Desktop: 4 cards per slide */}
-              <div className="hidden lg:block">
-                <div className="grid grid-cols-4 gap-6">
-                  <ProductCardWithTimer 
-                    product={product}
-                    isCompact={true}
-                  />
-                  {infiniteProducts[index + 1] && (
-                    <ProductCardWithTimer 
-                      product={infiniteProducts[index + 1]}
-                      isCompact={true}
-                    />
-                  )}
-                  {infiniteProducts[index + 2] && (
-                    <ProductCardWithTimer 
-                      product={infiniteProducts[index + 2]}
-                      isCompact={true}
-                    />
-                  )}
-                  {infiniteProducts[index + 3] && (
-                    <ProductCardWithTimer 
-                      product={infiniteProducts[index + 3]}
-                      isCompact={true}
-                    />
-                  )}
-                </div>
-              </div>
+              <ProductCardWithTimer 
+                product={product}
+                isCompact={true}
+              />
             </div>
           ))}
         </div>

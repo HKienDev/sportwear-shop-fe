@@ -10,6 +10,7 @@ import { Order, OrderStatus } from "@/types/base";
 import { AdminProduct } from "@/types/product";
 import { toast } from "sonner";
 import { safePromise } from "@/utils/promiseUtils";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type OrderItemProduct = AdminProduct;
 
@@ -92,28 +93,15 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
     try {
       console.log('🔄 Refreshing order details:', orderId);
       
-      const result = await safePromise(
-        fetch(`/api/orders/${orderId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        }),
-        'Không thể cập nhật thông tin đơn hàng'
-      );
+      const response = await fetchWithAuth<{ status: OrderStatus }>(`/api/orders/${orderId}`);
       
-      if (!result.success) {
-        throw new Error(result.error || 'Không thể cập nhật thông tin đơn hàng');
-      }
-      
-      const response = await result.data!.json();
       console.log('📥 Refresh response:', response);
       
-      if (response.success && response.data?.status) {
-        setCurrentStatus(response.data.status);
+      if (response.success && response.data && typeof response.data.status === 'string') {
+        setCurrentStatus(response.data.status as OrderStatus);
         console.log('✅ Status updated:', response.data.status);
+      } else {
+        throw new Error(response.message || 'Không thể cập nhật thông tin đơn hàng');
       }
     } catch (error) {
       console.error("❌ Error refreshing order details:", error);
@@ -132,25 +120,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         setIsUpdating(true);
         console.log('🔄 Updating order status:', orderId, 'to', newStatus);
         
-        const result = await safePromise(
-          fetch(`/api/orders/${orderId}/status`, {
-            method: "PUT",
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({ status: newStatus }),
-            credentials: 'include',
-          }),
-          'Không thể cập nhật trạng thái đơn hàng'
-        );
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Không thể cập nhật trạng thái đơn hàng');
-        }
-        
-        const response = await result.data!.json();
-        console.log('📥 Update status response:', response);
+        const response = await fetchWithAuth(`/api/orders/${orderId}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ status: newStatus }),
+        });
 
         if (response.success) {
           setCurrentStatus(newStatus);
@@ -158,8 +131,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           if (onStatusUpdate) {
             onStatusUpdate(orderId, newStatus);
           }
+          // Refresh order details after update
+          await refreshOrderDetails();
         } else {
-          toast.error("Không thể cập nhật trạng thái đơn hàng");
+          toast.error(response.message || "Không thể cập nhật trạng thái đơn hàng");
         }
       } catch (error) {
         console.error("❌ Error updating order status:", error);
@@ -179,28 +154,13 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         setIsUpdating(true);
         console.log('🔄 Canceling order:', id, 'to', newStatus);
         
-        const result = await safePromise(
-          fetch(`/api/orders/${id}/status`, {
-            method: "PUT",
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({ 
-              status: newStatus,
-              note: "Đơn hàng đã bị hủy bởi admin"
-            }),
-            credentials: 'include',
+        const response = await fetchWithAuth(`/api/orders/${id}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ 
+            status: newStatus,
+            note: "Đơn hàng đã bị hủy bởi admin"
           }),
-          'Không thể hủy đơn hàng'
-        );
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Không thể hủy đơn hàng');
-        }
-        
-        const response = await result.data!.json();
-        console.log('📥 Cancel order response:', response);
+        });
 
         if (response.success) {
           setCurrentStatus(newStatus);
@@ -208,8 +168,10 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
           if (onStatusUpdate) {
             onStatusUpdate(id, newStatus);
           }
+          // Refresh order details after update
+          await refreshOrderDetails();
         } else {
-          toast.error("Không thể hủy đơn hàng");
+          toast.error(response.message || "Không thể hủy đơn hàng");
         }
       } catch (error) {
         console.error("❌ Error canceling order:", error);
@@ -246,7 +208,8 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
                 images: {
                   main: typeof item.product === 'string' ? '' : item.product.mainImage || '',
                   sub: typeof item.product === 'string' ? [] : item.product.subImages || []
-                }
+                },
+                isFeatured: false,
               },
               quantity: item.quantity,
               price: item.price
@@ -287,12 +250,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               colors: [],
               sizes: [],
               tags: [],
-              ratings: { average: 0, count: 0 },
+              rating: 0,
+              numReviews: 0,
               soldCount: 0,
               viewCount: 0,
               discountPercentage: 0,
               isOutOfStock: false,
-              isLowStock: false
+              isLowStock: false,
+              isFeatured: false,
             } : {
               _id: item.product._id,
               name: item.product.name,
@@ -311,12 +276,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               colors: item.product.colors || [],
               sizes: item.product.sizes || [],
               tags: item.product.tags || [],
-              ratings: item.product.ratings || { average: 0, count: 0 },
+              rating: item.product.rating || 0,
+              numReviews: item.product.numReviews || 0,
               soldCount: item.product.soldCount || 0,
               viewCount: item.product.viewCount || 0,
               discountPercentage: item.product.discountPercentage || 0,
               isOutOfStock: item.product.isOutOfStock || false,
-              isLowStock: item.product.isLowStock || false
+              isLowStock: item.product.isLowStock || false,
+              isFeatured: item.product.isFeatured || false,
             };
             return {
               product: productData,

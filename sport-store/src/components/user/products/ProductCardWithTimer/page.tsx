@@ -4,6 +4,10 @@ import React, { useMemo, useCallback, memo } from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useCartOptimized } from "@/hooks/useCartOptimized";
+import { toast } from "sonner";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 // Tách component Countdown Timer riêng để tối ưu re-render - Mobile-first
 const CountdownTimer = memo(({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) => (
@@ -66,6 +70,18 @@ interface ProductCardWithTimerProps {
     sold?: number;
     total?: number;
     rating?: number;
+    image?: string;
+    sku?: string;
+    brand?: string;
+    category?: string;
+    featuredConfig?: {
+      countdownEndDate?: string;
+      soldCount?: number;
+      remainingStock?: number;
+      isActive?: boolean;
+    } | null;
+    colors?: string[];
+    sizes?: string[];
   };
   isCompact?: boolean;
 }
@@ -77,16 +93,65 @@ const ProductCardWithTimer = ({
     originalPrice: 2000000,
     sold: 20,
     total: 60,
-    rating: 3
+    rating: 3,
+    image: "/default-image.png",
+    sku: "DEFAULT-SKU",
+    brand: "Default Brand",
+    category: "Default Category"
   },
   isCompact = false
 }: ProductCardWithTimerProps) => {
-  // Sử dụng custom hook cho countdown
+  const { addToCart, fetchCart } = useCartOptimized();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Tính toán countdown từ featuredConfig hoặc sử dụng giá trị mặc định
+  const countdownConfig = useMemo(() => {
+    if (product.featuredConfig?.countdownEndDate && product.featuredConfig.isActive) {
+      const endDate = new Date(product.featuredConfig.countdownEndDate);
+      const now = new Date();
+      const diff = endDate.getTime() - now.getTime();
+      
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        return {
+          days,
+          hours,
+          minutes,
+          seconds,
+          isComplete: false
+        };
+      } else {
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isComplete: true
+        };
+      }
+    }
+    
+    // Fallback to default countdown
+    return {
+      days: 360,
+      hours: 24,
+      minutes: 59,
+      seconds: 0,
+      isComplete: false
+    };
+  }, [product.featuredConfig]);
+
+  // Sử dụng custom hook cho countdown với config động
   const { timeLeft, isComplete } = useCountdown({
-    initialDays: 360,
-    initialHours: 24,
-    initialMinutes: 59,
-    initialSeconds: 0,
+    initialDays: countdownConfig.days,
+    initialHours: countdownConfig.hours,
+    initialMinutes: countdownConfig.minutes,
+    initialSeconds: countdownConfig.seconds,
     onComplete: () => {
       console.log('Countdown completed!');
     }
@@ -96,11 +161,155 @@ const ProductCardWithTimer = ({
   const discountAmount = useMemo(() => (product.originalPrice || 2000000) - (product.price || 100000), [product.originalPrice, product.price]);
   const discountPercentage = useMemo(() => Math.round((discountAmount / (product.originalPrice || 2000000)) * 100), [discountAmount, product.originalPrice]);
 
-  // Tối ưu event handler
-  const handleAddToCart = useCallback(() => {
-    // TODO: Implement add to cart logic
-    console.log('Adding to cart...');
-  }, []);
+  // Tối ưu event handler với logic thực sự
+  const handleAddToCart = useCallback(async () => {
+    console.log('🔍 handleAddToCart called');
+    console.log('🔍 isAuthenticated:', isAuthenticated);
+    console.log('🔍 product:', product);
+
+    if (!isAuthenticated) {
+      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+      router.push('/auth/login');
+      return;
+    }
+
+    // Kiểm tra xem sản phẩm có hết hạn ưu đãi không
+    if (isComplete) {
+      toast.error("Ưu đãi đã hết hạn!");
+      return;
+    }
+
+    if (!product.sku) {
+      toast.error("Không tìm thấy thông tin sản phẩm");
+      return;
+    }
+
+    try {
+      // Lấy thông tin sản phẩm đầy đủ từ backend trực tiếp
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      
+      // Thử endpoint khác nhau
+      let productResponse;
+      let fullProduct = null;
+
+      // Thử endpoint 1: /api/products/sku/:sku
+      try {
+        productResponse = await fetch(`${API_URL}/api/products/sku/${product.sku}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('Product API response status:', productResponse.status);
+        
+        if (productResponse.ok) {
+          const productData = await productResponse.json();
+          fullProduct = productData.data;
+          console.log('Full product data:', fullProduct);
+        }
+      } catch (error) {
+        console.log('Endpoint 1 failed:', error);
+      }
+
+      // Thử endpoint 2: /api/products?keyword=${sku}&limit=1
+      if (!fullProduct) {
+        try {
+          productResponse = await fetch(`${API_URL}/api/products?keyword=${product.sku}&limit=1`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          console.log('Product API response status (endpoint 2):', productResponse.status);
+          
+          if (productResponse.ok) {
+            const productData = await productResponse.json();
+            if (productData.data && productData.data.length > 0) {
+              fullProduct = productData.data[0];
+              console.log('Full product data (endpoint 2):', fullProduct);
+            }
+          }
+        } catch (error) {
+          console.log('Endpoint 2 failed:', error);
+        }
+      }
+
+      // Fallback: Sử dụng dữ liệu từ props
+      if (!fullProduct) {
+        console.log('Using fallback data from props');
+        fullProduct = product;
+      }
+
+      console.log('🔍 fullProduct data:', fullProduct);
+      console.log('🔍 fullProduct.colors:', fullProduct.colors);
+      console.log('🔍 fullProduct.sizes:', fullProduct.sizes);
+
+      // Lấy color và size thực tế từ sản phẩm
+      let color = undefined;
+      let size = undefined;
+
+      console.log('🔍 === NEW LOGIC START ===');
+      console.log('🔍 fullProduct data:', fullProduct);
+      console.log('🔍 fullProduct.colors:', fullProduct.colors);
+      console.log('🔍 fullProduct.sizes:', fullProduct.sizes);
+
+      // Nếu sản phẩm có colors, lấy color đầu tiên
+      if (fullProduct.colors && Array.isArray(fullProduct.colors) && fullProduct.colors.length > 0) {
+        color = fullProduct.colors[0];
+        console.log('🔍 Found color from product:', color);
+      } else {
+        console.log('🔍 No colors found in product');
+      }
+
+      // Nếu sản phẩm có sizes, lấy size đầu tiên
+      if (fullProduct.sizes && Array.isArray(fullProduct.sizes) && fullProduct.sizes.length > 0) {
+        // Nếu sizes là array of objects, lấy size từ object đầu tiên
+        if (typeof fullProduct.sizes[0] === 'object' && fullProduct.sizes[0].size) {
+          size = fullProduct.sizes[0].size;
+          console.log('🔍 Found size from product (object):', size);
+        } else {
+          // Nếu sizes là array of strings
+          size = fullProduct.sizes[0];
+          console.log('🔍 Found size from product (string):', size);
+        }
+      } else {
+        console.log('🔍 No sizes found in product');
+      }
+
+      console.log('🔍 === NEW LOGIC END ===');
+      console.log('Selected color:', color);
+      console.log('Selected size:', size);
+
+      // Gọi API addToCart với format đúng
+      const cartData: { sku: string; quantity: number; color?: string; size?: string } = {
+        sku: product.sku,
+        quantity: 1
+      };
+
+      // Chỉ thêm color và size nếu có
+      if (color) {
+        cartData.color = color;
+      }
+      if (size) {
+        cartData.size = size;
+      }
+
+      console.log('Cart data to send:', cartData);
+
+      await addToCart(cartData);
+      
+      console.log('🔍 addToCart completed');
+      
+      // addToCart hook tự động hiển thị toast và xử lý lỗi
+      // Chỉ cần refresh cart data
+      fetchCart();
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
+    }
+  }, [isAuthenticated, product, addToCart, fetchCart, router, isComplete]);
 
   if (isCompact) {
     return (
@@ -109,7 +318,7 @@ const ProductCardWithTimer = ({
         <div className="relative h-36 sm:h-40 md:h-48 lg:h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <Image 
-            src="/default-image.png" 
+            src={product.image || "/default-image.png"} 
             alt={product.name || "Product Pack"}
             width={200}
             height={200}
@@ -144,35 +353,49 @@ const ProductCardWithTimer = ({
           {/* Add to Cart Button - Mobile-first */}
           <button 
             onClick={handleAddToCart}
-            className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg"
+            disabled={isComplete}
+            className={`w-full font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 rounded-lg transition-all duration-300 transform text-sm sm:text-base md:text-lg ${
+              isComplete 
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white hover:scale-105'
+            }`}
           >
-            Thêm Vào Giỏ
+            {isComplete ? 'HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
           </button>
 
           {/* Stock Information - Mobile-first */}
           <div className="flex justify-between items-center text-xs sm:text-sm">
             <span className="text-gray-600">
-              Đã bán: <span className="font-semibold text-gray-900">{product.sold || 20}</span>
+              Đã bán: <span className="font-semibold text-gray-900">
+                {product.featuredConfig?.soldCount ?? product.sold ?? 20}
+              </span>
             </span>
             <span className="text-gray-600">
-              Còn lại: <span className="font-semibold text-gray-900">{(product.total || 60) - (product.sold || 20)}</span>
+              Còn lại: <span className="font-semibold text-gray-900">
+                {product.featuredConfig?.remainingStock ?? ((product.total || 60) - (product.sold || 20))}
+              </span>
             </span>
           </div>
 
           {/* Progress Bar */}
-          <ProgressBar sold={product.sold || 20} total={product.total || 60} />
+          <ProgressBar 
+            sold={product.featuredConfig?.soldCount ?? product.sold ?? 20} 
+            total={(product.featuredConfig?.soldCount ?? product.sold ?? 20) + (product.featuredConfig?.remainingStock ?? ((product.total || 60) - (product.sold || 20)))}
+          />
 
           {/* Countdown Timer - Mobile-first */}
-          <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-            <p className="text-xs sm:text-sm font-semibold text-gray-700">
-              ⏰ Nhanh tay! Ưu đãi kết thúc sau:
-            </p>
-            {isComplete ? (
-              <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">OFFER EXPIRED!</div>
-            ) : (
-              <CountdownTimer timeLeft={timeLeft} />
-            )}
-          </div>
+          {product.featuredConfig?.isActive && (
+            <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
+              <p className="text-xs sm:text-sm font-semibold text-gray-700">
+                ⏰ Nhanh tay! Ưu đãi kết thúc sau:
+              </p>
+              {isComplete ? (
+                <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">HẾT HẠN ƯU ĐÃI!</div>
+              ) : (
+                <CountdownTimer timeLeft={timeLeft} />
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -187,7 +410,7 @@ const ProductCardWithTimer = ({
           <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-md xl:max-w-lg group aspect-[4/3] overflow-hidden" style={{height: '160px', minHeight: '160px'}}>
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Image 
-              src="/default-image.png" 
+              src={product.image || "/default-image.png"} 
               alt="Product Pack"
               width={240}
               height={180}
@@ -224,9 +447,14 @@ const ProductCardWithTimer = ({
           {/* Add to Cart Button - Mobile-first */}
           <button 
             onClick={handleAddToCart}
-            className="w-fit bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg"
+            disabled={isComplete}
+            className={`w-fit font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 rounded-lg transition-all duration-300 transform text-sm sm:text-base md:text-lg ${
+              isComplete 
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white hover:scale-105'
+            }`}
           >
-            Thêm Vào Giỏ
+            {isComplete ? 'HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
           </button>
 
           {/* Stock Information - Mobile-first */}
@@ -248,7 +476,7 @@ const ProductCardWithTimer = ({
               ⏰ Nhanh tay! Ưu đãi kết thúc sau:
             </p>
             {isComplete ? (
-              <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">OFFER EXPIRED!</div>
+              <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">HẾT HẠN ƯU ĐÃI!</div>
             ) : (
               <CountdownTimer timeLeft={timeLeft} />
             )}

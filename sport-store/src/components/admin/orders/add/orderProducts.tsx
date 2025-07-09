@@ -143,19 +143,13 @@ export default function OrderProducts() {
         colors: product.colors || [],
         sizes: product.sizes || [],
         sku: product.sku,
-        slug: product.sku.toLowerCase(),
         tags: product.tags || [],
         rating: product.rating || 0,
         numReviews: product.numReviews || 0,
         viewCount: product.viewCount || 0,
         soldCount: product.soldCount || 0,
-        reviews: (product.reviews || []).map(review => ({
-          ...review,
-          createdAt: new Date(review.createdAt)
-        })),
         createdAt: product.createdAt || new Date().toISOString(),
         updatedAt: product.updatedAt || new Date().toISOString(),
-        ratings: product.ratings || { average: 0, count: 0 },
         discountPercentage: product.discountPercentage || 0,
         isOutOfStock: product.isOutOfStock || false,
         isLowStock: product.isLowStock || false

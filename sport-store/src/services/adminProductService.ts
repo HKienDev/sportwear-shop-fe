@@ -28,17 +28,15 @@ function toAdminProduct(product: any): AdminProduct {
     colors: product.colors ?? [],
     sizes: product.sizes ?? [],
     tags: product.tags ?? [],
-    ratings: product.ratings ?? { average: 0, count: 0 },
+    rating: product.rating ?? (product.ratings?.average ?? 0),
+    numReviews: product.numReviews ?? (product.ratings?.count ?? 0),
     soldCount: product.soldCount ?? 0,
     viewCount: product.viewCount ?? 0,
     discountPercentage: product.discountPercentage ?? 0,
     isOutOfStock: product.isOutOfStock ?? false,
     isLowStock: product.isLowStock ?? false,
     status: product.status,
-    rating: product.rating,
-    numReviews: product.numReviews,
-    reviews: product.reviews ?? [],
-    slug: product.slug ?? ''
+    isFeatured: product.isFeatured ?? false,
   };
 }
 

@@ -89,17 +89,36 @@ export async function callBackendAPI(
   options: RequestInit = {}
 ): Promise<Response> {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    let API_URL = process.env.NEXT_PUBLIC_API_URL;
+    
+    console.log('🔍 callBackendAPI - Initial API_URL:', API_URL);
+    
+    // Đảm bảo API_URL không kết thúc bằng /api để tránh duplicate
+    if (API_URL?.endsWith('/api')) {
+      API_URL = API_URL.slice(0, -4); // Loại bỏ /api ở cuối
+      console.log('🔍 callBackendAPI - Removed /api suffix, new API_URL:', API_URL);
+    }
+    
     const authResult = await requireAdmin();
     
     if (authResult instanceof NextResponse) {
+      console.log('❌ callBackendAPI - Authentication failed');
       throw new Error('Authentication failed');
     }
 
     const { accessToken } = authResult;
-    const url = `${API_URL}${endpoint}`;
+    // Đảm bảo endpoint không bắt đầu bằng /api để tránh duplicate
+    const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.slice(4) : endpoint;
+    const url = `${API_URL}/api${cleanEndpoint}`;
     
-    console.log('🌐 API Auth - Calling backend:', { endpoint, method: options.method || 'GET' });
+    console.log('🌐 callBackendAPI - Calling backend:', { 
+      endpoint, 
+      method: options.method || 'GET',
+      fullUrl: url,
+      apiUrl: API_URL,
+      hasToken: !!accessToken,
+      tokenLength: accessToken?.length
+    });
 
     const response = await fetch(url, {
       ...options,
@@ -110,19 +129,26 @@ export async function callBackendAPI(
       },
     });
 
+    console.log('📥 callBackendAPI - Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      console.error('❌ API Auth - Backend API error:', { 
+      console.error('❌ callBackendAPI - Backend API error:', { 
         status: response.status, 
         statusText: response.statusText,
-        endpoint 
+        endpoint,
+        url
       });
       throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ API Auth - Backend API call successful:', { endpoint, status: response.status });
+    console.log('✅ callBackendAPI - Backend API call successful:', { endpoint, status: response.status });
     return response;
   } catch (error) {
-    console.error('❌ API Auth - Error calling backend API:', error);
+    console.error('❌ callBackendAPI - Error calling backend API:', error);
     throw error;
   }
 } 

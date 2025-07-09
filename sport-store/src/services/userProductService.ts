@@ -19,6 +19,13 @@ export interface UserProductsResponse {
   limit?: number;
 }
 
+export interface ProductQueryParams {
+  sort?: string;
+  order?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const userProductService = {
   // Get all products for user
   async getProducts(params?: any): Promise<ApiResponse<UserProductsResponse>> {
@@ -124,5 +131,40 @@ export const userProductService = {
   // Get products by category for user
   async getProductsByCategory(categoryId: string): Promise<ApiResponse<UserProductsResponse>> {
     return this.getProducts({ categoryId });
-  }
+  },
+
+  // Lấy danh sách sản phẩm theo danh mục với params
+  async getProductsByCategoryWithParams(categoryId: string, params?: ProductQueryParams): Promise<ApiResponse<UserProductsResponse>> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+
+      const response = await publicApiClient.get(`/products/category/${categoryId}?${queryParams.toString()}`);
+      
+      // Xử lý response tương tự như getProducts
+      if (response.data && (response.data as any).products) {
+        return { 
+          success: response.data.success, 
+          data: { 
+            products: (response.data as any).products as UserProduct[],
+            total: (response.data as any).total,
+            page: (response.data as any).page,
+            limit: (response.data as any).limit
+          } 
+        };
+      }
+      
+      return { success: false, data: { products: [] } };
+    } catch (error) {
+      console.error('Error fetching products by category:', error);
+      throw error;
+    }
+  },
 }; 
