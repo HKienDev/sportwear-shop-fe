@@ -2,13 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ShoppingCart, Heart, Star, Eye, Plus, Check } from "lucide-react";
+import { ShoppingCart, Heart, Star, Eye, Check } from "lucide-react";
 import { UserProduct } from "@/types/product";
 import { getCategoryById } from "@/services/categoryService";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
-import styles from './ProductCard.module.css';
 
 interface ProductCardProps {
   product: UserProduct;
@@ -100,154 +98,11 @@ const CartButton = ({
   );
 };
 
-// Enhanced Badge giảm giá
-const DiscountBadge = ({ discountPercentage = 0 }: { discountPercentage?: number }) => {
-  return (
-    <div className={`absolute top-3 sm:top-4 left-3 sm:left-4 z-20 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[clamp(0.75rem,2vw,0.875rem)] font-bold px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.375rem,1vw,0.5rem)] rounded-full shadow-lg ${styles.animatePulse}`}>
-      -{discountPercentage}%
-    </div>
-  );
-};
 
-// Enhanced Badge hết hàng
-const OutOfStockBadge = () => {
-  return (
-    <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-[clamp(0.75rem,2vw,0.875rem)] font-bold px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.375rem,1vw,0.5rem)] rounded-full shadow-lg">
-      Hết hàng
-    </div>
-  );
-};
-
-// Enhanced Brand Badge
-const BrandBadge = ({ brand }: { brand: string }) => {
-  return (
-    <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-[clamp(0.5rem,1.5vw,0.75rem)] py-[clamp(0.25rem,0.75vw,0.375rem)] rounded-full shadow-lg">
-      {brand}
-    </div>
-  );
-};
-
-// Enhanced Container ảnh
-const ImageContainer = ({ imageUrl, name }: { imageUrl: string; name: string }) => {
-  return (
-    <div className={`${styles.imageContainer} relative overflow-hidden rounded-t-2xl sm:rounded-t-3xl flex-shrink-0`}>
-      <div className={`${styles.imageWrapper} relative w-full h-full`}>
-        <Image
-          src={imageUrl}
-          alt={name}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-          className={`${styles.productImage} object-cover transition-all duration-700 ease-out`}
-          priority
-        />
-      </div>
-      
-      {/* Enhanced Overlay khi hover */}
-      <div className={`${styles.imageOverlay} absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500`}></div>
-      
-      {/* Enhanced Action Buttons */}
-      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-        <button 
-          className={`p-2 sm:p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-red-50 transition-all duration-300 hover:scale-110 ${styles.buttonHover}`}
-          aria-label="Yêu thích sản phẩm"
-        >
-          <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 hover:text-red-500 transition-colors" />
-        </button>
-        <button 
-          className={`p-2 sm:p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-blue-50 transition-all duration-300 hover:scale-110 ${styles.buttonHover}`}
-          aria-label="Xem chi tiết"
-        >
-          <Eye className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 hover:text-blue-500 transition-colors" />
-        </button>
-      </div>
-
-      {/* Enhanced Quick View Overlay */}
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 sm:p-4 shadow-lg transform scale-75 group-hover:scale-100 transition-all duration-300">
-          <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Enhanced Container thông tin
-const InfoContainer = ({ name, categoryName, rating, description, price, stock }: {
-  name: string;
-  categoryName: string;
-  rating: number;
-  description: string;
-  price: number | undefined;
-  stock: number;
-}) => {
-  return (
-    <div className="p-[clamp(1rem,3vw,1.5rem)] flex flex-col flex-grow relative z-10">
-      {/* Enhanced Category */}
-      <div className="mb-[clamp(0.75rem,2vw,1rem)]">
-        <span className="text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.375rem,1vw,0.5rem)] rounded-full border border-purple-200/50 shadow-sm">
-          {categoryName}
-        </span>
-      </div>
-
-      {/* Enhanced Rating */}
-      <div className="mb-[clamp(0.5rem,1.5vw,0.75rem)]">
-        <RatingStars rating={rating} />
-      </div>
-
-      {/* Enhanced Tên sản phẩm */}
-      <h3 className={`text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold text-gray-800 mb-[clamp(0.5rem,1.5vw,0.75rem)] line-clamp-2 group-hover:text-purple-600 transition-colors duration-300 leading-tight ${styles.textResponsive}`}>
-        {name}
-      </h3>
-
-      {/* Enhanced Mô tả */}
-      <p className={`text-gray-600 text-[clamp(0.75rem,2vw,0.875rem)] mb-[clamp(1rem,3vw,1.25rem)] line-clamp-2 leading-relaxed ${styles.textResponsive}`}>
-        {description}
-      </p>
-
-      {/* Enhanced Giá và nút mua */}
-      <div className="flex justify-between items-center mt-auto gap-[clamp(0.5rem,1.5vw,0.75rem)]">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0 flex-1">
-          {price > 0 ? (
-            <>
-              <span className="text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent truncate">
-                {formatCurrency(price)}
-              </span>
-              <span className="text-[clamp(0.625rem,1.5vw,0.75rem)] line-through text-gray-400 truncate">
-                {formatCurrency(price)}
-              </span>
-            </>
-          ) : (
-            <span className="text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold text-gray-800 truncate">
-              {formatCurrency(price)}
-            </span>
-          )}
-        </div>
-        
-        {/* Enhanced Stock Status */}
-        <div className="mt-[clamp(0.75rem,2vw,1rem)] flex items-center justify-between text-[clamp(0.625rem,1.5vw,0.75rem)]">
-          <span className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-            stock > 0 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${
-              stock > 0 ? 'bg-green-500' : 'bg-red-500'
-            }`}></span>
-            {stock > 0 ? 'Còn hàng' : 'Hết hàng'}
-          </span>
-          <span className="text-gray-500 truncate">
-            {stock} trong kho
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku, colors, sizes, brand } = product;
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
-  const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addToCart } = useCartStore();
 
@@ -314,105 +169,152 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : 0;
 
   return (
-    <div className="group relative w-full bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[360px]">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-pink-50/30 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      {/* Product Image - Ultra Enhanced */}
-      <div className="relative h-36 sm:h-44 md:h-52 lg:h-56 bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center group/image overflow-hidden rounded-t-2xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-pink-100/20 to-blue-100/30 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/image:translate-x-full transition-transform duration-1500 ease-out"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-500"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+    <article 
+      className="group relative bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-gray-100/80 shadow-sm hover:shadow-xl overflow-hidden transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 w-full mx-auto cursor-pointer"
+      style={{
+        minHeight: 'clamp(320px, 55vh, 420px)',
+        maxHeight: 'clamp(360px, 65vh, 480px)',
+        width: 'clamp(280px, 100%, 400px)'
+      }}
+      role="article"
+      aria-label={`Sản phẩm: ${name}`}
+    >
+      {/* Enhanced Background gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/40 via-pink-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      {/* Product Image Container - Optimized for all devices */}
+      <div 
+        className="relative bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center group/image overflow-hidden rounded-t-2xl sm:rounded-t-3xl"
+        style={{
+          height: 'clamp(160px, 48%, 260px)'
+        }}
+      >
+        {/* Enhanced overlay effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 via-pink-100/10 to-blue-100/20 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/image:translate-x-full transition-transform duration-1500 ease-out"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/3 via-transparent to-pink-500/3 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+        
+        {/* Image with enhanced loading and hover effects */}
         <div className="relative w-full h-full flex items-center justify-center transform perspective-1000">
-          <div className="relative w-full h-full transform transition-all duration-700 group-hover/image:scale-110 group-hover/image:rotate-y-12 group-hover/image:rotate-x-6">
+          <div className="relative w-full h-full transform transition-all duration-700 group-hover/image:scale-105 group-hover/image:rotate-y-2 group-hover/image:rotate-x-1">
             <Image 
               src={imageUrl} 
               alt={name}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-              className="w-full h-full object-cover transition-all duration-700 group-hover/image:scale-105 group-hover/image:rotate-2 drop-shadow-2xl"
+              sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
+              className="w-full h-full object-cover transition-all duration-700 group-hover/image:scale-105 group-hover/image:rotate-1 drop-shadow-lg"
               priority
+              loading="eager"
             />
           </div>
         </div>
-        {/* Discount Badge */}
+        
+        {/* Enhanced Action Buttons - Responsive positioning */}
+        <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 flex flex-col gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+          <button
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            aria-label="Yêu thích sản phẩm"
+          >
+            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+          </button>
+          <button
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            aria-label="Xem nhanh sản phẩm"
+          >
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+          </button>
+        </div>
+        
+        {/* Enhanced Badges - Responsive positioning */}
         {salePrice > 0 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-xl border border-white/20">
+          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-lg border border-white/20 truncate max-w-[clamp(60px,15vw,80px)] animate-pulse">
             -{discountPercentage}%
           </div>
         )}
-        {/* Brand Badge */}
         {brand && (
-          <div className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border border-white/20">
+          <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[clamp(0.5rem,1.2vw,0.625rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-sm border border-white/20 truncate max-w-[clamp(50px,12vw,70px)]">
             {brand}
           </div>
         )}
-        {/* Out of stock badge */}
+        
         {stock === 0 && (
-          <div className="absolute bottom-3 left-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-xs font-bold px-2 py-1 rounded-full shadow-xl border border-white/20">
+          <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-lg border border-white/20">
             Hết hàng
           </div>
         )}
       </div>
-      {/* Product Details - Enhanced */}
-      <div className="relative p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 flex flex-col flex-1">
-        {/* Category + Rating */}
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-2 py-1 rounded-full border border-purple-200/50 truncate max-w-[60%]">
+      
+      {/* Enhanced Product Details - Mobile-first responsive */}
+      <div 
+        className="relative flex flex-col flex-1"
+        style={{
+          padding: 'clamp(0.875rem, 2.5vw, 1.375rem)',
+          gap: 'clamp(0.375rem, 1.2vw, 0.625rem)'
+        }}
+      >
+        {/* Category + Rating - Enhanced responsive layout */}
+        <div 
+          className="flex items-center justify-between"
+          style={{
+            marginBottom: 'clamp(0.375rem, 1.2vw, 0.625rem)'
+          }}
+        >
+          <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] sm:text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full border border-purple-200/50 truncate max-w-[60%] hover:from-purple-100 hover:to-pink-100 transition-colors duration-200">
             {categoryName}
           </span>
           <RatingStars rating={4.5} />
         </div>
-        {/* Product Title */}
-        <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300">
+        
+        {/* Enhanced Product Title - Fluid typography */}
+        <h3 className="text-[clamp(0.875rem,2.5vw,1rem)] sm:text-[clamp(1rem,3vw,1.125rem)] md:text-[clamp(1.125rem,3.5vw,1.25rem)] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300 hover:line-clamp-none">
           {name}
         </h3>
-        {/* Description */}
-        <p className="text-gray-600 text-xs sm:text-sm mb-1 line-clamp-2 leading-relaxed flex-grow">
+        
+        {/* Enhanced Description - Better readability */}
+        <p className="text-gray-600 text-[clamp(0.75rem,2vw,0.875rem)] sm:text-[clamp(0.875rem,2.5vw,1rem)] mb-[clamp(0.625rem,1.8vw,0.875rem)] line-clamp-2 leading-relaxed flex-grow group-hover:line-clamp-3 transition-all duration-300">
           {description}
         </p>
-        {/* Price + Cart Button */}
+        
+        {/* Enhanced Price + Cart Button - Better responsive layout */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap mt-auto">
-          <span className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
-            {formatCurrency(salePrice > 0 ? salePrice : originalPrice)}
-          </span>
-          {salePrice > 0 && (
-            <span className="text-xs sm:text-sm text-gray-400 line-through">
-              {formatCurrency(originalPrice)}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0 flex-1">
+            <span className="text-[clamp(1rem,3vw,1.125rem)] sm:text-[clamp(1.125rem,3.5vw,1.25rem)] md:text-[clamp(1.25rem,4vw,1.375rem)] font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent truncate">
+              {formatCurrency(salePrice > 0 ? salePrice : originalPrice)}
             </span>
-          )}
-          <div className="flex-1"></div>
-          <button 
+            {salePrice > 0 && (
+              <span className="text-[clamp(0.75rem,2vw,0.875rem)] sm:text-[clamp(0.875rem,2.5vw,1rem)] text-gray-400 line-through truncate">
+                {formatCurrency(originalPrice)}
+              </span>
+            )}
+          </div>
+          
+          {/* Enhanced Cart Button - Better touch targets */}
+          <CartButton 
             onClick={handleAddToCart}
             disabled={stock === 0}
-            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-md border-none outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 ${
-              stock === 0 
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-purple-500/25 hover:shadow-purple-500/40'
-            }`}
-            aria-label="Thêm vào giỏ hàng"
-          >
-            <ShoppingCart className="h-4 w-4" />
-          </button>
+            isAdding={isAddingToCart}
+          />
         </div>
-        {/* Stock status */}
-        <div className="flex items-center justify-between text-[10px] mt-1">
-          <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
+        
+        {/* Enhanced Stock status - Better visual feedback */}
+        <div className="flex items-center justify-between text-[clamp(0.5rem,1.2vw,0.625rem)] sm:text-[clamp(0.625rem,1.5vw,0.75rem)] mt-[clamp(0.625rem,1.8vw,0.875rem)]">
+          <span className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors duration-200 ${
             stock > 0 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
+              ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' 
+              : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-colors duration-200 ${
               stock > 0 ? 'bg-green-500' : 'bg-red-500'
             }`}></span>
             {stock > 0 ? 'Còn hàng' : 'Hết hàng'}
           </span>
-          <span className="text-gray-500 truncate">
+          <span className="text-gray-500 truncate font-medium">
             {stock} trong kho
           </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
