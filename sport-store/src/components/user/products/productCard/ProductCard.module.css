@@ -1,32 +1,39 @@
 .imageContainer {
   position: relative;
   width: 100%;
-  height: 140px; /* Mobile first - increased height for better proportion */
+  height: clamp(10rem, 40vh, 14rem); /* Responsive height using clamp */
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* Responsive image container heights - Mobile-first approach */
 @media (min-width: 640px) {
   .imageContainer {
-    height: 160px; /* sm */
+    height: clamp(12rem, 45vh, 16rem); /* sm */
   }
 }
 
 @media (min-width: 768px) {
   .imageContainer {
-    height: 180px; /* md */
+    height: clamp(14rem, 50vh, 18rem); /* md */
   }
 }
 
 @media (min-width: 1024px) {
   .imageContainer {
-    height: 200px; /* lg */
+    height: clamp(16rem, 55vh, 20rem); /* lg */
   }
 }
 
 @media (min-width: 1280px) {
   .imageContainer {
-    height: 220px; /* xl */
+    height: clamp(18rem, 60vh, 22rem); /* xl */
+  }
+}
+
+@media (min-width: 1536px) {
+  .imageContainer {
+    height: clamp(20rem, 65vh, 24rem); /* 2xl */
   }
 }
 
@@ -38,21 +45,215 @@
 
 .productImage {
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  animation: imageLoad 0.5s ease-out;
 }
 
 .productImage:hover {
-  transform: scale(1.1);
+  transform: scale(1.1) rotate(1deg);
+  filter: brightness(1.1) contrast(1.05);
 }
 
 .imageOverlay {
   position: absolute;
   inset: 0;
-  background-color: black;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
 .imageOverlay:hover {
-  opacity: 0.1;
+  opacity: 1;
+}
+
+/* Enhanced hover effects for the entire card */
+.group:hover .productImage {
+  transform: scale(1.05);
+}
+
+.group:hover .imageOverlay {
+  opacity: 1;
+}
+
+/* Glass morphism effect */
+.glassEffect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Loading animation for images */
+@keyframes imageLoad {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pulse animation for discount badges */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animatePulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Enhanced button hover effects */
+.buttonHover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.buttonHover:hover {
+  transform: translateY(-1px);
+}
+
+.buttonHover:active {
+  transform: translateY(0);
+}
+
+/* Responsive text sizing using clamp */
+.textResponsive {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: clamp(1.25rem, 3vw, 1.5rem);
+}
+
+@media (min-width: 640px) {
+  .textResponsive {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+    line-height: clamp(1.5rem, 3.5vw, 1.75rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .textResponsive {
+    font-size: clamp(1.125rem, 3vw, 1.25rem);
+    line-height: clamp(1.75rem, 4vw, 2rem);
+  }
+}
+
+/* Focus states for accessibility */
+.focusVisible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+/* Container responsive utilities */
+.containerResponsive {
+  width: 100%;
+  max-width: min(90vw, 100%);
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .containerResponsive {
+    max-width: min(85vw, 100%);
+  }
+}
+
+@media (min-width: 768px) {
+  .containerResponsive {
+    max-width: min(80vw, 100%);
+  }
+}
+
+@media (min-width: 1024px) {
+  .containerResponsive {
+    max-width: min(75vw, 100%);
+  }
+}
+
+@media (min-width: 1280px) {
+  .containerResponsive {
+    max-width: min(70vw, 100%);
+  }
+}
+
+/* Grid responsive utilities */
+.gridResponsive {
+  display: grid;
+  gap: clamp(1rem, 3vw, 1.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 100%, 320px), 1fr));
+}
+
+@media (min-width: 640px) {
+  .gridResponsive {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 50%, 350px), 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .gridResponsive {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(320px, 33.333%, 380px), 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .gridResponsive {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(340px, 25%, 400px), 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .gridResponsive {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(360px, 20%, 420px), 1fr));
+  }
+}
+
+/* Spacing responsive utilities */
+.spacingResponsive {
+  padding: clamp(1rem, 3vw, 1.5rem);
+  margin: clamp(0.5rem, 2vw, 1rem);
+}
+
+/* Border radius responsive */
+.radiusResponsive {
+  border-radius: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+@media (min-width: 640px) {
+  .radiusResponsive {
+    border-radius: clamp(1rem, 2.5vw, 2rem);
+  }
+}
+
+/* Shadow responsive */
+.shadowResponsive {
+  box-shadow: 0 clamp(0.25rem, 1vw, 0.5rem) clamp(0.5rem, 2vw, 1rem) rgba(0, 0, 0, 0.1);
+}
+
+.shadowResponsive:hover {
+  box-shadow: 0 clamp(0.5rem, 2vw, 1rem) clamp(1rem, 3vw, 2rem) rgba(0, 0, 0, 0.15);
 } 

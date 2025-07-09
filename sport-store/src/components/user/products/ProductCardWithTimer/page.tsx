@@ -74,6 +74,7 @@ interface ProductCardWithTimerProps {
     sku?: string;
     brand?: string;
     category?: string;
+    description?: string;
     featuredConfig?: {
       countdownEndDate?: string;
       soldCount?: number;
@@ -313,84 +314,136 @@ const ProductCardWithTimer = ({
 
   if (isCompact) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:border-purple-300 hover:scale-105 min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[360px]">
-        {/* Product Image - Mobile-first */}
-        <div className="relative h-36 sm:h-40 md:h-48 lg:h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <Image 
-            src={product.image || "/default-image.png"} 
-            alt={product.name || "Product Pack"}
-            width={200}
-            height={200}
-            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-            priority
-          />
+      <div className="group relative bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[360px]">
+        {/* Background gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-pink-50/30 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        {/* Product Image - Ultra Enhanced */}
+        <div className="relative h-44 sm:h-48 md:h-52 lg:h-56 bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center group/image overflow-hidden rounded-t-2xl">
+          {/* 3D Parallax Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-pink-100/20 to-blue-100/30 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+          
+          {/* Animated Shimmer Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/image:translate-x-full transition-transform duration-1500 ease-out"></div>
+          
+          {/* Multi-layer Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+          
+          {/* Main Image Container with 3D Effect */}
+                      <div className="relative w-full h-full flex items-center justify-center transform perspective-1000">
+              <div className="relative w-full h-full transform transition-all duration-700 group-hover/image:scale-110 group-hover/image:rotate-y-12 group-hover/image:rotate-x-6">
+                <Image 
+                  src={product.image || "/default-image.png"} 
+                  alt={product.name || "Product Pack"}
+                  width={200}
+                  height={200}
+                  className="w-full h-full object-cover transition-all duration-700 group-hover/image:scale-105 group-hover/image:rotate-2 drop-shadow-2xl"
+                  priority
+                />
+              
+              {/* Floating Elements */}
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse shadow-lg"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-ping shadow-lg"></div>
+            </div>
+          </div>
+          
+          {/* Enhanced Floating Discount Badge */}
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-xl transform rotate-12 hover:rotate-0 transition-all duration-300 hover:scale-110 hover:shadow-2xl border border-white/20">
+            <span className="relative z-10">-{discountPercentage}%</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-500 rounded-full"></div>
+          </div>
+          
+          {/* Corner Accent */}
+          <div className="absolute top-0 left-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-br-2xl opacity-0 group-hover/image:opacity-100 transition-opacity duration-500"></div>
+          
+          {/* Bottom Glow */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-0 group-hover/image:opacity-100 transition-opacity duration-500"></div>
         </div>
 
-        {/* Product Details - Mobile-first */}
-        <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-2.5 md:space-y-3 lg:space-y-4">
-          {/* Rating */}
-          <RatingStars rating={product.rating || 3} />
+        {/* Product Details - Enhanced */}
+        <div className="relative p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4">
+          {/* Rating with enhanced styling */}
+          <div className="flex items-center justify-between">
+            <RatingStars rating={product.rating || 3} />
+            <div className="flex items-center space-x-1 text-xs text-gray-500">
+              <span>🔥</span>
+              <span className="font-medium">Hot</span>
+            </div>
+          </div>
 
-          {/* Product Title */}
-          <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-900 leading-tight line-clamp-2">
+          {/* Product Title - Enhanced */}
+          <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300">
             {product.name}
           </h3>
 
-          {/* Price with discount badge - Mobile-first */}
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-pink-500">
+          {/* Price with enhanced styling */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent">
               {(product.price || 100000).toLocaleString('vi-VN')}đ
             </span>
             <span className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-400 line-through">
               {(product.originalPrice || 2000000).toLocaleString('vi-VN')}đ
             </span>
-            <span className="bg-red-100 text-red-600 text-xs sm:text-sm font-semibold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
-              -{discountPercentage}%
-            </span>
           </div>
 
-          {/* Add to Cart Button - Mobile-first */}
+          {/* Enhanced Add to Cart Button */}
           <button 
             onClick={handleAddToCart}
             disabled={isComplete}
-            className={`w-full font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 rounded-lg transition-all duration-300 transform text-sm sm:text-base md:text-lg ${
+            className={`w-full font-bold py-3 sm:py-4 px-4 sm:px-5 rounded-xl transition-all duration-300 transform text-sm sm:text-base md:text-lg relative overflow-hidden ${
               isComplete 
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white hover:scale-105'
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-inner' 
+                : 'bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] hover:-translate-y-0.5 active:scale-95'
             }`}
           >
-            {isComplete ? 'HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
+            {/* Button shine effect */}
+            {!isComplete && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700"></div>
+            )}
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {!isComplete && <span>🛒</span>}
+              {isComplete ? '⏰ HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
+            </span>
           </button>
 
-          {/* Stock Information - Mobile-first */}
-          <div className="flex justify-between items-center text-xs sm:text-sm">
-            <span className="text-gray-600">
-              Đã bán: <span className="font-semibold text-gray-900">
+          {/* Enhanced Stock Information */}
+          <div className="flex justify-between items-center text-xs sm:text-sm bg-gray-50/50 rounded-lg p-2 sm:p-3">
+            <span className="text-gray-600 flex items-center gap-1">
+              <span>📦</span>
+              Đã bán: <span className="font-bold text-gray-900">
                 {product.featuredConfig?.soldCount ?? product.sold ?? 20}
               </span>
             </span>
-            <span className="text-gray-600">
-              Còn lại: <span className="font-semibold text-gray-900">
+            <span className="text-gray-600 flex items-center gap-1">
+              <span>🔄</span>
+              Còn lại: <span className="font-bold text-gray-900">
                 {product.featuredConfig?.remainingStock ?? ((product.total || 60) - (product.sold || 20))}
               </span>
             </span>
           </div>
 
-          {/* Progress Bar */}
-          <ProgressBar 
-            sold={product.featuredConfig?.soldCount ?? product.sold ?? 20} 
-            total={(product.featuredConfig?.soldCount ?? product.sold ?? 20) + (product.featuredConfig?.remainingStock ?? ((product.total || 60) - (product.sold || 20)))}
-          />
+          {/* Enhanced Progress Bar */}
+          <div className="space-y-2">
+            <ProgressBar 
+              sold={product.featuredConfig?.soldCount ?? product.sold ?? 20} 
+              total={(product.featuredConfig?.soldCount ?? product.sold ?? 20) + (product.featuredConfig?.remainingStock ?? ((product.total || 60) - (product.sold || 20)))}
+            />
+          </div>
 
-          {/* Countdown Timer - Mobile-first */}
+          {/* Enhanced Countdown Timer */}
           {product.featuredConfig?.isActive && (
-            <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-              <p className="text-xs sm:text-sm font-semibold text-gray-700">
-                ⏰ Nhanh tay! Ưu đãi kết thúc sau:
-              </p>
+            <div className="space-y-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-3 sm:p-4 border border-orange-100">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⏰</span>
+                <p className="text-xs sm:text-sm font-bold text-gray-700">
+                  Nhanh tay! Ưu đãi kết thúc sau:
+                </p>
+              </div>
               {isComplete ? (
-                <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">HẾT HẠN ƯU ĐÃI!</div>
+                <div className="text-red-600 font-bold text-sm sm:text-base md:text-lg text-center bg-red-100 rounded-lg py-2">
+                  ⏰ HẾT HẠN ƯU ĐÃI!
+                </div>
               ) : (
                 <CountdownTimer timeLeft={timeLeft} />
               )}
@@ -401,82 +454,141 @@ const ProductCardWithTimer = ({
     );
   }
 
-  // Original large layout - Mobile-first
+  // Enhanced large layout - Mobile-first
   return (
-    <div className="w-full max-w-4xl sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:border-purple-300">
-      <div className="flex flex-col lg:flex-row">
-        {/* Product Image - Mobile-first */}
-        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-          <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-md xl:max-w-lg group aspect-[4/3] overflow-hidden" style={{height: '160px', minHeight: '160px'}}>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Image 
-              src={product.image || "/default-image.png"} 
-              alt="Product Pack"
-              width={240}
-              height={180}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              priority
-            />
+    <div className="group relative w-full max-w-4xl sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl border border-white/30 shadow-xl hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.01]">
+      {/* Background gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <div className="relative flex flex-col lg:flex-row">
+        {/* Ultra Enhanced Product Image */}
+        <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center relative overflow-hidden">
+          {/* 3D Parallax Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/40 via-pink-100/30 to-blue-100/40 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+          
+          {/* Animated Shimmer Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-2000 ease-out"></div>
+          
+          {/* Multi-layer Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+          
+          {/* Main Image Container with 3D Effect */}
+          <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-md xl:max-w-lg group/image aspect-[4/3] overflow-hidden rounded-3xl transform perspective-1000" style={{height: '220px', minHeight: '220px'}}>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+            
+            {/* 3D Image Container */}
+            <div className="relative w-full h-full transform transition-all duration-1000 group-hover/image:scale-110 group-hover/image:rotate-y-15 group-hover/image:rotate-x-8">
+              <Image 
+                src={product.image || "/default-image.png"} 
+                alt="Product Pack"
+                width={240}
+                height={180}
+                className="w-full h-full object-cover transition-all duration-1000 group-hover/image:scale-105 group-hover/image:rotate-3 rounded-3xl drop-shadow-2xl"
+                priority
+              />
+              
+              {/* Floating Elements */}
+              <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse shadow-xl"></div>
+              <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-ping shadow-xl"></div>
+              <div className="absolute top-1/2 -right-2 w-4 h-4 bg-gradient-to-r from-green-400 to-teal-500 rounded-full animate-bounce shadow-lg"></div>
+            </div>
+            
+            {/* Enhanced Floating Discount Badge */}
+            <div className="absolute top-6 right-6 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-2xl transform rotate-12 hover:rotate-0 transition-all duration-500 hover:scale-125 hover:shadow-3xl border border-white/30">
+              <span className="relative z-10">-{discountPercentage}%</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700 rounded-full"></div>
+            </div>
+            
+            {/* Corner Accents */}
+            <div className="absolute top-0 left-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-br-3xl opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-tl from-blue-500 to-purple-500 rounded-tl-3xl opacity-0 group-hover/image:opacity-100 transition-opacity duration-700"></div>
+            
+            {/* Bottom Glow */}
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-0 group-hover/image:opacity-100 transition-opacity duration-700 rounded-b-3xl"></div>
           </div>
         </div>
 
-        {/* Product Details - Mobile-first */}
-        <div className="w-full lg:w-1/2 p-3 sm:p-4 lg:p-6 flex flex-col justify-center space-y-2 sm:space-y-2.5 md:space-y-3 lg:space-y-4">
-          {/* Rating */}
-          <RatingStars rating={3} />
+        {/* Enhanced Product Details */}
+        <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-7">
+          {/* Enhanced Rating */}
+          <div className="flex items-center justify-between">
+            <RatingStars rating={3} />
+            <div className="flex items-center space-x-2 text-sm text-gray-500 bg-gradient-to-r from-orange-100 to-red-100 px-3 py-1 rounded-full">
+              <span>🔥</span>
+              <span className="font-bold">HOT DEAL</span>
+            </div>
+          </div>
 
-          {/* Product Title - Mobile-first */}
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
-            SHAMPOO, CONDITIONER & FACEWASH PACKS
+          {/* Enhanced Product Title */}
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight group-hover:text-gray-800 transition-colors duration-300">
+            {product.name || "SHAMPOO, CONDITIONER & FACEWASH PACKS"}
           </h1>
 
-          {/* Description - Mobile-first */}
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed line-clamp-2">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam voluptates, quod, quia, voluptate quae voluptatem quibusdam voluptatibus quos quas nesciunt.
+          {/* Enhanced Description */}
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed line-clamp-3">
+            {product.description || "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam voluptates, quod, quia, voluptate quae voluptatem quibusdam voluptatibus quos quas nesciunt."}
           </p>
 
-          {/* Price with discount badge - Mobile-first */}
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-pink-500">100.000đ</span>
-            <span className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-400 line-through">2.000.000đ</span>
-            <span className="bg-red-100 text-red-600 text-xs sm:text-sm md:text-base font-semibold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full">
-              -{discountPercentage}%
+          {/* Enhanced Price */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-pink-600 bg-clip-text text-transparent">
+              {(product.price || 100000).toLocaleString('vi-VN')}đ
+            </span>
+            <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-400 line-through">
+              {(product.originalPrice || 2000000).toLocaleString('vi-VN')}đ
             </span>
           </div>
 
-          {/* Add to Cart Button - Mobile-first */}
+          {/* Enhanced Add to Cart Button */}
           <button 
             onClick={handleAddToCart}
             disabled={isComplete}
-            className={`w-fit font-semibold py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 rounded-lg transition-all duration-300 transform text-sm sm:text-base md:text-lg ${
+            className={`w-fit font-bold py-4 sm:py-5 px-6 sm:px-8 rounded-2xl transition-all duration-300 transform text-lg sm:text-xl md:text-2xl relative overflow-hidden ${
               isComplete 
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-black hover:to-gray-800 text-white hover:scale-105'
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-inner' 
+                : 'bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 active:scale-95'
             }`}
           >
-            {isComplete ? 'HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
+            {/* Button shine effect */}
+            {!isComplete && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>
+            )}
+            <span className="relative z-10 flex items-center justify-center gap-3">
+              {!isComplete && <span className="text-2xl">🛒</span>}
+              {isComplete ? '⏰ HẾT HẠN ƯU ĐÃI!' : 'Thêm Vào Giỏ'}
+            </span>
           </button>
 
-          {/* Stock Information - Mobile-first */}
-          <div className="flex justify-between items-center text-sm sm:text-base">
-            <span className="text-gray-600">
-              Đã bán: <span className="font-semibold text-gray-900">20</span>
+          {/* Enhanced Stock Information */}
+          <div className="flex justify-between items-center text-sm sm:text-base md:text-lg bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-5">
+            <span className="text-gray-600 flex items-center gap-2">
+              <span className="text-xl">📦</span>
+              Đã bán: <span className="font-bold text-gray-900">20</span>
             </span>
-            <span className="text-gray-600">
-              Còn lại: <span className="font-semibold text-gray-900">40</span>
+            <span className="text-gray-600 flex items-center gap-2">
+              <span className="text-xl">🔄</span>
+              Còn lại: <span className="font-bold text-gray-900">40</span>
             </span>
           </div>
 
-          {/* Progress Bar */}
-          <ProgressBar sold={20} total={60} />
+          {/* Enhanced Progress Bar */}
+          <div className="space-y-3">
+            <ProgressBar sold={20} total={60} />
+          </div>
 
-          {/* Countdown Timer - Mobile-first */}
-          <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-            <p className="text-sm sm:text-base font-semibold text-gray-700">
-              ⏰ Nhanh tay! Ưu đãi kết thúc sau:
-            </p>
+          {/* Enhanced Countdown Timer */}
+          <div className="space-y-4 bg-gradient-to-r from-orange-50 via-red-50 to-orange-50 rounded-2xl p-4 sm:p-6 border border-orange-200">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⏰</span>
+              <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700">
+                Nhanh tay! Ưu đãi kết thúc sau:
+              </p>
+            </div>
             {isComplete ? (
-              <div className="text-red-500 font-bold text-sm sm:text-base md:text-lg">HẾT HẠN ƯU ĐÃI!</div>
+              <div className="text-red-600 font-bold text-lg sm:text-xl md:text-2xl text-center bg-red-100 rounded-xl py-4">
+                ⏰ HẾT HẠN ƯU ĐÃI!
+              </div>
             ) : (
               <CountdownTimer timeLeft={timeLeft} />
             )}
