@@ -15,6 +15,7 @@ import ProductBenefits from '@/components/user/productDetail/ProductBenefits';
 import ProductDescription from '@/components/user/productDetail/ProductDescription';
 import { checkAuth } from '@/services/authService';
 import { cartService } from '@/services/cartService';
+import { getCategoryById } from '@/services/categoryService';
 
 interface Product {
   _id: string;
@@ -33,6 +34,16 @@ interface Product {
   sizes: string[];
   sku: string;
   tags: string[];
+  specifications?: {
+    material?: string;
+    weight?: string;
+    stretch?: string;
+    absorbency?: string;
+    warranty?: string;
+    origin?: string;
+    fabricTechnology?: string;
+    careInstructions?: string;
+  };
   rating: number;
   numReviews: number;
   viewCount: number;
@@ -59,6 +70,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState<{ name: string; slug: string } | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -66,8 +78,9 @@ export default function ProductDetail() {
         setLoading(true);
         setError(null);
         
-        console.log('Đang gọi API với ID:', params.id);
-        const response = await fetch(`/api/products/${params.id}`, {
+        const decodedSku = decodeURIComponent(params.id as string);
+        console.log('Đang gọi API với SKU:', decodedSku);
+        const response = await fetch(`/api/products/sku/${decodedSku}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -96,6 +109,17 @@ export default function ProductDetail() {
         
         // Cập nhật state với dữ liệu sản phẩm
         setProduct(result.data.product);
+        // Fetch category info
+        if (result.data.product.categoryId) {
+          const catRes = await getCategoryById(result.data.product.categoryId);
+          if (catRes && catRes.success && catRes.data) {
+            setCategory({ name: catRes.data.name, slug: catRes.data.slug });
+          } else {
+            setCategory(null);
+          }
+        } else {
+          setCategory(null);
+        }
         setLoading(false);
       } catch (error) {
         console.error('Lỗi khi tải thông tin sản phẩm:', error);
@@ -254,9 +278,9 @@ export default function ProductDetail() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white">
       <Breadcrumb 
-        productName={product.name}
-        categoryName="Giày bóng đá"
-        categorySlug="giay-bong-da"
+        productName={product?.name || ''}
+        categoryName={category?.name || ''}
+        categorySlug={category?.slug || ''}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -307,6 +331,7 @@ export default function ProductDetail() {
 
       <ProductDescription 
         description={product.description}
+        specifications={product.specifications}
       />
     </div>
   );

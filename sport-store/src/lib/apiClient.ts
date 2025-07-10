@@ -8,6 +8,7 @@ import type { AuthUser, RegisterRequest } from '@/types/auth';
 import type { Coupon } from '@/types/coupon';
 import { fetchWithAuth } from '@/utils/fetchWithAuth';
 import { fetchWithAuthNextJS } from '@/utils/fetchWithAuth';
+import { TOKEN_CONFIG } from '@/config/token';
 
 // Types for API data
 interface LoginCredentials {
@@ -72,7 +73,7 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
+      return localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     }
     return null;
   }
@@ -85,7 +86,7 @@ class ApiClient {
       if (axiosError.response?.status === 401) {
         // Token hết hạn hoặc không hợp lệ
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('access_token');
+          localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
           window.location.href = '/auth/login';
         }
       }

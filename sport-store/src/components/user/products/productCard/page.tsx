@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, Heart, Star, Eye, Check } from "lucide-react";
 import { UserProduct } from "@/types/product";
 import { getCategoryById } from "@/services/categoryService";
@@ -105,6 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addToCart } = useCartStore();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -134,6 +136,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent card click when clicking cart button
     
     if (stock === 0) {
       toast.error("Sản phẩm đã hết hàng!");
@@ -163,6 +166,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
+  const handleProductClick = () => {
+    const encodedSku = encodeURIComponent(sku);
+    router.push(`/user/products/details/${encodedSku}`);
+  };
+
   const imageUrl = mainImage || "/default-image.png";
   const discountPercentage = salePrice > 0 
     ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
@@ -178,6 +186,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       }}
       role="article"
       aria-label={`Sản phẩm: ${name}`}
+      onClick={handleProductClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleProductClick();
+        }
+      }}
+      tabIndex={0}
     >
       {/* Enhanced Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-50/40 via-pink-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -215,12 +231,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Yêu thích sản phẩm"
+            onClick={(e) => e.stopPropagation()}
           >
             <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
           </button>
           <button
             className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Xem nhanh sản phẩm"
+            onClick={(e) => e.stopPropagation()}
           >
             <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
           </button>

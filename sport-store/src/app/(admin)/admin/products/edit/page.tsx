@@ -8,6 +8,7 @@ import { fetchApi } from "@/utils/api";
 import BasicInfoForm from "@/components/admin/products/add/BasicInfoForm";
 import DetailInfoForm from "@/components/admin/products/add/DetailInfoForm";
 import SizeColorForm from "@/components/admin/products/add/SizeColorForm";
+import SpecificationsForm from "@/components/admin/products/add/SpecificationsForm";
 import ImageUpload from "@/components/admin/products/add/ImageUpload";
 import { toast } from "sonner";
 import { TOKEN_CONFIG } from '@/config/token';
@@ -155,6 +156,7 @@ export default function EditProductPage() {
           colors: colors,
           sizes: sizes,
           tags: productData.tags || [],
+          specifications: productData.specifications || {},
           isActive: productData.isActive !== undefined ? productData.isActive : true,
         });
       } catch (err) {
@@ -205,6 +207,7 @@ export default function EditProductPage() {
         colors: formData.colors,
         sizes: formData.sizes,
         tags: formData.tags,
+        specifications: formData.specifications,
         isActive: formData.isActive
       };
       
@@ -345,6 +348,11 @@ export default function EditProductPage() {
               />
               
               <SizeColorForm 
+                formData={formData}
+                onFieldChange={handleFieldChange}
+              />
+              
+              <SpecificationsForm 
                 formData={formData}
                 onFieldChange={handleFieldChange}
               />

@@ -145,6 +145,16 @@ export interface ProductFormData {
   colors: string[];
   sizes: string[];
   tags: string[];
+  specifications?: {
+    material?: string;
+    weight?: string;
+    stretch?: string;
+    absorbency?: string;
+    warranty?: string;
+    origin?: string;
+    fabricTechnology?: string;
+    careInstructions?: string;
+  };
   isActive: boolean;
 }
 

@@ -5,6 +5,7 @@ import BasicInfoForm from "@/components/admin/products/add/BasicInfoForm";
 import ImageUpload from "@/components/admin/products/add/ImageUpload";
 import DetailInfoForm from "@/components/admin/products/add/DetailInfoForm";
 import SizeColorForm from "@/components/admin/products/add/SizeColorForm";
+import SpecificationsForm from "@/components/admin/products/add/SpecificationsForm";
 import { Loader2, Save, Image, FileText, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -187,6 +188,18 @@ export default function AddProductPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
               <div className="p-6">
                 <SizeColorForm
+                  formData={formState.data}
+                  onFieldChange={(field, value) => {
+                    console.log('Updating field:', field, 'with value:', value);
+                    updateFormData(field, value);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+              <div className="p-6">
+                <SpecificationsForm
                   formData={formState.data}
                   onFieldChange={(field, value) => {
                     console.log('Updating field:', field, 'with value:', value);

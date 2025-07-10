@@ -293,57 +293,41 @@ export function useProducts(options: ProductQueryParams = {}) {
             // Upload ảnh chính
             let mainImageUrl = '';
             if (formState.data.mainImage && typeof formState.data.mainImage !== 'string') {
-                const formData = new FormData();
-                formData.append('file', formState.data.mainImage);
-                
-                console.log('Uploading main image...');
                 try {
                     const uploadResponse = await apiClient.uploadFile(formState.data.mainImage);
-                    console.log('Main image upload response:', uploadResponse);
                     
                     if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
                         throw new Error('Không thể upload ảnh chính');
                     }
                     mainImageUrl = uploadResponse.data.data.url;
-                    console.log('Main image URL:', mainImageUrl);
                 } catch (uploadError) {
                     console.error('Error uploading main image:', uploadError);
                     throw new Error('Không thể upload ảnh chính: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
                 }
             } else if (typeof formState.data.mainImage === 'string') {
                 mainImageUrl = formState.data.mainImage;
-                console.log('Using existing main image URL:', mainImageUrl);
-            } else {
-                console.log('No main image provided');
             }
 
             // Upload ảnh phụ
             const subImageUrls: string[] = [];
             if (formState.data.subImages.length > 0) {
-                console.log('Uploading sub images, count:', formState.data.subImages.length);
                 for (const image of formState.data.subImages) {
                     if (image && typeof image !== 'string') {
-                        console.log('Uploading sub image...');
                         try {
                             const uploadResponse = await apiClient.uploadFile(image);
-                            console.log('Sub image upload response:', uploadResponse);
                             
                             if (!uploadResponse.data.success || !uploadResponse.data.data?.url) {
                                 throw new Error('Không thể upload ảnh phụ');
                             }
                             subImageUrls.push(uploadResponse.data.data.url);
-                            console.log('Sub image URL added:', uploadResponse.data.data.url);
                         } catch (uploadError) {
                             console.error('Error uploading sub image:', uploadError);
                             throw new Error('Không thể upload ảnh phụ: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
                         }
                     } else if (typeof image === 'string') {
                         subImageUrls.push(image);
-                        console.log('Using existing sub image URL:', image);
                     }
                 }
-            } else {
-                console.log('No sub images to upload');
             }
 
             // Tạo slug từ tên sản phẩm
@@ -352,8 +336,6 @@ export function useProducts(options: ProductQueryParams = {}) {
                 .replace(/[đĐ]/g, 'd')
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '');
-            
-            console.log('Generated slug:', slug);
 
             // Chuyển đổi ProductFormData thành ProductFormData
             const createProductData: ProductFormData = {
@@ -370,13 +352,10 @@ export function useProducts(options: ProductQueryParams = {}) {
                 colors: formState.data.colors || [],
                 sizes: formState.data.sizes || [],
                 tags: formState.data.tags || [],
+                specifications: formState.data.specifications || {},
                 isActive: formState.data.isActive,
                 sku: `${selectedCategory.categoryId}-${Date.now()}`
             };
-
-            console.log('Sending product data:', JSON.stringify(createProductData, null, 2));
-            console.log('Selected category:', selectedCategory);
-            console.log('Category ID being sent:', selectedCategory.categoryId);
 
             // Kiểm tra dữ liệu trước khi gửi
             if (!createProductData.name || !createProductData.description || !createProductData.categoryId || !createProductData.mainImage) {
@@ -401,10 +380,8 @@ export function useProducts(options: ProductQueryParams = {}) {
             }
 
             // Gửi request tạo sản phẩm
-            console.log('Creating product with token:', token);
             try {
                 const response = await adminProductService.createProduct(createProductData);
-                console.log('Create product response:', response);
 
                 if (response.success) {
                     console.log('Product created successfully');
@@ -429,6 +406,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                     },
                     message?: string 
                 };
+                
                 let errorMessage = 'Có lỗi xảy ra khi gọi API tạo sản phẩm';
                 if (error.response?.data?.message) {
                     errorMessage = error.response.data.message;
@@ -444,7 +422,6 @@ export function useProducts(options: ProductQueryParams = {}) {
             toast.error(errorMessage);
             return false;
         } finally {
-            console.log('Setting isSubmitting to false');
             setFormState(prev => ({ ...prev, isSubmitting: false }));
         }
     }, [formState, validateForm, resetForm, fetchProducts, isAuthenticated]);
