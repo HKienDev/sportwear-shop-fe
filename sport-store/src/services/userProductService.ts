@@ -30,20 +30,15 @@ export const userProductService = {
   // Get all products for user
   async getProducts(params?: any): Promise<ApiResponse<UserProductsResponse>> {
     try {
-      console.log('🔍 userProductService.getProducts - Calling API with params:', params);
       const response = await publicApiClient.get('/products', { params });
-      console.log('📦 userProductService.getProducts - Raw response:', response);
-      console.log('📦 userProductService.getProducts - Response data:', response.data);
       
       // If response.data is an array, wrap it in products property
       if (Array.isArray(response.data)) {
-        console.log('✅ userProductService.getProducts - Array response, wrapping in products property');
         return { success: true, data: { products: response.data as UserProduct[] } };
       }
       
       // If response.data already has products property, return as is
       if (response.data && (response.data as any).products) {
-        console.log('✅ userProductService.getProducts - Response has products property');
         return { 
           success: response.data.success, 
           data: { 
@@ -57,7 +52,6 @@ export const userProductService = {
       
       // If response.data has success and data properties
       if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-        console.log('✅ userProductService.getProducts - Response has success/data structure');
         const apiData = response.data.data;
         if (Array.isArray(apiData)) {
           return { success: response.data.success, data: { products: apiData as UserProduct[] } };
@@ -77,7 +71,6 @@ export const userProductService = {
       
       // If response.data is the direct API response (from Next.js API route)
       if (response.data && typeof response.data === 'object' && 'success' in response.data) {
-        console.log('✅ userProductService.getProducts - Direct API response structure');
         if (response.data.success && response.data.data) {
           const apiData = response.data.data;
           if (Array.isArray(apiData)) {
@@ -97,7 +90,6 @@ export const userProductService = {
         }
       }
       
-      console.log('❌ userProductService.getProducts - Unknown response structure, returning empty');
       // Fallback
       return { success: false, data: { products: [] } };
     } catch (error) {

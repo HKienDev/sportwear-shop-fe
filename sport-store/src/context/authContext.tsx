@@ -111,13 +111,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const now = Date.now();
             if (lastCheckRef.current && now - lastCheckRef.current < 5000) {
-                console.log('⏭️ Auth check - Skipping due to recent check');
                 return;
             }
 
             // Kiểm tra flag justLoggedOut
             if (getJustLoggedOut()) {
-                console.log('🚫 Auth check - Just logged out, skipping');
                 return;
             }
 
@@ -125,23 +123,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             const storedUser = getUserData();
 
-            console.log('🔍 Auth check - Tokens:', { 
-                hasAccessToken: !!accessToken, 
-                hasRefreshToken: !!refreshToken,
-                hasStoredUser: !!storedUser,
-                accessTokenLength: accessToken?.length,
-                refreshTokenLength: refreshToken?.length,
-                storageKeys: {
-                    accessTokenKey: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
-                    refreshTokenKey: TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY
-                },
-                localStorageKeys: Object.keys(localStorage)
-            });
-
             if (!accessToken && !refreshToken) {
                 // Chỉ log khi thực sự cần thiết
                 if (userRef.current || isAuthenticatedRef.current) {
-                    console.log('❌ No tokens found, clearing auth state');
                     updateAuthState(null, false);
                 }
                 return;
@@ -149,7 +133,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // Nếu có stored user và access token, khôi phục state ngay lập tức
             if (storedUser && accessToken) {
-                console.log('✅ Restoring auth state from stored data');
                 axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                 
                 // Set cookies để middleware có thể đọc được
@@ -175,7 +158,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         return;
                     }
                 } catch {
-                    console.log('⚠️ Server verification failed, keeping stored user');
                     // Giữ nguyên stored user nếu server check thất bại
                     return;
                 }
@@ -195,7 +177,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         return;
                     }
                 } catch {
-                    console.log('⚠️ Access token invalid, trying refresh');
                     // Access token invalid, thử refresh
                 }
             }
@@ -221,14 +202,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         return;
                     }
                 } catch {
-                    console.log('❌ Refresh token invalid');
                     // Refresh token invalid
                 }
             }
 
             // Nếu không có token hợp lệ, clear state
             if (userRef.current || isAuthenticatedRef.current) {
-                console.log('❌ No valid tokens, clearing auth state');
                 updateAuthState(null, false);
                 clearUserData();
                 localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
@@ -260,123 +239,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [checkAuthStatus]);
 
     const login = async (email: string, password: string) => {
-        console.log('🚀 Auth context - LOGIN FUNCTION CALLED with email:', email);
         setLoading(true);
         try {
-            console.log('🔐 Auth context - Starting login request...');
             const response = await axiosInstance.post('/auth/login', { email, password });
             
             if (response.data.success && response.data.data) {
                 const { user, accessToken, refreshToken } = response.data.data;
                 
-                console.log('✅ Auth context - Login response received:', {
-                    hasAccessToken: !!accessToken,
-                    hasRefreshToken: !!refreshToken,
-                    hasUser: !!user,
-                    userRole: user.role
-                });
-                
-                console.log('🔄 Auth context - About to save tokens and user data...');
-                
                 try {
                     // Lưu tokens vào localStorage trước
-                    console.log('💾 Auth context - Saving tokens to localStorage...');
                     localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
                     localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
                     
                     // Lưu tokens vào cookies để middleware có thể đọc được
-                    console.log('🍪 Auth context - Setting cookies for middleware...');
                     document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; max-age=${TOKEN_CONFIG.ACCESS_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
                     document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
                     
-                    // Verify tokens đã được lưu
-                    const savedAccessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                    const savedRefreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
-                    
-                    console.log('🔍 Auth context - Tokens saved to localStorage:', {
-                        accessToken: !!savedAccessToken,
-                        refreshToken: !!savedRefreshToken,
-                        accessTokenLength: savedAccessToken?.length,
-                        refreshTokenLength: savedRefreshToken?.length,
-                        storageKeys: {
-                            accessTokenKey: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
-                            refreshTokenKey: TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY
-                        }
-                    });
-                    
                     // Lưu user data
-                    console.log('💾 Auth context - Saving user data...');
                     setUserData(user);
                     
                     // Lưu user data vào cookie để middleware có thể đọc được
-                    console.log('🍪 Auth context - Setting user cookie for middleware...');
                     const userCookieValue = encodeURIComponent(JSON.stringify(user));
                     document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userCookieValue}; path=/; max-age=${TOKEN_CONFIG.REFRESH_TOKEN.EXPIRY / 1000}; SameSite=Lax`;
                     
-                    // Verify cookie đã được set
-                    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                        const [key, value] = cookie.trim().split('=');
-                        acc[key] = value;
-                        return acc;
-                    }, {} as Record<string, string>);
-                    
-                    console.log('🔍 Auth context - Cookies after setting:', {
-                        userCookie: cookies[TOKEN_CONFIG.USER.COOKIE_NAME] ? 'present' : 'missing',
-                        accessTokenCookie: cookies[TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME] ? 'present' : 'missing',
-                        allCookies: Object.keys(cookies)
-                    });
-                    
-                    const savedUser = getUserData();
-                    console.log('🔍 Auth context - User data saved:', {
-                        hasUser: !!savedUser,
-                        userRole: savedUser?.role,
-                        userName: savedUser?.fullname
-                    });
-                    
-                    // Set Authorization header
+                    // Set Authorization header cho axios
                     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     
-                    console.log('🔄 Auth context - Updating auth state...');
                     updateAuthState(user, true);
                     
-                    console.log('✅ Auth context - Auth state updated:', {
-                        user: !!user,
-                        isAuthenticated: true,
-                        userRole: user.role,
-                        userData: {
-                            id: user._id,
-                            email: user.email,
-                            fullname: user.fullname,
-                            role: user.role,
-                            authStatus: user.authStatus
-                        }
-                    });
-                    
-                    // Clear justLoggedOut flag khi login thành công
-                    clearJustLoggedOut();
-                    
-                    // Thêm delay nhỏ để đảm bảo state được cập nhật trước khi redirect
-                    console.log('⏳ Auth context - Adding delay before return...');
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    console.log('🔍 Auth context - Final check before return:', {
-                        localStorageAccessToken: !!localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY),
-                        localStorageRefreshToken: !!localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY),
-                        contextUser: !!user,
-                        contextIsAuthenticated: true
-                    });
-                    
-                    console.log('✅ Auth context - Login process completed successfully');
+                    return {
+                        success: true,
+                        user,
+                        message: 'Đăng nhập thành công'
+                    };
                 } catch (error) {
-                    console.error('❌ Auth context - Error in login process:', error);
+                    console.error('Error saving auth data:', error);
+                    throw new Error('Lỗi khi lưu thông tin đăng nhập');
                 }
             } else {
-                console.log('❌ Auth context - Login response not successful:', response.data);
+                throw new Error(response.data.message || 'Đăng nhập thất bại');
             }
-            return response.data;
         } catch (error) {
-            console.error('❌ Auth context - Login error:', error);
-            updateAuthState(null, false);
+            console.error('Login error:', error);
             throw error;
         } finally {
             setLoading(false);
@@ -464,7 +368,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             setLoading(true);
             const response = await resendOTPService({ email: data.email });
-            console.log('Resend OTP response:', response);
             
             if (response.success) {
                 setLoading(false);

@@ -35,13 +35,9 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
     }
 
     try {
-      console.log('🚀 Login form - Starting login process...');
       const result = await login(email, password);
       
-      console.log('📋 Login form - Login result:', result);
-      
       if (result.success) {
-        console.log('✅ Login form - Login successful');
         toast.success(result.message);
         
         // Clear justLoggedOut flag khi login thành công
@@ -49,20 +45,16 @@ const LoginForm = ({ error, loading }: LoginFormProps) => {
         
         // Kiểm tra role để redirect đúng trang
         const userRole = result.data?.user?.role;
-        console.log('👤 Login form - User role:', userRole);
         
         // Thêm delay nhỏ để đảm bảo state được cập nhật
         setTimeout(() => {
           if (userRole === 'admin') {
-            console.log('🔄 Login form - Redirecting admin to /admin/dashboard');
             router.replace('/admin/dashboard');
           } else {
-            console.log('🔄 Login form - Redirecting user to /user');
             router.replace('/user');
           }
         }, 200);
       } else {
-        console.log('❌ Login form - Login failed:', result.message);
         toast.error(result.message);
       }
     } catch (error) {

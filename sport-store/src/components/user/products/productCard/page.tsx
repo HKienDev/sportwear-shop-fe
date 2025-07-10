@@ -101,7 +101,7 @@ const CartButton = ({
 
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku, colors, sizes, brand } = product;
+  const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku, colors, sizes } = product;
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addToCart } = useCartStore();
@@ -210,31 +210,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </div>
         
-        {/* Enhanced Action Buttons - Responsive positioning */}
-        <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 flex flex-col gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+        {/* Enhanced Action Buttons - Higher z-index to ensure visibility */}
+        <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 flex flex-col gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-30">
           <button
-            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Yêu thích sản phẩm"
           >
             <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
           </button>
           <button
-            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Xem nhanh sản phẩm"
           >
             <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
           </button>
         </div>
         
-        {/* Enhanced Badges - Responsive positioning */}
+        {/* Enhanced Badges - Clean design without brand badge */}
         {salePrice > 0 && (
-          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-lg border border-white/20 truncate max-w-[clamp(60px,15vw,80px)] animate-pulse">
+          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-lg border border-white/20 truncate max-w-[clamp(60px,15vw,80px)] animate-pulse z-10">
             -{discountPercentage}%
-          </div>
-        )}
-        {brand && (
-          <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[clamp(0.5rem,1.2vw,0.625rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-sm border border-white/20 truncate max-w-[clamp(50px,12vw,70px)]">
-            {brand}
           </div>
         )}
         

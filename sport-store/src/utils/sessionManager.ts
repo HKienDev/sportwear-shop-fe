@@ -40,8 +40,6 @@ class SessionManager {
     // Track online/offline
     window.addEventListener('online', this.handleOnline.bind(this));
     window.addEventListener('offline', this.handleOffline.bind(this));
-
-    console.log('Session activity tracking started');
   }
 
   // Dừng tracking
@@ -69,8 +67,6 @@ class SessionManager {
       clearTimeout(this.sessionTimeout);
       this.sessionTimeout = null;
     }
-
-    console.log('Session activity tracking stopped');
   }
 
   // Cập nhật thời gian hoạt động cuối cùng
@@ -99,7 +95,7 @@ class SessionManager {
 
   // Xử lý khi mất kết nối mạng
   private handleOffline(): void {
-    console.log('Network connection lost');
+    // Network connection lost
   }
 
   // Kiểm tra tính hợp lệ của session

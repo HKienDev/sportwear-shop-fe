@@ -29,20 +29,15 @@ export const categoryService = {
   // Get all categories
   async getCategories(params?: any): Promise<ApiResponse<CategoriesResponse>> {
     try {
-      console.log('🔍 categoryService.getCategories - Calling API with params:', params);
       const response = await publicApiClient.get('/categories', { params });
-      console.log('📦 categoryService.getCategories - Raw response:', response);
-      console.log('📦 categoryService.getCategories - Response data:', response.data);
       
       // If response.data is an array, wrap it in categories property
       if (Array.isArray(response.data)) {
-        console.log('✅ categoryService.getCategories - Array response, wrapping in categories property');
         return { success: true, data: { categories: response.data } };
       }
       
       // If response.data already has categories property, return as is
       if (response.data && response.data.data && response.data.data.categories) {
-        console.log('✅ categoryService.getCategories - Response has categories property');
         // Pass through pagination if present
         return {
           success: response.data.success,
@@ -55,7 +50,6 @@ export const categoryService = {
       
       // If response.data has success and data properties
       if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-        console.log('✅ categoryService.getCategories - Response has success/data structure');
         const apiData = response.data.data;
         if (Array.isArray(apiData)) {
           return { success: response.data.success, data: { categories: apiData } };
@@ -71,7 +65,6 @@ export const categoryService = {
         }
       }
       
-      console.log('❌ categoryService.getCategories - Unknown response structure, returning empty');
       // Fallback
       return { success: false, data: { categories: [] } };
     } catch (error) {

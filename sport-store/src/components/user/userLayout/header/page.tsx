@@ -41,26 +41,6 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    console.log('🔍 Header - User state changed:', {
-      hasUser: !!user,
-      isAuthenticated,
-      userRole: user?.role,
-      mounted
-    });
-  }, [user, isAuthenticated, mounted]);
-
-  useEffect(() => {
-    if (user) {
-      // User data available
-      console.log('✅ Header - User data available:', {
-        name: user.fullname,
-        role: user.role,
-        email: user.email
-      });
-    }
-  }, [user]);
-
-  useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
@@ -179,15 +159,7 @@ const Header = () => {
 
           {/* Auth Buttons - Enhanced Responsive */}
           <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-4 order-2 lg:order-3">
-            {(() => {
-              console.log('🔍 Header - Render decision:', {
-                hasUser: !!user,
-                isAuthenticated,
-                willRenderUserMenu: !!user,
-                willRenderAuthButtons: !user
-              });
-              return user ? <UserMenu /> : <AuthButtons />;
-            })()}
+            {user ? <UserMenu /> : <AuthButtons />}
           </div>
         </div>
       </div>
@@ -251,7 +223,7 @@ const Header = () => {
                       {categories.map((category) => (
                         <Link
                           key={category._id}
-                          href={`/categories/${category.slug}`}
+                          href={`/user/products?category=${category.slug}`}
                           className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-white hover:from-red-50 hover:to-red-100/50 transition-all duration-300 border border-gray-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-100/50"
                           onClick={() => setIsCategoriesOpen(false)}
                         >
@@ -401,7 +373,7 @@ const Header = () => {
                   {categories.map((category) => (
                     <Link
                       key={category._id}
-                      href={`/categories/${category.slug}`}
+                      href={`/user/products?category=${category.slug}`}
                       className="text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2 sm:space-x-3"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

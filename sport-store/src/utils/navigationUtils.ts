@@ -17,7 +17,6 @@ let isRedirecting = false;
 // Export để kiểm tra từ bên ngoài
 export const getJustLoggedOut = () => {
     const justLoggedOut = localStorage.getItem('justLoggedOut') === 'true';
-    console.log('[getJustLoggedOut] 🔍 Checking justLoggedOut flag:', justLoggedOut);
     return justLoggedOut;
 };
 
@@ -34,18 +33,15 @@ export const handleRedirect = debounce(async (
         
         // Nếu vừa logout, không redirect
         if (getJustLoggedOut()) {
-            console.log('[handleRedirect] 🔒 Just logged out, skipping redirect');
             return;
         }
         
         // Nếu không có user thực tế trong localStorage, không redirect
         if (!hasActualUser) {
-            console.log('[handleRedirect] ❌ No actual user data in localStorage');
             return;
         }
         
         if (isRedirecting) {
-            console.log('[handleRedirect] ⏳ Already redirecting, skipping');
             return;
         }
         if (!router) {
@@ -74,7 +70,6 @@ export const handleRedirect = debounce(async (
             }
         }
         
-        console.log(`[handleRedirect] 🔄 Redirecting to: ${redirectPath}`);
         await router.replace(redirectPath);
         await new Promise(resolve => setTimeout(resolve, REDIRECT_DELAY));
         isRedirecting = false;
@@ -87,21 +82,16 @@ export const handleRedirect = debounce(async (
 
 // Function để set flag logout và cancel debounce
 export const setJustLoggedOut = () => {
-    console.log('[setJustLoggedOut] 🔒 Setting justLoggedOut flag to true');
     localStorage.setItem('justLoggedOut', 'true');
     // Cancel debounce
     handleRedirect.cancel();
-    console.log('[setJustLoggedOut] ✅ Cancelled handleRedirect debounce');
     // Reset flag sau 2 giây
     setTimeout(() => {
         localStorage.removeItem('justLoggedOut');
-        console.log('[setJustLoggedOut] 🔄 Reset justLoggedOut flag to false');
     }, 2000);
 };
 
 // Function để clear flag khi login thành công
 export const clearJustLoggedOut = () => {
-    console.log('[clearJustLoggedOut] 🧹 Clearing justLoggedOut flag');
     localStorage.removeItem('justLoggedOut');
-    console.log('[clearJustLoggedOut] ✅ JustLoggedOut flag cleared');
 }; 

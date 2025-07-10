@@ -7,10 +7,6 @@ interface FetchOptions extends RequestInit {
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
-// Debug log
-console.log('🔍 API_URL from environment:', process.env.NEXT_PUBLIC_API_URL);
-console.log('🔍 Final API_URL:', API_URL);
-
 export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => {
   try {
     const { requireAuth = true, ...fetchOptions } = options;
@@ -28,7 +24,6 @@ export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => 
     
     if (requireAuth) {
       const token = await getAuthToken();
-      console.log('🔹 Token for API call:', token);
       
       if (!token) {
         throw new Error('Vui lòng đăng nhập lại');
@@ -43,16 +38,8 @@ export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => 
       headers
     };
 
-    console.log(`🔹 Calling API: ${cleanEndpoint}`, {
-      method: finalOptions.method || 'GET',
-      headers: Object.fromEntries(headers.entries())
-    });
-
     const response = await fetch(url, finalOptions);
-    console.log(`🔹 Response status:`, response.status);
-    
     const data = await response.json();
-    console.log(`🔹 Response data:`, data);
 
     if (!response.ok) {
       // Kiểm tra nếu token hết hạn

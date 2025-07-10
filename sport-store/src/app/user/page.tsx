@@ -333,8 +333,13 @@ function AnimatedNumberTicker() {
   );
 }
 
+
+
 // Product Section Component - Mobile-first Responsive
 const ProductSection = memo(({ products, categories }: { products: UserProduct[]; categories: Category[] }) => {
+  const router = useRouter();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
   const productsByCategory = useMemo(() => {
     return categories.map(category => {
       const productsInCategory = products.filter(
@@ -343,6 +348,26 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
       return { category, products: productsInCategory };
     }).filter(item => item.products.length > 0);
   }, [products, categories]);
+
+  const handleViewMore = useCallback((categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      newSet.add(categoryId);
+      return newSet;
+    });
+  }, []);
+
+  const handleViewLess = useCallback((categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(categoryId);
+      return newSet;
+    });
+  }, []);
+
+  const handleCategoryClick = useCallback((category: Category) => {
+    router.push(`/user/products?category=${category.slug}`);
+  }, [router]);
 
   if (!productsByCategory.length) {
     return <p className="text-center text-gray-500 px-4 text-sm sm:text-base">Không có sản phẩm nào</p>;
@@ -356,32 +381,130 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
           Sản phẩm Mới
         </h1>
         
-        {productsByCategory.map(({ category, products }) => (
-          <div key={category._id} className="mb-8 sm:mb-10 lg:mb-12 xl:mb-16">
-            {/* Category Header - Mobile-first */}
-            <div className="flex items-center mb-4 sm:mb-6 lg:mb-8">
-              {category.image && (
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  width={40}
-                  height={40}
-                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full object-cover mr-3 sm:mr-4 border shadow-sm"
-                />
+        {productsByCategory.map(({ category, products }) => {
+          const isExpanded = expandedCategories.has(category._id);
+          const displayProducts = isExpanded ? products : products.slice(0, 8);
+          const hasMoreProducts = products.length > 8;
+
+          return (
+            <div key={category._id} className="mb-8 sm:mb-10 lg:mb-12 xl:mb-16">
+              {/* Category Header - Enhanced for accessibility and clickability */}
+              <div className="group relative bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 lg:mb-8 hover:from-purple-100 hover:to-pink-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                   onClick={() => handleCategoryClick(category)}
+                   role="button"
+                   tabIndex={0}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                       e.preventDefault();
+                       handleCategoryClick(category);
+                     }
+                   }}
+                   aria-label={`Xem tất cả sản phẩm ${category.name}`}>
+                
+                {/* Hover overlay for visual feedback */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-200/20 to-pink-200/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    {category.image && (
+                      <div className="relative">
+                        <Image
+                          src={category.image}
+                          alt={category.name}
+                          width={40}
+                          height={40}
+                          className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 border-white shadow-lg group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 leading-tight group-hover:text-purple-700 transition-colors duration-300">
+                        {category.name}
+                      </h2>
+                      <p className="text-sm sm:text-base text-gray-600 mt-1 group-hover:text-gray-700 transition-colors duration-300">
+                        {products.length} sản phẩm có sẵn
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Enhanced Click Indicator - Clear visual cue for older users */}
+                  <div className="flex items-center space-x-3">
+                    {/* Product Count Badge */}
+                    {hasMoreProducts && (
+                      <div className="hidden sm:flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">Hiển thị:</span>
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                          {displayProducts.length}/{products.length}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Large, clear click indicator */}
+                    <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-purple-200/50 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+                      <span className="text-sm sm:text-base font-semibold text-purple-700 group-hover:text-purple-800">
+                        Xem tất cả
+                      </span>
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 group-hover:text-purple-700 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Accessibility focus indicator */}
+                <div className="absolute inset-0 border-2 border-transparent group-focus:border-purple-400 rounded-2xl transition-colors duration-200"></div>
+              </div>
+              
+              {/* Products Grid - Mobile-first */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+                {displayProducts.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
+              </div>
+
+              {/* View More/Less Button */}
+              {hasMoreProducts && (
+                <div className="flex justify-center mt-6 sm:mt-8 lg:mt-10">
+                  <button
+                    onClick={() => isExpanded ? handleViewLess(category._id) : handleViewMore(category._id)}
+                    className="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3.5 overflow-hidden font-medium text-purple-600 transition duration-300 ease-out border-2 border-purple-500 rounded-xl shadow-md hover:scale-105 hover:shadow-lg"
+                  >
+                    <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {isExpanded ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        )}
+                      </svg>
+                    </span>
+                    <span className="absolute flex items-center justify-center w-full h-full text-purple-500 transition-all duration-300 transform group-hover:translate-x-full ease">
+                      {isExpanded ? (
+                        <>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                          Thu gọn
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                          Xem thêm {products.length - 8} sản phẩm
+                        </>
+                      )}
+                    </span>
+                    <span className="relative invisible">
+                      {isExpanded ? "Thu gọn" : `Xem thêm ${products.length - 8} sản phẩm`}
+                    </span>
+                  </button>
+                </div>
               )}
-              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 leading-tight">
-                {category.name}
-              </h2>
             </div>
-            
-            {/* Products Grid - Mobile-first */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-              {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -603,19 +726,12 @@ const HomePage = () => {
 
   // Tối ưu redirect logic với useCallback
   const handleRedirect = useCallback(() => {
-    console.log('👤 User page - User state:', {
-      hasUser: !!user,
-      userRole: user?.role,
-      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
-    
     if (
       user &&
       user.role === "admin" &&
       typeof window !== "undefined" &&
       window.location.pathname === "/user"
     ) {
-      console.log('🔄 User page - Admin user detected, redirecting to admin dashboard');
       router.replace("/admin/dashboard");
     }
   }, [user, router]);
@@ -627,25 +743,16 @@ const HomePage = () => {
   // Tối ưu data fetching với useCallback
   const fetchData = useCallback(async () => {
     try {
-      console.log('🔄 Fetching data...');
       const [productRes, categoryRes] = await Promise.all([
         userProductService.getProducts(),
         categoryService.getCategories(),
       ]) as [ApiResponse<UserProductsResponse>, ApiResponse<CategoriesResponse>];
-      
-      console.log('📦 Product response:', productRes);
-      console.log('📂 Category response:', categoryRes);
       
       if (!productRes.success) throw new Error("Lỗi khi lấy dữ liệu sản phẩm");
       if (!categoryRes.success) throw new Error("Lỗi khi lấy dữ liệu thể loại");
       
       setProducts(productRes.data.products);
       setCategories(categoryRes.data.categories || []);
-      console.log('✅ Data loaded successfully');
-      console.log('📊 Categories loaded:', {
-        count: categoryRes.data.categories?.length || 0,
-        categories: categoryRes.data.categories?.map((c: Category) => c.name)
-      });
     } catch (error) {
       console.error('❌ Error fetching data:', error);
       setError("Đã xảy ra lỗi khi tải dữ liệu");
