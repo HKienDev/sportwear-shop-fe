@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import ProductCard from "@/components/user/products/productCard/page";
 import { API_URL } from "@/utils/api";
-import { Loader2, Filter, Grid3X3, List, ChevronDown, X, Star, Sparkles } from "lucide-react";
+import { Loader2, Filter, ChevronDown, X, Star, Sparkles } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { UserProduct } from "@/types/product";
 import { Category } from "@/types/category";
 
@@ -100,34 +101,12 @@ const CollapsibleContent: React.FC<{
   </div>
 );
 
-// Simple Slider Component
-const Slider: React.FC<{
-  value: [number, number];
-  onValueChange: (value: [number, number]) => void;
-  max: number;
-  min: number;
-  step: number;
-  className?: string;
-}> = ({ value, onValueChange, max, min, step, className }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(e.target.value);
-    onValueChange([value[0], newValue]);
-  };
-
-  return (
-    <div className={className}>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value[1]}
-        onChange={handleChange}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-      />
-    </div>
-  );
+// Format currency helper
+const formatCurrency = (amount: number) => {
+  return amount.toLocaleString("vi-VN") + "đ";
 };
+
+
 
 const ProductListPage: React.FC = () => {
   const searchParams = useSearchParams();
@@ -139,7 +118,7 @@ const ProductListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<Category | null>(null);
   const [error, setError] = useState<string>("");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
   
   // Filter states
   const [filters, setFilters] = useState<FilterState>({
@@ -314,9 +293,7 @@ const ProductListPage: React.FC = () => {
     });
   }, [uniqueValues.maxPrice]);
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("vi-VN") + "đ";
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -454,22 +431,45 @@ const ProductListPage: React.FC = () => {
 
               <div className="space-y-6">
                 {/* Price Range */}
-                <Collapsible>
+                <Collapsible defaultOpen={true}>
                   <CollapsibleTrigger>
-                    Khoảng giá
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                      <span className="font-semibold text-gray-900">Khoảng giá</span>
+                    </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <Slider
-                      value={filters.priceRange}
-                      onValueChange={(value) => handleFilterChange('priceRange', value)}
-                      max={uniqueValues.maxPrice}
-                      min={uniqueValues.minPrice}
-                      step={100000}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>{formatCurrency(filters.priceRange[0])}</span>
-                      <span>{formatCurrency(filters.priceRange[1])}</span>
+                    <div className="space-y-4">
+                      {/* Price Range Slider */}
+                      <div className="space-y-3">
+                        <Slider
+                          value={filters.priceRange}
+                          onValueChange={(value) => handleFilterChange('priceRange', value)}
+                          max={uniqueValues.maxPrice}
+                          min={uniqueValues.minPrice}
+                          step={100000}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between gap-2">
+                          <div className="flex-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg px-2 py-1.5 min-w-0">
+                            <div className="text-xs text-purple-600 font-semibold truncate text-center">
+                              {formatCurrency(filters.priceRange[0])}
+                            </div>
+                          </div>
+                          <div className="flex items-center text-gray-400 text-xs font-medium">
+                            -
+                          </div>
+                          <div className="flex-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg px-2 py-1.5 min-w-0">
+                            <div className="text-xs text-purple-600 font-semibold truncate text-center">
+                              {formatCurrency(filters.priceRange[1])}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+
+                      
+
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -480,28 +480,38 @@ const ProductListPage: React.FC = () => {
                 {uniqueValues.colors.length > 0 && (
                   <Collapsible>
                     <CollapsibleTrigger>
-                      Màu sắc
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
+                        <span className="font-semibold text-gray-900">Màu sắc</span>
+                        {filters.colors.length > 0 && (
+                          <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-700 text-xs">
+                            {filters.colors.length} đã chọn
+                          </Badge>
+                        )}
+                      </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="space-y-2">
-                        {uniqueValues.colors.map((color) => (
-                          <div key={color} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`color-${color}`}
-                              checked={filters.colors.includes(color)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  handleFilterChange('colors', [...filters.colors, color]);
-                                } else {
-                                  handleFilterChange('colors', filters.colors.filter(c => c !== color));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`color-${color}`} className="text-sm text-gray-700">
-                              {color}
-                            </label>
-                          </div>
-                        ))}
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          {uniqueValues.colors.map((color) => (
+                            <div key={color} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`color-${color}`}
+                                checked={filters.colors.includes(color)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleFilterChange('colors', [...filters.colors, color]);
+                                  } else {
+                                    handleFilterChange('colors', filters.colors.filter(c => c !== color));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`color-${color}`} className="text-sm text-gray-700 font-medium truncate">
+                                {color}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -513,28 +523,38 @@ const ProductListPage: React.FC = () => {
                 {uniqueValues.sizes.length > 0 && (
                   <Collapsible>
                     <CollapsibleTrigger>
-                      Kích thước
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                        <span className="font-semibold text-gray-900">Kích thước</span>
+                        {filters.sizes.length > 0 && (
+                          <Badge variant="secondary" className="ml-auto bg-indigo-100 text-indigo-700 text-xs">
+                            {filters.sizes.length} đã chọn
+                          </Badge>
+                        )}
+                      </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="space-y-2">
-                        {uniqueValues.sizes.map((size) => (
-                          <div key={size} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`size-${size}`}
-                              checked={filters.sizes.includes(size)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  handleFilterChange('sizes', [...filters.sizes, size]);
-                                } else {
-                                  handleFilterChange('sizes', filters.sizes.filter(s => s !== size));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`size-${size}`} className="text-sm text-gray-700">
-                              {size}
-                            </label>
-                          </div>
-                        ))}
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          {uniqueValues.sizes.map((size) => (
+                            <div key={size} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`size-${size}`}
+                                checked={filters.sizes.includes(size)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleFilterChange('sizes', [...filters.sizes, size]);
+                                  } else {
+                                    handleFilterChange('sizes', filters.sizes.filter(s => s !== size));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`size-${size}`} className="text-sm text-gray-700 font-medium truncate">
+                                {size}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -546,28 +566,38 @@ const ProductListPage: React.FC = () => {
                 {uniqueValues.brands.length > 0 && (
                   <Collapsible>
                     <CollapsibleTrigger>
-                      Thương hiệu
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full"></div>
+                        <span className="font-semibold text-gray-900">Thương hiệu</span>
+                        {filters.brands.length > 0 && (
+                          <Badge variant="secondary" className="ml-auto bg-orange-100 text-orange-700 text-xs">
+                            {filters.brands.length} đã chọn
+                          </Badge>
+                        )}
+                      </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="space-y-2">
-                        {uniqueValues.brands.map((brand) => (
-                          <div key={brand} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`brand-${brand}`}
-                              checked={filters.brands.includes(brand)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  handleFilterChange('brands', [...filters.brands, brand]);
-                                } else {
-                                  handleFilterChange('brands', filters.brands.filter(b => b !== brand));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`brand-${brand}`} className="text-sm text-gray-700">
-                              {brand}
-                            </label>
-                          </div>
-                        ))}
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-2">
+                          {uniqueValues.brands.map((brand) => (
+                            <div key={brand} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`brand-${brand}`}
+                                checked={filters.brands.includes(brand)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleFilterChange('brands', [...filters.brands, brand]);
+                                  } else {
+                                    handleFilterChange('brands', filters.brands.filter(b => b !== brand));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`brand-${brand}`} className="text-sm text-gray-700 font-medium truncate">
+                                {brand}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -614,26 +644,6 @@ const ProductListPage: React.FC = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* View Mode Toggle */}
-                <div className="flex items-center border border-gray-200 rounded-lg">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-r-none"
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="rounded-l-none"
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
             </div>
 
@@ -673,14 +683,12 @@ const ProductListPage: React.FC = () => {
             {/* Product grid */}
             {!loading && !error && filteredProducts.length > 0 && (
               <>
-                <div className={`grid 
+                <div className="grid 
                   gap-4 
                   sm:gap-6 
                   lg:gap-8 
-                  ${viewMode === 'grid' 
-                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                    : 'grid-cols-1'}
-                `}>
+                  grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+                ">
                   {paginatedProducts.map((product) => (
                     <div key={product._id} className="flex justify-center">
                       <ProductCard product={product} />

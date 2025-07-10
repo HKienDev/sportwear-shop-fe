@@ -890,3 +890,119 @@ select:focus-visible {
 .slider:focus::-moz-range-thumb {
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
 }
+
+/* Enhanced Shadcn Slider Styles */
+[data-radix-slider-track] {
+  background: linear-gradient(to right, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  height: 8px !important;
+}
+
+[data-radix-slider-range] {
+  background: linear-gradient(to right, #a855f7, #ec4899, #a855f7) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.3) !important;
+}
+
+[data-radix-slider-thumb] {
+  background: white !important;
+  border: 3px solid #a855f7 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s ease !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+[data-radix-slider-thumb]:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-radix-slider-thumb]:focus {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3) !important;
+}
+
+/* Price range labels */
+.price-range-label {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Range Slider Animations */
+@keyframes sliderGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+  }
+}
+
+.range-slider-handle:hover {
+  animation: sliderGlow 2s ease-in-out infinite;
+}
+
+/* Shimmer effect for active range */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.range-slider-active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Enhanced price label animations */
+.price-label {
+  transition: all 0.3s ease;
+}
+
+.price-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+}
+
+/* Quick price button animations */
+.quick-price-btn {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-price-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.quick-price-btn:hover::before {
+  left: 100%;
+}
+
+.quick-price-btn:active {
+  transform: scale(0.95);
+}
