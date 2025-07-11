@@ -27,25 +27,31 @@ export const customerService = {
 
   // Get customer by ID
   async getCustomerById(id: string): Promise<ApiResponse<Customer>> {
-    const response = await apiClient.get(`/api/users/${id}`);
+    const response = await apiClient.get(`/admin/users/${id}`);
     return response.data as ApiResponse<Customer>;
   },
 
   // Update customer
   async updateCustomer(id: string, customerData: Partial<Customer>): Promise<ApiResponse<Customer>> {
-    const response = await apiClient.put(`/api/users/${id}`, customerData);
+    const response = await apiClient.put(`/admin/users/${id}`, customerData);
     return response.data as ApiResponse<Customer>;
   },
 
   // Delete customer
   async deleteCustomer(id: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.delete(`/api/users/${id}`);
+    const response = await apiClient.delete(`/admin/users/${id}`);
     return response.data as ApiResponse<{ message: string }>;
   },
 
   // Change password
   async changePassword(id: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.put(`/api/users/${id}/password`, { newPassword });
+    const response = await apiClient.put(`/admin/users/${id}/reset-password`, { password: newPassword });
+    return response.data as ApiResponse<{ message: string }>;
+  },
+
+  // Toggle user status
+  async toggleUserStatus(id: string): Promise<ApiResponse<{ message: string }>> {
+    const response = await apiClient.patch(`/admin/users/${id}/toggle-status`);
     return response.data as ApiResponse<{ message: string }>;
   },
 

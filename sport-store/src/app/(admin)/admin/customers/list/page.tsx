@@ -10,6 +10,16 @@ import { CustomerSearch } from "@/components/admin/customers/list/customerSearch
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/authContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type FilterState = {
   status: string;
@@ -22,6 +32,7 @@ export default function CustomerList() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
 
   const fetchCustomers = async () => {
@@ -47,9 +58,27 @@ export default function CustomerList() {
     fetchCustomers();
   }, []);
 
-  const handleDelete = (customId: string) => {
-    setCustomers((prev) => prev.filter((customer) => customer.customId !== customId && `VJUSPORTUSER-${customer._id.slice(0, 8)}` !== customId));
-    toast.success("Xóa khách hàng thành công");
+  const handleDelete = async (customId: string): Promise<void> => {
+    setDeleteId(customId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    
+    try {
+      const response = await customerService.deleteCustomer(deleteId);
+      if (response.success) {
+        toast.success("Xóa khách hàng thành công");
+        fetchCustomers();
+      } else {
+        toast.error(response.message || "Không thể xóa khách hàng");
+      }
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      toast.error("Đã xảy ra lỗi khi xóa khách hàng");
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   const handleViewDetails = (id: string) => {
@@ -64,6 +93,31 @@ export default function CustomerList() {
   const handleFilterChange = (newFilters: FilterState) => {
     // TODO: Implement filter logic
     console.log("Applying filters:", newFilters);
+  };
+
+  const handleToggleStatus = async (customId: string) => {
+    try {
+      const customer = customers.find(c => 
+        c.customId === customId || `VJUSPORTUSER-${c._id.slice(0, 8)}` === customId
+      );
+      if (!customer) {
+        toast.error("Không tìm thấy khách hàng");
+        return;
+      }
+      
+      const toastId = toast.loading(`Đang ${customer.isActive ? 'khóa' : 'mở khóa'} tài khoản "${customer.fullname}"...`);
+      
+      const response = await customerService.toggleUserStatus(customId);
+      if (response.success) {
+        toast.success(`Đã ${customer.isActive ? 'khóa' : 'mở khóa'} tài khoản "${customer.fullname}" thành công`, { id: toastId });
+        fetchCustomers(); // Refresh data like products/list
+      } else {
+        toast.error(response.message || 'Cập nhật trạng thái thất bại', { id: toastId });
+      }
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast.error('Cập nhật trạng thái thất bại');
+    }
   };
 
   if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -213,11 +267,30 @@ export default function CustomerList() {
                 customers={customers}
                 onDelete={handleDelete}
                 onViewDetails={handleViewDetails}
+                onToggleStatus={handleToggleStatus}
               />
             )}
           </div>
         </div>
       </div>
+      
+      {/* AlertDialog xác nhận xóa */}
+      <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa khách hàng này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn khách hàng khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Xóa khách hàng
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

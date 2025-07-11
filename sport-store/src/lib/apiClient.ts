@@ -1,12 +1,11 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { CategoryListResponse, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/category';
-import type { DashboardStats, RevenueData, BestSellingProduct, RecentOrder, BestSellingProductsResponse } from '@/types/dashboard';
+import type { DashboardStats, RevenueData, RecentOrder, BestSellingProductsResponse } from '@/types/dashboard';
 import type { Order } from '@/types/order';
-import type { CreateOrderData, OrderData, User } from '@/types/base';
+import type { CreateOrderData } from '@/types/base';
 import type { Product, ProductFormData, ProductQueryParams } from '@/types/product';
 import type { AuthUser, RegisterRequest } from '@/types/auth';
 import type { Coupon } from '@/types/coupon';
-import { fetchWithAuth } from '@/utils/fetchWithAuth';
 import { fetchWithAuthNextJS } from '@/utils/fetchWithAuth';
 import { TOKEN_CONFIG } from '@/config/token';
 
@@ -23,14 +22,7 @@ interface MessageData {
   [key: string]: unknown;
 }
 
-interface ApiParams {
-  page?: number;
-  limit?: number;
-  category?: string;
-  search?: string;
-  status?: string;
-  [key: string]: string | number | undefined;
-}
+
 
 // Optimized API Client for Next.js API routes using fetch instead of axios
 class ApiClient {
@@ -43,7 +35,7 @@ class ApiClient {
     // Only create axios instance for server-side or when needed
     if (this.isClient) {
       this.client = axios.create({
-        baseURL: '', // Relative URLs - sẽ gọi Next.js API routes
+        baseURL: 'http://localhost:4000/api', // Backend API URL
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
@@ -247,7 +239,7 @@ class ApiClient {
     return this.put('/api/cart/update', productData);
   }
 
-  async removeFromCart(productData: { sku: string; color?: string; size?: string }): Promise<any> {
+  async removeFromCart(productData: { sku: string; color?: string; size?: string }): Promise<AxiosResponse<{ success: boolean; message: string; data?: unknown }>> {
     // Nếu là Next.js API route, dùng fetchWithAuthNextJS để luôn truyền token
     if (typeof window !== 'undefined' && (this.client.defaults.baseURL?.includes('/api') || this.client.defaults.baseURL === undefined)) {
       const res = await fetchWithAuthNextJS('/api/cart/remove', {
@@ -255,7 +247,7 @@ class ApiClient {
         body: JSON.stringify(productData),
       });
       const data = await res.json();
-      return { data };
+      return { data, status: 200, statusText: 'OK', headers: {}, config: {} } as AxiosResponse<{ success: boolean; message: string; data?: unknown }>;
     }
     // Nếu là backend API, dùng axios như cũ
     return this.post('/api/cart/remove', productData);

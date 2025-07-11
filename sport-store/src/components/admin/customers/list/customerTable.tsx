@@ -2,15 +2,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Customer } from '@/types/customer';
-import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, ChevronLeft, ChevronRight, AlertCircle, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { customerService } from '@/services/customerService';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface CustomerTableProps {
   customers: Customer[];
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onToggleStatus?: (id: string) => void;
 }
 
 // Thêm thuộc tính totalOrders vào interface Customer
@@ -25,6 +33,7 @@ export function CustomerTable({
   customers = [],
   onDelete,
   onViewDetails,
+  onToggleStatus,
 }: CustomerTableProps) {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -33,7 +42,8 @@ export function CustomerTable({
 
   const filteredCustomers = useMemo(() => {
     if (!Array.isArray(customers)) return [];
-    return customers.filter(customer => customer.role === "user");
+    // Backend đã filter chỉ trả về users có role 'user', nên không cần filter thêm
+    return customers;
   }, [customers]);
 
   useEffect(() => {
@@ -74,11 +84,21 @@ export function CustomerTable({
 
   const handleDelete = async (id: string) => {
     try {
-      await customerService.deleteCustomer(id);
-      onDelete(id);
-      toast.success('Xóa khách hàng thành công');
-    } catch {
-      toast.error('Xóa khách hàng thất bại');
+      await onDelete(id);
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast.error('Có lỗi xảy ra khi xóa khách hàng');
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      if (typeof onToggleStatus === 'function') {
+        await onToggleStatus(id);
+      }
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast.error('Cập nhật trạng thái thất bại');
     }
   };
 
@@ -258,21 +278,47 @@ export function CustomerTable({
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                            className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            className="text-red-500 hover:text-red-700 transition-colors"
-                            title="Xóa khách hàng"
-                            onClick={() => handleDelete(customer.customId || `VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                          >
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Mở menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem 
+                              onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>Xem chi tiết</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleToggleStatus(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                              className={`cursor-pointer ${customer.isActive ? "text-yellow-600" : "text-green-600"}`}
+                            >
+                              {customer.isActive ? (
+                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                                </svg>
+                              ) : (
+                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              )}
+                              <span>{customer.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-red-600 cursor-pointer"
+                              onClick={() => handleDelete(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Xóa khách hàng</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))
