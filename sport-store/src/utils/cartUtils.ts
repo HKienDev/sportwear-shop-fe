@@ -3,9 +3,43 @@ import type { CartItem, Cart } from '@/types/cart';
 
 // Utility function để xử lý lỗi cart
 export const handleCartError = (error: unknown, operation: string): string => {
-  const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR;
   console.error(`Cart ${operation} error:`, error);
-  return errorMessage;
+  
+  // Handle specific error types
+  if (error instanceof Error) {
+    // Handle 409 conflicts
+    if (error.message.includes('409')) {
+      return 'Có xung đột tạm thời, vui lòng thử lại sau';
+    }
+    
+    // Handle network errors
+    if (error.message.includes('Network Error') || error.message.includes('fetch')) {
+      return 'Lỗi kết nối mạng, vui lòng kiểm tra kết nối internet';
+    }
+    
+    // Handle timeout errors
+    if (error.message.includes('timeout')) {
+      return 'Yêu cầu quá thời gian chờ, vui lòng thử lại';
+    }
+    
+    // Handle authentication errors
+    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      return 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
+    }
+    
+    // Handle server errors
+    if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+      return 'Lỗi máy chủ, vui lòng thử lại sau';
+    }
+    
+    // Return the original error message if it's meaningful
+    if (error.message && !error.message.includes('HTTP error')) {
+      return error.message;
+    }
+  }
+  
+  // Default error message
+  return ERROR_MESSAGES.NETWORK_ERROR;
 };
 
 // Utility function để validate cart item

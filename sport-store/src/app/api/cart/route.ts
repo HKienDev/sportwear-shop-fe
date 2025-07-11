@@ -1,5 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Retry function for handling 409 conflicts
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      // If it's a 409 conflict and we haven't exhausted retries, wait and retry
+      if (response.status === 409 && attempt < maxRetries) {
+        console.log(`🔄 Cart API 409 conflict, retrying... (attempt ${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      console.log(`🔄 Cart API fetch error, retrying... (attempt ${attempt}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Lấy token từ Authorization header
@@ -13,9 +39,9 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Gọi API backend để lấy giỏ hàng
+    // Gọi API backend để lấy giỏ hàng với retry logic
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/cart`;
-    const response = await fetch(apiUrl, {
+    const response = await fetchWithRetry(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

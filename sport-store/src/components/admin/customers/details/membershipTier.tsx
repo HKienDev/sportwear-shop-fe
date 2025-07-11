@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Crown,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Star,
+  Gift
 } from "lucide-react";
 
 interface MembershipTierProps {
@@ -22,6 +24,7 @@ interface TierInfo {
   nextTier?: string;
   nextTierAmount?: number;
   gradient: string;
+  bgGradient: string;
 }
 
 const tiers: TierInfo[] = [
@@ -31,7 +34,8 @@ const tiers: TierInfo[] = [
     maxSpent: 5000000,
     color: "#9C7F7F",
     gradient: "from-[#9C7F7F] to-[#B39B9B]",
-    icon: <Crown className="w-6 h-6 text-[#9C7F7F]" />,
+    bgGradient: "from-slate-50 to-slate-100",
+    icon: <Crown className="w-5 h-5 text-[#9C7F7F]" />,
     benefits: [
       "Giảm giá 5% cho đơn hàng đầu tiên",
       "Miễn phí vận chuyển cho đơn hàng trên 500.000đ",
@@ -46,7 +50,8 @@ const tiers: TierInfo[] = [
     maxSpent: 20000000,
     color: "#797979",
     gradient: "from-[#797979] to-[#8F8F8F]",
-    icon: <Crown className="w-6 h-6 text-[#797979]" />,
+    bgGradient: "from-slate-50 to-gray-100",
+    icon: <Crown className="w-5 h-5 text-[#797979]" />,
     benefits: [
       "Giảm giá 7% cho tất cả đơn hàng",
       "Miễn phí vận chuyển cho mọi đơn hàng",
@@ -62,7 +67,8 @@ const tiers: TierInfo[] = [
     maxSpent: 30000000,
     color: "#FFBE00",
     gradient: "from-[#FFBE00] to-[#FFD700]",
-    icon: <Crown className="w-6 h-6 text-[#FFBE00]" />,
+    bgGradient: "from-amber-50 to-yellow-100",
+    icon: <Crown className="w-5 h-5 text-[#FFBE00]" />,
     benefits: [
       "Giảm giá 10% cho tất cả đơn hàng",
       "Miễn phí vận chuyển nhanh",
@@ -79,7 +85,8 @@ const tiers: TierInfo[] = [
     maxSpent: 50000000,
     color: "#4EB09D",
     gradient: "from-[#4EB09D] to-[#5BC4B0]",
-    icon: <Crown className="w-6 h-6 text-[#4EB09D]" />,
+    bgGradient: "from-teal-50 to-cyan-100",
+    icon: <Crown className="w-5 h-5 text-[#4EB09D]" />,
     benefits: [
       "Giảm giá 12% cho tất cả đơn hàng",
       "Miễn phí vận chuyển nhanh",
@@ -97,7 +104,8 @@ const tiers: TierInfo[] = [
     maxSpent: Infinity,
     color: "#7C54F3",
     gradient: "from-[#7C54F3] to-[#8F6FF3]",
-    icon: <Crown className="w-6 h-6 text-[#7C54F3]" />,
+    bgGradient: "from-purple-50 to-violet-100",
+    icon: <Crown className="w-5 h-5 text-[#7C54F3]" />,
     benefits: [
       "Giảm giá 15% cho tất cả đơn hàng",
       "Miễn phí vận chuyển nhanh",
@@ -127,25 +135,19 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
     : 100;
 
   return (
-    <Card className="relative overflow-hidden p-4 bg-gradient-to-br from-white via-gray-50 to-white shadow-xl border border-gray-100 w-full max-w-3xl mx-auto mb-8">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px]" />
-      </div>
-
+    <div className={`bg-gradient-to-br ${currentTier.bgGradient} rounded-2xl shadow-sm border border-slate-200 overflow-hidden`}>
       {/* Header Section */}
-      <div className="relative">
-        <div className={`absolute inset-0 bg-gradient-to-r ${currentTier.gradient} opacity-5 rounded-lg blur-xl`} />
-        <div className="relative flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-lg border border-gray-100 shadow-sm">
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className={`p-1.5 rounded-lg bg-[${currentTier.color}] bg-opacity-10 ring-2 ring-offset-2 ring-white shadow-lg`}>
+            <div className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-200`}>
               {currentTier.icon}
             </div>
             <div>
               <h3 className="text-lg font-bold" style={{ color: currentTier.color }}>
                 {currentTier.name}
               </h3>
-              <p className="text-xs text-gray-600">
+              <p className="text-sm text-slate-600">
                 Tổng chi tiêu: <span className="font-semibold" style={{ color: currentTier.color }}>
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalSpent)}
                 </span>
@@ -153,7 +155,7 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
             </div>
           </div>
           <Badge 
-            className="text-xs px-4 py-1 font-medium shadow-lg"
+            className="text-xs px-3 py-1 font-medium shadow-sm border-0"
             style={{ 
               backgroundColor: currentTier.color,
               color: 'white'
@@ -162,61 +164,65 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
             {currentTier.name}
           </Badge>
         </div>
+
+        {/* Progress bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-700">Tiến độ đến {nextTier?.name || 'hạng cao nhất'}</span>
+            <span className="font-semibold" style={{ color: currentTier.color }}>{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full h-2 bg-white rounded-full shadow-inner border border-slate-200">
+            <div 
+              className="h-full rounded-full transition-all duration-700 ease-out shadow-sm"
+              style={{ 
+                width: `${progress}%`,
+                background: `linear-gradient(to right, ${currentTier.color}, ${currentTier.color}80)`
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="relative mt-4">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="font-medium text-gray-700">Tiến độ đến {nextTier?.name || 'hạng cao nhất'}</span>
-          <span className="font-semibold" style={{ color: currentTier.color }}>{Math.round(progress)}%</span>
+      {/* Benefits Section */}
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Gift className="w-4 h-4" style={{ color: currentTier.color }} />
+          <h4 className="font-semibold text-sm text-slate-800">
+            Quyền lợi thành viên
+          </h4>
         </div>
-        <div className="w-full h-2 bg-gray-100 rounded-full shadow-inner">
-          <div 
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{ 
-              width: `${progress}%`,
-              background: `linear-gradient(to right, ${currentTier.color}, ${currentTier.color}80)`
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Benefits */}
-      <div className="mt-4 space-y-2">
-        <h4 className="font-bold text-sm" style={{ color: currentTier.color }}>
-          Quyền lợi thành viên
-        </h4>
-        <ul className="grid gap-2">
+        
+        <div className="space-y-3">
           {currentTier.benefits.map((benefit, index) => (
-            <li key={index} className="group flex items-start gap-3 p-2 rounded-lg bg-white/50 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
-              <div className={`p-1 rounded-md bg-[${currentTier.color}] bg-opacity-10 group-hover:bg-opacity-20 transition-all duration-200 ring-2 ring-offset-2 ring-white`}>
+            <div key={index} className="flex items-start gap-3 p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-sm">
+              <div className={`p-1 rounded-lg bg-opacity-10 flex-shrink-0`} style={{ backgroundColor: `${currentTier.color}20` }}>
                 <TrendingUp className="w-3.5 h-3.5" style={{ color: currentTier.color }} />
               </div>
-              <span className="text-xs text-gray-700 group-hover:text-gray-900 transition-colors duration-200 flex-1">
+              <span className="text-xs text-slate-700 leading-relaxed">
                 {benefit}
               </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Next tier info */}
-      {nextTier && (
-        <div className="mt-4 p-3 bg-gradient-to-r from-gray-50 via-white to-gray-50 rounded-lg border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="p-1 rounded-md" style={{ backgroundColor: `${currentTier.color}20` }}>
-              <Sparkles className="w-3.5 h-3.5" style={{ color: currentTier.color }} />
             </div>
-            <h4 className="font-semibold text-sm text-gray-800">Hạng tiếp theo: {nextTier.name}</h4>
-          </div>
-          <p className="text-xs text-gray-600">
-            Cần chi thêm <span className="font-semibold" style={{ color: currentTier.color }}>
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(nextTierAmount)}
-            </span> 
-            để đạt được {nextTier.name}
-          </p>
+          ))}
         </div>
-      )}
-    </Card>
+
+        {/* Next tier info */}
+        {nextTier && (
+          <div className="mt-6 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1 rounded-lg" style={{ backgroundColor: `${currentTier.color}20` }}>
+                <Sparkles className="w-3.5 h-3.5" style={{ color: currentTier.color }} />
+              </div>
+              <h4 className="font-semibold text-sm text-slate-800">Hạng tiếp theo: {nextTier.name}</h4>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Cần chi thêm <span className="font-semibold" style={{ color: currentTier.color }}>
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(nextTierAmount)}
+              </span> 
+              để đạt được {nextTier.name}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 } 

@@ -33,20 +33,35 @@ export const customerService = {
 
   // Update customer
   async updateCustomer(id: string, customerData: Partial<Customer>): Promise<ApiResponse<Customer>> {
-    const response = await apiClient.put(`/admin/users/${id}`, customerData);
-    return response.data as ApiResponse<Customer>;
+    try {
+      const response = await apiClient.put(`/admin/users/${id}`, customerData);
+      return response.data as ApiResponse<Customer>;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    }
   },
 
   // Delete customer
   async deleteCustomer(id: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.delete(`/admin/users/${id}`);
-    return response.data as ApiResponse<{ message: string }>;
+    try {
+      const response = await apiClient.delete(`/admin/users/${id}`);
+      return response.data as ApiResponse<{ message: string }>;
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      throw error;
+    }
   },
 
   // Change password
   async changePassword(id: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.put(`/admin/users/${id}/reset-password`, { password: newPassword });
-    return response.data as ApiResponse<{ message: string }>;
+    try {
+      const response = await apiClient.put(`/admin/users/${id}/reset-password`, { password: newPassword });
+      return response.data as ApiResponse<{ message: string }>;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
   },
 
   // Toggle user status

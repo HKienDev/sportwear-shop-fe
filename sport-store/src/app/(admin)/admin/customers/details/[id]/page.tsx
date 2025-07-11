@@ -31,6 +31,10 @@ export default function CustomerDetail() {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
+  const [locationCache, setLocationCache] = useState<{
+    districts: { [key: string]: Location[] };
+    wards: { [key: string]: Location[] };
+  }>({ districts: {}, wards: {} });
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [customerError, setCustomerError] = useState<string | null>(null);
@@ -50,6 +54,11 @@ export default function CustomerDetail() {
     
     // Nếu không phải cả hai trường hợp trên, trả về null
     return null;
+  };
+
+  // Helper function để tạo customId
+  const getCustomId = (customer: Customer) => {
+    return customer.customId || `VJUSPORTUSER-${customer._id.toString().slice(0, 8)}`;
   };
 
   // Fetch provinces data
@@ -86,6 +95,12 @@ export default function CustomerDetail() {
 
   // Fetch districts data
   const fetchDistricts = useCallback(async (provinceCode: string) => {
+    // Check cache first
+    if (locationCache.districts[provinceCode]) {
+      setDistricts(locationCache.districts[provinceCode]);
+      return;
+    }
+
     try {
       const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, {
         method: 'GET',
@@ -95,10 +110,17 @@ export default function CustomerDetail() {
       });
       if (response.ok) {
         const data: ProvinceApiData = await response.json();
-        setDistricts(data.districts?.map((d: DistrictApiData) => ({ 
+        const districtsData = data.districts?.map((d: DistrictApiData) => ({ 
           code: d.code.toString(), 
           name: d.name 
-        })) || []);
+        })) || [];
+        
+        setDistricts(districtsData);
+        // Cache the result
+        setLocationCache(prev => ({
+          ...prev,
+          districts: { ...prev.districts, [provinceCode]: districtsData }
+        }));
         return;
       }
     } catch (error) {
@@ -122,11 +144,23 @@ export default function CustomerDetail() {
         { code: "764", name: "Quận Gò Vấp" }
       ]
     };
-    setDistricts(staticDistricts[provinceCode] || []);
-  }, []);
+    const districtsData = staticDistricts[provinceCode] || [];
+    setDistricts(districtsData);
+    // Cache the result
+    setLocationCache(prev => ({
+      ...prev,
+      districts: { ...prev.districts, [provinceCode]: districtsData }
+    }));
+  }, [locationCache.districts]);
 
   // Fetch wards data
   const fetchWards = useCallback(async (districtCode: string) => {
+    // Check cache first
+    if (locationCache.wards[districtCode]) {
+      setWards(locationCache.wards[districtCode]);
+      return;
+    }
+
     try {
       const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`, {
         method: 'GET',
@@ -136,10 +170,17 @@ export default function CustomerDetail() {
       });
       if (response.ok) {
         const data: DistrictApiData = await response.json();
-        setWards(data.wards?.map((w: WardApiData) => ({ 
+        const wardsData = data.wards?.map((w: WardApiData) => ({ 
           code: w.code.toString(), 
           name: w.name 
-        })) || []);
+        })) || [];
+        
+        setWards(wardsData);
+        // Cache the result
+        setLocationCache(prev => ({
+          ...prev,
+          wards: { ...prev.wards, [districtCode]: wardsData }
+        }));
         return;
       }
     } catch (error) {
@@ -163,8 +204,14 @@ export default function CustomerDetail() {
         { code: "26746", name: "Nguyễn Thái Bình" }
       ]
     };
-    setWards(districtCode ? staticWards[districtCode] || [] : []);
-  }, []);
+    const wardsData = districtCode ? staticWards[districtCode] || [] : [];
+    setWards(wardsData);
+    // Cache the result
+    setLocationCache(prev => ({
+      ...prev,
+      wards: { ...prev.wards, [districtCode]: wardsData }
+    }));
+  }, [locationCache.wards]);
 
   // Fetch customer data
   const fetchCustomerData = useCallback(async () => {
@@ -263,7 +310,8 @@ export default function CustomerDetail() {
     if (!tempCustomer || !customer) return;
 
     try {
-      const response = await customerService.updateCustomer(customer._id, tempCustomer);
+      const customId = getCustomId(customer);
+      const response = await customerService.updateCustomer(customId, tempCustomer);
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi cập nhật thông tin");
       }
@@ -286,7 +334,8 @@ export default function CustomerDetail() {
     }
 
     try {
-      const response = await customerService.deleteCustomer(params.id.toString());
+      const customId = getCustomId(customer);
+      const response = await customerService.deleteCustomer(customId);
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi xóa khách hàng");
       }
@@ -304,7 +353,8 @@ export default function CustomerDetail() {
     if (!customer || !params.id) return;
 
     try {
-      const response = await customerService.changePassword(params.id.toString(), newPassword);
+      const customId = getCustomId(customer);
+      const response = await customerService.changePassword(customId, newPassword);
       if (!response.success) {
         throw new Error(response.message || "Lỗi khi thay đổi mật khẩu");
       }
@@ -430,52 +480,91 @@ export default function CustomerDetail() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Đang tải thông tin khách hàng...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!customer) {
-    return <div>Không tìm thấy thông tin khách hàng</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Không tìm thấy khách hàng</h2>
+          <p className="text-slate-600 mb-6">Thông tin khách hàng không tồn tại hoặc đã bị xóa.</p>
+          <button
+            onClick={() => router.push('/admin/customers')}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
+          >
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      {customerError ? (
-        <div className="text-red-500 text-center py-4">{customerError}</div>
-      ) : (
-        <>
-          <Header
-            onUpdate={handleUpdateCustomer}
-            onDelete={handleDeleteCustomer}
-            onResetPassword={() => setIsResetPasswordModalOpen(true)}
-          />
-          
-          <div className="flex flex-col lg:flex-row gap-4 mt-4">
-            <CustomerInfo
-              customer={convertToCustomerData(tempCustomer || customer)}
-              provinces={provinces}
-              districts={districts}
-              wards={wards}
-              onProvinceChange={handleProvinceChange}
-              onDistrictChange={handleDistrictChange}
-              onWardChange={handleWardChange}
-              onDataChange={handleDataChange}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {customerError ? (
+          <div className="bg-white rounded-xl shadow-sm border border-rose-200 p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Có lỗi xảy ra</h3>
+            <p className="text-slate-600">{customerError}</p>
+          </div>
+        ) : (
+          <>
+            <Header
+              onUpdate={handleUpdateCustomer}
+              onDelete={handleDeleteCustomer}
+              onResetPassword={() => setIsResetPasswordModalOpen(true)}
             />
             
-            <MembershipTier
-              totalSpent={tempCustomer?.totalSpent || customer.totalSpent || 0}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+              <div className="lg:col-span-2">
+                <CustomerInfo
+                  customer={convertToCustomerData(tempCustomer || customer)}
+                  provinces={provinces}
+                  districts={districts}
+                  wards={wards}
+                  onProvinceChange={handleProvinceChange}
+                  onDistrictChange={handleDistrictChange}
+                  onWardChange={handleWardChange}
+                  onDataChange={handleDataChange}
+                />
+              </div>
+              
+              <div className="lg:col-span-2">
+                <MembershipTier
+                  totalSpent={tempCustomer?.totalSpent || customer.totalSpent || 0}
+                />
+              </div>
+            </div>
+
+            <OrderList orders={customerOrders} />
+
+            <ResetPasswordModal
+              isOpen={isResetPasswordModalOpen}
+              onClose={() => setIsResetPasswordModalOpen(false)}
+              onSubmit={handleChangePassword}
+              customerName={customer?.fullname || "Khách hàng"}
             />
-          </div>
-
-          <OrderList orders={customerOrders} />
-
-          <ResetPasswordModal
-            isOpen={isResetPasswordModalOpen}
-            onClose={() => setIsResetPasswordModalOpen(false)}
-            onSubmit={handleChangePassword}
-            customerName={customer?.fullname || "Khách hàng"}
-          />
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

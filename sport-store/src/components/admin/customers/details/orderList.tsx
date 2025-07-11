@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Package, ShoppingBag, Search, Calendar, Filter } from "lucide-react";
+import { ChevronRight, Package, ShoppingBag, Search, Calendar, Filter, Eye } from "lucide-react";
 import { Order } from "@/types/base";
 
 interface OrderListProps {
   orders: Order[];
 }
-
-// Đã tái sử dụng và tinh chỉnh các component hiện có
-// thay vì import từ shadcn/ui
 
 const statusColors = {
   pending: "bg-amber-50 text-amber-700 border border-amber-200",
@@ -121,10 +118,10 @@ export default function OrderList({ orders }: OrderListProps) {
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className={`flex items-center justify-center w-8 h-8 rounded ${
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
             currentPage === 1 
-              ? "text-neutral-300 cursor-not-allowed" 
-              : "text-neutral-600 hover:bg-indigo-50"
+              ? "text-slate-300 cursor-not-allowed" 
+              : "text-slate-600 hover:bg-indigo-50"
           }`}
         >
           <ChevronRight className="h-4 w-4 transform rotate-180" />
@@ -132,14 +129,14 @@ export default function OrderList({ orders }: OrderListProps) {
         
         {getPageNumbers().map((page, index) => (
           page === "..." 
-            ? <span key={`ellipsis-${index}`} className="px-2 text-neutral-400">...</span>
+            ? <span key={`ellipsis-${index}`} className="px-2 text-slate-400">...</span>
             : <button
                 key={`page-${page}`}
                 onClick={() => onPageChange(page as number)}
-                className={`flex items-center justify-center w-8 h-8 rounded-full font-medium ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg font-medium transition-all duration-200 ${
                   currentPage === page
-                    ? "bg-indigo-600 text-white"
-                    : "text-neutral-600 hover:bg-indigo-50"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-indigo-50"
                 }`}
               >
                 {page}
@@ -149,10 +146,10 @@ export default function OrderList({ orders }: OrderListProps) {
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className={`flex items-center justify-center w-8 h-8 rounded ${
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
             currentPage === totalPages
-              ? "text-neutral-300 cursor-not-allowed"
-              : "text-neutral-600 hover:bg-indigo-50"
+              ? "text-slate-300 cursor-not-allowed"
+              : "text-slate-600 hover:bg-indigo-50"
           }`}
         >
           <ChevronRight className="h-4 w-4" />
@@ -169,136 +166,149 @@ export default function OrderList({ orders }: OrderListProps) {
   );
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-        <div className="flex items-center mb-4 md:mb-0">
-          <ShoppingBag className="h-6 w-6 text-indigo-600 mr-2" />
-          <h2 className="text-xl font-bold text-neutral-800">Lịch Sử Đơn Hàng</h2>
-          <div className="ml-3 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-sm font-medium">
-            {filteredOrders.length} đơn hàng
-          </div>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Tìm mã đơn hàng..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-9 pr-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 w-full transition-all duration-200 text-sm"
-            />
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-6 border-b border-slate-200">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
+              <ShoppingBag className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Lịch sử đơn hàng</h2>
+              <p className="text-sm text-slate-600">Quản lý và theo dõi đơn hàng của khách hàng</p>
+            </div>
+            <div className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium border border-indigo-200">
+              {filteredOrders.length} đơn hàng
+            </div>
           </div>
           
-          <div className="relative">
-            <Filter className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-            <select
-              value={filterStatus || ""}
-              onChange={(e) => {
-                setFilterStatus(e.target.value || null);
-                setCurrentPage(1);
-              }}
-              className="pl-9 pr-8 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 appearance-none bg-white text-sm w-full transition-all duration-200"
-            >
-              <option value="">Tất cả trạng thái</option>
-              {statusOptions.map(status => (
-                <option key={status} value={status}>{statusLabels[status as keyof typeof statusLabels]}</option>
-              ))}
-            </select>
-            <ChevronRight className="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 rotate-90 text-neutral-400" />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm mã đơn hàng..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full transition-all duration-200 text-sm bg-white"
+              />
+            </div>
+            
+            <div className="relative">
+              <Filter className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <select
+                value={filterStatus || ""}
+                onChange={(e) => {
+                  setFilterStatus(e.target.value || null);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 pr-8 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none bg-white text-sm w-full transition-all duration-200"
+              >
+                <option value="">Tất cả trạng thái</option>
+                {statusOptions.map(status => (
+                  <option key={status} value={status}>{statusLabels[status as keyof typeof statusLabels]}</option>
+                ))}
+              </select>
+              <ChevronRight className="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 rotate-90 text-slate-400" />
+            </div>
           </div>
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Package className="h-16 w-16 text-neutral-300 mb-4" />
-          <h3 className="text-lg font-semibold text-neutral-700 mb-2">Không tìm thấy đơn hàng nào</h3>
-          <p className="text-neutral-500 max-w-md">
-            {searchTerm || filterStatus 
-              ? "Không có đơn hàng nào khớp với điều kiện tìm kiếm. Hãy thử với từ khóa hoặc bộ lọc khác." 
-              : "Chưa có đơn hàng nào được tạo. Đơn hàng sẽ xuất hiện ở đây khi khách hàng đặt hàng."}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-lg border border-neutral-200">
-            <table className="w-full text-sm">
-              <thead className="bg-neutral-50 text-left">
-                <tr>
-                  <th className="font-semibold text-neutral-600 p-4 border-b">Mã Đơn</th>
-                  <th className="font-semibold text-neutral-600 p-4 border-b">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1.5" />
-                      Ngày Đặt
-                    </div>
-                  </th>
-                  <th className="font-semibold text-neutral-600 p-4 border-b">Tổng Tiền</th>
-                  <th className="font-semibold text-neutral-600 p-4 border-b">Trạng Thái</th>
-                  <th className="font-semibold text-neutral-600 p-4 border-b text-right">Thao Tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentOrders.map((order) => (
-                  <tr 
-                    key={order._id} 
-                    className="cursor-pointer hover:bg-indigo-50/30 transition-colors duration-200"
-                    onClick={() => handleOrderClick(order._id)}
-                  >
-                    <td className="p-4 border-b font-medium text-indigo-600">#{order.shortId}</td>
-                    <td className="p-4 border-b">
-                      <div className="flex flex-col">
-                        <span>{new Date(order.createdAt).toLocaleDateString("vi-VN")}</span>
-                        <span className="text-xs text-neutral-500">
-                          {new Date(order.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 border-b font-medium">
-                      {order.totalPrice.toLocaleString("vi-VN")}đ
-                    </td>
-                    <td className="p-4 border-b">
-                      <Badge className={`${statusColors[order.status as keyof typeof statusColors]} px-3 py-1 font-medium flex items-center w-fit text-xs`}>
-                        {statusIcons[order.status as keyof typeof statusIcons]}
-                        {statusLabels[order.status as keyof typeof statusLabels]}
-                      </Badge>
-                    </td>
-                    <td className="p-4 border-b text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOrderClick(order._id);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center ml-auto"
-                      >
-                        Chi tiết
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {totalPages > 1 && (
-            <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-sm text-neutral-500">
-                Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} trên tổng số {filteredOrders.length} đơn hàng
-              </div>
-              <CustomPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+      {/* Content */}
+      <div className="p-6">
+        {filteredOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <Package className="h-8 w-8 text-slate-400" />
             </div>
-          )}
-        </>
-      )}
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">Không tìm thấy đơn hàng nào</h3>
+            <p className="text-slate-500 max-w-md leading-relaxed">
+              {searchTerm || filterStatus 
+                ? "Không có đơn hàng nào khớp với điều kiện tìm kiếm. Hãy thử với từ khóa hoặc bộ lọc khác." 
+                : "Chưa có đơn hàng nào được tạo. Đơn hàng sẽ xuất hiện ở đây khi khách hàng đặt hàng."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left">
+                  <tr>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Mã đơn</th>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        Ngày đặt
+                      </div>
+                    </th>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Tổng tiền</th>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Trạng thái</th>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentOrders.map((order) => (
+                    <tr 
+                      key={order._id} 
+                      className="cursor-pointer hover:bg-indigo-50/30 transition-colors duration-200"
+                      onClick={() => handleOrderClick(order._id)}
+                    >
+                      <td className="p-4 border-b border-slate-100 font-medium text-indigo-600">#{order.shortId}</td>
+                      <td className="p-4 border-b border-slate-100">
+                        <div className="flex flex-col">
+                          <span className="text-slate-800">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</span>
+                          <span className="text-xs text-slate-500">
+                            {new Date(order.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 border-b border-slate-100 font-medium text-slate-800">
+                        {order.totalPrice.toLocaleString("vi-VN")}đ
+                      </td>
+                      <td className="p-4 border-b border-slate-100">
+                        <Badge className={`${statusColors[order.status as keyof typeof statusColors]} px-3 py-1 font-medium flex items-center w-fit text-xs`}>
+                          {statusIcons[order.status as keyof typeof statusIcons]}
+                          {statusLabels[order.status as keyof typeof statusLabels]}
+                        </Badge>
+                      </td>
+                      <td className="p-4 border-b border-slate-100 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOrderClick(order._id);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 ml-auto"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="text-sm text-slate-500">
+                  Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} trên tổng số {filteredOrders.length} đơn hàng
+                </div>
+                <CustomPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

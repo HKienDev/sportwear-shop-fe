@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Key, Save } from 'lucide-react';
+import { Trash2, Key, Save, ArrowLeft, User } from 'lucide-react';
 
 interface HeaderProps {
   onDelete: () => void;
@@ -8,63 +8,42 @@ interface HeaderProps {
 }
 
 export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [activeControl, setActiveControl] = useState<string | null>(null);
-  
-  // Hiệu ứng particle nhỏ khi hover vào nút cập nhật
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, size: number, opacity: number}>>([]);
-  
-  useEffect(() => {
-    if (isHovered) {
-      const interval = setInterval(() => {
-        setParticles(prev => {
-          // Thêm particle mới
-          const newParticle = {
-            id: Date.now(),
-            x: Math.random() * 100,
-            y: Math.random() * 60,
-            size: Math.random() * 5 + 1,
-            opacity: 0.8
-          };
-          
-          // Cập nhật và lọc các particle cũ
-          const updatedParticles = prev
-            .map(p => ({...p, opacity: p.opacity - 0.05, size: p.size - 0.1}))
-            .filter(p => p.opacity > 0 && p.size > 0);
-            
-          return [...updatedParticles, newParticle].slice(-15); // Giới hạn số particles
-        });
-      }, 150);
-      
-      return () => clearInterval(interval);
-    } else {
-      setParticles([]);
-    }
-  }, [isHovered]);
 
   return (
-    <div className="mb-8 pt-2">
+    <div className="mb-8">
       {/* Header Container */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-xl shadow-lg border border-neutral-200">
+      <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-200">
         {/* Background Elements */}
-        <div className="absolute -right-16 -top-16 w-32 h-32 bg-indigo-100 rounded-full opacity-60"></div>
-        <div className="absolute left-1/2 bottom-0 w-64 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/50 to-purple-50/50"></div>
+        <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full opacity-60"></div>
+        <div className="absolute -left-4 -bottom-4 w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full opacity-40"></div>
         
         {/* Main Content */}
-        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center p-6 gap-5">
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold text-indigo-600 tracking-widest mb-1 uppercase"></span>
-            <h1 className="text-3xl font-bold text-neutral-800">
-              CHI TIẾT <span className="relative inline-block">
-                KHÁCH HÀNG
-                <span className="absolute -bottom-1 left-0 w-full h-1 bg-indigo-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-bottom-left"></span>
-              </span>
-            </h1>
+        <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center p-6 lg:p-8 gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-indigo-600 tracking-widest uppercase bg-indigo-50 px-2 py-1 rounded-full">
+                  Quản lý khách hàng
+                </span>
+              </div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">
+                Chi tiết khách hàng
+              </h1>
+              <p className="text-slate-600 text-sm mt-1">
+                Xem và chỉnh sửa thông tin chi tiết của khách hàng
+              </p>
+            </div>
           </div>
           
           {/* Control Panel */}
-          <div className="flex items-center justify-end w-full md:w-auto">
-            <div className="relative bg-white p-1 rounded-xl shadow-sm border border-neutral-200 flex items-stretch">
+          <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full lg:w-auto">
+            {/* Secondary Actions */}
+            <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-1 border border-slate-200">
               {/* Delete Button */}
               <div 
                 className="relative"
@@ -73,12 +52,11 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               >
                 <button
                   onClick={onDelete}
-                  className="relative z-10 h-full px-4 py-2.5 text-neutral-600 rounded-lg hover:text-rose-600 transition-all duration-300 flex items-center gap-2 group"
+                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-rose-600 transition-all duration-300 flex items-center gap-2 group"
                   aria-label="Xóa khách hàng"
                 >
-                  <span className="absolute inset-0 bg-rose-50 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-200"></span>
                   <Trash2 size={18} className="relative z-10 transition-all duration-300" />
-                  <span className="relative z-10 hidden md:block font-medium whitespace-nowrap">Xóa Khách Hàng</span>
+                  <span className="relative z-10 hidden sm:block font-medium whitespace-nowrap text-sm">Xóa</span>
                 </button>
                 {activeControl === 'delete' && (
                   <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-rose-500 animate-pulse"></span>
@@ -86,7 +64,7 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               </div>
               
               {/* Separator */}
-              <div className="h-auto w-px bg-neutral-200 mx-1"></div>
+              <div className="h-8 w-px bg-slate-300"></div>
               
               {/* Reset Password Button */}
               <div 
@@ -96,12 +74,11 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               >
                 <button
                   onClick={onResetPassword}
-                  className="relative z-10 h-full px-4 py-2.5 text-neutral-600 rounded-lg hover:text-amber-600 transition-all duration-300 flex items-center gap-2 group"
+                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-amber-600 transition-all duration-300 flex items-center gap-2 group"
                   aria-label="Thay đổi mật khẩu"
                 >
-                  <span className="absolute inset-0 bg-amber-50 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-200"></span>
                   <Key size={18} className="relative z-10 transition-all duration-300" />
-                  <span className="relative z-10 hidden md:block font-medium whitespace-nowrap">Thay Đổi Mật Khẩu</span>
+                  <span className="relative z-10 hidden sm:block font-medium whitespace-nowrap text-sm">Mật khẩu</span>
                 </button>
                 {activeControl === 'reset' && (
                   <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-amber-500 animate-pulse"></span>
@@ -109,34 +86,14 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               </div>
             </div>
             
-            {/* Update Button - Separated for emphasis */}
-            <div 
-              className="relative ml-3" 
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
+            {/* Primary Action - Update Button */}
+            <div className="relative">
               <button
                 onClick={onUpdate}
-                className="relative overflow-hidden px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 flex items-center gap-2 shadow-md group"
+                className="relative h-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 shadow-lg group font-medium"
               >
-                {/* Particle Animation Container */}
-                <div className="absolute inset-0 overflow-hidden">
-                  {particles.map((particle) => (
-                    <div
-                      key={particle.id}
-                      className="absolute bg-white rounded-full"
-                      style={{
-                        left: `${particle.x}%`,
-                        top: `${particle.y}%`,
-                        width: `${particle.size}px`,
-                        height: `${particle.size}px`,
-                        opacity: particle.opacity,
-                      }}
-                    />
-                  ))}
-                </div>
-                <Save size={18} className="relative z-10 transition-all duration-300 group-hover:rotate-12" />
-                <span className="relative z-10 font-medium">Cập Nhật</span>
+                <Save size={18} className="transition-all duration-300 group-hover:rotate-12" />
+                <span className="whitespace-nowrap text-sm">Cập nhật</span>
               </button>
             </div>
           </div>

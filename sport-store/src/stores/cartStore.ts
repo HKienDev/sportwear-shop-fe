@@ -55,6 +55,16 @@ export const useCartStore = create<CartState>()(
               throw new Error(response.data.message || 'Không thể lấy giỏ hàng');
             }
           } catch (error) {
+            // Handle 409 conflicts gracefully
+            if (error instanceof Error && error.message.includes('409')) {
+              console.warn('Cart fetch conflict (409), this is usually temporary');
+              // Don't set error for 409 conflicts as they're usually temporary
+              set((state) => {
+                state.loading = false;
+              });
+              return;
+            }
+            
             const errorMessage = handleCartError(error, 'fetch');
             set((state) => {
               state.error = errorMessage;
