@@ -91,32 +91,36 @@ export default function Dashboard() {
             value={stats.totalOrders}
             icon={<FileText className="h-6 w-6 text-blue-500" />}
             percentage={stats.growth.orders}
-            isPositive={stats.growth.orders >= 0}
+            trend={stats.growth.orders >= 0 ? 'up' : 'down'}
             compareText="So với tháng trước"
+            loading={isLoading}
           />
           <AnalyticsCard
             title="Tổng Doanh Thu"
             value={formatCurrency(stats.totalRevenue)}
             icon={<DollarSign className="h-6 w-6 text-green-500" />}
             percentage={stats.growth.revenue}
-            isPositive={stats.growth.revenue >= 0}
+            trend={stats.growth.revenue >= 0 ? 'up' : 'down'}
             compareText="So với tháng trước"
+            loading={isLoading}
           />
           <AnalyticsCard
             title="Tổng Khách Hàng"
             value={stats.totalCustomers}
             icon={<Users className="h-6 w-6 text-purple-500" />}
             percentage={stats.growth.customers}
-            isPositive={stats.growth.customers >= 0}
+            trend={stats.growth.customers >= 0 ? 'up' : 'down'}
             compareText="So với tháng trước"
+            loading={isLoading}
           />
           <AnalyticsCard
             title="Tổng Sản Phẩm"
             value={stats.totalProducts}
             icon={<Package className="h-6 w-6 text-orange-500" />}
             percentage={stats.growth.products}
-            isPositive={stats.growth.products >= 0}
+            trend={stats.growth.products >= 0 ? 'up' : 'down'}
             compareText="So với tháng trước"
+            loading={isLoading}
           />
         </div>
         
@@ -124,12 +128,14 @@ export default function Dashboard() {
         {isLoading ? (
           <Skeleton className="h-96 mb-8" />
         ) : (
-          <RevenueChart 
-            chartData={revenue} 
-            formatCurrency={formatCurrency}
-            timeRange={timeRange}
-            onTimeRangeChange={setTimeRange}
-          />
+          <div className="mb-8">
+            <RevenueChart 
+              chartData={revenue} 
+              formatCurrency={formatCurrency}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+            />
+          </div>
         )}
         
         {/* Orders and Products Section */}

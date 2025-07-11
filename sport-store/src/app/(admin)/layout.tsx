@@ -4,7 +4,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 import { ROUTES } from '@/config/constants';
 import Sidebar from '@/components/admin/adminLayout/sidebar';
-import Topbar from '@/components/admin/adminLayout/topbar';
 import Footer from '@/components/admin/adminLayout/footer';
 
 export default function AdminLayout({
@@ -62,10 +61,10 @@ export default function AdminLayout({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Sidebar */}
+            {/* Sidebar - Always Fixed */}
             <div className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } lg:translate-x-0 lg:static lg:inset-0 w-[clamp(240px,25vw,280px)]`}>
+            } lg:translate-x-0 w-[clamp(240px,25vw,280px)]`}>
                 <Sidebar />
             </div>
 
@@ -73,8 +72,6 @@ export default function AdminLayout({
             <div className={`flex flex-col min-h-screen transition-all duration-300 ${
                 isSidebarOpen ? 'lg:ml-[clamp(240px,25vw,280px)]' : 'lg:ml-0'
             }`}>
-                {/* Topbar */}
-                <Topbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
 
                 {/* Main Content Area */}
                 <main className="flex-1 pt-[clamp(3rem,6vw,4rem)] pb-[clamp(3rem,6vw,4rem)] px-[clamp(0.5rem,2vw,1rem)] sm:px-[clamp(1rem,3vw,1.5rem)] lg:px-[clamp(1.5rem,4vw,2rem)]">
