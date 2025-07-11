@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, ChevronLeft, ChevronRight, Star, Clock } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, ChevronLeft, ChevronRight, Star, Clock, Eye, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,8 +10,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ProductStatusBadge from "./productStatusBadge";
 import FeaturedProductModal, { FeaturedProductConfig } from "../featuredProductModal";
+import { toast } from "sonner";
 
 interface Category {
   _id: string;
@@ -77,6 +88,8 @@ const ProductListTable = React.memo(
     const [currentPage, setCurrentPage] = React.useState(1);
     const [isFeaturedModalOpen, setIsFeaturedModalOpen] = React.useState(false);
     const [selectedProductForSetup, setSelectedProductForSetup] = React.useState<Product | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+    const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
     const productsPerPage = 10;
 
     // Pagination logic
@@ -101,6 +114,36 @@ const ProductListTable = React.memo(
       }
       
       return category.name;
+    };
+
+    // Handle delete confirmation
+    const handleDeleteClick = (product: Product) => {
+      setProductToDelete(product);
+      setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+      if (!productToDelete) return;
+      
+      try {
+        await onDelete(productToDelete.sku);
+        setDeleteDialogOpen(false);
+        setProductToDelete(null);
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+      }
+    };
+
+    // Handle copy SKU
+    const handleCopySKU = async (sku: string) => {
+      try {
+        await navigator.clipboard.writeText(sku);
+        toast.success('Đã sao chép SKU vào clipboard');
+      } catch (error) {
+        console.error('Error copying SKU:', error);
+        toast.error('Không thể sao chép SKU');
+      }
     };
 
     return (
@@ -281,11 +324,26 @@ const ProductListTable = React.memo(
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem 
+                                onClick={() => window.open(`/admin/products/details/${product.sku}`, '_blank')}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>Xem chi tiết</span>
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => onEdit(product._id)} className="cursor-pointer">
                                 <Edit className="mr-2 h-4 w-4" />
                                 <span>Chỉnh sửa</span>
                               </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleCopySKU(product.sku)}
+                                className="cursor-pointer"
+                              >
+                                <Copy className="mr-2 h-4 w-4" />
+                                <span>Sao chép SKU</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => onToggleStatus(product._id, !product.isActive)}
                                 className={`cursor-pointer ${product.isActive ? "text-yellow-600" : "text-green-600"}`}
@@ -315,10 +373,10 @@ const ProductListTable = React.memo(
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 className="text-red-600 cursor-pointer"
-                                onClick={() => onDelete(product.sku)}
+                                onClick={() => handleDeleteClick(product)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Xóa</span>
+                                <span>Xóa sản phẩm</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -416,6 +474,28 @@ const ProductListTable = React.memo(
             }
           }}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa sản phẩm</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa sản phẩm "{productToDelete?.name}"? 
+                Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn sản phẩm khỏi hệ thống.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleConfirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa sản phẩm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }

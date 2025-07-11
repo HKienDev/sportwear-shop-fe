@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
-import { couponService } from "@/services/couponService";
+
 import { Coupon } from "@/types/coupon";
 import { getTimeRemaining, formatDateForAPI } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
@@ -33,18 +33,21 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
     const fetchCoupon = async () => {
       try {
         setLoading(true);
-        const response = await couponService.getCouponById(id);
+        const response = await fetch(`/api/coupons/${id}`, {
+          credentials: 'include',
+        });
         
-        if (response && typeof response === 'object' && 'success' in response && response.success && 'data' in response) {
-          const responseData = (response as ApiResponse<Coupon | { coupon: Coupon }> ).data;
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          const responseData = data.data;
           if (responseData && typeof responseData === 'object' && 'coupon' in responseData) {
             setCoupon((responseData as { coupon: Coupon }).coupon);
           } else if (responseData) {
             setCoupon(responseData as Coupon);
           }
         } else {
-          const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể tải thông tin mã giảm giá";
-          toast.error(message as string);
+          toast.error(data.message || "Không thể tải thông tin mã giảm giá");
           router.push("/admin/coupons/list");
         }
       } catch (error) {
@@ -79,14 +82,21 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
 
     try {
       setIsDeleting(true);
-      const response = await couponService.deleteCoupon(coupon._id);
+      const response = await fetch(`/api/coupons/${coupon._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
       
-      if (response && typeof response === 'object' && 'success' in response && response.success) {
+      const data = await response.json();
+      
+      if (data.success) {
         toast.success("Xóa mã giảm giá thành công");
         router.push("/admin/coupons/list");
       } else {
-        const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể xóa mã giảm giá";
-        toast.error(message as string);
+        toast.error(data.message || "Không thể xóa mã giảm giá");
       }
     } catch (error) {
       console.error("Error deleting coupon:", error);
@@ -101,19 +111,26 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
 
     try {
       setIsPausing(true);
-      const response = await couponService.pauseCoupon(coupon._id);
+      const response = await fetch(`/api/coupons/${coupon._id}/pause`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
       
-      if (response && typeof response === 'object' && 'success' in response && response.success && 'data' in response) {
+      const data = await response.json();
+      
+      if (data.success && data.data) {
         toast.success("Tạm dừng mã giảm giá thành công");
-        const responseData = (response as ApiResponse<{ coupon: Coupon }> ).data;
+        const responseData = data.data;
         if (responseData && 'coupon' in responseData) {
           setCoupon(responseData.coupon);
         } else if (responseData) {
           setCoupon(responseData as Coupon);
         }
       } else {
-        const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể tạm dừng mã giảm giá";
-        toast.error(message as string);
+        toast.error(data.message || "Không thể tạm dừng mã giảm giá");
       }
     } catch (error) {
       console.error("Error pausing coupon:", error);
@@ -128,19 +145,26 @@ const CouponDetailClient: React.FC<CouponDetailClientProps> = ({ id }) => {
 
     try {
       setIsActivating(true);
-      const response = await couponService.activateCoupon(coupon._id);
+      const response = await fetch(`/api/coupons/${coupon._id}/activate`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
       
-      if (response && typeof response === 'object' && 'success' in response && response.success && 'data' in response) {
+      const data = await response.json();
+      
+      if (data.success && data.data) {
         toast.success("Kích hoạt mã giảm giá thành công");
-        const responseData = (response as ApiResponse<{ coupon: Coupon }> ).data;
+        const responseData = data.data;
         if (responseData && 'coupon' in responseData) {
           setCoupon(responseData.coupon);
         } else if (responseData) {
           setCoupon(responseData as Coupon);
         }
       } else {
-        const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể kích hoạt mã giảm giá";
-        toast.error(message as string);
+        toast.error(data.message || "Không thể kích hoạt mã giảm giá");
       }
     } catch (error) {
       console.error("Error activating coupon:", error);

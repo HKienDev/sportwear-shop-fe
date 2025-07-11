@@ -24,10 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { couponService } from "@/services/couponService";
 import { useAuth } from "@/context/authContext";
 import { TOKEN_CONFIG } from "@/config/token";
-import { formatDateForInput, parseDateFromInput } from "@/utils/dateUtils";
+
 import { Percent, Coins, Calendar, Users, ShoppingCart, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -38,28 +37,19 @@ const formSchema = z.object({
   usageLimit: z.coerce.number().min(1, "Giới hạn sử dụng phải lớn hơn 0"),
   userLimit: z.coerce.number().min(1, "Giới hạn sử dụng trên mỗi user phải lớn hơn 0"),
   startDate: z.string().min(1, "Vui lòng chọn ngày bắt đầu"),
+  startTime: z.string().min(1, "Vui lòng chọn giờ bắt đầu"),
   endDate: z.string().min(1, "Vui lòng chọn ngày kết thúc"),
+  endTime: z.string().min(1, "Vui lòng chọn giờ kết thúc"),
   minimumPurchaseAmount: z.coerce.number().min(0, "Số tiền tối thiểu không thể âm").default(0),
 }).refine(
   (data) => {
-    const startDate = parseDateFromInput(data.startDate);
-    const endDate = parseDateFromInput(data.endDate);
-    return endDate > startDate;
+    const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
+    const endDateTime = new Date(`${data.endDate}T${data.endTime}`);
+    return endDateTime > startDateTime;
   },
   {
-    message: "Ngày kết thúc phải lớn hơn ngày bắt đầu",
+    message: "Thời gian kết thúc phải lớn hơn thời gian bắt đầu",
     path: ["endDate"],
-  }
-).refine(
-  (data) => {
-    if (data.type === "%" && data.value > 100) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: "Phần trăm giảm giá không thể vượt quá 100%",
-    path: ["value"],
   }
 );
 
@@ -70,6 +60,8 @@ const CouponForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated, checkAuthStatus } = useAuth();
   
+  console.log('CouponForm rendering');
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,8 +70,10 @@ const CouponForm = () => {
       usageLimit: 1,
       userLimit: 1,
       minimumPurchaseAmount: 0,
-      startDate: formatDateForInput(new Date().toISOString()),
-      endDate: formatDateForInput(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()),
+      startDate: new Date().toISOString().split('T')[0],
+      startTime: "00:00",
+      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      endTime: "23:59",
     },
   });
 
@@ -101,6 +95,8 @@ const CouponForm = () => {
   const onSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
+      
+      console.log('Form data:', data);
       
       // Kiểm tra xác thực trước khi gửi request
       if (!isAuthenticated) {
@@ -131,22 +127,31 @@ const CouponForm = () => {
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
         minimumPurchaseAmount: data.minimumPurchaseAmount,
-        startDate: new Date(parseDateFromInput(data.startDate)).toISOString(),
-        endDate: new Date(parseDateFromInput(data.endDate)).toISOString(),
+        startDate: new Date(`${data.startDate}T${data.startTime}`).toISOString(),
+        endDate: new Date(`${data.endDate}T${data.endTime}`).toISOString(),
       };
 
-      const response = await couponService.createCoupon(formattedData);
+      const response = await fetch('/api/coupons/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formattedData),
+      });
       
-      console.log('Coupon creation response:', response);
+      const responseData = await response.json();
       
-      if (response.success && response.data) {
+      console.log('Coupon creation response:', responseData);
+      
+      if (responseData.success && responseData.data) {
         toast.success("Tạo mã giảm giá thành công", {
-          description: `Mã: ${response.data.code}, Giá trị: ${response.data.value}${response.data.type === 'percentage' ? '%' : ' VNĐ'}`
+          description: `Mã: ${responseData.data.code}, Giá trị: ${responseData.data.value}${responseData.data.type === 'percentage' ? '%' : ' VNĐ'}`
         });
         router.push("/admin/coupons/list");
       } else {
-        console.error('Invalid response structure:', response);
-        toast.error(response.message || "Không thể tạo mã giảm giá");
+        console.error('Invalid response structure:', responseData);
+        toast.error(responseData.message || "Không thể tạo mã giảm giá");
       }
     } catch (error) {
       console.error("Error creating coupon:", error);
@@ -156,12 +161,14 @@ const CouponForm = () => {
     }
   };
 
-  const today = new Date().toISOString().split("T")[0];
+
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Loại giảm giá và Giá trị */}
           <FormField
             control={form.control}
             name="type"
@@ -207,32 +214,23 @@ const CouponForm = () => {
                     <Input
                       type="number"
                       className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      placeholder={
-                        form.watch("type") === "%"
-                          ? "Nhập phần trăm giảm giá (0-100)"
-                          : "Nhập số tiền giảm giá"
-                      }
+                      placeholder="Nhập giá trị giảm giá"
                       {...field}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      {form.watch("type") === "%" ? (
-                        <Percent className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <Coins className="w-5 h-5 text-gray-400" />
-                      )}
+                      <Percent className="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                 </FormControl>
                 <FormDescription className="text-sm text-gray-500">
-                  {form.watch("type") === "%"
-                    ? "Nhập phần trăm giảm giá (0-100%)"
-                    : "Nhập số tiền giảm giá (VNĐ)"}
+                  Nhập giá trị giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Số tiền tối thiểu và Giới hạn sử dụng */}
           <FormField
             control={form.control}
             name="minimumPurchaseAmount"
@@ -287,6 +285,7 @@ const CouponForm = () => {
             )}
           />
 
+          {/* Giới hạn user và Ngày bắt đầu */}
           <FormField
             control={form.control}
             name="userLimit"
@@ -325,7 +324,6 @@ const CouponForm = () => {
                     <Input
                       type="date"
                       className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      min={today}
                       {...field}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -334,7 +332,34 @@ const CouponForm = () => {
                   </div>
                 </FormControl>
                 <FormDescription className="text-sm text-gray-500">
-                  Ngày bắt đầu áp dụng mã giảm giá
+                  Ngày bắt đầu áp dụng mã giảm giá (có thể chọn ngày trong quá khứ)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Giờ bắt đầu và Ngày kết thúc */}
+          <FormField
+            control={form.control}
+            name="startTime"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Giờ bắt đầu</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type="time"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                </FormControl>
+                <FormDescription className="text-sm text-gray-500">
+                  Giờ bắt đầu áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -352,7 +377,7 @@ const CouponForm = () => {
                     <Input
                       type="date"
                       className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      min={form.watch("startDate") || today}
+
                       {...field}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -361,7 +386,34 @@ const CouponForm = () => {
                   </div>
                 </FormControl>
                 <FormDescription className="text-sm text-gray-500">
-                  Ngày kết thúc áp dụng mã giảm giá
+                  Ngày kết thúc áp dụng mã giảm giá (phải lớn hơn ngày bắt đầu)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Giờ kết thúc */}
+          <FormField
+            control={form.control}
+            name="endTime"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Giờ kết thúc</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type="time"
+                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                      {...field}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                </FormControl>
+                <FormDescription className="text-sm text-gray-500">
+                  Giờ kết thúc áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -387,6 +439,7 @@ const CouponForm = () => {
         </div>
       </form>
     </Form>
+    </div>
   );
 };
 

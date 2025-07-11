@@ -6,19 +6,11 @@ import { Coupon } from "@/types/coupon";
 import { formatDate, getTimeRemaining } from "@/utils/dateUtils";
 import { toast } from "sonner";
 import { Power, Trash2, Eye, Percent, DollarSign, Calendar, Clock } from "lucide-react";
-import axios from "axios";
+
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-      error?: string;
-    };
-  };
-  message?: string;
-}
+
 
 interface CouponTableProps {
   coupons: Coupon[];
@@ -56,28 +48,12 @@ const CouponTable: React.FC<CouponTableProps> = ({
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const handleDelete = async (id: string) => {
-    try {
-      await onDelete(id);
-      setCoupons(coupons.filter(coupon => coupon._id !== id));
-      toast.success("Xóa mã giảm giá thành công");
-    } catch {
-      toast.error("Không thể xóa mã giảm giá");
-    }
+  const handleDelete = (id: string) => {
+    onDelete(id);
   };
 
   const getErrorMessage = (error: unknown): string => {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as ApiError;
-      // Kiểm tra response từ server
-      if (axiosError.response?.data?.message) {
-        return axiosError.response.data.message;
-      } else if (axiosError.response?.data?.error) {
-        return axiosError.response.data.error;
-      } else if (axiosError.message) {
-        return axiosError.message;
-      }
-    } else if (error instanceof Error) {
+    if (error instanceof Error) {
       return error.message;
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
       return String((error as { message: unknown }).message);

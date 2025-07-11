@@ -62,6 +62,7 @@ export async function POST(req: Request) {
             );
         }
 
+        // Gọi admin endpoint để tạo sản phẩm
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
             method: 'POST',
             headers: {
@@ -80,18 +81,28 @@ export async function POST(req: Request) {
                 errorData = { message: 'Unknown error occurred' };
             }
             
+            console.error('Backend error response:', errorData);
             return NextResponse.json(
-                { error: errorData.message || 'Failed to create product' },
+                { 
+                    success: false,
+                    message: errorData.message || 'Failed to create product',
+                    error: errorData
+                },
                 { status: response.status }
             );
         }
 
         const result = await response.json();
+        console.log('Backend success response:', result);
         return NextResponse.json(result);
     } catch (error) {
         console.error('Error in POST /api/products:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            { 
+                success: false,
+                message: 'Internal Server Error',
+                error: error instanceof Error ? error.message : String(error)
+            },
             { status: 500 }
         );
     }

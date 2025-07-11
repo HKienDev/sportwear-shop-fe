@@ -6,28 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, MapPin, ChevronRight, Info } from "lucide-react";
 
-// Interfaces for API responses
-interface ProvinceResponse {
-  code: number;
-  name: string;
-}
 
-interface DistrictResponse {
-  code: number;
-  name: string;
-  districts?: DistrictResponse[];
-}
 
-interface WardResponse {
-  code: number;
-  name: string;
-  wards?: WardResponse[];
-}
 
-interface LocationData {
-  code: string;
-  name: string;
-}
 
 export default function CustomerInfo() {
   const { customer, updateCustomer } = useCustomer();
@@ -45,9 +26,9 @@ export default function CustomerInfo() {
       try {
         setIsLoadingProvinces(true);
         
-        // Thử API chính trước
+        // Sử dụng API backend
         try {
-          const res = await fetch("https://provinces.open-api.vn/api/?depth=1", {
+          const res = await fetch("/api/orders/address/provinces", {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -55,16 +36,14 @@ export default function CustomerInfo() {
           });
           
           if (res.ok) {
-            const data = await res.json();
-            const formattedProvinces = Array.isArray(data) ? data.map((p: ProvinceResponse) => ({
-              code: p.code.toString(),
-              name: p.name
-            })) : [];
-            setProvinces(formattedProvinces);
-            return;
+            const responseData = await res.json();
+            if (responseData.success) {
+              setProvinces(responseData.data);
+              return;
+            }
           }
         } catch (apiError) {
-          console.warn("API chính không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
+          console.warn("API backend không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
         }
 
         // Fallback: Sử dụng dữ liệu tĩnh
@@ -157,10 +136,10 @@ export default function CustomerInfo() {
       try {
         setIsLoadingDistricts(true);
         
-        // Thử API chính trước
+        // Sử dụng API backend
         try {
           const provinceCode = customer.province?.code;
-          const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, {
+          const res = await fetch(`/api/orders/address/districts/${provinceCode}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -168,19 +147,14 @@ export default function CustomerInfo() {
           });
           
           if (res.ok) {
-            const data = await res.json();
-            let districtsData: Location[] = [];
-            if (data && Array.isArray(data.districts)) {
-              districtsData = data.districts.map((d: DistrictResponse) => ({
-                code: d.code.toString(),
-                name: d.name
-              }));
+            const responseData = await res.json();
+            if (responseData.success) {
+              setDistricts(responseData.data);
+              return;
             }
-            setDistricts(districtsData);
-            return;
           }
         } catch (apiError) {
-          console.warn("API chính không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
+          console.warn("API backend không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
         }
 
         // Fallback: Sử dụng dữ liệu tĩnh cho một số tỉnh chính
@@ -271,10 +245,10 @@ export default function CustomerInfo() {
       try {
         setIsLoadingWards(true);
         
-        // Thử API chính trước
+        // Sử dụng API backend
         try {
           const districtCode = customer.district?.code;
-          const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`, {
+          const res = await fetch(`/api/orders/address/wards/${districtCode}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -282,19 +256,14 @@ export default function CustomerInfo() {
           });
           
           if (res.ok) {
-            const data = await res.json();
-            let wardsData: Location[] = [];
-            if (data && Array.isArray(data.wards)) {
-              wardsData = data.wards.map((w: WardResponse) => ({
-                code: w.code.toString(),
-                name: w.name
-              }));
+            const responseData = await res.json();
+            if (responseData.success) {
+              setWards(responseData.data);
+              return;
             }
-            setWards(wardsData);
-            return;
           }
         } catch (apiError) {
-          console.warn("API chính không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
+          console.warn("API backend không khả dụng, sử dụng dữ liệu tĩnh:", apiError);
         }
 
         // Fallback: Sử dụng dữ liệu tĩnh cho một số quận/huyện chính
@@ -369,6 +338,57 @@ export default function CustomerInfo() {
     
     return parts.join(", ") || "Chưa có địa chỉ";
   }, [customer.street, customer.ward?.name, customer.district?.name, customer.province?.name]);
+
+  // Custom dropdown component with better UX
+  const AddressSelect = ({ 
+    value, 
+    onValueChange, 
+    placeholder, 
+    options, 
+    disabled, 
+    loading 
+  }: {
+    value: string;
+    onValueChange: (value: string) => void;
+    placeholder: string;
+    options: Location[];
+    disabled?: boolean;
+    loading?: boolean;
+  }) => (
+    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder={loading ? "Đang tải..." : placeholder} />
+      </SelectTrigger>
+      <SelectContent 
+        className="max-h-[300px] w-full custom-scrollbar address-dropdown"
+        position="popper"
+        sideOffset={4}
+      >
+        {options.length === 0 ? (
+          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+            {loading ? "Đang tải dữ liệu..." : "Không có dữ liệu"}
+          </div>
+        ) : (
+          <>
+            {options.map((option) => (
+              <SelectItem 
+                key={option.code} 
+                value={option.code}
+                className="cursor-pointer hover:bg-accent py-2"
+              >
+                {option.name}
+              </SelectItem>
+            ))}
+            {options.length > 10 && (
+              <div className="px-2 py-1 text-xs text-muted-foreground text-center border-t">
+                Cuộn để xem thêm ({options.length} tùy chọn)
+              </div>
+            )}
+          </>
+        )}
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -447,22 +467,14 @@ export default function CustomerInfo() {
                   <label className="text-sm font-medium text-gray-700 mb-1">
                     TỈNH / THÀNH PHỐ <span className="text-red-500">*</span>
                   </label>
-                  <Select
+                  <AddressSelect
                     value={customer.province ? customer.province.code : ""}
                     onValueChange={handleProvinceChange}
+                    placeholder="Chọn Tỉnh/Thành phố"
+                    options={provinces}
                     disabled={isLoadingProvinces}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn Tỉnh/Thành phố" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {provinces.map((p) => (
-                        <SelectItem key={p.code} value={p.code}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    loading={isLoadingProvinces}
+                  />
                 </div>
               </div>
 
@@ -471,22 +483,14 @@ export default function CustomerInfo() {
                   <label className="text-sm font-medium text-gray-700 mb-1">
                     QUẬN / HUYỆN <span className="text-red-500">*</span>
                   </label>
-                  <Select
+                  <AddressSelect
                     value={customer.district ? customer.district.code : ""}
                     onValueChange={handleDistrictChange}
+                    placeholder="Chọn Quận/Huyện"
+                    options={districts}
                     disabled={!customer.province || isLoadingDistricts}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn Quận/Huyện" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {districts.map((d) => (
-                        <SelectItem key={d.code} value={d.code}>
-                          {d.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    loading={isLoadingDistricts}
+                  />
                 </div>
               </div>
 
@@ -495,22 +499,14 @@ export default function CustomerInfo() {
                   <label className="text-sm font-medium text-gray-700 mb-1">
                     PHƯỜNG / XÃ <span className="text-red-500">*</span>
                   </label>
-                  <Select
+                  <AddressSelect
                     value={customer.ward ? customer.ward.code : ""}
                     onValueChange={handleWardChange}
+                    placeholder="Chọn Phường/Xã"
+                    options={wards}
                     disabled={!customer.district || isLoadingWards}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn Phường/Xã" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {wards.map((w) => (
-                        <SelectItem key={w.code} value={w.code}>
-                          {w.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    loading={isLoadingWards}
+                  />
                 </div>
               </div>
 

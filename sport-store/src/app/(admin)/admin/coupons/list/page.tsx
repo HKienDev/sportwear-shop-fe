@@ -4,11 +4,22 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
 import { Coupon } from "@/types/coupon";
-import { couponService } from "@/services/couponService";
+
 import { toast } from "sonner";
 import CouponTable from "@/components/admin/coupons/list/couponTable";
 import CouponFilter from "@/components/admin/coupons/list/couponFilter";
 import { ApiResponse } from "@/types/api";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 
 export default function CouponListPage() {
     const router = useRouter();
@@ -18,14 +29,23 @@ export default function CouponListPage() {
     const [statusFilter, setStatusFilter] = useState<string>("");
     const [selectedCoupons, setSelectedCoupons] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const fetchCouponsWithStatus = useCallback(async (status: string | undefined) => {
         try {
             setLoading(true);
-            const response = await couponService.getCoupons(searchQuery, status);
-
-            if (response.success && response.data) {
-                setCoupons(response.data.coupons);
+            const params = new URLSearchParams({
+                ...(searchQuery && { search: searchQuery }),
+                ...(status && { status }),
+            });
+            
+            const response = await fetch(`/api/coupons/admin?${params}`, {
+                credentials: 'include',
+            });
+            
+            const data = await response.json();
+            if (data.success && data.data) {
+                setCoupons(data.data.coupons);
             } else {
                 toast.error("Không thể tải danh sách mã giảm giá");
             }
@@ -85,35 +105,53 @@ export default function CouponListPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) {
-            return;
-        }
+    // Sửa lại hàm handleDelete chỉ set id, không gọi API
+    const handleDelete = (id: string) => {
+        setDeleteId(id);
+    };
 
+    // Hàm xác nhận xóa thực sự
+    const confirmDelete = async () => {
+        if (!deleteId) return;
         try {
-            const response = await couponService.deleteCoupon(id);
-            if (response && typeof response === 'object' && 'success' in response && response.success) {
+            const response = await fetch(`/api/coupons/${deleteId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
                 toast.success("Xóa mã giảm giá thành công");
                 fetchCoupons();
             } else {
-                const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể xóa mã giảm giá";
-                toast.error(message as string);
+                toast.error(data.message || "Không thể xóa mã giảm giá");
             }
         } catch (error) {
             console.error("Error deleting coupon:", error);
             toast.error("Đã xảy ra lỗi khi xóa mã giảm giá");
+        } finally {
+            setDeleteId(null);
         }
     };
 
     const handlePause = async (id: string) => {
         try {
-            const response = await couponService.pauseCoupon(id);
-            if (response && typeof response === 'object' && 'success' in response && response.success) {
+            const response = await fetch(`/api/coupons/${id}/pause`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
+            
+            const data = await response.json();
+            if (data.success) {
                 toast.success("Tạm dừng mã giảm giá thành công");
                 fetchCoupons();
             } else {
-                const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể tạm dừng mã giảm giá";
-                toast.error(message as string);
+                toast.error(data.message || "Không thể tạm dừng mã giảm giá");
             }
         } catch (error) {
             console.error("Error pausing coupon:", error);
@@ -123,19 +161,28 @@ export default function CouponListPage() {
 
     const handleActivate = async (id: string) => {
         try {
-            const response = await couponService.activateCoupon(id);
-            if (response && typeof response === 'object' && 'success' in response && response.success) {
+            const response = await fetch(`/api/coupons/${id}/activate`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
+            
+            const data = await response.json();
+            if (data.success) {
                 toast.success("Kích hoạt mã giảm giá thành công");
                 fetchCoupons();
             } else {
-                const message = response && typeof response === 'object' && 'message' in response ? (response as ApiResponse<unknown>).message : "Không thể kích hoạt mã giảm giá";
-                toast.error(message as string);
+                toast.error(data.message || "Không thể kích hoạt mã giảm giá");
             }
         } catch (error) {
             console.error("Error activating coupon:", error);
             toast.error("Đã xảy ra lỗi khi kích hoạt mã giảm giá");
         }
     };
+
+
 
     if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
         return null;
@@ -264,6 +311,19 @@ export default function CouponListPage() {
                             />
                         )}
                     </div>
+                    {/* AlertDialog xác nhận xóa */}
+                    <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Bạn có chắc chắn muốn xóa mã giảm giá này?</AlertDialogTitle>
+                          <AlertDialogDescription>Hành động này không thể hoàn tác.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+                          <AlertDialogAction onClick={confirmDelete}>Xóa</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
         </div>

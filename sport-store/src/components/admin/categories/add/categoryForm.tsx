@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import Image from "next/image";
 import { uploadToCloudinary } from "@/utils/cloudinary";
-import categoryService from "@/services/categoryService";
+
 import { CreateCategoryRequest, Category } from "@/types/category";
 import { X, Upload, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 
@@ -44,9 +44,12 @@ export default function CategoryForm() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await categoryService.getCategories();
-        if (response.success && response.data.categories) {
-          setCategories(response.data.categories);
+        const response = await fetch('/api/categories/admin', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data.success && data.data.categories) {
+          setCategories(data.data.categories);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -170,20 +173,29 @@ export default function CategoryForm() {
       };
 
       // Gọi API tạo category
-      const response = await categoryService.createCategory(categoryData);
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(categoryData)
+      });
       
-      if (response.success) {
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         toast.success("Tạo danh mục thành công");
         router.push("/admin/categories/list");
         router.refresh();
       } else {
-        if (response.message?.includes("đã tồn tại")) {
+        if (responseData.message?.includes("đã tồn tại")) {
           form.setError("name", {
             type: "manual",
-            message: response.message
+            message: responseData.message
           });
         }
-        toast.error(response.message || "Có lỗi xảy ra khi tạo danh mục");
+        toast.error(responseData.message || "Có lỗi xảy ra khi tạo danh mục");
       }
     } catch (error) {
       console.error("Error creating category:", error);

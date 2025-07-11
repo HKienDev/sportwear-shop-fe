@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Category } from "@/types/category";
 import { toast } from "sonner";
-import categoryService from "@/services/categoryService";
+
 import { CategoryQueryParams } from "@/types/category";
 import CategoryStatusBadge from "./categoryStatusBadge";
 import Image from "next/image";
@@ -56,18 +56,23 @@ const CategoryTable = React.memo(
 
     const fetchCategories = useCallback(async () => {
       try {
-        const params: CategoryQueryParams = {
-          page,
-          limit,
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
           ...(searchQuery && { search: searchQuery }),
-          ...(filters.status && !searchQuery && { isActive: filters.status === "active" }),
-          _t: Date.now(),
-        };
-        const response = await categoryService.getCategories(params);
-        if (response.success) {
-          setTotal(response.data.pagination?.total || 0);
+          ...(filters.status && !searchQuery && { isActive: filters.status === "active" ? "true" : "false" }),
+          _t: Date.now().toString(),
+        });
+        
+        const response = await fetch(`/api/categories/admin?${params}`, {
+          credentials: "include",
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setTotal(data.data.pagination?.total || 0);
         } else {
-          toast.error(response.message || "Có lỗi xảy ra khi tải danh sách danh mục");
+          toast.error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
         }
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -102,11 +107,18 @@ const CategoryTable = React.memo(
         );
         
         // Gọi API để cập nhật trạng thái
-        const response = await categoryService.updateCategory(categoryId, {
-          isActive: !currentStatus,
+        const response = await fetch(`/api/categories/${categoryId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ isActive: Boolean(!currentStatus) })
         });
         
-        if (response.success) {
+        const data = await response.json();
+        
+        if (data.success) {
           toast.success(`Đã ${!currentStatus ? "Kích hoạt" : "Tạm dừng"} danh mục`);
           // Cập nhật lại danh sách từ server
           fetchCategories();
@@ -120,7 +132,7 @@ const CategoryTable = React.memo(
               return category;
             })
           );
-          toast.error(response.message || "Có lỗi xảy ra");
+          toast.error(data.message || "Có lỗi xảy ra");
         }
       } catch (error) {
         // Nếu có lỗi, hoàn tác lại trạng thái
@@ -152,6 +164,9 @@ const CategoryTable = React.memo(
         
         const response = await fetch(`/api/categories/${categoryToDelete}`, {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
         });
         const data = await response.json();

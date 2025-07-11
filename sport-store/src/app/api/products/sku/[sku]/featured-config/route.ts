@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { callBackendAPI } from '@/utils/apiAuth';
 
 export async function PATCH(
   request: NextRequest,
@@ -7,63 +6,60 @@ export async function PATCH(
 ) {
   try {
     const { sku } = await params;
+    const decodedSku = decodeURIComponent(sku);
     const body = await request.json();
     
-    console.log('🔄 Setting up featured config for SKU:', sku);
-    console.log('📝 Config data:', body);
+    console.log('PATCH featured-config request for SKU:', decodedSku, 'with body:', body);
     
-    // Validate required fields
-    const { countdownEndDate, soldCount, remainingStock, isActive } = body;
-    
-    if (!countdownEndDate) {
+    // Validate body
+    if (!body || typeof body.countdownEndDate !== 'string' || 
+        typeof body.soldCount !== 'number' || 
+        typeof body.remainingStock !== 'number' || 
+        typeof body.isActive !== 'boolean') {
+      console.error('PATCH /api/products/sku/[sku]/featured-config: Invalid body:', body);
       return NextResponse.json(
-        { success: false, message: 'Thời gian kết thúc là bắt buộc' },
+        { success: false, message: 'Invalid request body: missing required fields', body },
         { status: 400 }
       );
     }
     
-    if (typeof soldCount !== 'number' || soldCount < 0) {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') || 
+                  request.cookies.get('accessToken')?.value;
+
+    if (!token) {
+      console.log('No token found');
       return NextResponse.json(
-        { success: false, message: 'Số lượng đã bán không hợp lệ' },
-        { status: 400 }
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
       );
     }
-    
-    if (typeof remainingStock !== 'number' || remainingStock < 0) {
-      return NextResponse.json(
-        { success: false, message: 'Số lượng còn lại không hợp lệ' },
-        { status: 400 }
-      );
-    }
-    
-    // Call backend API
-    const response = await callBackendAPI(`/products/sku/${sku}/featured-config`, {
+
+    console.log('Calling backend PATCH:', `http://localhost:4000/api/products/sku/${decodedSku}/featured-config`);
+    const response = await fetch(`http://localhost:4000/api/products/sku/${decodedSku}/featured-config`, {
       method: 'PATCH',
-      body: JSON.stringify({
-        countdownEndDate,
-        soldCount,
-        remainingStock,
-        isActive
-      })
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
-    
-    const responseData = await response.json();
-    
-    if (!response.ok || !responseData.success) {
-      console.error('❌ Backend API error:', responseData);
+
+    console.log('Backend response status:', response.status);
+    const data = await response.json();
+    console.log('Backend response data:', data);
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, message: responseData.message || 'Không thể setup countdown' },
-        { status: 400 }
+        { success: false, message: data.message || 'Failed to update product featured config' },
+        { status: response.status }
       );
     }
-    
-    console.log('✅ Featured config setup successfully');
-    return NextResponse.json(responseData);
-    
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('❌ Error in featured config API:', error);
+    console.error('Error updating product featured config:', error);
     return NextResponse.json(
-      { success: false, message: 'Lỗi server khi setup countdown' },
+      { success: false, message: 'Internal server error' },
       { status: 500 }
     );
   }

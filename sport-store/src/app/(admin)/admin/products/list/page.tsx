@@ -159,7 +159,7 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`/api/products/${sku}`, {
+      const response = await fetch(`/api/products/sku/${sku}`, {
         method: "DELETE",
         headers
       });
@@ -187,6 +187,14 @@ export default function ProductListPage() {
         toast.error("Không tìm thấy sản phẩm");
         return;
       }
+      
+      console.log('Toggling status for product:', { 
+        id, 
+        sku: product.sku, 
+        name: product.name, 
+        isActive 
+      });
+      
       const toastId = toast.loading(`Đang ${isActive ? 'kích hoạt' : 'ngừng bán'} sản phẩm "${product.name}"...`);
       const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       const headers: HeadersInit = {
@@ -195,16 +203,34 @@ export default function ProductListPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`/api/products/${product.sku}/status`, {
+      
+      console.log('Calling API:', `/api/products/sku/${product.sku}`);
+      console.log('Request body:', { isActive });
+      
+      const response = await fetch(`/api/products/sku/${product.sku}`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ isActive })
+        body: JSON.stringify({ isActive: Boolean(isActive) })
       });
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
+        let errorMessage = "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm";
+        try {
+          const errorData = await response.json();
+          console.log('Error data:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
+      
       const data = await response.json();
+      console.log('Success data:', data);
+      
       if (data.success) {
         toast.success(`Đã ${isActive ? 'kích hoạt' : 'ngừng bán'} sản phẩm "${product.name}" thành công`, { id: toastId });
         fetchProducts();
@@ -213,7 +239,8 @@ export default function ProductListPage() {
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái sản phẩm:", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm");
+      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm";
+      toast.error(errorMessage);
     }
   }, [fetchProducts, products]);
 
@@ -235,7 +262,7 @@ export default function ProductListPage() {
       const response = await fetch(`/api/products/sku/${sku}/featured`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ isFeatured })
+        body: JSON.stringify({ isFeatured: Boolean(isFeatured) })
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -253,6 +280,47 @@ export default function ProductListPage() {
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái nổi bật");
     }
   }, [fetchProducts, products]);
+
+  const handleBulkDeleteProducts = useCallback(async () => {
+    if (selectedProducts.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một sản phẩm để xóa");
+      return;
+    }
+
+    try {
+      const toastId = toast.loading(`Đang xóa ${selectedProducts.length} sản phẩm...`);
+      const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/products/bulk-delete', {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ productIds: selectedProducts })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi xóa sản phẩm");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Đã xóa ${data.data.deletedCount} sản phẩm thành công`, { id: toastId });
+        setSelectedProducts([]);
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra khi xóa sản phẩm", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa sản phẩm:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm");
+    }
+  }, [selectedProducts, fetchProducts]);
 
   const handleSetupFeatured = useCallback(async (sku: string, config: FeaturedProductConfig) => {
     try {
@@ -367,9 +435,8 @@ export default function ProductListPage() {
                     Bỏ chọn
                   </button>
                   <button
-                    onClick={() => {}}
-                    disabled={true}
-                    className="group px-4 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg hover:from-rose-600 hover:to-rose-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30"
+                    onClick={handleBulkDeleteProducts}
+                    className="group px-4 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg hover:from-rose-600 hover:to-rose-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 flex items-center text-sm shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30"
                   >
                     Xóa đã chọn
                   </button>
