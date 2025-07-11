@@ -106,7 +106,7 @@ export default function CouponListPage() {
     };
 
     // Sửa lại hàm handleDelete chỉ set id, không gọi API
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string): Promise<void> => {
         setDeleteId(id);
     };
 

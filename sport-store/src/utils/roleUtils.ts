@@ -1,6 +1,5 @@
 import type { AuthUser } from '@/types/auth';
 import type { AppRouter } from '@/types/router';
-import { checkAuth } from '@/services/authService';
 
 /**
  * Kiểm tra xem user có phải là admin không
@@ -11,18 +10,38 @@ export const isAdmin = (user: AuthUser | null): boolean => {
 };
 
 /**
- * Kiểm tra quyền truy cập admin từ API response
+ * Kiểm tra quyền truy cập admin từ API response - optimized for Edge Runtime
  */
 export const checkAdminAccess = async (): Promise<boolean> => {
     try {
-        const response = await checkAuth();
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
         
-        if (!response.success || !response.data?.user) {
+        if (!token) {
+            console.log('❌ Không có token');
+            return false;
+        }
+
+        const response = await fetch('/api/auth/check', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            console.log('❌ API check auth thất bại');
+            return false;
+        }
+
+        const data = await response.json();
+        
+        if (!data.success || !data.data?.user) {
             console.log('❌ API check auth thất bại hoặc không có user');
             return false;
         }
 
-        const isAdminUser = isAdmin(response.data.user);
+        const isAdminUser = isAdmin(data.data.user);
         console.log(isAdminUser ? '✅ Admin được phép truy cập' : '❌ Không phải admin');
         return isAdminUser;
     } catch (error) {

@@ -32,47 +32,53 @@ interface ApiParams {
   [key: string]: string | number | undefined;
 }
 
-// API Client cho Next.js API routes (relative URLs)
+// Optimized API Client for Next.js API routes using fetch instead of axios
 class ApiClient {
-  private client: AxiosInstance;
+  private client!: AxiosInstance;
+  private isClient: boolean;
 
   constructor() {
-    this.client = axios.create({
-      baseURL: '', // Relative URLs - sẽ gọi Next.js API routes
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    this.isClient = typeof window !== 'undefined';
+    
+    // Only create axios instance for server-side or when needed
+    if (this.isClient) {
+      this.client = axios.create({
+        baseURL: '', // Relative URLs - sẽ gọi Next.js API routes
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    // Request interceptor để thêm token
-    this.client.interceptors.request.use(
-      (config) => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      // Request interceptor để thêm token
+      this.client.interceptors.request.use(
+        (config) => {
+          const token = this.getToken();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+          return config;
+        },
+        (error) => {
+          return Promise.reject(error);
         }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
+      );
 
-    // Response interceptor để xử lý lỗi
-    this.client.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      (error) => {
-        this.handleError(error);
-        return Promise.reject(error);
-      }
-    );
+      // Response interceptor để xử lý lỗi
+      this.client.interceptors.response.use(
+        (response) => {
+          return response;
+        },
+        (error) => {
+          this.handleError(error);
+          return Promise.reject(error);
+        }
+      );
+    }
   }
 
   private getToken(): string | null {
-    if (typeof window !== 'undefined') {
+    if (this.isClient) {
       return localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
     }
     return null;
@@ -85,7 +91,7 @@ class ApiClient {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 401) {
         // Token hết hạn hoặc không hợp lệ
-        if (typeof window !== 'undefined') {
+        if (this.isClient) {
           localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
           window.location.href = '/auth/login';
         }
@@ -94,31 +100,111 @@ class ApiClient {
   }
 
   setAuthToken(token: string | null) {
-    if (token) {
+    if (token && this.isClient) {
       this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
+    } else if (this.isClient) {
       delete this.client.defaults.headers.common['Authorization'];
     }
   }
 
-  // Generic methods
+  // Optimized fetch-based methods for Next.js API routes
+  private async fetchApi<T = unknown>(
+    url: string, 
+    options: RequestInit = {}
+  ): Promise<{ data: T; status: number }> {
+    const token = this.getToken();
+    let headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (options.headers) {
+      if (Array.isArray(options.headers)) {
+        headers = Object.fromEntries(options.headers as [string, string][]);
+      } else if (options.headers instanceof Headers) {
+        headers = Object.fromEntries((options.headers as Headers).entries());
+      } else {
+        headers = { ...options.headers } as Record<string, string>;
+      }
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+    if (!response.ok) {
+      if (response.status === 401 && this.isClient) {
+        localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+        window.location.href = '/auth/login';
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return { data, status: response.status };
+  }
+
+  // Generic methods using fetch for Next.js API routes
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    if (this.isClient && url.startsWith('/api/')) {
+      const { data, status } = await this.fetchApi<T>(url);
+      return { data, status } as AxiosResponse<T>;
+    }
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
     return this.client.get(url, config);
   }
 
   async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    if (this.isClient && url.startsWith('/api/')) {
+      const { data: responseData, status } = await this.fetchApi<T>(url, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return { data: responseData, status } as AxiosResponse<T>;
+    }
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
     return this.client.post(url, data, config);
   }
 
   async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    if (this.isClient && url.startsWith('/api/')) {
+      const { data: responseData, status } = await this.fetchApi<T>(url, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return { data: responseData, status } as AxiosResponse<T>;
+    }
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
     return this.client.put(url, data, config);
   }
 
   async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    if (this.isClient && url.startsWith('/api/')) {
+      const { data: responseData, status } = await this.fetchApi<T>(url, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      return { data: responseData, status } as AxiosResponse<T>;
+    }
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
     return this.client.patch(url, data, config);
   }
 
   async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    if (this.isClient && url.startsWith('/api/')) {
+      const { data: responseData, status } = await this.fetchApi<T>(url, {
+        method: 'DELETE',
+      });
+      return { data: responseData, status } as AxiosResponse<T>;
+    }
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
     return this.client.delete(url, config);
   }
 
