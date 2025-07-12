@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Coupon } from "@/types/coupon";
-import { formatDate, getTimeRemaining } from "@/utils/dateUtils";
+import { formatDate } from "@/utils/dateUtils";
 import { toast } from "sonner";
-import { Power, Trash2, Eye, Percent, DollarSign, Calendar, Clock } from "lucide-react";
+import { Power, Trash2, Eye, Percent, DollarSign } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
@@ -102,30 +102,7 @@ const CouponTable: React.FC<CouponTableProps> = ({
   const getDiscountDisplay = (coupon: Coupon) =>
     coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')} VNĐ`;
 
-  const getTimeDisplay = (coupon: Coupon) => {
-    if (isStatus(coupon.status, "Sắp diễn ra")) {
-      return (
-        <div className="flex items-center gap-1 text-blue-600">
-          <Clock className="h-4 w-4" />
-          <span>Còn {getTimeRemaining(coupon.startDate)}</span>
-        </div>
-      );
-    } else if (isStatus(coupon.status, "Hết hạn")) {
-      return (
-        <div className="flex items-center gap-1 text-gray-500">
-          <Calendar className="h-4 w-4" />
-          <span>Hết hạn {formatDate(coupon.endDate)}</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-1">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>{formatDate(coupon.startDate)}</span>
-        </div>
-      );
-    }
-  };
+
 
   return (
     <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">

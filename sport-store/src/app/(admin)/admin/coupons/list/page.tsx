@@ -8,10 +8,8 @@ import { Coupon } from "@/types/coupon";
 import { toast } from "sonner";
 import CouponTable from "@/components/admin/coupons/list/couponTable";
 import CouponFilter from "@/components/admin/coupons/list/couponFilter";
-import { ApiResponse } from "@/types/api";
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,

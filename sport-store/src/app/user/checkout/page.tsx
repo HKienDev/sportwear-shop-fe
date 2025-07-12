@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { CartItem } from '@/types/cart';
-import { PaymentMethod, ShippingMethod, OrderStatus } from '@/types/order';
+import { PaymentMethod, ShippingMethod } from '@/types/order';
 import { ShippingAddress } from '@/types/order';
 import { Coupon } from '@/types/coupon';
 import OrderItems from '@/components/user/checkout/OrderItems';
@@ -28,10 +28,8 @@ export default function Checkout() {
     cart,
     loading,
     error,
-    cartTotals,
-    updateCartItem,
-    removeFromCart,
     fetchCart,
+    removeFromCart,
   } = useCartOptimized();
 
   // Selected items state - lấy từ localStorage
@@ -66,7 +64,6 @@ export default function Checkout() {
   const [showCouponOptions, setShowCouponOptions] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [originalTotal, setOriginalTotal] = useState(0);
-  const [currentCartTotal, setCurrentCartTotal] = useState(0);
 
   // Load selected items từ localStorage khi mount
   useEffect(() => {
@@ -120,7 +117,6 @@ export default function Checkout() {
     const totals = selectedItemsTotals();
     setOriginalTotal(totals.originalTotal);
     setSubtotal(totals.subtotal);
-    setCurrentCartTotal(totals.subtotal);
     setDiscount(totals.discount);
     
     // Reset coupon nếu không có items được chọn
@@ -375,13 +371,9 @@ export default function Checkout() {
     router.back();
   };
 
-  const handleCartUpdate = useCallback((items: CartItem[]) => {
-    // Không cần update local state nữa vì đã dùng store
-    // Store sẽ tự động update khi có thay đổi
-  }, []);
+
 
   const handleCartTotalChange = useCallback((newTotal: number) => {
-    setCurrentCartTotal(newTotal);
     setSubtotal(newTotal);
     
     // Tính lại discount dựa trên giá gốc
@@ -399,7 +391,7 @@ export default function Checkout() {
       setCouponCode('');
       toast.info('Mã giảm giá đã được reset do thay đổi giỏ hàng');
     }
-  }, [selectedCartItems, appliedCoupon, currentCartTotal]);
+  }, [selectedCartItems, appliedCoupon, subtotal]);
 
   // Hiển thị loading nếu đang fetch cart
   if (loading) {

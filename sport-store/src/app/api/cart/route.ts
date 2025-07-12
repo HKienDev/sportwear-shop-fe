@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Interface cho cart item
+interface CartItem {
+  _id: string;
+  quantity: number;
+  product?: {
+    sku?: string;
+  };
+  color?: string;
+  size?: string;
+}
+
 // Retry function for handling 409 conflicts
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -69,14 +80,16 @@ export async function GET(request: NextRequest) {
       itemsType: typeof data.data?.items,
       itemsIsArray: Array.isArray(data.data?.items),
       itemsLength: data.data?.items?.length || 0,
-      itemDetails: data.data?.items?.map((item: any) => ({
-        id: item._id,
-        quantity: item.quantity,
-        quantityType: typeof item.quantity,
-        sku: item.product?.sku,
-        color: item.color,
-        size: item.size
-      }))
+      itemDetails: data.data?.items?.map((item: CartItem) => {
+        return {
+          id: item._id,
+          quantity: item.quantity,
+          quantityType: typeof item.quantity,
+          sku: item.product?.sku,
+          color: item.color,
+          size: item.size
+        };
+      })
     });
     
     // Đảm bảo items là array

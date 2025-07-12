@@ -4,7 +4,6 @@ import { hasAdminAccess } from '@/utils/roleUtils';
 import { AUTH_CONFIG } from '@/config/auth';
 import { TOKEN_CONFIG } from '@/config/token';
 import { RATE_LIMIT_CONFIG } from '@/config/rateLimit';
-import { AuthStatus, UserRole } from '@/types/base';
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;

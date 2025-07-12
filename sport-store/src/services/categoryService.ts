@@ -1,6 +1,5 @@
 import type { Category } from '@/types/category';
 import type { ApiResponse } from '@/types/api';
-import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryQueryParams } from '../types/category';
 import { API_URL } from '@/utils/api';
 
 // Tạo axios instance riêng cho public API calls (không cần authentication)
@@ -27,7 +26,7 @@ export interface CategoriesResponse {
 
 export const categoryService = {
   // Get all categories
-  async getCategories(params?: any): Promise<ApiResponse<CategoriesResponse>> {
+  async getCategories(params?: unknown): Promise<ApiResponse<CategoriesResponse>> {
     try {
       const response = await publicApiClient.get('/categories', { params });
       
@@ -54,12 +53,17 @@ export const categoryService = {
         if (Array.isArray(apiData)) {
           return { success: response.data.success, data: { categories: apiData } };
         }
-        if (apiData && (apiData as any).categories) {
+        if (apiData && (apiData as unknown as { categories?: unknown }).categories) {
           return { 
             success: response.data.success, 
             data: { 
-              categories: (apiData as any).categories,
-              pagination: (apiData as any).pagination
+              categories: (apiData as unknown as { categories?: unknown }).categories as Category[],
+              pagination: (apiData as unknown as { pagination?: unknown }).pagination as {
+                total: number;
+                page: number;
+                limit: number;
+                totalPages: number;
+              } | undefined
             } 
           };
         }
@@ -80,17 +84,17 @@ export const categoryService = {
   },
 
   // Create category (requires authentication - use apiClient)
-  async createCategory(categoryData: any): Promise<ApiResponse<Category>> {
+  async createCategory(): Promise<ApiResponse<Category>> {
     throw new Error('Create category requires authentication');
   },
 
   // Update category (requires authentication - use apiClient)
-  async updateCategory(id: string, categoryData: any): Promise<ApiResponse<Category>> {
+  async updateCategory(): Promise<ApiResponse<Category>> {
     throw new Error('Update category requires authentication');
   },
 
   // Delete category (requires authentication - use apiClient)
-  async deleteCategory(id: string): Promise<ApiResponse<{ message: string }>> {
+  async deleteCategory(): Promise<ApiResponse<{ message: string }>> {
     throw new Error('Delete category requires authentication');
   },
 

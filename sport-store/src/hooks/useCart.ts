@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
-import { handleCartError, calculateCartTotals, validateCartData } from '@/utils/cartUtils';
-import type { CartItem, Cart } from '@/types/cart';
+import { handleCartError, calculateCartTotals } from '@/utils/cartUtils';
+import type { Cart } from '@/types/cart';
 
 export function useCart() {
   const [cart, setCart] = useState<Cart | null>(null);

@@ -1,12 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Settings, Package, Weight, Move, Droplets, Shield, MapPin, Zap, WashingMachine } from "lucide-react";
 import { ProductFormData } from "@/types/product";
 
 interface SpecificationsFormProps {
   formData: ProductFormData;
-  onFieldChange: (field: keyof ProductFormData, value: any) => void;
+  onFieldChange: (field: keyof ProductFormData, value: ProductFormData[keyof ProductFormData]) => void;
 }
 
 export default function SpecificationsForm({ 
@@ -40,7 +39,7 @@ export default function SpecificationsForm({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-700">
           Thông số kỹ thuật giúp khách hàng hiểu rõ hơn về sản phẩm. 
-          Nếu không nhập, hệ thống sẽ hiển thị "Đang cập nhật".
+          Nếu không nhập, hệ thống sẽ hiển thị &quot;Đang cập nhật&quot;.
         </p>
       </div>
 

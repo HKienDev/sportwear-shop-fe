@@ -9,7 +9,7 @@ import OrderTable from "./orderTable";
 import { Order, OrderStatus } from "@/types/base";
 import { AdminProduct } from "@/types/product";
 import { toast } from "sonner";
-import { safePromise } from "@/utils/promiseUtils";
+
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type OrderItemProduct = AdminProduct;

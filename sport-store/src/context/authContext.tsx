@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { TOKEN_CONFIG } from '@/config/token';
 import { getUserData, setUserData, clearUserData } from '@/config/user';
 import type { AuthUser } from '@/types/auth';
-import { handleRedirect, setJustLoggedOut, getJustLoggedOut, clearJustLoggedOut } from '@/utils/navigationUtils';
+import { handleRedirect, setJustLoggedOut, getJustLoggedOut } from '@/utils/navigationUtils';
 import { axiosInstance } from '@/config/axios';
 import { toast } from 'sonner';
 import { SUCCESS_MESSAGES } from '@/config/constants';

@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Edit, Power, Trash, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Power, Trash } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +16,7 @@ import {
 import { Category } from "@/types/category";
 import { toast } from "sonner";
 
-import { CategoryQueryParams } from "@/types/category";
 import CategoryStatusBadge from "./categoryStatusBadge";
-import Image from "next/image";
 
 interface CategoryTableProps {
   categories: Category[];
@@ -41,13 +39,10 @@ const CategoryTable = React.memo(
     filters = { status: null },
   }: CategoryTableProps) => {
     const router = useRouter();
-    const [total, setTotal] = useState(0);
-    const [page, setPage] = useState(1);
     const [limit] = useState(10);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
     const [localCategories, setLocalCategories] = useState<Category[]>([]);
-    const totalPages = useMemo(() => Math.ceil(total / limit), [total, limit]);
 
     // Cập nhật localCategories khi categories thay đổi
     useEffect(() => {
@@ -57,7 +52,7 @@ const CategoryTable = React.memo(
     const fetchCategories = useCallback(async () => {
       try {
         const params = new URLSearchParams({
-          page: page.toString(),
+          page: "1", // Always fetch page 1 for now
           limit: limit.toString(),
           ...(searchQuery && { search: searchQuery }),
           ...(filters.status && !searchQuery && { isActive: filters.status === "active" ? "true" : "false" }),
@@ -69,16 +64,14 @@ const CategoryTable = React.memo(
         });
         
         const data = await response.json();
-        if (data.success) {
-          setTotal(data.data.pagination?.total || 0);
-        } else {
+        if (!data.success) {
           toast.error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
         }
       } catch (error) {
         console.error("Error fetching categories:", error);
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải danh sách danh mục");
       }
-    }, [page, limit, searchQuery, filters]);
+    }, [limit, searchQuery, filters]);
 
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -188,165 +181,74 @@ const CategoryTable = React.memo(
     };
 
     return (
-      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-7xl mx-auto">
-          {/* Status Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Tổng Danh Mục</p>
-                  <p className="text-2xl font-bold text-slate-800">{localCategories.length}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
-                  <span className="text-teal-500 text-xl font-bold">Σ</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Đang Hoạt Động</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {localCategories.filter((category) => category.isActive).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <span className="text-indigo-500 text-xl font-bold">⧗</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Tạm Dừng</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {localCategories.filter((category) => !category.isActive).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center">
-                  <span className="text-amber-500 text-xl font-bold">⏸️</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Có Sản Phẩm</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {localCategories.filter((category) => category.productCount > 0).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
-                  <span className="text-rose-500 text-xl font-bold">P</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
+      <div className="space-y-6">
+        {/* Table Container with Enhanced Glass Effect */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-2xl transform rotate-1"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-2xl transform -rotate-1"></div>
+          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full divide-y divide-slate-200/60">
                 <thead>
-                  <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                    <th className="px-4 py-3 w-10">
+                  <tr className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 backdrop-blur-sm">
+                    <th className="px-6 py-4 w-12">
                       <input
                         type="checkbox"
                         checked={selectedCategories.length === localCategories.length && localCategories.length > 0}
                         onChange={onToggleSelectAll}
-                        className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-48">
-                      Tên Danh Mục
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
-                      Mã Danh Mục
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
-                      Số Sản Phẩm
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">
-                      Trạng Thái
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">
-                      Thao Tác
-                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Tên danh mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Mã danh mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Số sản phẩm</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200/60">
                   {localCategories.length > 0 ? (
                     localCategories.map((category, index) => (
-                      <tr key={category._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                        <td className="px-4 py-3">
+                      <tr key={category._id} className={`group hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-300 ${
+                        index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
+                      }`}>
+                        <td className="px-6 py-4">
                           <input
                             type="checkbox"
                             checked={selectedCategories.includes(category._id)}
                             onChange={() => onToggleSelectCategory(category._id)}
-                            className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                           />
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center">
-                            {category.image && (
-                              <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0 mr-3">
-                                <Image
-                                  src={category.image}
-                                  alt={category.name}
-                                  fill
-                                  className="object-cover"
-                                  sizes="40px"
-                                />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <div className="font-medium text-slate-800 truncate">
-                                {category.name}
-                              </div>
-                              <div className="text-slate-500 text-sm truncate">
-                                {category.description || "Không có mô tả"}
-                              </div>
-                            </div>
-                          </div>
+                        <td className="px-6 py-4 font-semibold text-slate-800">
+                          {category.name}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-slate-800 font-mono">
-                            {category.categoryId}
-                          </div>
+                        <td className="px-6 py-4 font-mono text-xs text-slate-600">
+                          {category.categoryId}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-slate-800 whitespace-nowrap">
-                            {category.productCount || 0}
-                          </div>
+                        <td className="px-6 py-4 text-center font-semibold text-slate-800">
+                          {category.productCount || 0}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-6 py-4">
                           <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(category._id)}
-                              className="p-1 text-slate-600 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
-                              title="Chỉnh sửa"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all duration-200"
                             >
                               <Edit size={16} />
                             </button>
                             <button
                               onClick={() => handleToggleStatus(category._id, category.isActive)}
-                              className={`p-1 rounded-full transition-colors ${
-                                category.isActive
-                                  ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                                  : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                              }`}
-                              title={category.isActive ? "Tạm dừng" : "Kích hoạt"}
+                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${category.isActive ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "bg-green-100 text-green-600 hover:bg-green-200"} transition-all duration-200`}
                             >
                               <Power size={16} />
                             </button>
                             <button
                               onClick={() => handleDelete(category._id)}
-                              className="p-1 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
-                              title="Xóa"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-all duration-200"
                             >
                               <Trash size={16} />
                             </button>
@@ -356,8 +258,14 @@ const CategoryTable = React.memo(
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="text-center text-slate-500 py-4">
-                        Không có danh mục nào
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="mb-4 p-4 rounded-full bg-slate-100">
+                            <Edit size={32} className="text-slate-400" />
+                          </div>
+                          <p className="text-lg font-medium text-slate-800 mb-1">Không tìm thấy danh mục</p>
+                          <p className="text-slate-500">Hiện tại chưa có danh mục nào trong hệ thống</p>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -365,64 +273,10 @@ const CategoryTable = React.memo(
               </table>
             </div>
           </div>
+        </div>
 
-          {/* Pagination */}
-          {localCategories.length > 0 && (
-            <div className="flex flex-wrap justify-between items-center">
-              <div className="text-sm text-slate-600 mb-2 sm:mb-0">
-                Trang <span className="font-medium">{page}</span> / <span className="font-medium">{totalPages}</span>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className={`p-2 rounded-lg flex items-center justify-center ${
-                    page === 1
-                      ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                      : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                  }`}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageToShow;
-                  if (totalPages <= 5) {
-                    pageToShow = i + 1;
-                  } else if (page <= 3) {
-                    pageToShow = i + 1;
-                  } else if (page >= totalPages - 2) {
-                    pageToShow = totalPages - 4 + i;
-                  } else {
-                    pageToShow = page - 2 + i;
-                  }
-                  return (
-                    <button
-                      key={pageToShow}
-                      onClick={() => setPage(pageToShow)}
-                      className={`w-10 h-10 rounded-lg text-center ${
-                        page === pageToShow
-                          ? "bg-teal-500 text-white font-medium"
-                          : "text-slate-600 hover:bg-teal-50 bg-white border border-slate-200"
-                      }`}
-                    >
-                      {pageToShow}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setPage(Math.min(totalPages, page + 1))}
-                  disabled={page === totalPages}
-                  className={`p-2 rounded-lg flex items-center justify-center ${
-                    page === totalPages
-                      ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                      : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                  }`}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Pagination Component */}
+          {/* (KHÔNG render Pagination ở đây nữa) */}
 
           {/* Delete Confirmation Dialog */}
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -440,7 +294,6 @@ const CategoryTable = React.memo(
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </div>
     );
   }
 );

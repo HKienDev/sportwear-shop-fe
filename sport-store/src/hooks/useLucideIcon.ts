@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export function useLucideIcon(iconName: string) {
-  const [Icon, setIcon] = useState<any>(null);
+  const [Icon, setIcon] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -9,7 +9,7 @@ export function useLucideIcon(iconName: string) {
       try {
         // Dynamic import để tránh HMR issues
         const lucideReact = await import('lucide-react');
-        const iconComponent = (lucideReact as any)[iconName];
+        const iconComponent = (lucideReact as unknown as { [key: string]: unknown })[iconName];
         
         if (iconComponent) {
           setIcon(() => iconComponent);

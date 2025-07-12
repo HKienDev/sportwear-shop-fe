@@ -3,14 +3,14 @@ import { useAuth } from '@/context/authContext';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
-import type { Order, OrderQueryParams } from '@/types/api';
+import type { Order } from '@/types/api';
 import type { CreateOrderData, UpdateOrderData } from '@/types/base';
 import { OrderStatus, PaymentStatus } from '@/types/base';
 import { sendEmailFromTemplate } from '@/lib/email';
 import NewOrderEmail from '@/email-templates/NewOrderEmail';
 import type { NewOrderEmailProps } from '@/email-templates/NewOrderEmail';
 
-export function useOrders(options: OrderQueryParams = {}) {
+export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);

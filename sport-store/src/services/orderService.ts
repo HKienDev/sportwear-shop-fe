@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { Order } from '@/types/order';
+import type { Order, CreateOrderInput } from '@/types/order';
 import type { ApiResponse } from '@/types/api';
 import { API_URL } from '@/utils/api';
 
@@ -70,8 +70,8 @@ export const orderService = {
   },
 
   // Create order
-  async createOrder(orderData: any): Promise<ApiResponse<Order>> {
-    const response = await apiClient.createOrder(orderData);
+  async createOrder(orderData: unknown): Promise<ApiResponse<Order>> {
+    const response = await apiClient.createOrder(orderData as any);
     return response.data as ApiResponse<Order>;
   },
 

@@ -219,7 +219,7 @@ export const useCartStore = create<CartState>()(
             
             const response = await apiClient.clearCart();
             
-            const data = response.data as { success: boolean; message?: string; data?: any };
+            const data = response.data as { success: boolean; message?: string; data?: unknown };
             if (data.success) {
               set((state) => {
                 state.cart = null;

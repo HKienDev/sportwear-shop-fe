@@ -100,9 +100,6 @@ const OrderListTable = React.memo(
         {/* Orders Summary */}
         <div className="flex flex-wrap justify-between items-center">
           <div className="flex items-center gap-3 mb-4 sm:mb-0">
-            <span className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-emerald-50 text-indigo-700 rounded-xl text-sm font-semibold border border-indigo-200/60">
-              {currentOrders.length} đơn hàng
-            </span>
             {selectedOrders.length > 0 && (
               <span className="px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 rounded-xl text-sm font-semibold border border-emerald-200/60 animate-pulse">
                 Đã chọn {selectedOrders.length} đơn

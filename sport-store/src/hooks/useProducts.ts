@@ -56,7 +56,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                 setProducts([]);
                 setTotal(0);
             }
-        } catch (error) {
+        } catch {
             setProducts([]);
             setTotal(0);
             toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');

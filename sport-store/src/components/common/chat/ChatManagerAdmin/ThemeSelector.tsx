@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThemeType, ThemeColors } from './types';
+import { ThemeType } from './types';
 
 interface ThemeSelectorProps {
   currentTheme: ThemeType;

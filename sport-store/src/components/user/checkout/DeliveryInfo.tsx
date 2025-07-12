@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { Customer } from '@/types/customer';
 import { API_URL } from "@/utils/api";
@@ -87,7 +87,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
   }, []);
 
   // Hàm retry để gọi API với số lần thử lại
-  const fetchWithRetry = async (url: string, retries = 3) => {
+  const fetchWithRetry = useCallback(async (url: string, retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
         const response = await fetch(url, {
@@ -98,7 +98,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
-      } catch (error) {
+      } catch {
         if (i === retries - 1) {
           // Nếu tất cả retry đều thất bại, sử dụng dữ liệu tĩnh
           console.warn("API không khả dụng, sử dụng dữ liệu tĩnh:", url);
@@ -107,7 +107,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
         await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
       }
     }
-  };
+  }, []);
 
   // Function để lấy dữ liệu tĩnh
   const getStaticLocationData = (url: string) => {
@@ -246,7 +246,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
 
       initializeAddress();
     }
-  }, [user, onAddressChange]);
+  }, [user, onAddressChange, fetchWithRetry]);
 
   // Lấy danh sách tỉnh
   useEffect(() => {
@@ -267,7 +267,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     };
 
     fetchProvinces();
-  }, [showForm]);
+  }, [showForm, fetchWithRetry]);
 
   // Lấy danh sách quận khi chọn tỉnh
   useEffect(() => {
@@ -296,7 +296,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     };
 
     fetchDistricts();
-  }, [form.province, provinces]);
+  }, [form.province, provinces, fetchWithRetry]);
 
   // Lấy danh sách phường khi chọn quận
   useEffect(() => {
@@ -324,7 +324,7 @@ export default function DeliveryInfo({ onAddressChange }: DeliveryInfoProps) {
     };
 
     fetchWards();
-  }, [form.district, districts]);
+  }, [form.district, districts, fetchWithRetry]);
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};

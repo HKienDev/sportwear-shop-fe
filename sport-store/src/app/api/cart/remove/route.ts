@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     try {
       const body = await request.json();
       ({ sku, color, size } = body);
-    } catch (bodyError) {
+    } catch {
       // Nếu không đọc được body, thử lấy từ query params
       const url = new URL(request.url);
       sku = url.searchParams.get('sku');

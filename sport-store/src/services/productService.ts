@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { Product } from '@/types/product';
+import type { Product, ProductQueryParams, ProductFormData } from '@/types/product';
 import type { ApiResponse } from '@/types/api';
 
 export interface ProductsResponse {
@@ -11,14 +11,14 @@ export interface ProductsResponse {
 
 export const productService = {
   // Get all products
-  async getProducts(params?: any): Promise<ApiResponse<ProductsResponse>> {
-    const response = await apiClient.getProducts(params);
+  async getProducts(params?: unknown): Promise<ApiResponse<ProductsResponse>> {
+    const response = await apiClient.getProducts(params as ProductQueryParams);
     // If response.data is an array, wrap it in products property
     if (Array.isArray(response.data)) {
       return { success: true, data: { products: response.data } };
     }
     // If response.data already has products property, return as is
-    if (response.data && (response.data as any).products) {
+    if (response.data && (response.data as unknown as { products?: unknown }).products) {
       return response.data as ApiResponse<ProductsResponse>;
     }
     // Fallback
@@ -32,14 +32,14 @@ export const productService = {
   },
 
   // Create product
-  async createProduct(productData: any): Promise<ApiResponse<Product>> {
-    const response = await apiClient.createProduct(productData);
+  async createProduct(productData: unknown): Promise<ApiResponse<Product>> {
+    const response = await apiClient.createProduct(productData as ProductFormData);
     return response.data as ApiResponse<Product>;
   },
 
   // Update product
-  async updateProduct(id: string, productData: any): Promise<ApiResponse<Product>> {
-    const response = await apiClient.updateProduct(id, productData);
+  async updateProduct(id: string, productData: unknown): Promise<ApiResponse<Product>> {
+    const response = await apiClient.updateProduct(id, productData as ProductFormData);
     return response.data as ApiResponse<Product>;
   },
 

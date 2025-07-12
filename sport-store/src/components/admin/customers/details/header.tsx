@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Trash2, Key, Save, ArrowLeft, User } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Key, Save, User } from 'lucide-react';
 
 interface HeaderProps {
   onDelete: () => void;

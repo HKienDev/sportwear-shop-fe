@@ -29,7 +29,7 @@ interface Category {
 }
 
 const Header = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [mounted, setMounted] = useState(false);

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { AdminProduct } from '@/types/product';
+import type { AdminProduct, ProductQueryParams, ProductFormData } from '@/types/product';
 import type { ApiResponse } from '@/types/api';
 
 export interface AdminProductsResponse {
@@ -9,50 +9,89 @@ export interface AdminProductsResponse {
   limit?: number;
 }
 
-function toAdminProduct(product: any): AdminProduct {
+// Interface cho raw product data từ API
+interface RawProduct {
+  _id?: string;
+  name?: string;
+  description?: string;
+  originalPrice?: number;
+  salePrice?: number;
+  price?: number;
+  stock?: number;
+  categoryId?: string;
+  category?: string;
+  brand?: string;
+  mainImage?: string;
+  subImages?: string[];
+  images?: string[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  isActive?: boolean;
+  sku?: string;
+  colors?: string[];
+  sizes?: string[];
+  tags?: string[];
+  rating?: number;
+  ratings?: {
+    average?: number;
+    count?: number;
+  };
+  numReviews?: number;
+  soldCount?: number;
+  viewCount?: number;
+  discountPercentage?: number;
+  isOutOfStock?: boolean;
+  isLowStock?: boolean;
+  status?: string;
+  isFeatured?: boolean;
+}
+
+function toAdminProduct(product: unknown): AdminProduct {
+  const rawProduct = product as RawProduct;
+  
   return {
-    _id: product._id,
-    name: product.name,
-    description: product.description,
-    originalPrice: product.originalPrice ?? product.price ?? 0,
-    salePrice: product.salePrice ?? product.price ?? 0,
-    stock: product.stock ?? 0,
-    categoryId: product.categoryId ?? product.category ?? '',
-    brand: product.brand ?? '',
-    mainImage: product.mainImage ?? (Array.isArray(product.images) ? product.images[0] : '') ?? '',
-    subImages: product.subImages ?? product.images ?? [],
-    createdAt: typeof product.createdAt === 'string' ? product.createdAt : (product.createdAt ? new Date(product.createdAt).toISOString() : new Date().toISOString()),
-    updatedAt: typeof product.updatedAt === 'string' ? product.updatedAt : (product.updatedAt ? new Date(product.updatedAt).toISOString() : new Date().toISOString()),
-    isActive: product.isActive ?? true,
-    sku: product.sku ?? '',
-    colors: product.colors ?? [],
-    sizes: product.sizes ?? [],
-    tags: product.tags ?? [],
-    rating: product.rating ?? (product.ratings?.average ?? 0),
-    numReviews: product.numReviews ?? (product.ratings?.count ?? 0),
-    soldCount: product.soldCount ?? 0,
-    viewCount: product.viewCount ?? 0,
-    discountPercentage: product.discountPercentage ?? 0,
-    isOutOfStock: product.isOutOfStock ?? false,
-    isLowStock: product.isLowStock ?? false,
-    status: product.status,
-    isFeatured: product.isFeatured ?? false,
+    _id: rawProduct._id || '',
+    name: rawProduct.name || '',
+    description: rawProduct.description || '',
+    originalPrice: rawProduct.originalPrice ?? rawProduct.price ?? 0,
+    salePrice: rawProduct.salePrice ?? rawProduct.price ?? 0,
+    stock: rawProduct.stock ?? 0,
+    categoryId: rawProduct.categoryId ?? rawProduct.category ?? '',
+    brand: rawProduct.brand ?? '',
+    mainImage: rawProduct.mainImage ?? (Array.isArray(rawProduct.images) ? rawProduct.images[0] : '') ?? '',
+    subImages: rawProduct.subImages ?? rawProduct.images ?? [],
+    createdAt: typeof rawProduct.createdAt === 'string' ? rawProduct.createdAt : (rawProduct.createdAt ? new Date(rawProduct.createdAt).toISOString() : new Date().toISOString()),
+    updatedAt: typeof rawProduct.updatedAt === 'string' ? rawProduct.updatedAt : (rawProduct.updatedAt ? new Date(rawProduct.updatedAt).toISOString() : new Date().toISOString()),
+    isActive: rawProduct.isActive ?? true,
+    sku: rawProduct.sku ?? '',
+    colors: rawProduct.colors ?? [],
+    sizes: rawProduct.sizes ?? [],
+    tags: rawProduct.tags ?? [],
+    rating: rawProduct.rating ?? (rawProduct.ratings?.average ?? 0),
+    numReviews: rawProduct.numReviews ?? (rawProduct.ratings?.count ?? 0),
+    soldCount: rawProduct.soldCount ?? 0,
+    viewCount: rawProduct.viewCount ?? 0,
+    discountPercentage: rawProduct.discountPercentage ?? 0,
+    isOutOfStock: rawProduct.isOutOfStock ?? false,
+    isLowStock: rawProduct.isLowStock ?? false,
+    status: rawProduct.status || '',
+    isFeatured: rawProduct.isFeatured ?? false,
   };
 }
 
 export const adminProductService = {
   // Get all products for admin
-  async getProducts(params?: any): Promise<ApiResponse<AdminProductsResponse>> {
-    const response = await apiClient.getProducts(params);
-    if (response.data && (response.data as any).products) {
-      const products = (response.data as any).products.map(toAdminProduct);
+  async getProducts(params?: unknown): Promise<ApiResponse<AdminProductsResponse>> {
+    const response = await apiClient.getProducts(params as ProductQueryParams);
+    if (response.data && (response.data as unknown as { products?: unknown }).products) {
+      const products = (response.data as unknown as { products?: unknown[] }).products?.map(toAdminProduct) || [];
       return {
         success: response.data.success,
         data: {
           products,
-          total: (response.data as any).total,
-          page: (response.data as any).page,
-          limit: (response.data as any).limit
+          total: (response.data as unknown as { total?: number }).total,
+          page: (response.data as unknown as { page?: number }).page,
+          limit: (response.data as unknown as { limit?: number }).limit
         }
       };
     }
@@ -73,8 +112,8 @@ export const adminProductService = {
   },
 
   // Create product for admin
-  async createProduct(productData: any): Promise<ApiResponse<AdminProduct>> {
-    const response = await apiClient.createProduct(productData);
+  async createProduct(productData: unknown): Promise<ApiResponse<AdminProduct>> {
+    const response = await apiClient.createProduct(productData as ProductFormData);
     return {
       success: response.data.success,
       data: toAdminProduct(response.data.data)
@@ -82,8 +121,8 @@ export const adminProductService = {
   },
 
   // Update product for admin
-  async updateProduct(id: string, productData: any): Promise<ApiResponse<AdminProduct>> {
-    const response = await apiClient.updateProduct(id, productData);
+  async updateProduct(id: string, productData: unknown): Promise<ApiResponse<AdminProduct>> {
+    const response = await apiClient.updateProduct(id, productData as ProductFormData);
     return {
       success: response.data.success,
       data: toAdminProduct(response.data.data)

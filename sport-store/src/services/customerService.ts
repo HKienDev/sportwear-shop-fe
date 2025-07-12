@@ -2,6 +2,14 @@ import { apiClient } from '@/lib/apiClient';
 import type { Customer } from '@/types/customer';
 import type { ApiResponse } from '@/types/api';
 
+// Interface cho raw customer data từ API
+interface RawCustomer {
+  deliveredOrders?: number;
+  orders?: unknown[];
+  orderCount?: number;
+  [key: string]: unknown;
+}
+
 export const customerService = {
   // Get all customers
   async getCustomers(): Promise<ApiResponse<{
@@ -88,7 +96,7 @@ export const customerService = {
   // Xóa nhiều khách hàng
   deleteManyCustomers: async (ids: string[]): Promise<ApiResponse<{ message: string }>> => {
     try {
-      const response = await apiClient.delete("/admin/users/bulk", { data: { ids } });
+      await apiClient.delete("/admin/users/bulk", { data: { ids } });
       return {
         success: true,
         message: "Xóa nhiều khách hàng thành công",
@@ -112,35 +120,37 @@ export const customerService = {
       const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
       
       // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
-      const customersWithDeliveredOrders = (response.data as any[]).map((customer: any) => {
+      const customersWithDeliveredOrders = (response.data as unknown[]).map((customer: unknown) => {
+        const rawCustomer = customer as RawCustomer;
+        
         // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
-        if (customer.deliveredOrders !== undefined) {
+        if (rawCustomer.deliveredOrders !== undefined) {
           return customer;
         }
         
         // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
-        if (customer.orders && Array.isArray(customer.orders)) {
-          const deliveredOrders = customer.orders.filter((order: any) => 
-            order.status === "delivered"
+        if (rawCustomer.orders && Array.isArray(rawCustomer.orders)) {
+          const deliveredOrders = rawCustomer.orders.filter((order: unknown) => 
+            (order as { status?: string })?.status === "delivered"
           ).length;
           
           return {
-            ...customer,
+            ...(customer as Record<string, unknown>),
             deliveredOrders
           };
         }
         
         // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
-        if (customer.orderCount !== undefined) {
+        if (rawCustomer.orderCount !== undefined) {
           return {
-            ...customer,
-            deliveredOrders: customer.orderCount
+            ...(customer as Record<string, unknown>),
+            deliveredOrders: rawCustomer.orderCount
           };
         }
         
         // Nếu không có thông tin nào, mặc định là 0
         return {
-          ...customer,
+          ...(customer as Record<string, unknown>),
           deliveredOrders: 0
         };
       });

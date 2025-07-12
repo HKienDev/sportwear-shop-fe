@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Customer } from '@/types/customer';
 import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, ChevronLeft, ChevronRight, AlertCircle, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
-import { customerService } from '@/services/customerService';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { CheckCircle, XCircle, AlertTriangle, PauseCircle, Package, TrendingUp, Star } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, PauseCircle } from "lucide-react";
 
 export function getStatusConfig(isActive: boolean, stock: number): {
   color: string;

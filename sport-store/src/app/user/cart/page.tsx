@@ -15,8 +15,7 @@ export default function CartPage() {
     selectedItems,
     toggleSelect,
     toggleSelectAll,
-    removeItem: removeSelectedItem,
-    clearSelection
+    removeItem: removeSelectedItem
   } = useSelectedItems();
   
   const {
@@ -26,9 +25,7 @@ export default function CartPage() {
     cartTotals,
     fetchCart,
     updateCartItem,
-    removeFromCart,
-    removeItemsBatch,
-    isEmpty,
+    removeFromCart
   } = useCartOptimized();
 
   // Force refresh cart khi vào trang

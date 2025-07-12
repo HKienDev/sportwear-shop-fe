@@ -5,8 +5,6 @@ import { ArrowRightIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 interface CartSummaryProps {
   items: CartItem[];
   selectedItems: string[];
-  totalQuantity: number;
-  cartTotal: number;
   onCheckout: () => void;
   showAnimation?: boolean;
 }
@@ -14,8 +12,6 @@ interface CartSummaryProps {
 export default function CartSummary({ 
   items, 
   selectedItems, 
-  totalQuantity, 
-  cartTotal, 
   onCheckout, 
   showAnimation = true 
 }: CartSummaryProps) {

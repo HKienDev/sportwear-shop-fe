@@ -146,8 +146,6 @@ export default function Cart({
           <CartSummary 
             items={cart.items}
             selectedItems={selectedItems}
-            totalQuantity={cart.totalQuantity}
-            cartTotal={cart.cartTotal}
             onCheckout={onCheckout}
           />
         </div>

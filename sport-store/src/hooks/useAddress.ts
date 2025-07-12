@@ -43,7 +43,6 @@ const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn =
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProvinces = async () => {
@@ -199,7 +198,7 @@ const useAddress = ({ province, district }: UseAddressProps): UseAddressReturn =
     fetchWards();
   }, [district, districts]);
 
-  return { provinces, districts, wards, loading, error };
+  return { provinces, districts, wards, loading, error: null };
 };
 
 export default useAddress; 

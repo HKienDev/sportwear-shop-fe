@@ -1,98 +1,169 @@
+import React from "react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface CategoryPaginationProps {
-    currentPage: number;
-    totalPages: number;
-    total: number;
-    startIndex: number;
-    endIndex: number;
-    onPageChange: (page: number) => void;
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  itemsPerPage?: number;
+  totalItems?: number;
 }
 
-export default function CategoryPagination({ 
-    currentPage, 
-    totalPages, 
-    total,
-    startIndex,
-    endIndex,
-    onPageChange 
-}: CategoryPaginationProps) {
-    // Tính toán các trang cần hiển thị
-    const getPageNumbers = () => {
-        const delta = 2; // Số trang hiển thị trước và sau trang hiện tại
-        const range = [];
-        const rangeWithDots = [];
-        let l;
+export default function Pagination({ 
+  currentPage, 
+  totalPages, 
+  onPageChange, 
+  itemsPerPage = 10,
+  totalItems = 0 
+}: PaginationProps) {
+  const delta = 2;
 
-        for (let i = 1; i <= totalPages; i++) {
-            if (
-                i === 1 || // Trang đầu
-                i === totalPages || // Trang cuối
-                (i >= currentPage - delta && i <= currentPage + delta) // Các trang xung quanh trang hiện tại
-            ) {
-                range.push(i);
-            }
-        }
+  const getPageNumbers = () => {
+    const range = [];
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
 
-        for (let i = 0; i < range.length; i++) {
-            if (l) {
-                if (range[i] - l === 2) {
-                    rangeWithDots.push(l + 1);
-                } else if (range[i] - l !== 1) {
-                    rangeWithDots.push('...');
-                }
-            }
-            rangeWithDots.push(range[i]);
-            l = range[i];
-        }
+    if (currentPage - delta > 2) {
+      range.unshift("...");
+    }
+    if (currentPage + delta < totalPages - 1) {
+      range.push("...");
+    }
 
-        return rangeWithDots;
-    };
+    if (totalPages > 1) {
+      range.unshift(1);
+      range.push(totalPages);
+    }
 
-    return (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4 mt-3 sm:mt-4">
-            <div className="text-[clamp(0.75rem,1.5vw,1rem)] text-muted-foreground">
-                Hiển thị {startIndex + 1} - {Math.min(endIndex, total)} / {total} danh mục
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-                <Button
-                    variant="outline"
+    return range;
+  };
+
+  const pageNumbers = getPageNumbers();
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  // Temporarily show pagination even for single page for testing
+  // if (totalPages <= 1) return null;
+
+  return (
+    <div className="relative">
+      {/* Glass Morphism Background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-2xl transform rotate-1"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-2xl transform -rotate-1"></div>
+      
+      {/* Main Container */}
+      <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 shadow-lg p-6">
+        <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Info Section */}
+          <div className="text-sm text-slate-600 hidden sm:block">
+            <span className="font-medium text-slate-800">
+              {startItem.toLocaleString()}
+            </span>
+            {" - "}
+            <span className="font-medium text-slate-800">
+              {endItem.toLocaleString()}
+            </span>
+            {" trong "}
+            <span className="font-medium text-slate-800">
+              {totalItems.toLocaleString()}
+            </span>
+            {" kết quả"}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center gap-2">
+            {/* Previous Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative group transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={16} className="mr-1 group-hover:-translate-x-0.5 transition-transform duration-200" />
+              Trước
+            </Button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {pageNumbers.map((page, index) =>
+                page === "..." ? (
+                  <div
+                    key={`ellipsis-${index}`}
+                    className="flex items-center justify-center w-10 h-10 text-slate-400"
+                  >
+                    <MoreHorizontal size={16} />
+                  </div>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
                     size="sm"
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="text-[clamp(0.75rem,1.5vw,1rem)]"
-                >
-                    Trước
-                </Button>
-                <div className="flex items-center gap-1 sm:gap-2">
-                    {getPageNumbers().map((pageNumber, index) => (
-                        pageNumber === '...' ? (
-                            <span key={`dots-${index}`} className="px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 text-gray-500 text-[10px] sm:text-xs md:text-sm">
-                                {pageNumber}
-                            </span>
-                        ) : (
-                            <Button
-                                key={pageNumber}
-                                variant={currentPage === pageNumber ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onPageChange(pageNumber as number)}
-                                className="min-w-[clamp(2rem,4vw,2.5rem)] h-[clamp(1.5rem,3vw,2.5rem)] text-[clamp(0.75rem,1.5vw,1rem)]"
-                            >
-                                {pageNumber}
-                            </Button>
-                        )
-                    ))}
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="text-[clamp(0.75rem,1.5vw,1rem)]"
-                >
-                    Sau
-                </Button>
+                    onClick={() => onPageChange(Number(page))}
+                    className={`w-10 h-10 p-0 transition-all duration-300 hover:scale-105 ${
+                      currentPage === page 
+                        ? "bg-gradient-to-r from-indigo-600 to-emerald-600 text-white shadow-lg shadow-indigo-500/25" 
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
             </div>
+
+            {/* Next Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative group transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sau
+              <ChevronRight size={16} className="ml-1 group-hover:translate-x-0.5 transition-transform duration-200" />
+            </Button>
+          </div>
+
+          {/* Page Info */}
+          <div className="text-sm text-slate-500 font-medium hidden sm:block">
+            Trang {currentPage} / {totalPages}
+          </div>
         </div>
-    );
+
+        {/* Mobile Pagination */}
+        <div className="block sm:hidden mt-2 pt-2 border-t border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex-1 mr-2"
+            >
+              <ChevronLeft size={16} className="mr-1" />
+              Trước
+            </Button>
+            
+            <div className="text-sm text-slate-600 font-medium">
+              {currentPage} / {totalPages}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex-1 ml-2"
+            >
+              Sau
+              <ChevronRight size={16} className="ml-1" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

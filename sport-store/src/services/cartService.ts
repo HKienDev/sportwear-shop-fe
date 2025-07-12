@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { CartItem, Cart } from '@/types/cart';
+import type { Cart } from '@/types/cart';
 import type { ApiResponse } from '@/types/api';
 
 export const cartService = {

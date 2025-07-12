@@ -28,7 +28,7 @@ export interface ProductQueryParams {
 
 export const userProductService = {
   // Get all products for user
-  async getProducts(params?: any): Promise<ApiResponse<UserProductsResponse>> {
+  async getProducts(params?: unknown): Promise<ApiResponse<UserProductsResponse>> {
     try {
       const response = await publicApiClient.get('/products', { params });
       
@@ -38,14 +38,14 @@ export const userProductService = {
       }
       
       // If response.data already has products property, return as is
-      if (response.data && (response.data as any).products) {
+      if (response.data && (response.data as unknown as { products?: unknown }).products) {
         return { 
           success: response.data.success, 
           data: { 
-            products: (response.data as any).products as UserProduct[],
-            total: (response.data as any).total,
-            page: (response.data as any).page,
-            limit: (response.data as any).limit
+            products: (response.data as unknown as { products?: unknown[] }).products as UserProduct[],
+            total: (response.data as unknown as { total?: number }).total,
+            page: (response.data as unknown as { page?: number }).page,
+            limit: (response.data as unknown as { limit?: number }).limit
           } 
         };
       }
@@ -56,14 +56,14 @@ export const userProductService = {
         if (Array.isArray(apiData)) {
           return { success: response.data.success, data: { products: apiData as UserProduct[] } };
         }
-        if (apiData && (apiData as any).products) {
+        if (apiData && (apiData as unknown as { products?: unknown }).products) {
           return { 
             success: response.data.success, 
             data: { 
-              products: (apiData as any).products as UserProduct[],
-              total: (apiData as any).total,
-              page: (apiData as any).page,
-              limit: (apiData as any).limit
+              products: (apiData as unknown as { products?: unknown[] }).products as UserProduct[],
+              total: (apiData as unknown as { total?: number }).total,
+              page: (apiData as unknown as { page?: number }).page,
+              limit: (apiData as unknown as { limit?: number }).limit
             } 
           };
         }
@@ -76,14 +76,14 @@ export const userProductService = {
           if (Array.isArray(apiData)) {
             return { success: true, data: { products: apiData as UserProduct[] } };
           }
-          if (apiData && (apiData as any).products) {
+          if (apiData && (apiData as unknown as { products?: unknown }).products) {
             return { 
               success: true, 
               data: { 
-                products: (apiData as any).products as UserProduct[],
-                total: (apiData as any).total,
-                page: (apiData as any).page,
-                limit: (apiData as any).limit
+                products: (apiData as unknown as { products?: unknown[] }).products as UserProduct[],
+                total: (apiData as unknown as { total?: number }).total,
+                page: (apiData as unknown as { page?: number }).page,
+                limit: (apiData as unknown as { limit?: number }).limit
               } 
             };
           }
@@ -111,10 +111,11 @@ export const userProductService = {
   async getProductBySku(sku: string): Promise<ApiResponse<UserProduct>> {
     // Use getProducts with SKU filter as fallback
     const response = await publicApiClient.get('/products', { params: { keyword: sku } });
-    if (response.data && (response.data as any).products && (response.data as any).products.length > 0) {
+    const products = (response.data as unknown as { products?: unknown[] })?.products;
+    if (products && products.length > 0) {
       return { 
         success: true, 
-        data: (response.data as any).products[0] as UserProduct 
+        data: products[0] as UserProduct 
       };
     }
     return { success: false, data: {} as UserProduct };
@@ -141,14 +142,14 @@ export const userProductService = {
       const response = await publicApiClient.get(`/products/category/${categoryId}?${queryParams.toString()}`);
       
       // Xử lý response tương tự như getProducts
-      if (response.data && (response.data as any).products) {
+      if (response.data && (response.data as unknown as { products?: unknown }).products) {
         return { 
           success: response.data.success, 
           data: { 
-            products: (response.data as any).products as UserProduct[],
-            total: (response.data as any).total,
-            page: (response.data as any).page,
-            limit: (response.data as any).limit
+            products: (response.data as unknown as { products?: unknown[] }).products as UserProduct[],
+            total: (response.data as unknown as { total?: number }).total,
+            page: (response.data as unknown as { page?: number }).page,
+            limit: (response.data as unknown as { limit?: number }).limit
           } 
         };
       }

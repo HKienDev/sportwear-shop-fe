@@ -15,7 +15,6 @@ import { setAuthCookies, clearAuthCookies } from '@/utils/cookieUtils';
 import { setAuthStorage, clearAuthStorage } from '@/utils/storageUtils';
 import { TOKEN_CONFIG } from '@/config/token';
 import type { LoginCredentials, RegisterRequest } from '@/types/auth';
-import type { User } from '@/types/base';
 
 interface AuthData {
     accessToken: string;
@@ -357,11 +356,6 @@ export const loginWithGoogle = async (token: string): Promise<ApiResponse<LoginR
         throw error;
     }
 };
-
-function clearAuthData(): void {
-    clearAuthCookies();
-    clearAuthStorage();
-}
 
 // Default export for backward compatibility
 export default authService; 

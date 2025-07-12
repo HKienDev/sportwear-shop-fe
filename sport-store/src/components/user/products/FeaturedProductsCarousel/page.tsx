@@ -68,35 +68,6 @@ const FeaturedProductsCarousel = ({
     return [...displayProducts, ...displayProducts];
   }, [displayProducts, count]);
 
-  // Tính toán layout dựa trên số lượng sản phẩm
-  const getLayoutConfig = useMemo(() => {
-    if (count === 1) {
-      return {
-        desktop: 'justify-center', // Căn giữa 1 sản phẩm
-        tablet: 'justify-center',
-        mobile: 'justify-center'
-      };
-    } else if (count === 2) {
-      return {
-        desktop: 'justify-center', // Căn giữa 2 sản phẩm
-        tablet: 'justify-center',
-        mobile: 'justify-start'
-      };
-    } else if (count === 3) {
-      return {
-        desktop: 'justify-center', // Căn giữa 3 sản phẩm
-        tablet: 'justify-start',
-        mobile: 'justify-start'
-      };
-    } else {
-      return {
-        desktop: 'justify-start', // Nhiều sản phẩm thì scroll
-        tablet: 'justify-start',
-        mobile: 'justify-start'
-      };
-    }
-  }, [count]);
-
   // Auto scroll effect - chỉ hoạt động khi có nhiều sản phẩm
   useEffect(() => {
     if (count === 0 || count <= 3) return; // Không auto scroll khi có ít sản phẩm

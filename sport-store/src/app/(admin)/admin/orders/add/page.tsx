@@ -26,24 +26,7 @@ export default function AddOrderPage() {
   // Sử dụng useRef để theo dõi lần render đầu tiên
   const isFirstRender = useRef(true);
 
-  // Reset tất cả dữ liệu khi trang được tải lại (chỉ chạy một lần)
-  useEffect(() => {
-    if (isFirstRender.current) {
-      resetCustomer();
-      clearCart();
-      setPaymentMethod(PaymentMethod.COD);
-      setShippingMethod(ShippingMethod.STANDARD);
-      setPromoDetails(null);
-      isFirstRender.current = false;
-    }
-  }, [resetCustomer, clearCart, setPaymentMethod, setShippingMethod, setPromoDetails]);
-
-  // Redirect if not authenticated or not admin
-  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
-    router.push('/admin/login');
-    return null;
-  }
-
+  // Định nghĩa tất cả useCallback hooks trước điều kiện redirect
   const resetAllData = useCallback(() => {
     resetCustomer();
     clearCart();
@@ -70,6 +53,24 @@ export default function AddOrderPage() {
       router.push('/admin/orders/list');
     }, 800);
   }, [resetAllData, router]);
+
+  // Reset tất cả dữ liệu khi trang được tải lại (chỉ chạy một lần)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      resetCustomer();
+      clearCart();
+      setPaymentMethod(PaymentMethod.COD);
+      setShippingMethod(ShippingMethod.STANDARD);
+      setPromoDetails(null);
+      isFirstRender.current = false;
+    }
+  }, [resetCustomer, clearCart, setPaymentMethod, setShippingMethod, setPromoDetails]);
+
+  // Redirect if not authenticated or not admin
+  if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    router.push('/admin/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white p-6">

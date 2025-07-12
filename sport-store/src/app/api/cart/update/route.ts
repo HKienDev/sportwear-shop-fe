@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   console.log('🔧 POST /api/cart/update called - This should not happen!');
   return NextResponse.json(
     { success: false, message: 'Method not allowed. Use PUT instead.' },
