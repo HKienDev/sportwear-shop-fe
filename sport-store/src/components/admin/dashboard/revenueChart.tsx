@@ -186,14 +186,14 @@ export function RevenueChart({
 
       <div className="relative p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-              <BarChart3 className="h-5 w-5 text-white" />
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Biểu Đồ Doanh Thu</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{getTimeRangeLabel()}</p>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Biểu Đồ Doanh Thu</h2>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{getTimeRangeLabel()}</p>
             </div>
           </div>
           
@@ -201,12 +201,12 @@ export function RevenueChart({
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-500/50 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-500/50 transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto"
             >
-              <Calendar className="h-4 w-4 text-emerald-500" />
-              <span>{getCurrentTimeRangeText()}</span>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
+              <span className="truncate">{getCurrentTimeRangeText()}</span>
               <ChevronDown 
-                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                className={`h-3 w-3 sm:h-4 sm:w-4 text-gray-500 transition-transform duration-200 flex-shrink-0 ${
                   isDropdownOpen ? 'rotate-180' : ''
                 }`} 
               />
@@ -214,7 +214,7 @@ export function RevenueChart({
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-full sm:w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-lg sm:rounded-xl shadow-xl z-50 overflow-hidden">
                 {timeRangeOptions.map((option) => (
                   <button
                     key={option.value}
@@ -222,15 +222,15 @@ export function RevenueChart({
                       onTimeRangeChange(option.value as TimeRange);
                       setIsDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
+                    className={`w-full flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 text-xs sm:text-sm ${
                       timeRange === option.value 
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' 
                         : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <span className="font-medium">{option.label}</span>
+                    <span className="font-medium truncate">{option.label}</span>
                     {timeRange === option.value && (
-                      <div className="ml-auto w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <div className="ml-auto w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-500 rounded-full flex-shrink-0"></div>
                     )}
                   </button>
                 ))}
@@ -240,39 +240,39 @@ export function RevenueChart({
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tăng trưởng</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
+              <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tăng trưởng</span>
             </div>
-            <p className={`text-lg font-bold ${growthPercentage >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            <p className={`text-sm sm:text-lg font-bold ${growthPercentage >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {growthPercentage >= 0 ? '+' : ''}{growthPercentage.toFixed(1)}%
             </p>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-2">
-              <DollarSign className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{getAverageLabel()}</span>
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+              <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">{getAverageLabel()}</span>
             </div>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
+            <p className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
               {loading ? (
-                <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 sm:h-6 w-16 sm:w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               ) : (
                 formatCurrency(averageRevenue)
               )}
             </p>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-2">
-              <BarChart3 className="h-4 w-4 text-purple-500" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{getTotalLabel()}</span>
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
+              <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">{getTotalLabel()}</span>
             </div>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
+            <p className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
               {loading ? (
-                <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 sm:h-6 w-16 sm:w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               ) : (
                 formatCurrency(totalRevenue)
               )}
@@ -281,16 +281,16 @@ export function RevenueChart({
         </div>
         
         {/* Chart */}
-        <div className="h-80 w-full">
+        <div className="h-64 sm:h-80 w-full">
           {loading ? (
-            <div className="h-full w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse flex items-center justify-center">
-              <div className="text-gray-500 dark:text-gray-400">Đang tải biểu đồ...</div>
+            <div className="h-full w-full bg-gray-100 dark:bg-gray-800 rounded-lg sm:rounded-xl animate-pulse flex items-center justify-center">
+              <div className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">Đang tải biểu đồ...</div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={displayData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
               >
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -303,21 +303,24 @@ export function RevenueChart({
                   dataKey="date" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#6b7280', fontSize: 12, fontWeight: 500 }}
+                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 500 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
                   tickFormatter={(value) => `${value / 1000000}M`}
-                  width={60}
-                  tick={{ fill: '#6b7280', fontSize: 12, fontWeight: 500 }}
+                  width={50}
+                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 500 }}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }} />
                 <Bar 
                   dataKey="revenue" 
                   fill="url(#revenueGradient)"
-                  radius={[8, 8, 0, 0]} 
-                  barSize={40}
+                  radius={[4, 4, 0, 0]} 
+                  barSize={20}
                   animationDuration={1500}
                 />
               </BarChart>

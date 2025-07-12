@@ -14,8 +14,6 @@ import {
   Gift,
   MessageSquare,
   UserCircle,
-  Menu,
-  X,
   Sun,
   Moon,
   ChevronDown,
@@ -161,9 +159,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
   const { logout, user } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Lấy thống kê đơn hàng
@@ -216,7 +212,6 @@ export default function Sidebar() {
       toggleMenu(item.path);
     } else {
       router.push(item.path);
-      setIsMobileMenuOpen(false);
     }
   };
 
@@ -224,9 +219,6 @@ export default function Sidebar() {
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const sidebarWidth = isCollapsed ? 'w-16' : 'w-72';
-  const sidebarWidthMobile = isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full';
 
   // Hàm để lấy badge text
   const getBadgeText = (item: typeof menuItems[0]) => {
@@ -238,231 +230,179 @@ export default function Sidebar() {
   };
 
   return (
-    <>
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition-all duration-200"
-      >
-        <Menu size={20} className="text-gray-700 dark:text-gray-300" />
-      </button>
-
-      {/* Desktop Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="hidden lg:block fixed top-4 left-4 z-50 p-2.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:scale-105 transition-all duration-200"
-      >
-        <Menu size={20} className="text-gray-700 dark:text-gray-300" />
-      </button>
-
-      {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-screen bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-600/50 z-50 transition-all duration-300 ease-out ${sidebarWidth} ${sidebarWidthMobile} lg:translate-x-0 shadow-2xl overflow-hidden`}
-      >
-        {/* Header - Fixed */}
-        <div className="p-6 border-b-2 border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50 sticky top-0 z-10">
-          {/* Close button for mobile */}
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 rounded-lg border border-gray-200/50 dark:border-gray-700/50 transition-all duration-200"
-          >
-            <X size={18} className="text-gray-500 dark:text-gray-400" />
-          </button>
-
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl border-2 border-white/20 dark:border-gray-800/20 transition-all duration-300 hover:scale-105">
-              <Activity size={20} className="text-white" />
-            </div>
-            {(!isCollapsed || isMobileMenuOpen) && (
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                  Admin Panel
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  E-commerce Dashboard
-                </p>
-              </div>
-            )}
+    <div className="h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-600/50 shadow-2xl overflow-hidden transition-all duration-300 ease-out flex flex-col">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-4 sm:p-6 border-b-2 border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50">
+        {/* Logo & Brand */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl border-2 border-white/20 dark:border-gray-800/20 transition-all duration-300 hover:scale-105">
+            <Activity size={16} className="sm:w-5 sm:h-5 text-white" />
           </div>
-
-          {/* Search Bar */}
-          {(!isCollapsed || isMobileMenuOpen) && (
-            <div className="mt-6 relative">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm menu..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/80 border-2 border-gray-200/50 dark:border-gray-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile - Fixed */}
-        <div className="p-6 border-b-2 border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50 sticky top-0 z-10">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl border-2 border-white/20 dark:border-gray-800/20 transition-all duration-300 hover:scale-105">
-                <span className="text-white font-medium text-sm">
-                  {user?.name?.charAt(0) || 'A'}
-                </span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
-            </div>
-            {(!isCollapsed || isMobileMenuOpen) && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.name || 'Admin User'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user?.email || 'admin@example.com'}
-                </p>
-                <div className="flex items-center mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">Trực tuyến</span>
-                </div>
-              </div>
-            )}
+          <div className="flex-1">
+            <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              Admin Panel
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              E-commerce Dashboard
+            </p>
           </div>
         </div>
 
-        {/* Navigation - Scrollable */}
-        <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 280px)' }}>
-          <nav className="p-4 space-y-1">
-            {filteredMenuItems.map((item) => (
-              <div key={item.path} className="group">
-                <button
-                  onClick={() => handleMenuClick(item)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group relative overflow-hidden border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 ${
-                    isActive(item.path)
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 scale-105 border-blue-400/30'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white hover:scale-102'
-                  }`}
-                >
-                  {/* Hover effect background */}
-                  <div className={`absolute inset-0 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-lg`}></div>
-                  
-                  {/* Icon with gradient background */}
-                  <div className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110 border border-white/20 dark:border-gray-800/20 ${
-                    isActive(item.path) 
-                      ? 'bg-white/20 shadow-lg' 
-                      : `bg-gradient-to-br ${item.color} text-white shadow-md group-hover:shadow-lg`
-                  }`}>
-                    <item.icon size={16} />
-                  </div>
-
-                  {(!isCollapsed || isMobileMenuOpen) && (
-                    <>
-                      <div className="flex-1 text-left">
-                        <span className="text-sm font-medium">
-                          {item.name}
-                        </span>
-                        {item.description && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Badge */}
-                      {item.badge && (
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-300 border border-white/20 dark:border-gray-800/20 ${
-                          item.badge === 'Hot' 
-                            ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md animate-pulse' 
-                            : 'bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-md'
-                        }`}>
-                          {getBadgeText(item)}
-                        </span>
-                      )}
-
-                      {/* Expand icon */}
-                      {item.subMenu && item.subMenu.length > 0 && (
-                        <ChevronDown
-                          size={14}
-                          className={`transition-all duration-300 ${
-                            openMenus[item.path] ? 'rotate-180' : ''
-                          }`}
-                        />
-                      )}
-                    </>
-                  )}
-
-                  {/* Active indicator */}
-                  {isActive(item.path) && (
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg"></div>
-                  )}
-                </button>
-
-                {/* Submenu */}
-                {item.subMenu && item.subMenu.length > 0 && openMenus[item.path] && (!isCollapsed || isMobileMenuOpen) && (
-                  <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-300">
-                    {item.subMenu.map((subItem) => (
-                      <Link
-                        key={subItem.path}
-                        href={subItem.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`block px-3 py-2 rounded-lg text-sm transition-all duration-300 hover:scale-105 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 ${
-                          isActive(subItem.path)
-                            ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-600 dark:text-blue-400 border-l-4 border-blue-500 shadow-md'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        {subItem.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-        </div>
-
-        {/* Footer - Fixed */}
-        <div className="p-4 border-t-2 border-gray-200/50 dark:border-gray-700/50 space-y-2 bg-gradient-to-t from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50 sticky bottom-0 z-10">
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white transition-all duration-300 hover:scale-102 group border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
-          >
-            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg border border-white/20 dark:border-gray-800/20 transition-all duration-300 group-hover:scale-110">
-              {isDarkMode ? <Sun size={16} className="text-white" /> : <Moon size={16} className="text-white" />}
-            </div>
-            {(!isCollapsed || isMobileMenuOpen) && (
-              <span className="flex-1 text-left text-sm font-medium">
-                {isDarkMode ? 'Chế độ sáng' : 'Chế độ tối'}
-              </span>
-            )}
-          </button>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-50/80 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 hover:scale-102 group border border-transparent hover:border-red-200/50 dark:hover:border-red-700/50"
-          >
-            <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg border border-white/20 dark:border-gray-800/20 transition-all duration-300 group-hover:scale-110">
-              <LogOut size={16} className="text-white" />
-            </div>
-            {(!isCollapsed || isMobileMenuOpen) && (
-              <span className="flex-1 text-left text-sm font-medium">
-                Đăng Xuất
-              </span>
-            )}
-          </button>
+        {/* Search Bar */}
+        <div className="mt-4 sm:mt-6 relative">
+          <div className="relative">
+            <Search size={14} className="sm:w-4 sm:h-4 absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-50/80 dark:bg-gray-800/80 border-2 border-gray-200/50 dark:border-gray-700/50 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200"
+            />
+          </div>
         </div>
       </div>
-    </>
+
+      {/* User Profile - Fixed */}
+      <div className="flex-shrink-0 p-4 sm:p-6 border-b-2 border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="relative">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl border-2 border-white/20 dark:border-gray-800/20 transition-all duration-300 hover:scale-105">
+              <span className="text-white font-medium text-xs sm:text-sm">
+                {user?.name?.charAt(0) || 'A'}
+              </span>
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+              {user?.name || 'Admin User'}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {user?.email || 'admin@example.com'}
+            </p>
+            <div className="flex items-center mt-0.5 sm:mt-1">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1.5 sm:mr-2 animate-pulse"></div>
+              <span className="text-xs text-green-600 dark:text-green-400 font-medium">Trực tuyến</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation - Scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <nav className="p-3 sm:p-4 space-y-1">
+          {filteredMenuItems.map((item) => (
+            <div key={item.path} className="group">
+              <button
+                onClick={() => handleMenuClick(item)}
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-all duration-300 group relative overflow-hidden border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 ${
+                  isActive(item.path)
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 scale-105 border-blue-400/30'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white hover:scale-102'
+                }`}
+              >
+                {/* Hover effect background */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-lg`}></div>
+                
+                {/* Icon with gradient background */}
+                <div className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110 border border-white/20 dark:border-gray-800/20 ${
+                  isActive(item.path) 
+                    ? 'bg-white/20 shadow-lg' 
+                    : `bg-gradient-to-br ${item.color} text-white shadow-md group-hover:shadow-lg`
+                }`}>
+                  <item.icon size={14} className="sm:w-4 sm:h-4" />
+                </div>
+
+                <div className="flex-1 text-left">
+                  <span className="text-xs sm:text-sm font-medium">
+                    {item.name}
+                  </span>
+                  {item.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Badge */}
+                {item.badge && (
+                  <span className={`px-1.5 sm:px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-300 border border-white/20 dark:border-gray-800/20 ${
+                    item.badge === 'Hot' 
+                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md animate-pulse' 
+                      : 'bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-md'
+                  }`}>
+                    {getBadgeText(item)}
+                  </span>
+                )}
+
+                {/* Expand icon */}
+                {item.subMenu && item.subMenu.length > 0 && (
+                  <ChevronDown
+                    size={12}
+                    className={`sm:w-3.5 sm:h-3.5 transition-all duration-300 ${
+                      openMenus[item.path] ? 'rotate-180' : ''
+                    }`}
+                  />
+                )}
+
+                {/* Active indicator */}
+                {isActive(item.path) && (
+                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-6 sm:h-8 bg-white rounded-r-full shadow-lg"></div>
+                )}
+              </button>
+
+              {/* Submenu */}
+              {item.subMenu && item.subMenu.length > 0 && openMenus[item.path] && (
+                <div className="ml-3 sm:ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                  {item.subMenu.map((subItem) => (
+                    <Link
+                      key={subItem.path}
+                      href={subItem.path}
+                      className={`block px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-all duration-300 hover:scale-105 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 ${
+                        isActive(subItem.path)
+                          ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-600 dark:text-blue-400 border-l-4 border-blue-500 shadow-md'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {subItem.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* Footer - Fixed */}
+      <div className="flex-shrink-0 p-3 sm:p-4 border-t-2 border-gray-200/50 dark:border-gray-700/50 space-y-1.5 sm:space-y-2 bg-gradient-to-t from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50">
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="w-full flex items-center space-x-2 sm:space-x-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 hover:text-gray-900 dark:hover:text-white transition-all duration-300 hover:scale-102 group border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
+        >
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg border border-white/20 dark:border-gray-800/20 transition-all duration-300 group-hover:scale-110">
+            {isDarkMode ? <Sun size={14} className="sm:w-4 sm:h-4 text-white" /> : <Moon size={14} className="sm:w-4 sm:h-4 text-white" />}
+          </div>
+          <span className="flex-1 text-left text-xs sm:text-sm font-medium">
+            {isDarkMode ? 'Chế độ sáng' : 'Chế độ tối'}
+          </span>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-2 sm:space-x-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-red-50/80 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 hover:scale-102 group border border-transparent hover:border-red-200/50 dark:hover:border-red-700/50"
+        >
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg border border-white/20 dark:border-gray-800/20 transition-all duration-300 group-hover:scale-110">
+            <LogOut size={14} className="sm:w-4 sm:h-4 text-white" />
+          </div>
+          <span className="flex-1 text-left text-xs sm:text-sm font-medium">
+            Đăng Xuất
+          </span>
+        </button>
+      </div>
+    </div>
   );
 }
