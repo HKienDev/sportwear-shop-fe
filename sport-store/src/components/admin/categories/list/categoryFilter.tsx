@@ -60,11 +60,6 @@ const CategoryFilter = React.memo(
             {/* Search Section */}
             <div className="flex-1 w-full lg:max-w-xl group">
               <div className="relative">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${
-                  isSearchFocused ? 'text-indigo-500' : 'text-slate-400'
-                }`}>
-                  <Search size={20} className="transition-transform duration-300 group-hover:scale-110" />
-                </div>
                 <input
                   type="text"
                   placeholder="Tìm kiếm theo tên danh mục..."
@@ -91,11 +86,6 @@ const CategoryFilter = React.memo(
             {/* Status Filter & Add Button */}
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               <div className="relative w-full sm:w-64 group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${
-                  statusFilter ? 'text-emerald-500' : 'text-slate-400'
-                }`}>
-                  <Filter size={16} className="transition-transform duration-300 group-hover:scale-110" />
-                </div>
                 <select
                   className={`block w-full pl-12 pr-10 py-4 border-2 rounded-xl bg-white/70 backdrop-blur-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm appearance-none transition-all duration-300 cursor-pointer ${
                     statusFilter ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-200 hover:border-slate-300'

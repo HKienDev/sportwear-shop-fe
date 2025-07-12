@@ -2,21 +2,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Customer } from '@/types/customer';
-import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, ChevronLeft, ChevronRight, AlertCircle, MoreHorizontal } from 'lucide-react';
+import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, AlertCircle, Power } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import CustomerStatusBadge from './customerStatusBadge';
 
 interface CustomerTableProps {
   customers: Customer[];
-  onDelete: (id: string) => void;
+  selectedCustomers?: string[];
+  onSelectCustomer: (customerId: string) => void;
+  onSelectAll: () => void;
+  onDelete: (id: string) => Promise<void>;
   onViewDetails: (id: string) => void;
   onToggleStatus?: (id: string) => void;
 }
@@ -31,20 +37,27 @@ declare module '@/types/customer' {
 
 export function CustomerTable({
   customers = [],
+  selectedCustomers,
+  onSelectCustomer,
+  onSelectAll,
   onDelete,
   onViewDetails,
   onToggleStatus,
 }: CustomerTableProps) {
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const customersPerPage = 10;
+  const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
+  const [localCustomers, setLocalCustomers] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    setLocalCustomers(customers);
+  }, [customers]);
 
   const filteredCustomers = useMemo(() => {
-    if (!Array.isArray(customers)) return [];
-    // Backend đã filter chỉ trả về users có role 'user', nên không cần filter thêm
-    return customers;
-  }, [customers]);
+    if (!Array.isArray(localCustomers)) return [];
+    return localCustomers;
+  }, [localCustomers]);
 
   useEffect(() => {
     if (!Array.isArray(filteredCustomers)) return;
@@ -62,43 +75,51 @@ export function CustomerTable({
     setOnlineUsers(onlineIds);
   }, [filteredCustomers]);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (!Array.isArray(filteredCustomers)) return;
-    
-    if (checked) {
-      setSelectedCustomers(filteredCustomers.map(customer => customer._id));
-    } else {
-      setSelectedCustomers([]);
-    }
+  const handleDelete = (id: string) => {
+    setCustomerToDelete(id);
+    setDeleteDialogOpen(true);
   };
 
-  const handleSelectCustomer = (id: string) => {
-    setSelectedCustomers(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(customerId => customerId !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
-  };
-
-  const handleDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
     try {
-      await onDelete(id);
+      await onDelete(customerToDelete);
+      toast.success("Đã xóa khách hàng thành công");
     } catch (error) {
-      console.error('Error deleting customer:', error);
-      toast.error('Có lỗi xảy ra khi xóa khách hàng');
+      console.error("Error deleting customer:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+    } finally {
+      setCustomerToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleToggleStatus = async (id: string) => {
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      return error.message;
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      return String((error as { message: unknown }).message);
+    }
+    return "Đã xảy ra lỗi không xác định";
+  };
+
+  const handleToggleStatus = async (customer: Customer) => {
+    const id = `VJUSPORTUSER-${customer._id.slice(0, 8)}`;
+    setIsUpdating(prev => ({ ...prev, [id]: true }));
+    // Cập nhật localCustomers ngay trên UI
+    setLocalCustomers(prev => prev.map(c => c._id === customer._id ? { ...c, isActive: !customer.isActive } : c));
     try {
       if (typeof onToggleStatus === 'function') {
         await onToggleStatus(id);
+        toast.success(customer.isActive ? "Đã khóa tài khoản thành công" : "Đã mở khóa tài khoản thành công");
       }
     } catch (error) {
-      console.error('Error toggling user status:', error);
-      toast.error('Cập nhật trạng thái thất bại');
+      // Nếu lỗi, hoàn tác lại trạng thái
+      setLocalCustomers(prev => prev.map(c => c._id === customer._id ? { ...c, isActive: customer.isActive } : c));
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage || "Không thể thay đổi trạng thái khách hàng");
+    } finally {
+      setIsUpdating(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -113,107 +134,60 @@ export function CustomerTable({
     }).format(amount);
   };
 
-  const indexOfLastCustomer = currentPage * customersPerPage;
-  const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
-  const currentCustomers = Array.isArray(filteredCustomers) 
-    ? filteredCustomers.slice(indexOfFirstCustomer, indexOfLastCustomer)
-    : [];
-  const totalPages = Math.ceil((Array.isArray(filteredCustomers) ? filteredCustomers.length : 0) / customersPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
   return (
-    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
-      <div className="max-w-7xl mx-auto">
-        {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Tổng Khách Hàng</p>
-                <p className="text-2xl font-bold text-slate-800">{Array.isArray(filteredCustomers) ? filteredCustomers.length : 0}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
-                <span className="text-teal-500 text-xl font-bold">Σ</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Đang Hoạt Động</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {Array.isArray(filteredCustomers) ? filteredCustomers.filter(customer => customer.isActive).length : 0}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                <span className="text-indigo-500 text-xl font-bold">⧗</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Customers Summary & Selection */}
-        <div className="flex flex-wrap justify-between items-center mb-2">
-          <div className="flex items-center gap-2 mb-2 sm:mb-0">
-            <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-lg text-sm font-medium">
-              {currentCustomers.length} khách hàng
-            </span>
-            {selectedCustomers.length > 0 && (
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-medium animate-pulse">
-                Đã chọn {selectedCustomers.length} khách hàng
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Customers Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
+    <div className="space-y-6">
+      {/* Table Container with Enhanced Glass Effect */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-3xl transform rotate-1"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-3xl transform -rotate-1"></div>
+        <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
+            <table className="min-w-full divide-y divide-slate-200/60">
               <thead>
-                <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                  <th className="px-4 py-3 w-10">
+                <tr className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 backdrop-blur-sm">
+                  <th className="px-6 py-4 w-12">
                     <input
                       type="checkbox"
-                      checked={Array.isArray(filteredCustomers) && selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                      checked={selectedCustomers?.length === filteredCustomers.length && filteredCustomers.length > 0}
+                      onChange={onSelectAll}
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Mã Thành Viên</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Tên Khách Hàng</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Số Điện Thoại</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Tổng Đơn Hàng</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Tổng Chi Tiêu</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Trạng Thái</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Thao Tác</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-32 whitespace-nowrap">Mã Thành Viên</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-64 whitespace-nowrap">Tên Khách Hàng</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-56">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-48">Số Điện Thoại</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-56 whitespace-nowrap">Tổng Đơn Hàng</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-56 whitespace-nowrap">Tổng Chi Tiêu</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-52 whitespace-nowrap">Trạng Thái</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-44 whitespace-nowrap">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
-                {currentCustomers.length > 0 ? (
-                  currentCustomers.map((customer, index) => (
-                    <tr key={customer._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                      <td className="px-4 py-3">
+              <tbody className="divide-y divide-slate-200/60">
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((customer, index) => (
+                    <tr key={customer._id} className={`group hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-300 ${
+                      index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
+                    }`}>
+                      <td className="px-6 py-4">
                         <input
                           type="checkbox"
-                          checked={selectedCustomers.includes(customer._id)}
-                          onChange={() => handleSelectCustomer(customer._id)}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                          checked={selectedCustomers?.includes(customer._id) || false}
+                          onChange={() => onSelectCustomer(customer._id)}
+                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                         />
                       </td>
-                      <td className="px-4 py-3 font-medium whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                      <td className="px-6 py-4 font-semibold text-slate-800">
+                        <span
+                          className="cursor-pointer hover:text-indigo-600 transition-colors"
+                          title="Xem chi tiết khách hàng"
                           onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
                         >
-                          {`VJUSPORTUSER-${customer._id.slice(0, 8)}`}
-                        </Button>
+                          {customer._id.slice(0, 8)}
+                        </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
                           <div className="relative">
                             {customer.avatar ? (
                               <Image
@@ -224,101 +198,85 @@ export function CustomerTable({
                                 className="rounded-full object-cover"
                               />
                             ) : (
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-500">
+                              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500 flex items-center justify-center">
+                                <span className="text-xs font-medium text-white">
                                   {customer.fullname.charAt(0).toUpperCase()}
                                 </span>
                               </div>
                             )}
                             {isUserOnline(customer._id) && (
-                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white"></span>
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
                             )}
                           </div>
                           <div>
-                            <div className="font-medium whitespace-nowrap">{customer.fullname}</div>
-                            <div className="text-xs text-gray-500 sm:hidden">
+                            <div
+                              className="font-semibold text-slate-800 whitespace-nowrap cursor-pointer hover:text-indigo-600 transition-colors"
+                              title="Xem chi tiết khách hàng"
+                              onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                            >
+                              {customer.fullname}
+                            </div>
+                            <div className="text-xs text-slate-500 sm:hidden">
                               {customer.email}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Mail size={16} className="text-gray-400" />
-                          <span className="text-sm text-gray-600 whitespace-nowrap">{customer.email}</span>
+                          <Mail size={16} className="text-slate-400" />
+                          <span className="text-sm text-slate-700">{customer.email}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Phone size={16} className="text-gray-400" />
-                          <span className="text-sm text-gray-600 whitespace-nowrap">{customer.phone}</span>
+                          <Phone size={16} className="text-slate-400" />
+                          <span className="text-sm text-slate-700">{customer.phone}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <ShoppingBag size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{customer.deliveredOrders || 0}</span>
+                          <ShoppingBag size={16} className="text-slate-400" />
+                          <span className="text-sm font-semibold text-slate-800">{customer.deliveredOrders || 0}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <CreditCard size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                          <CreditCard size={16} className="text-slate-400" />
+                          <span className="text-sm font-semibold text-slate-800">
                             {formatCurrency(customer.totalSpent || 0)}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
-                          customer.isActive 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-red-100 text-red-800"
-                        }`}>
-                          {customer.isActive ? "Hoạt động" : "Bị khóa"}
-                        </span>
+                      <td className="px-6 py-4">
+                        <CustomerStatusBadge isActive={customer.isActive} />
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Mở menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
-                              onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                              className="cursor-pointer"
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>Xem chi tiết</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleToggleStatus(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                              className={`cursor-pointer ${customer.isActive ? "text-yellow-600" : "text-green-600"}`}
-                            >
-                              {customer.isActive ? (
-                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
-                                </svg>
-                              ) : (
-                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              )}
-                              <span>{customer.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-red-600 cursor-pointer"
-                              onClick={() => handleDelete(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Xóa khách hàng</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => onViewDetails(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all duration-200"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(customer)}
+                            disabled={isUpdating[`VJUSPORTUSER-${customer._id.slice(0, 8)}`]}
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${
+                              customer.isActive 
+                                ? "bg-amber-100 text-amber-600 hover:bg-amber-200" 
+                                : "bg-green-100 text-green-600 hover:bg-green-200"
+                            } transition-all duration-200 disabled:opacity-50`}
+                          >
+                            <Power size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-all duration-200"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -339,65 +297,30 @@ export function CustomerTable({
             </table>
           </div>
         </div>
-
-        {/* Pagination */}
-        {filteredCustomers.length > 0 && (
-          <div className="flex flex-wrap justify-between items-center">
-            <div className="text-sm text-slate-600 mb-2 sm:mb-0">
-              Trang <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => paginate(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 rounded-lg flex items-center justify-center ${
-                  currentPage === 1
-                    ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                    : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                }`}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageToShow;
-                if (totalPages <= 5) {
-                  pageToShow = i + 1;
-                } else if (currentPage <= 3) {
-                  pageToShow = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageToShow = totalPages - 4 + i;
-                } else {
-                  pageToShow = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageToShow}
-                    onClick={() => paginate(pageToShow)}
-                    className={`w-10 h-10 rounded-lg text-center ${
-                      currentPage === pageToShow
-                        ? "bg-teal-500 text-white font-medium"
-                        : "text-slate-600 hover:bg-teal-50 bg-white border border-slate-200"
-                    }`}
-                  >
-                    {pageToShow}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className={`p-2 rounded-lg flex items-center justify-center ${
-                  currentPage === totalPages
-                    ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                    : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                }`}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white/95 backdrop-blur-sm border border-indigo-100/60 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-800 font-bold">Xác nhận xóa khách hàng</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              Bạn có chắc chắn muốn xóa khách hàng này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-0">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white border-0"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

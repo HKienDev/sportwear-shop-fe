@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Order } from "@/types/base";
 import OrderStatusBadge from "./orderStatusBadge";
-import { AlertCircle, Eye, Package, DollarSign, Calendar, User, MapPin } from "lucide-react";
+import { AlertCircle, Eye, Package, DollarSign, Calendar, User, MapPin, Truck } from "lucide-react";
 import Pagination from "./pagination";
 
 interface OrderListTableProps {
@@ -75,7 +75,7 @@ const OrderListTable = React.memo(
                   <p className="text-3xl font-bold text-slate-800">{shippingOrders.toLocaleString()}</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                  <Package size={24} className="text-white" />
+                  <Truck size={24} className="text-white" />
                 </div>
               </div>
             </div>

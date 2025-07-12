@@ -1,15 +1,23 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Coupon } from "@/types/coupon";
 import { formatDate } from "@/utils/dateUtils";
 import { toast } from "sonner";
 import { Power, Trash2, Eye, Percent, DollarSign } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-
+import { AlertCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import CouponStatusBadge from "./couponStatusBadge";
 
 
 interface CouponTableProps {
@@ -34,22 +42,35 @@ const CouponTable: React.FC<CouponTableProps> = ({
   const router = useRouter();
   const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons);
   const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const couponsPerPage = 10;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     setCoupons(initialCoupons);
   }, [initialCoupons]);
 
-  const indexOfLastCoupon = currentPage * couponsPerPage;
-  const indexOfFirstCoupon = indexOfLastCoupon - couponsPerPage;
-  const currentCoupons = coupons.slice(indexOfFirstCoupon, indexOfLastCoupon);
-  const totalPages = Math.ceil(coupons.length / couponsPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
   const handleDelete = (id: string) => {
-    onDelete(id);
+    setCouponToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!couponToDelete) return;
+    try {
+      // Cập nhật UI ngay lập tức
+      setCoupons(prevCoupons => 
+        prevCoupons.filter(coupon => coupon._id !== couponToDelete)
+      );
+      
+      await onDelete(couponToDelete);
+      toast.success("Đã xóa mã giảm giá thành công");
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+    } finally {
+      setCouponToDelete(null);
+      setDeleteDialogOpen(false);
+    }
   };
 
   const getErrorMessage = (error: unknown): string => {
@@ -64,12 +85,16 @@ const CouponTable: React.FC<CouponTableProps> = ({
   const handleToggleStatus = async (coupon: Coupon) => {
     const id = coupon._id;
     setIsUpdating(prev => ({ ...prev, [id]: true }));
-    
     try {
-      if (isStatus(coupon.status, "Hoạt động")) {
+      // Hỗ trợ cả status tiếng Việt và tiếng Anh
+      const status = coupon.status as string;
+      const isActive = status === "active" || status === "Hoạt động";
+      const isInactive = status === "inactive" || status === "Tạm Dừng";
+      
+      if (isActive) {
         await onPause(id);
         toast.success("Tạm dừng mã giảm giá thành công");
-      } else if (isStatus(coupon.status, "Tạm Dừng")) {
+      } else if (isInactive) {
         await onActivate(id);
         toast.success("Kích hoạt mã giảm giá thành công");
       }
@@ -81,171 +106,104 @@ const CouponTable: React.FC<CouponTableProps> = ({
     }
   };
 
-  const isStatus = (status: string, targetStatus: string) =>
-    status.toLowerCase() === targetStatus.toLowerCase();
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Hoạt động":
-        return <Badge variant="success">Hoạt động</Badge>;
-      case "Tạm Dừng":
-        return <Badge variant="destructive">Tạm dừng</Badge>;
-      case "Hết hạn":
-        return <Badge variant="secondary">Hết hạn</Badge>;
-      case "Sắp diễn ra":
-        return <Badge variant="outline">Sắp diễn ra</Badge>;
-      default:
-        return <Badge variant="default">{status}</Badge>;
-    }
-  };
-
   const getDiscountDisplay = (coupon: Coupon) =>
     coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')} VNĐ`;
 
-
-
   return (
-    <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
-      <div className="max-w-7xl mx-auto">
-        {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Tổng Mã Giảm Giá</p>
-                <p className="text-2xl font-bold text-slate-800">{coupons.length}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
-                <span className="text-teal-500 text-xl font-bold">Σ</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Đang Hoạt Động</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {coupons.filter(coupon => isStatus(coupon.status, "Hoạt động")).length}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                <span className="text-indigo-500 text-xl font-bold">⧗</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Tạm Dừng</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {coupons.filter(coupon => isStatus(coupon.status, "Tạm Dừng")).length}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center">
-                <span className="text-amber-500 text-xl font-bold">⏸️</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Hết Hạn</p>
-                <p className="text-2xl font-bold text-slate-800">
-                  {coupons.filter(coupon => isStatus(coupon.status, "Hết hạn")).length}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center">
-                <span className="text-emerald-500 text-xl font-bold">✓</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Coupons Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
+    <div className="space-y-6">
+      {/* Table Container with Enhanced Glass Effect */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-3xl transform rotate-1"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-3xl transform -rotate-1"></div>
+        <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
+            <table className="min-w-full divide-y divide-slate-200/60">
               <thead>
-                <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                  <th className="px-4 py-3 w-10">
+                <tr className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 backdrop-blur-sm">
+                  <th className="px-6 py-4 w-12">
                     <input
                       type="checkbox"
                       checked={selectedCoupons.length === coupons.length && coupons.length > 0}
                       onChange={onSelectAll}
-                      className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Mã</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Loại</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Giá trị</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Bắt đầu</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Kết thúc</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-32">Thao tác</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Mã</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Loại</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Giá trị</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Bắt đầu</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Kết thúc</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
-                {currentCoupons.length > 0 ? (
-                  currentCoupons.map((coupon, index) => (
-                    <tr key={coupon._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                      <td className="px-4 py-3">
+                              <tbody className="divide-y divide-slate-200/60">
+                  {coupons.length > 0 ? (
+                    coupons.map((coupon, index) => (
+                    <tr key={coupon._id} className={`group hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-300 ${
+                      index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
+                    }`}>
+                      <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedCoupons.includes(coupon._id)}
                           onChange={() => onSelectCoupon(coupon._id)}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                         />
                       </td>
-                      <td className="px-4 py-3 font-medium whitespace-nowrap">{coupon.code}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4 font-semibold text-slate-800">
+                        {coupon.code}
+                      </td>
+                      <td className="px-6 py-4">
                         {coupon.type === 'percentage' ? (
-                          <div className="flex items-center gap-1 whitespace-nowrap">
-                            <Percent className="h-4 w-4 text-primary" />
-                            <span>Phần trăm</span>
+                          <div className="flex items-center gap-2">
+                            <Percent className="h-4 w-4 text-indigo-500" />
+                            <span className="text-slate-700">Phần trăm</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1 whitespace-nowrap">
-                            <DollarSign className="h-4 w-4 text-primary" />
-                            <span>Số tiền</span>
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4 text-emerald-500" />
+                            <span className="text-slate-700">Số tiền</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">{getDiscountDisplay(coupon)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(coupon.startDate)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(coupon.endDate)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {getStatusBadge(coupon.status)}
+                      <td className="px-6 py-4 font-semibold text-slate-800">
+                        {getDiscountDisplay(coupon)}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatDate(coupon.startDate)}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatDate(coupon.endDate)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <CouponStatusBadge status={coupon.status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
                             onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
-                            className="text-slate-600 hover:bg-slate-100"
-                            aria-label="Xem chi tiết"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all duration-200"
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {isStatus(coupon.status, "Hoạt động") || isStatus(coupon.status, "Tạm Dừng") ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 p-0"
-                              onClick={() => handleToggleStatus(coupon)}
-                              disabled={isUpdating[coupon._id]}
-                            >
-                              <Power className="h-4 w-4" />
-                            </Button>
-                          ) : null}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0 text-destructive"
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(coupon)}
+                            disabled={isUpdating[coupon._id]}
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${
+                              ((coupon.status as string) === "active" || (coupon.status as string) === "Hoạt động")
+                                ? "bg-amber-100 text-amber-600 hover:bg-amber-200" 
+                                : "bg-green-100 text-green-600 hover:bg-green-200"
+                            } transition-all duration-200 disabled:opacity-50`}
+                          >
+                            <Power size={16} />
+                          </button>
+                          <button
                             onClick={() => handleDelete(coupon._id)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-all duration-200"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -267,66 +225,35 @@ const CouponTable: React.FC<CouponTableProps> = ({
             </table>
           </div>
         </div>
-
-        {/* Pagination */}
-        {coupons.length > 0 && (
-          <div className="flex flex-wrap justify-between items-center">
-            <div className="text-sm text-slate-600 mb-2 sm:mb-0">
-              Trang <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => paginate(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 rounded-lg flex items-center justify-center ${
-                  currentPage === 1
-                    ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                    : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                }`}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageToShow;
-                if (totalPages <= 5) {
-                  pageToShow = i + 1;
-                } else if (currentPage <= 3) {
-                  pageToShow = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageToShow = totalPages - 4 + i;
-                } else {
-                  pageToShow = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageToShow}
-                    onClick={() => paginate(pageToShow)}
-                    className={`w-10 h-10 rounded-lg text-center ${
-                      currentPage === pageToShow
-                        ? "bg-teal-500 text-white font-medium"
-                        : "text-slate-600 hover:bg-teal-50 bg-white border border-slate-200"
-                    }`}
-                  >
-                    {pageToShow}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className={`p-2 rounded-lg flex items-center justify-center ${
-                  currentPage === totalPages
-                    ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                    : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                }`}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white/95 backdrop-blur-sm border border-indigo-100/60 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-800 font-bold">Xác nhận xóa mã giảm giá</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              Bạn có chắc chắn muốn xóa mã giảm giá này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-0">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white border-0"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-};export default CouponTable;
+};
+
+export default CouponTable;
 

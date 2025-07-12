@@ -10,7 +10,7 @@ interface PaginationProps {
   totalItems?: number;
 }
 
-export function Pagination({ 
+export default function Pagination({ 
   currentPage, 
   totalPages, 
   onPageChange, 
@@ -69,7 +69,7 @@ export function Pagination({
             <span className="font-medium text-slate-800">
               {totalItems.toLocaleString()}
             </span>
-            {" khách hàng"}
+            {" mã giảm giá"}
           </div>
 
           {/* Pagination Controls */}

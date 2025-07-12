@@ -174,8 +174,16 @@ export default function ProductListPage() {
       }
       const data = await response.json();
       if (data.success) {
+        // Xóa sản phẩm khỏi local state thay vì reload toàn bộ danh sách
+        setProducts(prevProducts => 
+          prevProducts.filter(p => p.sku !== sku)
+        );
+        // Cũng xóa khỏi selected products nếu có
+        setSelectedProducts(prev => prev.filter(id => {
+          const productToCheck = products.find(p => p._id === id);
+          return productToCheck && productToCheck.sku !== sku;
+        }));
         toast.success(`Đã xóa sản phẩm "${product.name}" thành công`, { id: toastId });
-        fetchProducts();
       } else {
         toast.error(data.message || "Có lỗi xảy ra khi xóa sản phẩm", { id: toastId });
       }
@@ -183,7 +191,7 @@ export default function ProductListPage() {
       console.error("Lỗi khi xóa sản phẩm:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa sản phẩm");
     }
-  }, [fetchProducts, products]);
+  }, [products]);
 
   const handleToggleStatus = useCallback(async (id: string, isActive: boolean) => {
     try {
@@ -237,8 +245,13 @@ export default function ProductListPage() {
       console.log('Success data:', data);
       
       if (data.success) {
+        // Cập nhật local state thay vì reload toàn bộ danh sách
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p._id === id ? { ...p, isActive } : p
+          )
+        );
         toast.success(`Đã ${isActive ? 'kích hoạt' : 'ngừng bán'} sản phẩm "${product.name}" thành công`, { id: toastId });
-        fetchProducts();
       } else {
         toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm", { id: toastId });
       }
@@ -247,7 +260,7 @@ export default function ProductListPage() {
       const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái sản phẩm";
       toast.error(errorMessage);
     }
-  }, [fetchProducts, products]);
+  }, [products]);
 
   const handleToggleFeatured = useCallback(async (sku: string, isFeatured: boolean) => {
     try {
@@ -275,8 +288,13 @@ export default function ProductListPage() {
       }
       const data = await response.json();
       if (data.success) {
+        // Cập nhật local state thay vì reload toàn bộ danh sách
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p.sku === sku ? { ...p, isFeatured } : p
+          )
+        );
         toast.success(`Đã ${isFeatured ? 'đặt làm nổi bật' : 'hủy nổi bật'} sản phẩm "${product.name}" thành công`, { id: toastId });
-        fetchProducts();
       } else {
         toast.error(data.message || "Có lỗi xảy ra khi cập nhật trạng thái nổi bật", { id: toastId });
       }
@@ -284,7 +302,7 @@ export default function ProductListPage() {
       console.error("Lỗi khi cập nhật trạng thái nổi bật:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật trạng thái nổi bật");
     }
-  }, [fetchProducts, products]);
+  }, [products]);
 
   const handleBulkDeleteProducts = useCallback(async () => {
     if (selectedProducts.length === 0) {
@@ -316,9 +334,12 @@ export default function ProductListPage() {
 
       const data = await response.json();
       if (data.success) {
-        toast.success(`Đã xóa ${data.data.deletedCount} sản phẩm thành công`, { id: toastId });
+        // Xóa các sản phẩm đã chọn khỏi local state thay vì reload toàn bộ danh sách
+        setProducts(prevProducts => 
+          prevProducts.filter(p => !selectedProducts.includes(p._id))
+        );
         setSelectedProducts([]);
-        fetchProducts();
+        toast.success(`Đã xóa ${data.data.deletedCount} sản phẩm thành công`, { id: toastId });
       } else {
         toast.error(data.message || "Có lỗi xảy ra khi xóa sản phẩm", { id: toastId });
       }
@@ -328,7 +349,7 @@ export default function ProductListPage() {
     } finally {
       setIsDeleting(false);
     }
-  }, [selectedProducts, fetchProducts]);
+  }, [selectedProducts]);
 
   const handleSetupFeatured = useCallback(async (sku: string, config: FeaturedProductConfig) => {
     try {
@@ -361,8 +382,9 @@ export default function ProductListPage() {
       
       const data = await response.json();
       if (data.success) {
+        // Cập nhật local state thay vì reload toàn bộ danh sách
+        // Note: Có thể cần cập nhật thêm thông tin featured config nếu cần
         toast.success(`Đã setup countdown cho sản phẩm "${product.name}" thành công`, { id: toastId });
-        fetchProducts();
       } else {
         toast.error(data.message || "Có lỗi xảy ra khi setup countdown", { id: toastId });
       }
@@ -370,7 +392,7 @@ export default function ProductListPage() {
       console.error("Lỗi khi setup countdown:", error);
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi setup countdown");
     }
-  }, [fetchProducts, products]);
+  }, [products]);
 
   // Check if should redirect after all hooks are defined
   const shouldRedirect = !loading && (!isAuthenticated || user?.role !== 'admin');
