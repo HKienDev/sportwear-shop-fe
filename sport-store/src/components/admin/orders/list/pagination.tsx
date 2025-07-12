@@ -1,12 +1,22 @@
 import React from "react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  itemsPerPage?: number;
+  totalItems?: number;
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export default function Pagination({ 
+  currentPage, 
+  totalPages, 
+  onPageChange, 
+  itemsPerPage = 10,
+  totalItems = 0 
+}: PaginationProps) {
   const delta = 2;
 
   const getPageNumbers = () => {
@@ -31,63 +41,128 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   };
 
   const pageNumbers = getPageNumbers();
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  // Temporarily show pagination for testing
+  // if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-100 sm:px-8">
-      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-gray-600">
-            Hiển thị <span className="font-semibold text-gray-900">{Math.min((currentPage - 1) * 10 + 1, totalPages * 10)}</span> đến{' '}
-            <span className="font-semibold text-gray-900">{Math.min(currentPage * 10, totalPages * 10)}</span> trên{' '}
-            <span className="font-semibold text-gray-900">{totalPages * 10}</span> kết quả
-          </p>
+    <div className="relative">
+      {/* Glass Morphism Background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-2xl transform rotate-1"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-2xl transform -rotate-1"></div>
+      
+      {/* Main Container */}
+      <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 shadow-lg p-6">
+        <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Info Section */}
+          <div className="text-sm text-slate-600 hidden sm:block">
+            <span className="font-medium text-slate-800">
+              {startItem.toLocaleString()}
+            </span>
+            {" - "}
+            <span className="font-medium text-slate-800">
+              {endItem.toLocaleString()}
+            </span>
+            {" trong "}
+            <span className="font-medium text-slate-800">
+              {totalItems.toLocaleString()}
+            </span>
+            {" kết quả"}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center gap-2">
+            {/* Previous Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative group transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={16} className="mr-1 group-hover:-translate-x-0.5 transition-transform duration-200" />
+              Trước
+            </Button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {pageNumbers.map((page, index) =>
+                page === "..." ? (
+                  <div
+                    key={`ellipsis-${index}`}
+                    className="flex items-center justify-center w-10 h-10 text-slate-400"
+                  >
+                    <MoreHorizontal size={16} />
+                  </div>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onPageChange(Number(page))}
+                    className={`w-10 h-10 p-0 transition-all duration-300 hover:scale-105 ${
+                      currentPage === page 
+                        ? "bg-gradient-to-r from-indigo-600 to-emerald-600 text-white shadow-lg shadow-indigo-500/25" 
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+            </div>
+
+            {/* Next Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative group transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sau
+              <ChevronRight size={16} className="ml-1 group-hover:translate-x-0.5 transition-transform duration-200" />
+            </Button>
+          </div>
+
+          {/* Page Info */}
+          <div className="text-sm text-slate-500 font-medium hidden sm:block">
+            Trang {currentPage} / {totalPages}
+          </div>
         </div>
-        <nav className="inline-flex items-center -space-x-px rounded-lg shadow-sm" aria-label="Pagination">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            <span className="sr-only">Trang trước</span>
-            <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
 
-          {pageNumbers.map((page, index) =>
-            page === "..." ? (
-              <span
-                key={`ellipsis-${index}`}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-white border border-gray-200"
-              >
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                onClick={() => onPageChange(Number(page))}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border transition-all duration-200 ${
-                  currentPage === page
-                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                }`}
-              >
-                {page}
-              </button>
-            )
-          )}
-
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-r-lg hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            <span className="sr-only">Trang sau</span>
-            <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </nav>
+        {/* Mobile Pagination */}
+        <div className="block sm:hidden mt-2 pt-2 border-t border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex-1 mr-2"
+            >
+              <ChevronLeft size={16} className="mr-1" />
+              Trước
+            </Button>
+            
+            <div className="text-sm text-slate-600 font-medium">
+              {currentPage} / {totalPages}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex-1 ml-2"
+            >
+              Sau
+              <ChevronRight size={16} className="ml-1" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

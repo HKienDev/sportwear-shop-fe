@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, ChevronLeft, ChevronRight, Star, Clock, Eye, Copy } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, Star, Clock, Eye, Copy, Package, TrendingUp, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ import {
 import ProductStatusBadge from "./productStatusBadge";
 import FeaturedProductModal, { FeaturedProductConfig } from "../featuredProductModal";
 import { toast } from "sonner";
+import Pagination from "./pagination";
 
 interface Category {
   _id: string;
@@ -146,177 +147,189 @@ const ProductListTable = React.memo(
       }
     };
 
+    // Calculate statistics
+    const totalProducts = products.length;
+    const activeProducts = products.filter(product => product.isActive && product.stock > 0).length;
+    const lowStockProducts = products.filter(product => product.stock > 0 && product.stock <= 10).length;
+    const featuredProducts = products.filter(product => product.isFeatured).length;
+
     return (
-      <div className="px-4 py-6 bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-7xl mx-auto">
-          {/* Status Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
-              <div className="flex justify-between">
+      <div className="space-y-6">
+        {/* Enhanced Statistics Cards with Glass Morphism */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-2xl transform rotate-1 transition-transform duration-300 group-hover:rotate-2"></div>
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500">Tổng Sản Phẩm</p>
-                  <p className="text-2xl font-bold text-slate-800">{products.length}</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Tổng Sản Phẩm</p>
+                  <p className="text-3xl font-bold text-slate-800">{totalProducts.toLocaleString()}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
-                  <span className="text-teal-500 text-xl font-bold">Σ</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Đang Bán</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {products.filter(product => product.isActive && product.stock > 0).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <span className="text-indigo-500 text-xl font-bold">✓</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Sắp Hết</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {products.filter(product => product.stock > 0 && product.stock <= 10).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center">
-                  <span className="text-amber-500 text-xl font-bold">⚠</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Hết Hàng</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {products.filter(product => product.stock === 0).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center">
-                  <span className="text-red-500 text-xl font-bold">×</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg">
+                  <Package size={24} className="text-white" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Products Summary & Selection */}
-          <div className="flex flex-wrap justify-between items-center mb-2">
-            <div className="flex items-center gap-2 mb-2 sm:mb-0">
-              <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-lg text-sm font-medium">
-                {currentProducts.length} sản phẩm
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-2xl transform -rotate-1 transition-transform duration-300 group-hover:-rotate-2"></div>
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-emerald-100/60 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Đang Bán</p>
+                  <p className="text-3xl font-bold text-slate-800">{activeProducts.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg">
+                  <TrendingUp size={24} className="text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl transform rotate-1 transition-transform duration-300 group-hover:rotate-2"></div>
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-100/60 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Sắp Hết</p>
+                  <p className="text-3xl font-bold text-slate-800">{lowStockProducts.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                  <AlertTriangle size={24} className="text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl transform -rotate-1 transition-transform duration-300 group-hover:-rotate-2"></div>
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-100/60 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Nổi Bật</p>
+                  <p className="text-3xl font-bold text-slate-800">{featuredProducts.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <Star size={24} className="text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Products Summary */}
+        <div className="flex flex-wrap justify-between items-center">
+          <div className="flex items-center gap-3 mb-4 sm:mb-0">
+            <span className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-emerald-50 text-indigo-700 rounded-xl text-sm font-semibold border border-indigo-200/60">
+              {currentProducts.length} sản phẩm
+            </span>
+            {selectedProducts.length > 0 && (
+              <span className="px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 rounded-xl text-sm font-semibold border border-emerald-200/60 animate-pulse">
+                Đã chọn {selectedProducts.length} sản phẩm
               </span>
-              {selectedProducts.length > 0 && (
-                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-medium animate-pulse">
-                  Đã chọn {selectedProducts.length} sản phẩm
-                </span>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Products Table with Card Design */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-4">
-            <div className="w-full">
-              <table className="w-full divide-y divide-slate-200">
+        {/* Enhanced Table Container with Glass Morphism */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-2xl transform rotate-1"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-2xl transform -rotate-1"></div>
+          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 shadow-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200/60">
                 <thead>
-                  <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                    <th className="px-2 py-3 w-[5%]">
+                  <tr className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 backdrop-blur-sm">
+                    <th className="px-6 py-4 w-12">
                       <input
                         type="checkbox"
-                        checked={selectedProducts.length === products.length && products.length > 0}
+                        checked={selectedProducts.length === currentProducts.length && currentProducts.length > 0}
                         onChange={onToggleSelectAll}
-                        className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                       />
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">SKU</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[30%]">Sản Phẩm</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Giá</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Tồn Kho</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[15%]">Danh Mục</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Trạng Thái</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider w-[10%]">Thao Tác</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-64">Sản Phẩm</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-36">Giá</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-32">Tồn Kho</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-48">Danh Mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-44">Trạng Thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">Thao Tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200/60">
                   {currentProducts.length > 0 ? (
                     currentProducts.map((product, index) => (
-                      <tr key={product._id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-teal-50 transition-colors duration-150`}>
-                        <td className="px-2 py-3">
+                      <tr key={product._id} className={`group hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-300 ${
+                        index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
+                      }`}>
+                        <td className="px-6 py-4">
                           <input
                             type="checkbox"
                             checked={selectedProducts.includes(product._id)}
                             onChange={() => onToggleSelectProduct(product._id)}
-                            className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                           />
                         </td>
-                        <td className="px-2 py-3">
-                          <Link
-                            href={`/admin/products/details/${product.sku}`}
-                            className="text-teal-600 hover:text-teal-800 hover:underline font-medium font-mono text-sm"
-                          >
-                            {product.sku || "N/A"}
-                          </Link>
-                        </td>
-                        <td className="px-2 py-3">
-                          <div className="flex items-center">
-                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
-                              <Image
-                                src={product.mainImage || "/default-image.png"}
-                                alt={product.name || "Product Image"}
-                                fill
-                                className="object-cover"
-                                sizes="40px"
-                              />
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border border-slate-200/60">
+                                <Image
+                                  src={product.mainImage || '/default-image.png'}
+                                  alt={product.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <Link
+                                href={`/admin/products/details/${product.sku}`}
+                                className="group/link inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition-all duration-200"
+                              >
+                                <span className="text-sm font-medium text-slate-800 truncate">
+                                  {product.name}
+                                </span>
+                                <Eye size={14} className="opacity-0 group-hover/link:opacity-100 transition-opacity duration-200" />
+                              </Link>
+                              <p className="text-xs text-slate-500 font-mono">SKU: {product.sku.replace('VJUSPORTPRODUCT-', '')}</p>
                               {product.isFeatured && (
-                                <div className="absolute top-0 right-0 bg-yellow-500 text-white p-1 rounded-bl-lg">
-                                  <Star size={12} className="fill-current" />
+                                <div className="flex items-center mt-1">
+                                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                  <span className="text-xs text-yellow-600 ml-1">Nổi bật</span>
                                 </div>
                               )}
                             </div>
-                            <div className="ml-2 min-w-0">
-                              <div className="font-medium text-slate-800 truncate text-sm flex items-center gap-1">
-                                {product.name || "Sản phẩm chưa thêm"}
-                                {product.isFeatured && (
-                                  <Star size={14} className="text-yellow-500 fill-current" />
-                                )}
-                              </div>
-                              <div className="text-slate-500 text-xs">
-                                {new Date(product.createdAt).toLocaleDateString() || "Chưa có ngày tạo"}
-                              </div>
-                            </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="flex flex-col">
-                            <div className="text-sm font-medium text-slate-800">
-                              {product.salePrice === 0 
-                                ? `${product.originalPrice?.toLocaleString() || 0}₫` 
-                                : `${product.salePrice?.toLocaleString() || 0}₫`}
-                            </div>
-                            {product.salePrice > 0 && product.salePrice < product.originalPrice && (
-                              <div className="text-xs text-slate-500 line-through">
-                                {product.originalPrice?.toLocaleString() || 0}₫
-                              </div>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <p className="font-semibold text-slate-800">
+                              {product.salePrice.toLocaleString()}₫
+                            </p>
+                            {product.originalPrice > product.salePrice && (
+                              <p className="text-xs text-slate-500 line-through">
+                                {product.originalPrice.toLocaleString()}₫
+                              </p>
                             )}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="text-sm font-medium text-slate-800">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-semibold text-slate-800">
                             {product.stock || 0}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="text-sm text-slate-600 truncate">
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-slate-600">
                             {getCategoryName(product.categoryId)}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-6 py-4">
                           <ProductStatusBadge isActive={product.isActive} stock={product.stock} />
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-6 py-4">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -385,7 +398,7 @@ const ProductListTable = React.memo(
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center">
                           <div className="mb-4 p-4 rounded-full bg-slate-100">
                             <AlertCircle size={32} className="text-slate-400" />
@@ -400,65 +413,18 @@ const ProductListTable = React.memo(
               </table>
             </div>
           </div>
-
-          {/* Pagination */}
-          {products.length > 0 && (
-            <div className="flex flex-wrap justify-between items-center">
-              <div className="text-sm text-slate-600 mb-2 sm:mb-0">
-                Trang <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => paginate(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-lg flex items-center justify-center ${
-                    currentPage === 1
-                      ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                      : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                  }`}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageToShow;
-                  if (totalPages <= 5) {
-                    pageToShow = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageToShow = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageToShow = totalPages - 4 + i;
-                  } else {
-                    pageToShow = currentPage - 2 + i;
-                  }
-                  return (
-                    <button
-                      key={pageToShow}
-                      onClick={() => paginate(pageToShow)}
-                      className={`w-10 h-10 rounded-lg text-center ${
-                        currentPage === pageToShow
-                          ? "bg-teal-500 text-white font-medium"
-                          : "text-slate-600 hover:bg-teal-50 bg-white border border-slate-200"
-                      }`}
-                    >
-                      {pageToShow}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 rounded-lg flex items-center justify-center ${
-                    currentPage === totalPages
-                      ? "text-slate-300 cursor-not-allowed bg-slate-50"
-                      : "text-slate-700 hover:bg-teal-50 bg-white border border-slate-200"
-                  }`}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Pagination Component */}
+        {products.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={paginate}
+            totalItems={products.length}
+            itemsPerPage={productsPerPage}
+          />
+        )}
 
         {/* Featured Product Setup Modal */}
         <FeaturedProductModal
@@ -481,7 +447,7 @@ const ProductListTable = React.memo(
             <AlertDialogHeader>
               <AlertDialogTitle>Xác nhận xóa sản phẩm</AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn có chắc chắn muốn xóa sản phẩm "{productToDelete?.name}"? 
+                Bạn có chắc chắn muốn xóa sản phẩm &quot;{productToDelete?.name}&quot;? 
                 Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn sản phẩm khỏi hệ thống.
               </AlertDialogDescription>
             </AlertDialogHeader>

@@ -319,7 +319,11 @@ export default function Sidebar() {
                     {item.name}
                   </span>
                   {item.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className={`text-xs mt-0.5 transition-opacity duration-300 ${
+                      isActive(item.path)
+                        ? 'text-white/80 opacity-100'
+                        : 'text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100'
+                    }`}>
                       {item.description}
                     </p>
                   )}

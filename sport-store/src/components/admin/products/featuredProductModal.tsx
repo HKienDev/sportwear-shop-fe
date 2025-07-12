@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface FeaturedProduct {
   _id: string;
@@ -112,9 +113,11 @@ const FeaturedProductModal: React.FC<FeaturedProductModalProps> = ({
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
-              <img
+              <Image
                 src={product.mainImage}
                 alt={product.name}
+                width={64}
+                height={64}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -149,7 +152,7 @@ const FeaturedProductModal: React.FC<FeaturedProductModalProps> = ({
               min={new Date().toISOString().slice(0, 16)}
             />
             <p className="text-xs text-gray-500">
-              Thời gian hiển thị countdown "Ưu đãi kết thúc sau"
+              Thời gian hiển thị countdown &quot;Ưu đãi kết thúc sau&quot;
             </p>
           </div>
 
