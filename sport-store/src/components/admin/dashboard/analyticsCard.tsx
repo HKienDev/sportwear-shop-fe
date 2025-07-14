@@ -44,8 +44,8 @@ export function AnalyticsCard({
     <div className={`
       relative group overflow-hidden
       bg-gradient-to-br ${gradient} dark:from-gray-900 dark:to-gray-800
-      rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl 
-      border border-gray-200/50 dark:border-gray-700/50
+      rounded-xl sm:rounded-2xl
+      border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500
       transition-all duration-300 ease-out
       hover:scale-[1.02] hover:-translate-y-1
       ${highlighted ? 'ring-2 ring-emerald-500/20 hover:ring-emerald-500/30' : ''}

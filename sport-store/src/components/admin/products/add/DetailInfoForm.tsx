@@ -38,23 +38,23 @@ export default function DetailInfoForm({
   console.log('CategoryId in DetailInfoForm:', formData.categoryId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 border-2 border-gray-300 rounded-xl p-6 bg-[#F8FAFC]">
       {/* Header */}
-      <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-        <Info className="w-5 h-5 text-orange-500" />
-        <h3 className="text-lg font-semibold text-gray-900">Thông tin chi tiết</h3>
+      <div className="flex items-center gap-3 pb-4 border-b-2 border-orange-200">
+        <Info className="w-7 h-7 text-orange-500" />
+        <h3 className="text-xl font-bold text-gray-900">Thông tin chi tiết</h3>
       </div>
 
       {/* Category Selection */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Tag className="w-4 h-4 text-orange-500" />
+          <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <Tag className="w-5 h-5 text-orange-500" />
             Thể loại
           </Label>
           {!formData.categoryId && (
-            <span className="text-xs text-red-500 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
+            <span className="text-xs text-red-500 flex items-center gap-1 font-medium">
+              <AlertCircle className="w-4 h-4" />
               Bắt buộc
             </span>
           )}
@@ -63,7 +63,7 @@ export default function DetailInfoForm({
           value={formData.categoryId || ""}
           onValueChange={(value) => onFieldChange('categoryId', value)}
         >
-          <SelectTrigger className="w-full transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500">
+          <SelectTrigger className="w-full rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3">
             <SelectValue>
               {categories.find(cat => cat.categoryId === formData.categoryId)?.name || "Chọn danh mục"}
             </SelectValue>
@@ -87,13 +87,13 @@ export default function DetailInfoForm({
       {/* Brand Input */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Package className="w-4 h-4 text-orange-500" />
+          <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <Package className="w-5 h-5 text-orange-500" />
             Thương hiệu
           </Label>
           {!formData.brand && (
-            <span className="text-xs text-red-500 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
+            <span className="text-xs text-red-500 flex items-center gap-1 font-medium">
+              <AlertCircle className="w-4 h-4" />
               Bắt buộc
             </span>
           )}
@@ -102,7 +102,7 @@ export default function DetailInfoForm({
           value={formData.brand}
           onChange={(e) => onFieldChange('brand', e.target.value)}
           placeholder="Nhập thương hiệu sản phẩm"
-          className="transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500"
+          className="rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3"
         />
       </div>
 
@@ -111,13 +111,13 @@ export default function DetailInfoForm({
         {/* Original Price */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-orange-500" />
+            <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-orange-500" />
               Giá gốc
             </Label>
             {!formData.originalPrice && (
-              <span className="text-xs text-red-500 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
+              <span className="text-xs text-red-500 flex items-center gap-1 font-medium">
+                <AlertCircle className="w-4 h-4" />
                 Bắt buộc
               </span>
             )}
@@ -127,14 +127,13 @@ export default function DetailInfoForm({
             value={formData.originalPrice}
             onChange={(e) => onFieldChange('originalPrice', parseFloat(e.target.value) || 0)}
             placeholder="Nhập giá gốc sản phẩm"
-            className="transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500"
+            className="rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3"
           />
         </div>
-
         {/* Sale Price */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-orange-500" />
+          <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-orange-500" />
             Giá khuyến mãi
           </Label>
           <Input 
@@ -142,7 +141,7 @@ export default function DetailInfoForm({
             value={formData.salePrice}
             onChange={(e) => onFieldChange('salePrice', parseFloat(e.target.value) || 0)}
             placeholder="Nhập giá khuyến mãi sản phẩm"
-            className="transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500"
+            className="rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3"
           />
         </div>
       </div>
@@ -150,13 +149,13 @@ export default function DetailInfoForm({
       {/* Stock Input */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Box className="w-4 h-4 text-orange-500" />
+          <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <Box className="w-5 h-5 text-orange-500" />
             Số lượng tồn kho
           </Label>
           {!formData.stock && (
-            <span className="text-xs text-red-500 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
+            <span className="text-xs text-red-500 flex items-center gap-1 font-medium">
+              <AlertCircle className="w-4 h-4" />
               Bắt buộc
             </span>
           )}
@@ -166,23 +165,23 @@ export default function DetailInfoForm({
           value={formData.stock}
           onChange={(e) => onFieldChange('stock', parseInt(e.target.value) || 0)}
           placeholder="Nhập số lượng tồn kho"
-          className="transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500"
+          className="rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3"
         />
       </div>
 
       {/* Tags Input */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-          <Tag className="w-4 h-4 text-orange-500" />
+        <Label className="text-base font-semibold text-gray-700 flex items-center gap-2">
+          <Tag className="w-5 h-5 text-orange-500" />
           Tags
         </Label>
         <Input 
           value={Array.isArray(formData.tags) ? formData.tags.join(', ') : ''}
           onChange={(e) => handleTagsChange(e.target.value)}
           placeholder="Nhập tags, phân cách bằng dấu phẩy"
-          className="transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500"
+          className="rounded-xl border-2 border-gray-200 transition-all duration-200 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-500 text-base px-4 py-3"
         />
-        <p className="text-xs text-gray-500">Ví dụ: thể thao, chạy bộ, gym</p>
+        <p className="text-xs text-gray-500 mt-1">Ví dụ: thể thao, chạy bộ, gym</p>
       </div>
     </div>
   );

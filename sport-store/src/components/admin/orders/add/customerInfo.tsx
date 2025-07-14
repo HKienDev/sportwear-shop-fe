@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useCustomer, Location } from "@/context/customerContext";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, MapPin, ChevronRight, Info } from "lucide-react";
-
-
-
-
+import { User, MapPin, Phone, Home, Info } from "lucide-react";
 
 export default function CustomerInfo() {
   const { customer, updateCustomer } = useCustomer();
@@ -268,7 +264,7 @@ export default function CustomerInfo() {
 
         // Fallback: Sử dụng dữ liệu tĩnh cho một số quận/huyện chính
         const staticWards: { [key: string]: Location[] } = {
-          "001": [ // Ba Đình - Hà Nội
+          "001": [ // Ba Đình
             { code: "00001", name: "Phúc Xá" },
             { code: "00004", name: "Trúc Bạch" },
             { code: "00006", name: "Vĩnh Phúc" },
@@ -284,7 +280,7 @@ export default function CustomerInfo() {
             { code: "00031", name: "Giảng Võ" },
             { code: "00034", name: "Thành Công" }
           ],
-          "760": [ // Quận 1 - Hồ Chí Minh
+          "760": [ // Quận 1
             { code: "26734", name: "Tân Định" },
             { code: "26737", name: "Đa Kao" },
             { code: "26740", name: "Bến Nghé" },
@@ -313,33 +309,7 @@ export default function CustomerInfo() {
     fetchWards();
   }, [customer.district]);
 
-  const handleProvinceChange = useCallback((code: string) => {
-    const province = provinces.find(p => p.code === code) || null;
-    updateCustomer("province", province);
-  }, [provinces, updateCustomer]);
-
-  const handleDistrictChange = useCallback((code: string) => {
-    const district = districts.find(d => d.code === code) || null;
-    updateCustomer("district", district);
-  }, [districts, updateCustomer]);
-
-  const handleWardChange = useCallback((code: string) => {
-    const ward = wards.find(w => w.code === code) || null;
-    updateCustomer("ward", ward);
-  }, [wards, updateCustomer]);
-
-  // Address summary display
-  const addressSummary = useMemo(() => {
-    const parts = [];
-    if (customer.street) parts.push(customer.street);
-    if (customer.ward?.name) parts.push(customer.ward.name);
-    if (customer.district?.name) parts.push(customer.district.name);
-    if (customer.province?.name) parts.push(customer.province.name);
-    
-    return parts.join(", ") || "Chưa có địa chỉ";
-  }, [customer.street, customer.ward?.name, customer.district?.name, customer.province?.name]);
-
-  // Custom dropdown component with better UX
+  // Custom Address Select Component
   const AddressSelect = ({ 
     value, 
     onValueChange, 
@@ -356,174 +326,160 @@ export default function CustomerInfo() {
     loading?: boolean;
   }) => (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className="w-full">
+      <SelectTrigger className="h-12 bg-gray-50 border-gray-200 rounded-xl hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         <SelectValue placeholder={loading ? "Đang tải..." : placeholder} />
       </SelectTrigger>
-      <SelectContent 
-        className="max-h-[300px] w-full custom-scrollbar address-dropdown"
-        position="popper"
-        sideOffset={4}
-      >
-        {options.length === 0 ? (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-            {loading ? "Đang tải dữ liệu..." : "Không có dữ liệu"}
-          </div>
-        ) : (
-          <>
-            {options.map((option) => (
-              <SelectItem 
-                key={option.code} 
-                value={option.code}
-                className="cursor-pointer hover:bg-accent py-2"
-              >
-                {option.name}
-              </SelectItem>
-            ))}
-            {options.length > 10 && (
-              <div className="px-2 py-1 text-xs text-muted-foreground text-center border-t">
-                Cuộn để xem thêm ({options.length} tùy chọn)
-              </div>
-            )}
-          </>
-        )}
+      <SelectContent className="max-h-60">
+        {options.map((option) => (
+          <SelectItem key={option.code} value={option.code} className="py-3">
+            <div className="flex items-center">
+              <MapPin size={16} className="text-gray-400 mr-2" />
+              {option.name}
+            </div>
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      {/* Header with stylish gradient */}
-      <div className="p-6 text-white">
-        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-          <Info className="w-5 h-5 text-orange-500" />
-          <h3 className="text-lg font-semibold text-gray-900">Thông tin khách hàng</h3>
+    <div className="p-6 lg:p-8">
+      {/* Personal Information Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mr-3">
+            <User size={20} className="text-white" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900">Thông tin cá nhân</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Full Name */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <User size={16} className="mr-2 text-gray-500" />
+              Họ và tên *
+            </label>
+            <Input
+              type="text"
+              placeholder="Nhập họ và tên khách hàng"
+              value={customer.fullName || ""}
+              onChange={(e) => updateCustomer("fullName", e.target.value)}
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Phone size={16} className="mr-2 text-gray-500" />
+              Số điện thoại *
+            </label>
+            <Input
+              type="tel"
+              placeholder="Nhập số điện thoại"
+              value={customer.phone || ""}
+              onChange={(e) => updateCustomer("phone", e.target.value)}
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Main form section */}
-      <div className="p-6">
-        <div className="space-y-6">
-          {/* Personal information card */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center mb-4">
-              <User size={18} className="text-orange-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Thông tin cá nhân</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    TÊN NGƯỜI NHẬN <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    value={customer.fullName} 
-                    onChange={(e) => updateCustomer("fullName", e.target.value)} 
-                    placeholder="Nhập tên người nhận"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    SĐT NGƯỜI NHẬN <span className="text-red-500">*</span>
-                  </label>
-                  <Input 
-                    value={customer.phone} 
-                    onChange={(e) => updateCustomer("phone", e.target.value)} 
-                    placeholder="Nhập số điện thoại"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
+      {/* Address Information Section */}
+      <div>
+        <div className="flex items-center mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mr-3">
+            <Home size={20} className="text-white" />
           </div>
-          
-          {/* Address information card */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center mb-4">
-              <MapPin size={18} className="text-orange-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Địa chỉ giao hàng</h3>
-            </div>
-            
-            {/* Address summary */}
-            <div className="mb-5 p-3 bg-orange-50 rounded-lg border border-orange-100 text-sm text-gray-700 flex items-center">
-              <div className="flex-shrink-0 mr-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <MapPin size={16} className="text-orange-500" />
-                </div>
-              </div>
-              <div className="flex-1">
-                {addressSummary}
-              </div>
-              <ChevronRight size={16} className="text-gray-400" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    TỈNH / THÀNH PHỐ <span className="text-red-500">*</span>
-                  </label>
-                  <AddressSelect
-                    value={customer.province ? customer.province.code : ""}
-                    onValueChange={handleProvinceChange}
-                    placeholder="Chọn Tỉnh/Thành phố"
-                    options={provinces}
-                    disabled={isLoadingProvinces}
-                    loading={isLoadingProvinces}
-                  />
-                </div>
-              </div>
+          <h3 className="text-xl font-semibold text-gray-900">Địa chỉ giao hàng</h3>
+        </div>
+        
+        <div className="space-y-6">
+          {/* Province */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <MapPin size={16} className="mr-2 text-gray-500" />
+              Tỉnh/Thành phố *
+            </label>
+            <AddressSelect
+              value={customer.province?.code || ""}
+              onValueChange={(value) => {
+                const province = provinces.find(p => p.code === value) || null;
+                updateCustomer("province", province);
+              }}
+              placeholder="Chọn tỉnh/thành phố"
+              options={provinces}
+              loading={isLoadingProvinces}
+            />
+          </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    QUẬN / HUYỆN <span className="text-red-500">*</span>
-                  </label>
-                  <AddressSelect
-                    value={customer.district ? customer.district.code : ""}
-                    onValueChange={handleDistrictChange}
-                    placeholder="Chọn Quận/Huyện"
-                    options={districts}
-                    disabled={!customer.province || isLoadingDistricts}
-                    loading={isLoadingDistricts}
-                  />
-                </div>
-              </div>
+          {/* District */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <MapPin size={16} className="mr-2 text-gray-500" />
+              Quận/Huyện *
+            </label>
+            <AddressSelect
+              value={customer.district?.code || ""}
+              onValueChange={(value) => {
+                const district = districts.find(d => d.code === value) || null;
+                updateCustomer("district", district);
+              }}
+              placeholder="Chọn quận/huyện"
+              options={districts}
+              disabled={!customer.province}
+              loading={isLoadingDistricts}
+            />
+          </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    PHƯỜNG / XÃ <span className="text-red-500">*</span>
-                  </label>
-                  <AddressSelect
-                    value={customer.ward ? customer.ward.code : ""}
-                    onValueChange={handleWardChange}
-                    placeholder="Chọn Phường/Xã"
-                    options={wards}
-                    disabled={!customer.district || isLoadingWards}
-                    loading={isLoadingWards}
-                  />
-                </div>
-              </div>
+          {/* Ward */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <MapPin size={16} className="mr-2 text-gray-500" />
+              Phường/Xã *
+            </label>
+            <AddressSelect
+              value={customer.ward?.code || ""}
+              onValueChange={(value) => {
+                const ward = wards.find(w => w.code === value) || null;
+                updateCustomer("ward", ward);
+              }}
+              placeholder="Chọn phường/xã"
+              options={wards}
+              disabled={!customer.district}
+              loading={isLoadingWards}
+            />
+          </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    SỐ NHÀ, TÊN ĐƯỜNG <span className="text-red-500">*</span>
-                  </label>
-                  <Input 
-                    value={customer.street} 
-                    onChange={(e) => updateCustomer("street", e.target.value)}
-                    placeholder="Nhập số nhà, tên đường"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
+          {/* Street Address */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Home size={16} className="mr-2 text-gray-500" />
+              Địa chỉ chi tiết *
+            </label>
+            <Input
+              type="text"
+              placeholder="Nhập số nhà, tên đường, phường/xã"
+              value={customer.street || ""}
+              onChange={(e) => updateCustomer("street", e.target.value)}
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Information Note */}
+      <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+        <div className="flex items-start">
+          <Info size={20} className="text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-700">
+            <p className="font-medium mb-1">Lưu ý quan trọng:</p>
+            <ul className="space-y-1 text-blue-600">
+              <li>• Các trường có dấu * là bắt buộc</li>
+              <li>• Thông tin sẽ được sử dụng để giao hàng</li>
+              <li>• Vui lòng kiểm tra kỹ thông tin trước khi tiếp tục</li>
+            </ul>
           </div>
         </div>
       </div>

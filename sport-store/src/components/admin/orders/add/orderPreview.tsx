@@ -7,21 +7,19 @@ import { usePaymentMethod, PaymentMethod } from "@/context/paymentMethodContext"
 import { useCustomer } from "@/context/customerContext";
 import { usePromo } from "@/context/promoContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { CartItem } from "@/types/cart";
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
-import { Check, Truck, CreditCard, Package, AlertCircle, User, Tag, Info } from "lucide-react";
+import { Check, Truck, CreditCard, Package, AlertCircle, User, ShoppingBag, Eye, MapPin, Tag, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 interface OrderPreviewProps {
   onConfirmOrder: () => void;
-  onBack: () => void;
 }
 
-export default function OrderPreview({ onConfirmOrder, onBack }: OrderPreviewProps) {
+export default function OrderPreview({ onConfirmOrder }: OrderPreviewProps) {
   const { items: cartItems } = useCart();
   const { paymentMethod } = usePaymentMethod();
   const { shippingMethod } = useShippingMethod();
@@ -139,55 +137,68 @@ export default function OrderPreview({ onConfirmOrder, onBack }: OrderPreviewPro
       case PaymentMethod.COD:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-blue-100 group-hover:border-blue-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Thanh toán khi nhận hàng</h4>
-                <p className="text-sm text-gray-500 mt-1">(COD)</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-blue-100 group-hover:border-blue-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <CreditCard size={20} className="text-white" />
               </div>
-              <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Thanh toán khi nhận hàng</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">(COD) - Thanh toán khi giao hàng</p>
+              </div>
+              <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       case PaymentMethod.BANKING:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-green-100 group-hover:border-green-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Chuyển khoản ngân hàng</h4>
-                <p className="text-sm text-gray-500 mt-1">Thanh toán qua tài khoản ngân hàng</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-green-100 group-hover:border-green-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <CreditCard size={20} className="text-white" />
               </div>
-              <div className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Chuyển khoản ngân hàng</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Thanh toán qua tài khoản ngân hàng</p>
+              </div>
+              <Badge className="bg-green-50 text-green-600 border-green-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       case PaymentMethod.MOMO:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-pink-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-pink-100 group-hover:border-pink-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Thanh toán qua Momo</h4>
-                <p className="text-sm text-gray-500 mt-1">Quét mã QR hoặc chuyển khoản</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-pink-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-pink-100 group-hover:border-pink-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <CreditCard size={20} className="text-white" />
               </div>
-              <div className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Thanh toán qua Momo</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Quét mã QR hoặc chuyển khoản</p>
+              </div>
+              <Badge className="bg-pink-50 text-pink-600 border-pink-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       default:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Chưa chọn phương thức thanh toán</h4>
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <CreditCard size={20} className="text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Chưa chọn phương thức thanh toán</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Vui lòng chọn phương thức thanh toán</p>
               </div>
             </div>
           </div>
@@ -201,55 +212,68 @@ export default function OrderPreview({ onConfirmOrder, onBack }: OrderPreviewPro
       case ShippingMethod.STANDARD:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Vận chuyển thường</h4>
-                <p className="text-sm text-gray-500 mt-1">3-5 ngày làm việc</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
+                <Truck size={20} className="text-white" />
               </div>
-              <div className="bg-gray-50 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Vận chuyển thường</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">3-5 ngày làm việc - 30.000₫</p>
+              </div>
+              <Badge className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       case ShippingMethod.EXPRESS:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-blue-100 group-hover:border-blue-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Vận chuyển nhanh</h4>
-                <p className="text-sm text-gray-500 mt-1">1-2 ngày làm việc</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-blue-100 group-hover:border-blue-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Truck size={20} className="text-white" />
               </div>
-              <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Vận chuyển nhanh</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">1-2 ngày làm việc - 45.000₫</p>
+              </div>
+              <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       case ShippingMethod.SAME_DAY:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-green-100 group-hover:border-green-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Vận chuyển trong ngày</h4>
-                <p className="text-sm text-gray-500 mt-1">Giao hàng trong ngày</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-green-100 group-hover:border-green-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <Truck size={20} className="text-white" />
               </div>
-              <div className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Vận chuyển trong ngày</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Giao hàng trong ngày - 60.000₫</p>
+              </div>
+              <Badge className="bg-green-50 text-green-600 border-green-200 text-xs">
                 Đã chọn
-              </div>
+              </Badge>
             </div>
           </div>
         );
       default:
         return (
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-            <div className="relative flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Chưa chọn phương thức vận chuyển</h4>
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-600/10 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300" />
+            <div className="relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 group-hover:border-gray-200 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <Truck size={20} className="text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Chưa chọn phương thức vận chuyển</h4>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Vui lòng chọn phương thức vận chuyển</p>
               </div>
             </div>
           </div>
@@ -258,220 +282,213 @@ export default function OrderPreview({ onConfirmOrder, onBack }: OrderPreviewPro
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="w-full overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <Check className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-white text-xl">Xác nhận đơn hàng</CardTitle>
-                <p className="text-white/80 text-sm mt-1">Kiểm tra và xác nhận thông tin đơn hàng</p>
-              </div>
+    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <Eye size={20} className="text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Xem trước đơn hàng</h3>
+            <p className="text-sm text-gray-500 mt-1">Kiểm tra thông tin trước khi xác nhận</p>
+          </div>
+        </div>
+        <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200 text-sm px-3 py-1">
+          <Package size={14} className="mr-1" />
+          {cartItems.length} sản phẩm
+        </Badge>
+      </div>
+
+      {/* Customer Information */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 shadow-lg rounded-3xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <User size={18} className="text-white" />
             </div>
+            <CardTitle className="text-lg sm:text-xl text-blue-900">Thông tin khách hàng</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="space-y-8 p-6">
-          {/* Header with stylish gradient */}
-          <div className="p-6 text-white">
-            <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-              <Info className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Xem trước đơn hàng</h3>
+        <CardContent className="space-y-4">
+          <div className="flex items-start space-x-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <User size={16} className="text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm sm:text-base font-semibold text-blue-900">
+                {customer.fullName || "Chưa nhập tên"}
+              </p>
+              <p className="text-xs sm:text-sm text-blue-700 mt-1">
+                {customer.phone || "Chưa nhập số điện thoại"}
+              </p>
             </div>
           </div>
-
-          {/* Thông tin khách hàng */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center mb-4">
-              <User className="h-5 w-5 text-orange-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Thông tin khách hàng</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Họ tên:</span>
-                <span className="font-medium">{customer.fullName || "Chưa có"}</span>
+          {customer.street && (
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MapPin size={16} className="text-blue-600" />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Số điện thoại:</span>
-                <span className="font-medium">{customer.phone || "Chưa có"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Địa chỉ:</span>
-                <span className="font-medium text-right">
-                  {customer.street ? `${customer.street}, ` : ""}
-                  {customer.ward?.name ? `${customer.ward.name}, ` : ""}
-                  {customer.district?.name ? `${customer.district.name}, ` : ""}
-                  {customer.province?.name || "Chưa có"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Thông tin sản phẩm */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center mb-4">
-              <Package className="h-5 w-5 text-orange-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Sản phẩm đã chọn</h3>
-            </div>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-              {cartItems?.length > 0 ? (
-                cartItems.map((item: CartItem) => (
-                  <div
-                    key={item._id}
-                    className="flex items-start gap-4 bg-white p-4 rounded-lg border border-gray-100 hover:border-orange-200 transition-colors"
-                  >
-                    <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                      <Image
-                        src={item.product.mainImage || "/images/placeholder.png"}
-                        alt={item.product.name}
-                        width={80}
-                        height={80}
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900">{item.product.name}</p>
-                      <div className="text-sm text-gray-600 mt-2 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span>Số lượng:</span>
-                          <span className="font-medium">{item.quantity}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Đơn giá:</span>
-                          <span className="font-medium">{item.product.salePrice.toLocaleString("vi-VN")}đ</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Thành tiền:</span>
-                          <span className="font-medium text-orange-500">{(item.product.salePrice * item.quantity).toLocaleString("vi-VN")}đ</span>
-                        </div>
-                        {(item.size || item.color) && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {item.size && <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-600">{item.size}</Badge>}
-                            {item.color && <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-600">{item.color}</Badge>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <AlertCircle className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                  <p>Chưa có sản phẩm nào trong đơn hàng</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Phương thức thanh toán & vận chuyển */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">Phương thức thanh toán</h3>
-              </div>
-              <div className="space-y-4">
-                {renderPaymentMethod()}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-lg">
-                  <Truck className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">Phương thức vận chuyển</h3>
-              </div>
-              <div className="space-y-4">
-                {renderShippingMethod()}
-              </div>
-            </div>
-          </div>
-
-          {/* Mã giảm giá */}
-          {promoDetails && (
-            <div className="bg-gray-50 rounded-xl p-5">
-              <div className="flex items-center mb-4">
-                <Tag className="h-5 w-5 text-orange-500" />
-                <h3 className="text-gray-700 font-medium ml-2">Mã giảm giá</h3>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Mã:</span>
-                  <span className="font-medium text-green-600">{promoDetails.code}</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-gray-600">Giảm giá:</span>
-                  <span className="font-medium text-green-600">
-                    {promoDetails.type === 'percentage' ? `${promoDetails.value}%` : `${promoDetails.value.toLocaleString("vi-VN")}đ`}
-                  </span>
-                </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm sm:text-base text-blue-900 leading-relaxed">
+                  {customer.street}, {customer.ward?.name}, {customer.district?.name}, {customer.province?.name}
+                </p>
               </div>
             </div>
           )}
-
-          {/* Tổng tiền */}
-          <div className="bg-gray-50 rounded-xl p-5">
-            <div className="flex items-center mb-4">
-              <CreditCard className="h-5 w-5 text-orange-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Tổng đơn hàng</h3>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Tạm tính:</span>
-                <span className="font-medium">{subtotal.toLocaleString("vi-VN")}đ</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Phí vận chuyển:</span>
-                <span className="font-medium">{shippingFee.toLocaleString("vi-VN")}đ</span>
-              </div>
-              {promoDetails && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Giảm giá:</span>
-                  <span className="font-medium text-green-600">-{discountAmount.toLocaleString("vi-VN")}đ</span>
-                </div>
-              )}
-              <Separator className="my-3" />
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-semibold">Tổng cộng:</span>
-                <span className="text-xl font-bold text-orange-500">{total.toLocaleString("vi-VN")}đ</span>
-              </div>
-            </div>
-          </div>
         </CardContent>
-        <CardFooter className="bg-gray-50 p-6 border-t border-gray-100">
-          <div className="flex items-center justify-between w-full">
-            <Button
-              variant="outline"
-              onClick={onBack}
-              className="border-gray-300 hover:bg-gray-100"
-            >
-              Quay lại
-            </Button>
-            <Button
-              onClick={handleConfirmOrder}
-              disabled={isSubmitting}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang xử lý...
-                </div>
-              ) : (
-                "Xác nhận đơn hàng"
-              )}
-            </Button>
-          </div>
-        </CardFooter>
       </Card>
+
+      {/* Payment & Shipping Methods */}
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h4 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            <CreditCard size={20} className="mr-3 text-gray-600" />
+            Phương thức thanh toán
+          </h4>
+          {renderPaymentMethod()}
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            <Truck size={20} className="mr-3 text-gray-600" />
+            Phương thức vận chuyển
+          </h4>
+          {renderShippingMethod()}
+        </div>
+      </div>
+
+      {/* Order Summary */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-100 shadow-lg rounded-3xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <ShoppingBag size={18} className="text-white" />
+            </div>
+            <CardTitle className="text-lg sm:text-xl text-green-900">Tóm tắt đơn hàng</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Products List */}
+          {cartItems.length > 0 ? (
+            <div className="space-y-4">
+              {cartItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center p-4 bg-white rounded-2xl border border-green-100 shadow-sm hover:shadow-md transition-all duration-300 gap-4"
+                >
+                  {/* Ảnh sản phẩm */}
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                    <Image
+                      src={item.product.mainImage || "/images/placeholder.png"}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  {/* Thông tin sản phẩm */}
+                  <div className="flex-1 min-w-0">
+                    {/* Tên + Giá tổng */}
+                    <div className="flex items-center justify-between gap-2">
+                      <h5 className="text-sm sm:text-base font-semibold text-gray-900 truncate max-w-[60%]">{item.product.name}</h5>
+                      <span className="text-base sm:text-lg font-bold text-green-700 whitespace-nowrap">{item.totalPrice.toLocaleString()}₫</span>
+                    </div>
+                    {/* Màu + Size */}
+                    <div className="flex items-center gap-4 mt-1 text-xs sm:text-sm text-gray-600">
+                      {item.color && <span>Màu: <span className="font-medium text-gray-900">{item.color}</span></span>}
+                      {item.size && <span>Size: <span className="font-medium text-gray-900">{item.size}</span></span>}
+                    </div>
+                    {/* Số lượng + Đơn giá/cái */}
+                    <div className="flex items-center gap-4 mt-1 text-xs sm:text-sm text-gray-600">
+                      <span>Số lượng: <span className="font-medium text-gray-900">{item.quantity}</span></span>
+                      <span className="ml-auto text-gray-500">{(item.product.salePrice || item.product.originalPrice).toLocaleString()}₫/cái</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 bg-white rounded-2xl border border-green-100 text-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingBag size={24} className="text-gray-400" />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">Chưa có sản phẩm</h4>
+              <p className="text-gray-500 text-sm">Vui lòng thêm sản phẩm vào đơn hàng</p>
+            </div>
+          )}
+
+          {/* Price Breakdown */}
+          {cartItems.length > 0 && (
+            <div className="space-y-3 pt-6 border-t border-green-200">
+              <div className="flex justify-between items-center text-sm sm:text-base">
+                <span className="text-gray-600">Tạm tính:</span>
+                <span className="font-semibold">{subtotal.toLocaleString()}₫</span>
+              </div>
+              
+              {discountAmount > 0 && (
+                <div className="flex justify-between items-center text-sm sm:text-base">
+                  <span className="text-gray-600 flex items-center">
+                    <Tag size={14} className="mr-2" />
+                    Giảm giá:
+                  </span>
+                  <span className="font-semibold text-green-600">-{discountAmount.toLocaleString()}₫</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center text-sm sm:text-base">
+                <span className="text-gray-600 flex items-center">
+                  <Truck size={14} className="mr-2" />
+                  Phí vận chuyển:
+                </span>
+                <span className="font-semibold">{shippingFee.toLocaleString()}₫</span>
+              </div>
+              
+              <Separator className="my-3" />
+              
+              <div className="flex justify-between items-center text-lg sm:text-xl font-bold text-green-900">
+                <span>Tổng cộng:</span>
+                <span>{total.toLocaleString()}₫</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="space-y-4">
+        <Button
+          onClick={handleConfirmOrder}
+          disabled={isSubmitting || cartItems.length === 0}
+          className="w-full h-14 sm:h-16 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-base sm:text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={isSubmitting ? "Đang tạo đơn hàng" : "Xác nhận đơn hàng"}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center space-x-3">
+              <Loader2 size={20} className="animate-spin" />
+              <span>Đang tạo đơn hàng...</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-3">
+              <Check size={20} />
+              <span>Xác nhận đơn hàng</span>
+            </div>
+          )}
+        </Button>
+
+        {cartItems.length === 0 && (
+          <div className="p-4 sm:p-6 bg-amber-50 rounded-2xl border border-amber-100">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertCircle size={20} className="text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-amber-900 text-sm sm:text-base mb-1">Chưa có sản phẩm</h4>
+                <p className="text-amber-700 text-sm">Vui lòng thêm sản phẩm vào đơn hàng để tiếp tục</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

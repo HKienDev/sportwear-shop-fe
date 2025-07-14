@@ -178,7 +178,7 @@ export function RevenueChart({
   ];
 
   return (
-    <div className="relative group overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-2xl transition-all duration-300">
+    <div className="relative group overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-500 to-transparent rounded-full -translate-y-32 translate-x-32"></div>
@@ -201,7 +201,7 @@ export function RevenueChart({
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-500/50 transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto"
             >
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
               <span className="truncate">{getCurrentTimeRangeText()}</span>
@@ -214,7 +214,7 @@ export function RevenueChart({
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-full sm:w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-lg sm:rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-full sm:w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl shadow-xl z-50 overflow-hidden">
                 {timeRangeOptions.map((option) => (
                   <button
                     key={option.value}
@@ -241,7 +241,7 @@ export function RevenueChart({
         
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-gray-200 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-500 transition-all duration-200">
             <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
               <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tăng trưởng</span>
@@ -251,7 +251,7 @@ export function RevenueChart({
             </p>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200">
             <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
               <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
               <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">{getAverageLabel()}</span>
@@ -265,7 +265,7 @@ export function RevenueChart({
             </p>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200/50 dark:border-gray-700/50 sm:col-span-2 lg:col-span-1">
+          <div className="bg-white/80 dark:bg-gray-800/80 rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
               <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">{getTotalLabel()}</span>

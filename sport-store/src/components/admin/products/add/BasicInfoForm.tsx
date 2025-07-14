@@ -32,19 +32,19 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 border-2 border-gray-300 rounded-xl p-6 bg-[#F8FAFC]">
       {/* Header */}
-      <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-        <Info className="w-5 h-5 text-orange-500" />
-        <h3 className="text-lg font-semibold text-gray-900">Thông tin cơ bản</h3>
+      <div className="flex items-center gap-3 pb-4 border-b-2 border-orange-200">
+        <Info className="w-7 h-7 text-orange-500" />
+        <h3 className="text-xl font-bold text-gray-900">Thông tin cơ bản</h3>
       </div>
 
       {/* Form Content */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Product Name */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-gray-700">Tên sản phẩm</Label>
+            <Label className="text-base font-semibold text-gray-700">Tên sản phẩm</Label>
             <span className="text-xs text-gray-500">
               {formData.name ? formData.name.length : 0}/100
             </span>
@@ -54,7 +54,7 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
               value={formData.name || ''}
               onChange={handleNameChange}
               placeholder="Nhập tên sản phẩm" 
-              className={`block w-full border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.name ? 'border-red-500' : ''}`}
+              className={`block w-full rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 text-base px-4 py-3 ${errors.name ? 'border-red-500' : ''}`}
               maxLength={100}
             />
             {!formData.name && (
@@ -64,9 +64,9 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
             )}
           </div>
           {errors.name && (
-            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+            <p className="text-xs text-red-500 mt-1 font-medium">{errors.name}</p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mt-1">
             Tên sản phẩm nên ngắn gọn, rõ ràng và dễ hiểu
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
         {/* Product Description */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-gray-700">Mô tả sản phẩm</Label>
+            <Label className="text-base font-semibold text-gray-700">Mô tả sản phẩm</Label>
             <span className="text-xs text-gray-500">
               {formData.description ? formData.description.length : 0}/1000
             </span>
@@ -84,7 +84,7 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
               value={formData.description || ''}
               onChange={handleDescriptionChange}
               placeholder="Nhập mô tả chi tiết về sản phẩm..." 
-              className={`block w-full h-40 border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 resize-none ${errors.description ? 'border-red-500' : ''}`}
+              className={`block w-full h-40 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 resize-none text-base px-4 py-3 ${errors.description ? 'border-red-500' : ''}`}
               maxLength={1000}
             />
             {!formData.description && (
@@ -94,9 +94,9 @@ export default function BasicInfoForm({ formData, errors = {}, onFieldChange }: 
             )}
           </div>
           {errors.description && (
-            <p className="text-xs text-red-500 mt-1">{errors.description}</p>
+            <p className="text-xs text-red-500 mt-1 font-medium">{errors.description}</p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mt-1">
             Mô tả chi tiết về sản phẩm, bao gồm đặc điểm, công dụng và lợi ích
           </p>
         </div>
