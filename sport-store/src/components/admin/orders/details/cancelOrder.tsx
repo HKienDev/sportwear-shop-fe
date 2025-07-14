@@ -101,7 +101,7 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
       // Chuẩn bị dữ liệu để gửi lên server
       const cancelData = {
         items: items.map(item => ({
-          productId: item.product._id,
+          productId: item.product?._id || 'unknown',
           quantity: item.quantity
         })),
         status: OrderStatus.CANCELLED,

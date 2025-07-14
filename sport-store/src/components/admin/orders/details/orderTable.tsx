@@ -87,43 +87,66 @@ export default function OrderTable({
         Thông Tin Đơn Hàng
       </h3>
       <div className="space-y-4 mb-8">
-        {items.map((item, index) => (
-          <div 
-            key={index} 
-            className="flex flex-col sm:flex-row border border-gray-200 rounded-xl overflow-hidden"
-            style={{
-              transition: `all 0.5s ease-out ${0.1 + index * 0.1}s`
-            }}
-          >
-            <div className="w-full sm:w-40 h-28 bg-gradient-to-br from-blue-400 to-green-300 flex items-center justify-center relative">
-              <Image
-                src={item.product.mainImage || '/placeholder.png'}
-                alt={item.product.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="p-4 flex-1 flex flex-col sm:flex-row sm:items-center">
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-900">{item.product.name}</h4>
-                <div className="mt-1 text-sm text-gray-500">{item.product.description}</div>
-                {(item.size || item.color) && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.size && `Size: ${item.size}`}
-                    {item.color && ` | Màu: ${item.color}`}
+        {items.map((item, index) => {
+          // Kiểm tra xem item.product có tồn tại không
+          if (!item.product) {
+            return (
+              <div 
+                key={index} 
+                className="flex flex-col sm:flex-row border border-gray-200 rounded-xl overflow-hidden bg-red-50"
+                style={{
+                  transition: `all 0.5s ease-out ${0.1 + index * 0.1}s`
+                }}
+              >
+                <div className="p-4 flex-1">
+                  <div className="text-red-600 font-medium">Sản phẩm không tồn tại</div>
+                  <div className="text-sm text-gray-500">Số lượng: {item.quantity}</div>
+                  <div className="text-sm font-medium text-gray-900 mt-1">
+                    Thành tiền: {(item.price * item.quantity).toLocaleString('vi-VN')} VND
                   </div>
-                )}
+                </div>
               </div>
-              <div className="mt-3 sm:mt-0 flex items-center justify-between sm:flex-col sm:items-end">
-                <div className="font-medium text-gray-900">{item.price.toLocaleString('vi-VN')} VND</div>
-                <div className="text-sm text-gray-500">Số lượng: {item.quantity}</div>
-                <div className="text-sm font-medium text-gray-900 mt-1">
-                  Thành tiền: {(item.price * item.quantity).toLocaleString('vi-VN')} VND
+            );
+          }
+
+          return (
+            <div 
+              key={index} 
+              className="flex flex-col sm:flex-row border border-gray-200 rounded-xl overflow-hidden"
+              style={{
+                transition: `all 0.5s ease-out ${0.1 + index * 0.1}s`
+              }}
+            >
+              <div className="w-full sm:w-40 h-28 bg-gradient-to-br from-blue-400 to-green-300 flex items-center justify-center relative">
+                <Image
+                  src={item.product.mainImage || '/placeholder.png'}
+                  alt={item.product.name || 'Sản phẩm'}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 flex-1 flex flex-col sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{item.product.name || 'Tên sản phẩm không xác định'}</h4>
+                  <div className="mt-1 text-sm text-gray-500">{item.product.description || 'Không có mô tả'}</div>
+                  {(item.size || item.color) && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {item.size && `Size: ${item.size}`}
+                      {item.color && ` | Màu: ${item.color}`}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 sm:mt-0 flex items-center justify-between sm:flex-col sm:items-end">
+                  <div className="font-medium text-gray-900">{item.price.toLocaleString('vi-VN')} VND</div>
+                  <div className="text-sm text-gray-500">Số lượng: {item.quantity}</div>
+                  <div className="text-sm font-medium text-gray-900 mt-1">
+                    Thành tiền: {(item.price * item.quantity).toLocaleString('vi-VN')} VND
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
         <div className="border border-gray-200 rounded-xl p-4 mt-6 bg-gray-50">
           <div className="flex justify-between py-2 border-b border-gray-100">

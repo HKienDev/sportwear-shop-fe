@@ -133,15 +133,15 @@ export default function InvoicePage() {
     return items.map((item, index) => {
       console.log(`🔍 Processing item ${index}:`, item);
       return {
-        id: parseInt(item.product._id.slice(-6), 16),
-        name: item.product.name,
-        price: item.product.salePrice,
+        id: parseInt((item.product?._id || '0').slice(-6), 16),
+        name: item.product?.name || 'Sản phẩm không xác định',
+        price: item.product?.salePrice || item.price || 0,
         quantity: item.quantity,
-        brand: item.product.brand,
-        image: item.product.mainImage,
+        brand: item.product?.brand || 'Không có thương hiệu',
+        image: item.product?.mainImage || '/placeholder.png',
         categoryName: 'Chưa phân loại',
-        color: item.product.colors?.[0] || 'Mặc định',
-        size: item.product.sizes?.[0] || 'N/A'
+        color: item.product?.colors?.[0] || 'Mặc định',
+        size: item.product?.sizes?.[0] || 'N/A'
       };
     });
   }, []);

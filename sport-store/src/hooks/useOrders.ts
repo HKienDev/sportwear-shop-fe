@@ -107,7 +107,7 @@ export function useOrders() {
                         })(),
                         fullName: typeof order.shippingAddress.fullName === 'string' ? order.shippingAddress.fullName : '',
                         deliveryDate: '',
-                        items: order.items.map((item) => {
+                        items: (order.items || []).map((item) => {
                             let image = '';
                             if ('image' in item && typeof item.image === 'string' && item.image) {
                                 image = item.image;

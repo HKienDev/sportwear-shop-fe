@@ -16,6 +16,10 @@ export interface Customer {
   email?: string;
   deliveredOrders?: number;
   customId?: string;
+  // Thống kê thực tế (bao gồm đơn hàng theo phone)
+  realOrderCount?: number;
+  realTotalSpent?: number;
+  realDeliveredOrders?: number;
 }
 
 export interface CustomerResponse {

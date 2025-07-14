@@ -48,7 +48,7 @@ export const API_CONFIG = {
       UPDATE: (id: string) => `/api/orders/${id}`,
       DELETE: (id: string) => `/api/orders/${id}`,
       UPDATE_STATUS: (id: string) => `/api/orders/${id}/status`,
-      GET_BY_PHONE: '/api/orders/by-phone',
+      GET_BY_PHONE: '/api/orders/phone',
       GET_ADMIN: '/api/orders/admin',
     },
     

@@ -61,8 +61,35 @@ export default function OrderProducts() {
         throw new Error('Vui lòng nhập mã sản phẩm');
       }
 
-      console.log("🔍 [fetchProduct] Tìm sản phẩm với SKU:", productId);
-      const response = await fetchWithAuth<{ product: AdminProduct }>(`/products/${productId}`);
+      // Tìm kiếm theo phần đuôi của mã sản phẩm
+      let searchTerm = productId;
+      if (productId.includes('-')) {
+        // Nếu có dấu gạch ngang, lấy phần sau dấu gạch cuối cùng
+        searchTerm = productId.split('-').pop() || productId;
+      }
+
+      console.log("🔍 [fetchProduct] Tìm sản phẩm với SKU:", productId, "Search term:", searchTerm);
+      
+      // Thử tìm kiếm theo SKU trước
+      let response = await fetchWithAuth<{ product: AdminProduct }>(`/products/sku/${productId}`);
+      
+      // Nếu không tìm thấy, thử tìm theo phần đuôi
+      if (!response.success || !response.data?.product) {
+        console.log("🔍 [fetchProduct] Không tìm thấy theo SKU, thử tìm theo phần đuôi:", searchTerm);
+        response = await fetchWithAuth<{ product: AdminProduct }>(`/products/sku/${searchTerm}`);
+      }
+      
+      // Nếu vẫn không tìm thấy, thử tìm theo tên sản phẩm
+      if (!response.success || !response.data?.product) {
+        console.log("🔍 [fetchProduct] Không tìm thấy theo SKU, thử tìm theo tên:", productId);
+        const searchResponse = await fetchWithAuth<{ products: AdminProduct[] }>(`/products/search/${productId}`);
+        
+        if (searchResponse.success && searchResponse.data?.products && searchResponse.data.products.length > 0) {
+          // Trả về sản phẩm đầu tiên tìm thấy
+          return searchResponse.data.products[0];
+        }
+      }
+      
       console.log("🔍 [fetchProduct] Kết quả:", response);
       
       if (!response.success || !response.data?.product) {
@@ -162,10 +189,20 @@ export default function OrderProducts() {
 
     addItem(cartItem);
     toast.success("Đã thêm sản phẩm vào giỏ hàng");
+    
+    // Reset form để có thể thêm sản phẩm khác
+    setQuantity(1);
+    setSize("");
+    setColor("");
+    setAvailableSizes([]);
+    setAvailableColors([]);
+    setSelectedProduct(null);
+    setError("");
+    // Không xóa searchTerm để có thể tìm kiếm sản phẩm khác
   }, [addItem, availableSizes.length, availableColors.length, quantity, size, color]);
 
   const handleQuantityChange = useCallback((productId: string, newQuantity: number) => {
-    const item = cartItems.find(item => item.product._id === productId);
+    const item = cartItems.find(item => item.product?._id === productId);
     if (!item) return;
 
     if (newQuantity < 1) {
@@ -314,7 +351,7 @@ export default function OrderProducts() {
                 <Input
                   value={searchTerm}
                   onChange={handleProductIdChange}
-                  placeholder="Nhập tên sản phẩm"
+                  placeholder="Nhập mã sản phẩm (VD: VREP từ VJUSPORTPRODUCT-VREP)"
                   className="w-full"
                   disabled={isLoadingProduct}
                 />
@@ -334,14 +371,18 @@ export default function OrderProducts() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <Select value={size} onValueChange={setSize}>
+                <Select value={size} onValueChange={setSize} disabled={availableSizes.length === 0}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn kích thước" />
+                    <SelectValue placeholder={
+                      availableSizes.length === 0 
+                        ? "Không có kích thước" 
+                        : "Chọn kích thước"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableSizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
+                    {availableSizes.map((sizeOption) => (
+                      <SelectItem key={sizeOption} value={sizeOption}>
+                        {sizeOption}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -349,14 +390,18 @@ export default function OrderProducts() {
               </div>
 
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1">
-                <Select value={color} onValueChange={setColor}>
+                <Select value={color} onValueChange={setColor} disabled={availableColors.length === 0}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn màu sắc" />
+                    <SelectValue placeholder={
+                      availableColors.length === 0 
+                        ? "Không có màu sắc" 
+                        : "Chọn màu sắc"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableColors.map((color) => (
-                      <SelectItem key={color} value={color}>
-                        {color}
+                    {availableColors.map((colorOption) => (
+                      <SelectItem key={colorOption} value={colorOption}>
+                        {colorOption}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -425,14 +470,14 @@ export default function OrderProducts() {
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
               {cartItems.map((item) => (
                 <div
-                  key={item.product._id}
+                  key={item.product?._id || `item-${Math.random()}`}
                   className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
                 >
                   <div className="flex items-start space-x-4">
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
                       <Image 
-                        src={item.product.mainImage} 
-                        alt={item.product.name}
+                        src={item.product?.mainImage || '/placeholder.png'} 
+                        alt={item.product?.name || 'Sản phẩm'}
                         width={64}
                         height={64}
                         className="w-full h-full object-cover"
@@ -442,13 +487,13 @@ export default function OrderProducts() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-medium text-gray-900">{item.product.name}</h4>
+                          <h4 className="font-medium text-gray-900">{item.product?.name || 'Sản phẩm không xác định'}</h4>
                           <p className="text-sm text-gray-500">
                             {item.size} - {item.color}
                           </p>
                         </div>
                         <button
-                          onClick={() => handleRemoveFromCart(item.product._id)}
+                          onClick={() => handleRemoveFromCart(item.product?._id || '')}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <X size={18} />
@@ -457,7 +502,7 @@ export default function OrderProducts() {
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(item.product?._id || '', item.quantity - 1)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                             disabled={item.quantity <= 1}
                           >
@@ -465,9 +510,9 @@ export default function OrderProducts() {
                           </button>
                           <span className="w-12 text-center font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item.product?._id || '', item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                            disabled={item.quantity >= item.product.stock}
+                            disabled={item.quantity >= (item.product?.stock || 0)}
                           >
                             +
                           </button>

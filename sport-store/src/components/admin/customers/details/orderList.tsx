@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Package, ShoppingBag, Search, Calendar, Filter, Eye } from "lucide-react";
+import { ChevronRight, Package, ShoppingBag, Search, Calendar, Filter, Eye, TrendingUp, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Order } from "@/types/base";
 
 interface OrderListProps {
@@ -18,11 +18,11 @@ const statusColors = {
 } as const;
 
 const statusIcons = {
-  pending: <div className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></div>,
-  processing: <div className="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></div>,
-  shipped: <div className="w-2 h-2 rounded-full bg-indigo-500 mr-1.5"></div>,
-  delivered: <div className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></div>,
-  cancelled: <div className="w-2 h-2 rounded-full bg-rose-500 mr-1.5"></div>
+  pending: <Clock className="w-3 h-3" />,
+  processing: <TrendingUp className="w-3 h-3" />,
+  shipped: <Package className="w-3 h-3" />,
+  delivered: <CheckCircle className="w-3 h-3" />,
+  cancelled: <XCircle className="w-3 h-3" />
 };
 
 const ITEMS_PER_PAGE = 5;
@@ -118,10 +118,10 @@ export default function OrderList({ orders }: OrderListProps) {
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
             currentPage === 1 
               ? "text-slate-300 cursor-not-allowed" 
-              : "text-slate-600 hover:bg-indigo-50"
+              : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
           }`}
         >
           <ChevronRight className="h-4 w-4 transform rotate-180" />
@@ -136,7 +136,7 @@ export default function OrderList({ orders }: OrderListProps) {
                 className={`flex items-center justify-center w-8 h-8 rounded-lg font-medium transition-all duration-200 ${
                   currentPage === page
                     ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-indigo-50"
+                    : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
                 }`}
               >
                 {page}
@@ -146,10 +146,10 @@ export default function OrderList({ orders }: OrderListProps) {
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
             currentPage === totalPages
               ? "text-slate-300 cursor-not-allowed"
-              : "text-slate-600 hover:bg-indigo-50"
+              : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
           }`}
         >
           <ChevronRight className="h-4 w-4" />
@@ -160,7 +160,7 @@ export default function OrderList({ orders }: OrderListProps) {
 
   // Custom badge component
   const Badge = ({ className, children }: { className?: string, children: React.ReactNode }) => (
-    <span className={`inline-flex items-center rounded-full ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium text-xs ${className}`}>
       {children}
     </span>
   );
@@ -170,15 +170,15 @@ export default function OrderList({ orders }: OrderListProps) {
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-6 border-b border-slate-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
-              <ShoppingBag className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
+              <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-800">Lịch sử đơn hàng</h2>
               <p className="text-sm text-slate-600">Quản lý và theo dõi đơn hàng của khách hàng</p>
             </div>
-            <div className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium border border-indigo-200">
+            <div className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium border border-indigo-200">
               {filteredOrders.length} đơn hàng
             </div>
           </div>
@@ -194,7 +194,7 @@ export default function OrderList({ orders }: OrderListProps) {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full transition-all duration-200 text-sm bg-white"
+                className="pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full transition-all duration-200 text-sm bg-white hover:border-slate-400"
               />
             </div>
             
@@ -206,7 +206,7 @@ export default function OrderList({ orders }: OrderListProps) {
                   setFilterStatus(e.target.value || null);
                   setCurrentPage(1);
                 }}
-                className="pl-10 pr-8 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none bg-white text-sm w-full transition-all duration-200"
+                className="pl-10 pr-8 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none bg-white text-sm w-full transition-all duration-200 hover:border-slate-400"
               >
                 <option value="">Tất cả trạng thái</option>
                 {statusOptions.map(status => (
@@ -223,10 +223,10 @@ export default function OrderList({ orders }: OrderListProps) {
       <div className="p-6">
         {filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-              <Package className="h-8 w-8 text-slate-400" />
+            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mb-6">
+              <Package className="h-10 w-10 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">Không tìm thấy đơn hàng nào</h3>
+            <h3 className="text-xl font-semibold text-slate-700 mb-3">Không tìm thấy đơn hàng nào</h3>
             <p className="text-slate-500 max-w-md leading-relaxed">
               {searchTerm || filterStatus 
                 ? "Không có đơn hàng nào khớp với điều kiện tìm kiếm. Hãy thử với từ khóa hoặc bộ lọc khác." 
@@ -235,9 +235,9 @@ export default function OrderList({ orders }: OrderListProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left">
+                <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 text-left">
                   <tr>
                     <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Mã đơn</th>
                     <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">
@@ -248,33 +248,52 @@ export default function OrderList({ orders }: OrderListProps) {
                     </th>
                     <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Tổng tiền</th>
                     <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Trạng thái</th>
+                    <th className="font-semibold text-slate-700 p-4 border-b border-slate-200">Thông tin</th>
                     <th className="font-semibold text-slate-700 p-4 border-b border-slate-200 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentOrders.map((order) => (
+                  {currentOrders.map((order, index) => (
                     <tr 
                       key={order._id} 
-                      className="cursor-pointer hover:bg-indigo-50/30 transition-colors duration-200"
+                      className="cursor-pointer hover:bg-indigo-50/30 transition-all duration-200 group"
                       onClick={() => handleOrderClick(order._id)}
                     >
-                      <td className="p-4 border-b border-slate-100 font-medium text-indigo-600">#{order.shortId}</td>
+                      <td className="p-4 border-b border-slate-100 font-medium text-indigo-600 group-hover:text-indigo-700">
+                        #{order.shortId}
+                      </td>
                       <td className="p-4 border-b border-slate-100">
                         <div className="flex flex-col">
-                          <span className="text-slate-800">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</span>
+                          <span className="text-slate-800 font-medium">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</span>
                           <span className="text-xs text-slate-500">
                             {new Date(order.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 border-b border-slate-100 font-medium text-slate-800">
-                        {order.totalPrice.toLocaleString("vi-VN")}đ
+                      <td className="p-4 border-b border-slate-100">
+                        <span className="font-semibold text-slate-800">
+                          {order.totalPrice.toLocaleString("vi-VN")}đ
+                        </span>
                       </td>
                       <td className="p-4 border-b border-slate-100">
-                        <Badge className={`${statusColors[order.status as keyof typeof statusColors]} px-3 py-1 font-medium flex items-center w-fit text-xs`}>
+                        <Badge className={`${statusColors[order.status as keyof typeof statusColors]} transition-all duration-200 hover:scale-105`}>
                           {statusIcons[order.status as keyof typeof statusIcons]}
                           {statusLabels[order.status as keyof typeof statusLabels]}
                         </Badge>
+                      </td>
+                      <td className="p-4 border-b border-slate-100">
+                        <div className="flex flex-col gap-1">
+                          {order.user && (
+                            <div className="text-xs text-slate-600">
+                              <span className="font-medium">User:</span> {order.user.fullname || order.user.email}
+                            </div>
+                          )}
+                          {order.shippingAddress && (
+                            <div className="text-xs text-slate-600">
+                              <span className="font-medium">Phone:</span> {order.shippingAddress.phone}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 border-b border-slate-100 text-right">
                         <button
@@ -282,9 +301,9 @@ export default function OrderList({ orders }: OrderListProps) {
                             e.stopPropagation();
                             handleOrderClick(order._id);
                           }}
-                          className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 ml-auto"
+                          className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 transition-all duration-200 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 ml-auto group-hover:bg-indigo-100"
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-4 w-4" />
                           Chi tiết
                         </button>
                       </td>
@@ -295,7 +314,7 @@ export default function OrderList({ orders }: OrderListProps) {
             </div>
             
             {totalPages > 1 && (
-              <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="text-sm text-slate-500">
                   Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} trên tổng số {filteredOrders.length} đơn hàng
                 </div>

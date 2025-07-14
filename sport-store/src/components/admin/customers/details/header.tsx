@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Trash2, Key, Save, User } from 'lucide-react';
+import { Trash2, Key, Save, User, Loader2 } from 'lucide-react';
 
 interface HeaderProps {
   onDelete: () => void;
   onResetPassword: () => void;
   onUpdate: () => void;
+  isUpdating?: boolean;
 }
 
-export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderProps) {
+export default function Header({ onDelete, onResetPassword, onUpdate, isUpdating = false }: HeaderProps) {
   const [activeControl, setActiveControl] = useState<string | null>(null);
 
   return (
@@ -52,7 +53,8 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               >
                 <button
                   onClick={onDelete}
-                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-rose-600 transition-all duration-300 flex items-center gap-2 group"
+                  disabled={isUpdating}
+                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-rose-600 transition-all duration-300 flex items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Xóa khách hàng"
                 >
                   <Trash2 size={18} className="relative z-10 transition-all duration-300" />
@@ -74,7 +76,8 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
               >
                 <button
                   onClick={onResetPassword}
-                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-amber-600 transition-all duration-300 flex items-center gap-2 group"
+                  disabled={isUpdating}
+                  className="relative z-10 h-full px-4 py-2.5 text-slate-600 rounded-lg hover:text-amber-600 transition-all duration-300 flex items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Thay đổi mật khẩu"
                 >
                   <Key size={18} className="relative z-10 transition-all duration-300" />
@@ -90,10 +93,17 @@ export default function Header({ onDelete, onResetPassword, onUpdate }: HeaderPr
             <div className="relative">
               <button
                 onClick={onUpdate}
-                className="relative h-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 shadow-lg group font-medium"
+                disabled={isUpdating}
+                className="relative h-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 shadow-lg group font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save size={18} className="transition-all duration-300 group-hover:rotate-12" />
-                <span className="whitespace-nowrap text-sm">Cập nhật</span>
+                {isUpdating ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Save size={18} className="transition-all duration-300 group-hover:rotate-12" />
+                )}
+                <span className="whitespace-nowrap text-sm">
+                  {isUpdating ? 'Đang cập nhật...' : 'Cập nhật'}
+                </span>
               </button>
             </div>
           </div>

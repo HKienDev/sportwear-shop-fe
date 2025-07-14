@@ -262,7 +262,7 @@ export default function OrderUserPage() {
                   
                   {/* Order Items Preview */}
                   <div className="text-xs text-gray-500">
-                    {order.items.length} sản phẩm
+                    {(order.items || []).length} sản phẩm
                   </div>
                 </div>
               ))}

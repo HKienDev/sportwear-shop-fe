@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Customer } from '@/types/customer';
-import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, AlertCircle, Power } from 'lucide-react';
+import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, AlertCircle, Power, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -31,7 +31,13 @@ interface CustomerTableProps {
 declare module '@/types/customer' {
   interface Customer {
     totalOrders?: number;
+    orderCount?: number;
     deliveredOrders?: number;
+    role?: string;
+    // Thống kê thực tế (bao gồm đơn hàng theo phone)
+    realOrderCount?: number;
+    realTotalSpent?: number;
+    realDeliveredOrders?: number;
   }
 }
 
@@ -56,7 +62,8 @@ export function CustomerTable({
 
   const filteredCustomers = useMemo(() => {
     if (!Array.isArray(localCustomers)) return [];
-    return localCustomers;
+    // Chỉ hiển thị khách hàng có role "user"
+    return localCustomers.filter(customer => customer.role === 'user');
   }, [localCustomers]);
 
   useEffect(() => {
@@ -84,6 +91,13 @@ export function CustomerTable({
     if (!customerToDelete) return;
     try {
       await onDelete(customerToDelete);
+      
+      // Cập nhật danh sách local sau khi xóa thành công
+      setLocalCustomers(prev => prev.filter(customer => {
+        const customerId = `VJUSPORTUSER-${customer._id.slice(0, 8)}`;
+        return customerId !== customerToDelete;
+      }));
+      
       toast.success("Đã xóa khách hàng thành công");
     } catch (error) {
       console.error("Error deleting customer:", error);
@@ -136,6 +150,16 @@ export function CustomerTable({
 
   return (
     <div className="space-y-6">
+      {/* Info about filtered customers */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <Info className="w-5 h-5 text-blue-600" />
+          <span className="text-sm text-blue-700">
+            Chỉ hiển thị khách hàng có vai trò &quot;user&quot;. Các tài khoản admin và staff không được hiển thị ở đây.
+          </span>
+        </div>
+      </div>
+      
       {/* Table Container with Enhanced Glass Effect */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-3xl transform rotate-1"></div>
@@ -237,7 +261,9 @@ export function CustomerTable({
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <ShoppingBag size={16} className="text-slate-400" />
-                          <span className="text-sm font-semibold text-slate-800">{customer.deliveredOrders || 0}</span>
+                          <span className="text-sm font-semibold text-slate-800">
+                            {customer.orderCount || customer.totalOrders || 0}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -272,7 +298,17 @@ export function CustomerTable({
                           </button>
                           <button
                             onClick={() => handleDelete(`VJUSPORTUSER-${customer._id.slice(0, 8)}`)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-all duration-200"
+                            disabled={(customer.realOrderCount || customer.totalOrders || customer.orderCount || 0) > 0}
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
+                              (customer.realOrderCount || customer.totalOrders || customer.orderCount || 0) > 0
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                : "bg-rose-100 text-rose-600 hover:bg-rose-200"
+                            }`}
+                            title={
+                              (customer.realOrderCount || customer.totalOrders || customer.orderCount || 0) > 0
+                                ? "Không thể xóa khách hàng có đơn hàng"
+                                : "Xóa khách hàng"
+                            }
                           >
                             <Trash2 size={16} />
                           </button>

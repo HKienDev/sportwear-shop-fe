@@ -7,6 +7,9 @@ interface CustomerStatusCardsProps {
 }
 
 export function CustomerStatusCards({ customers }: CustomerStatusCardsProps) {
+  // Filter customers to only include those with role "user"
+  const userCustomers = customers.filter(customer => customer.role === 'user');
+
   // Helper function to check if customer is active
   const isActive = (customer: Customer) => customer.isActive;
 
@@ -27,7 +30,7 @@ export function CustomerStatusCards({ customers }: CustomerStatusCardsProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600 mb-1">Tổng Khách Hàng</p>
-              <p className="text-3xl font-bold text-slate-800">{customers.length}</p>
+              <p className="text-3xl font-bold text-slate-800">{userCustomers.length}</p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg">
               <Users size={24} className="text-white" />
@@ -44,7 +47,7 @@ export function CustomerStatusCards({ customers }: CustomerStatusCardsProps) {
             <div>
               <p className="text-sm font-medium text-slate-600 mb-1">Hoạt Động</p>
               <p className="text-3xl font-bold text-slate-800">
-                {customers.filter(isActive).length}
+                {userCustomers.filter(isActive).length}
               </p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg">
@@ -62,7 +65,7 @@ export function CustomerStatusCards({ customers }: CustomerStatusCardsProps) {
             <div>
               <p className="text-sm font-medium text-slate-600 mb-1">Không Hoạt Động</p>
               <p className="text-3xl font-bold text-slate-800">
-                {customers.filter(customer => !isActive(customer)).length}
+                {userCustomers.filter(customer => !isActive(customer)).length}
               </p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
@@ -80,7 +83,7 @@ export function CustomerStatusCards({ customers }: CustomerStatusCardsProps) {
             <div>
               <p className="text-sm font-medium text-slate-600 mb-1">Khách Hàng Mới</p>
               <p className="text-3xl font-bold text-slate-800">
-                {customers.filter(isNewCustomer).length}
+                {userCustomers.filter(isNewCustomer).length}
               </p>
             </div>
             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center shadow-lg">

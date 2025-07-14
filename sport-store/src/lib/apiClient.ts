@@ -267,7 +267,11 @@ class ApiClient {
   }
 
   async getOrdersByPhone(phone: string): Promise<AxiosResponse<{ success: boolean; message: string; data: Order[] }>> {
-    return this.get(`/api/orders/by-phone?phone=${phone}`);
+    // Gọi trực tiếp đến backend, không qua Next.js API route
+    if (!this.client) {
+      throw new Error('Axios client not initialized');
+    }
+    return this.client.get(`/orders/phone/${phone}`);
   }
 
   async createOrder(orderData: CreateOrderData): Promise<AxiosResponse<{ success: boolean; message: string; data: Order }>> {
@@ -371,7 +375,7 @@ class ApiClient {
 
   // User methods
   async getUsers() {
-    return this.get('/api/users');
+    return this.get('/api/admin/users');
   }
 
   // Coupon methods

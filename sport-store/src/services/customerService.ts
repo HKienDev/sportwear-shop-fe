@@ -7,6 +7,10 @@ interface RawCustomer {
   deliveredOrders?: number;
   orders?: unknown[];
   orderCount?: number;
+  // Thống kê thực tế (bao gồm đơn hàng theo phone)
+  realOrderCount?: number;
+  realTotalSpent?: number;
+  realDeliveredOrders?: number;
   [key: string]: unknown;
 }
 
@@ -21,16 +25,114 @@ export const customerService = {
       totalPages: number;
     };
   }>> {
+    console.log("🚀 customerService.getCustomers() called");
     const response = await apiClient.getUsers();
-    return response.data as ApiResponse<{
-      users: Customer[];
-      pagination: {
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      };
-    }>;
+    console.log("📡 apiClient.getUsers() response:", response);
+    // API trả về array trực tiếp, không bọc trong data
+    const users = Array.isArray(response.data) ? response.data : [];
+    console.log("👥 Raw users from API:", users.length, "users");
+    
+    // Tính toán thống kê thực tế cho từng customer
+    const usersWithRealStats = await Promise.all(
+      users.map(async (user: Record<string, unknown>) => {
+        try {
+          let allOrders: Record<string, unknown>[] = [];
+          
+          // Chỉ gọi API lấy đơn hàng cho users có role "user"
+          if (user.role === 'user') {
+            // Tìm theo userId
+            try {
+              console.log('🔍 Searching orders by userId for:', user._id);
+              const ordersByUserIdResponse = await apiClient.get(`/orders?userId=${user._id}`);
+              console.log('📡 ordersByUserIdResponse:', ordersByUserIdResponse);
+              if (ordersByUserIdResponse.data && typeof ordersByUserIdResponse.data === 'object' && 'success' in ordersByUserIdResponse.data) {
+                const responseData = ordersByUserIdResponse.data as { success: boolean; data?: unknown };
+                console.log('📊 userId responseData:', responseData);
+                if (responseData.success && responseData.data) {
+                  const userIdOrders = Array.isArray(responseData.data) ? responseData.data : [];
+                  allOrders = [...allOrders, ...userIdOrders];
+                  console.log('📦 Orders found by userId for', user.phone, ':', userIdOrders.length);
+                } else {
+                  console.log('❌ ordersByUserIdResponse not successful or no data');
+                }
+              } else {
+                console.log('❌ ordersByUserIdResponse.data is not valid');
+              }
+            } catch (error) {
+              console.error(`❌ Error getting orders by userId for ${user.phone}:`, error);
+            }
+            
+            // Tìm theo phone
+            try {
+              console.log('🔍 Searching orders by phone for:', user.phone);
+              const ordersByPhoneResponse = await apiClient.getOrdersByPhone(user.phone as string);
+              console.log('📡 ordersByPhoneResponse:', ordersByPhoneResponse);
+              if (ordersByPhoneResponse.data && typeof ordersByPhoneResponse.data === 'object' && 'success' in ordersByPhoneResponse.data) {
+                const responseData = ordersByPhoneResponse.data as { success: boolean; data?: unknown };
+                console.log('📊 responseData:', responseData);
+                if (responseData.success && responseData.data) {
+                  const phoneOrders = Array.isArray(responseData.data) ? responseData.data : [];
+                  console.log('📦 Orders found by phone for', user.phone, ':', phoneOrders.length);
+                  
+                  // Loại bỏ trùng lặp dựa trên _id
+                  const existingIds = new Set(allOrders.map(order => (order._id as string)));
+                  const uniquePhoneOrders = phoneOrders.filter(order => !existingIds.has(order._id as string));
+                  allOrders = [...allOrders, ...uniquePhoneOrders];
+                } else {
+                  console.log('❌ ordersByPhoneResponse not successful or no data');
+                }
+              } else {
+                console.log('❌ ordersByPhoneResponse.data is not valid');
+              }
+            } catch (error) {
+              console.error(`❌ Error getting orders by phone for ${user.phone}:`, error);
+            }
+          } else {
+            console.log('⏭️ Skipping orders lookup for non-user role:', user.role, 'phone:', user.phone);
+          }
+          
+          // Tính toán thống kê từ tất cả đơn hàng
+          const totalOrders = allOrders.length;
+          const totalSpent = allOrders.reduce((total: number, order: Record<string, unknown>) => {
+            return total + ((order.totalPrice as number) || 0);
+          }, 0);
+          const deliveredOrders = allOrders.filter((order: Record<string, unknown>) => 
+            (order.status as string) === 'delivered'
+          ).length;
+          
+          console.log('Total orders for', user.phone, ':', totalOrders, 'Total spent:', totalSpent);
+          
+          return {
+            ...user,
+            orderCount: totalOrders,
+            totalSpent: totalSpent,
+            deliveredOrders: deliveredOrders
+          };
+        } catch (error) {
+          console.error(`Error getting orders for user ${user.phone}:`, error);
+          return {
+            ...user,
+            orderCount: 0,
+            totalSpent: 0,
+            deliveredOrders: 0
+          };
+        }
+      })
+    );
+
+    return {
+      success: true,
+      message: 'Lấy danh sách users thành công',
+      data: {
+        users: usersWithRealStats as Customer[],
+        pagination: {
+          total: usersWithRealStats.length,
+          page: 1,
+          limit: usersWithRealStats.length,
+          totalPages: 1
+        }
+      }
+    };
   },
 
   // Get customer by ID
@@ -120,40 +222,82 @@ export const customerService = {
       const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
       
       // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
-      const customersWithDeliveredOrders = (response.data as unknown[]).map((customer: unknown) => {
-        const rawCustomer = customer as RawCustomer;
-        
-        // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
-        if (rawCustomer.deliveredOrders !== undefined) {
-          return customer;
-        }
-        
-        // Nếu có danh sách orders, tính toán từ danh sách đơn hàng
-        if (rawCustomer.orders && Array.isArray(rawCustomer.orders)) {
-          const deliveredOrders = rawCustomer.orders.filter((order: unknown) => 
-            (order as { status?: string })?.status === "delivered"
-          ).length;
+      const customersWithDeliveredOrders = await Promise.all(
+        (response.data as unknown[]).map(async (customer: unknown) => {
+          const rawCustomer = customer as RawCustomer;
           
-          return {
-            ...(customer as Record<string, unknown>),
-            deliveredOrders
-          };
-        }
-        
-        // Nếu không có danh sách orders nhưng có orderCount, sử dụng orderCount
-        if (rawCustomer.orderCount !== undefined) {
-          return {
-            ...(customer as Record<string, unknown>),
-            deliveredOrders: rawCustomer.orderCount
-          };
-        }
-        
-        // Nếu không có thông tin nào, mặc định là 0
-        return {
-          ...(customer as Record<string, unknown>),
-          deliveredOrders: 0
-        };
-      });
+          // Nếu backend đã trả về realOrderCount và realTotalSpent, sử dụng giá trị đó
+          if (rawCustomer.realOrderCount !== undefined && rawCustomer.realTotalSpent !== undefined) {
+            return customer;
+          }
+          
+          // Nếu backend đã trả về deliveredOrders, sử dụng giá trị đó
+          if (rawCustomer.deliveredOrders !== undefined) {
+            return customer;
+          }
+          
+          // Tính toán thống kê thực tế từ đơn hàng
+          try {
+            let allOrders: Record<string, unknown>[] = [];
+            
+            // Tìm theo userId
+            try {
+              const ordersByUserIdResponse = await apiClient.get(`/orders?userId=${rawCustomer._id}`);
+              if (ordersByUserIdResponse.data && typeof ordersByUserIdResponse.data === 'object' && 'success' in ordersByUserIdResponse.data) {
+                const responseData = ordersByUserIdResponse.data as { success: boolean; data?: unknown };
+                if (responseData.success && responseData.data) {
+                  const userIdOrders = Array.isArray(responseData.data) ? responseData.data : [];
+                  allOrders = [...allOrders, ...userIdOrders];
+                }
+              }
+            } catch (error) {
+              console.error(`Error getting orders by userId for ${rawCustomer.phone}:`, error);
+            }
+            
+            // Tìm theo phone
+            try {
+              const ordersByPhoneResponse = await apiClient.getOrdersByPhone(rawCustomer.phone as string);
+              if (ordersByPhoneResponse.data && typeof ordersByPhoneResponse.data === 'object' && 'success' in ordersByPhoneResponse.data) {
+                const responseData = ordersByPhoneResponse.data as { success: boolean; data?: unknown };
+                if (responseData.success && responseData.data) {
+                  const phoneOrders = Array.isArray(responseData.data) ? responseData.data : [];
+                  
+                  // Loại bỏ trùng lặp dựa trên _id
+                  const existingIds = new Set(allOrders.map(order => (order._id as string)));
+                  const uniquePhoneOrders = phoneOrders.filter(order => !existingIds.has(order._id as string));
+                  allOrders = [...allOrders, ...uniquePhoneOrders];
+                }
+              }
+            } catch (error) {
+              console.error(`Error getting orders by phone for ${rawCustomer.phone}:`, error);
+            }
+            
+            // Tính toán thống kê từ tất cả đơn hàng
+            const totalOrders = allOrders.length;
+            const totalSpent = allOrders.reduce((total: number, order: Record<string, unknown>) => {
+              return total + ((order.totalPrice as number) || 0);
+            }, 0);
+            const deliveredOrders = allOrders.filter((order: Record<string, unknown>) => 
+              (order.status as string) === 'delivered'
+            ).length;
+
+            return {
+              ...(customer as Record<string, unknown>),
+              orderCount: totalOrders,
+              totalSpent: totalSpent,
+              deliveredOrders: deliveredOrders
+            };
+          } catch (error) {
+            console.error(`Error getting orders for user ${rawCustomer.phone}:`, error);
+            return {
+              ...(customer as Record<string, unknown>),
+              orderCount: 0,
+              totalSpent: 0,
+              deliveredOrders: 0
+            };
+          }
+        })
+      );
       
       return {
         success: true,

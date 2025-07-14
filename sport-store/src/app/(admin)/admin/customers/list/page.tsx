@@ -43,15 +43,19 @@ export default function CustomerList() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
+      console.log("🔄 Starting fetchCustomers...");
       const response = await customerService.getCustomers();
+      console.log("📦 customerService.getCustomers() response:", response);
       if (response.success) {
+        console.log("✅ Setting customers:", response.data.users.length, "customers");
         setCustomers(response.data.users);
       } else {
+        console.error("❌ customerService.getCustomers() failed:", response.message);
         setError(response.message || "Không thể tải danh sách khách hàng");
         toast.error(response.message || "Không thể tải danh sách khách hàng");
       }
     } catch (error) {
-      console.error("Error fetching customers:", error);
+      console.error("❌ Error fetching customers:", error);
       setError("Có lỗi xảy ra khi tải danh sách khách hàng");
       toast.error("Có lỗi xảy ra khi tải danh sách khách hàng");
     } finally {
@@ -60,6 +64,7 @@ export default function CustomerList() {
   };
 
   useEffect(() => {
+    console.log("🔄 useEffect called - fetching customers");
     fetchCustomers();
   }, []);
 
@@ -151,7 +156,9 @@ export default function CustomerList() {
     console.log("Changing to page:", page);
   };
 
+  console.log("🔍 Auth check - loading:", loading, "isAuthenticated:", isAuthenticated, "user?.role:", user?.role);
   if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
+    console.log("❌ Redirecting to login - not authenticated or not admin");
     router.push('/admin/login');
     return null;
   }

@@ -200,7 +200,7 @@ const OrderListTable = React.memo(
                           <div className="flex items-center gap-2">
                             <DollarSign size={14} className="text-emerald-600" />
                             <div className="text-sm font-semibold text-slate-800">
-                              {order.items.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString()}
+                              {(order.items || []).reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString()}
                               <span className="text-slate-500 text-xs ml-1">Vnđ</span>
                             </div>
                           </div>

@@ -187,9 +187,9 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
   return (
     <div className="space-y-6">
       <OrderHeader
-        shortId={order.shortId}
+        shortId={order.shortId || ""}
         customerId={order.user?.customId || "Không có dữ liệu"}
-        lastUpdated={new Date(order.updatedAt).toLocaleString("vi-VN")}
+        lastUpdated={order.updatedAt ? new Date(order.updatedAt).toLocaleString("vi-VN") : "Không có dữ liệu"}
         status={currentStatus}
         paymentStatus={currentStatus === OrderStatus.DELIVERED ? "Đã thanh toán" : (order.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán")}
       />
@@ -200,14 +200,14 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
             onChangeStatus={handleUpdateStatus}
             isLoading={isUpdating}
             orderId={orderId}
-            items={order.items.map(item => ({
+            items={(order.items || []).map(item => ({
               product: {
-                _id: typeof item.product === 'string' ? item.product : item.product._id,
-                name: typeof item.product === 'string' ? '' : item.product.name,
+                _id: typeof item.product === 'string' ? item.product : (item.product?._id || 'unknown'),
+                name: typeof item.product === 'string' ? '' : (item.product?.name || 'Sản phẩm không xác định'),
                 price: item.price,
                 images: {
-                  main: typeof item.product === 'string' ? '' : item.product.mainImage || '',
-                  sub: typeof item.product === 'string' ? [] : item.product.subImages || []
+                  main: typeof item.product === 'string' ? '' : (item.product?.mainImage || ''),
+                  sub: typeof item.product === 'string' ? [] : (item.product?.subImages || [])
                 },
                 isFeatured: false,
               },
@@ -220,18 +220,18 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ShippingMethod 
             method={order.shippingMethod?.name || "Standard"}
-            shortId={order.shortId}
+            shortId={order.shortId || ""}
             shippingMethod="standard"
             createdAt={order.createdAt ? new Date(order.createdAt).toISOString() : undefined}
           />
           <ShippingAddress 
-            name={order.shippingAddress.fullName || "Không có dữ liệu"}
-            address={`${order.shippingAddress.address.street || ""}, ${order.shippingAddress.address.ward.name}, ${order.shippingAddress.address.district.name}, ${order.shippingAddress.address.province.name}`}
-            phone={order.shippingAddress.phone || "Không có dữ liệu"}
+            name={order.shippingAddress?.fullName || "Không có dữ liệu"}
+            address={`${order.shippingAddress?.address?.street || ""}, ${order.shippingAddress?.address?.ward?.name || ""}, ${order.shippingAddress?.address?.district?.name || ""}, ${order.shippingAddress?.address?.province?.name || ""}`}
+            phone={order.shippingAddress?.phone || "Không có dữ liệu"}
           />
         </div>
         <OrderTable 
-          items={order.items.map(item => {
+          items={(order.items || []).map(item => {
             const productData: OrderItemProduct = typeof item.product === 'string' ? {
               _id: item.product,
               name: '',
@@ -259,31 +259,31 @@ export default function OrderDetails({ order, orderId, onStatusUpdate }: OrderDe
               isLowStock: false,
               isFeatured: false,
             } : {
-              _id: item.product._id,
-              name: item.product.name,
-              description: item.product.description || '',
+              _id: item.product?._id || 'unknown',
+              name: item.product?.name || 'Sản phẩm không xác định',
+              description: item.product?.description || '',
               originalPrice: item.price,
               salePrice: item.price,
-              mainImage: item.product.mainImage || '',
-              subImages: item.product.subImages || [],
-              categoryId: item.product.categoryId || '',
-              stock: item.product.stock || 0,
-              isActive: item.product.isActive || true,
-              createdAt: item.product.createdAt || new Date().toISOString(),
-              updatedAt: item.product.updatedAt || new Date().toISOString(),
-              brand: item.product.brand || '',
-              sku: item.product.sku || '',
-              colors: item.product.colors || [],
-              sizes: item.product.sizes || [],
-              tags: item.product.tags || [],
-              rating: item.product.rating || 0,
-              numReviews: item.product.numReviews || 0,
-              soldCount: item.product.soldCount || 0,
-              viewCount: item.product.viewCount || 0,
-              discountPercentage: item.product.discountPercentage || 0,
-              isOutOfStock: item.product.isOutOfStock || false,
-              isLowStock: item.product.isLowStock || false,
-              isFeatured: item.product.isFeatured || false,
+              mainImage: item.product?.mainImage || '',
+              subImages: item.product?.subImages || [],
+              categoryId: item.product?.categoryId || '',
+              stock: item.product?.stock || 0,
+              isActive: item.product?.isActive || true,
+              createdAt: item.product?.createdAt || new Date().toISOString(),
+              updatedAt: item.product?.updatedAt || new Date().toISOString(),
+              brand: item.product?.brand || '',
+              sku: item.product?.sku || '',
+              colors: item.product?.colors || [],
+              sizes: item.product?.sizes || [],
+              tags: item.product?.tags || [],
+              rating: item.product?.rating || 0,
+              numReviews: item.product?.numReviews || 0,
+              soldCount: item.product?.soldCount || 0,
+              viewCount: item.product?.viewCount || 0,
+              discountPercentage: item.product?.discountPercentage || 0,
+              isOutOfStock: item.product?.isOutOfStock || false,
+              isLowStock: item.product?.isLowStock || false,
+              isFeatured: item.product?.isFeatured || false,
             };
             return {
               product: productData,
