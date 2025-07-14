@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Package, Truck, Home, Loader2 } from "lucide-react";
+import { Clock, Package, Truck, Home, Loader2, CheckCircle } from "lucide-react";
 import { OrderStatus } from "@/types/base";
 import CancelOrder from "./cancelOrder";
 
@@ -70,31 +70,51 @@ export default function DeliveryTracking({
 
   const nextStatus = getNextStatus(currentStatus);
 
+  const getStatusStep = (status: OrderStatus) => {
+    switch (status) {
+      case OrderStatus.PENDING: return 1;
+      case OrderStatus.CONFIRMED: return 2;
+      case OrderStatus.SHIPPED: return 3;
+      case OrderStatus.DELIVERED: return 4;
+      case OrderStatus.CANCELLED: return 0;
+      default: return 1;
+    }
+  };
+
+  const currentStep = getStatusStep(currentStatus);
+
   return (
-    <div className="px-6 py-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-700 flex items-center gap-2">
-          <Package className="w-5 h-5" />
-          Theo Dõi Đơn Hàng
-        </h3>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg">
+            <Package className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-800 text-lg">Theo Dõi Đơn Hàng</h3>
+            <p className="text-sm text-slate-600">Cập nhật trạng thái vận chuyển</p>
+          </div>
+        </div>
         
-        <div className="flex items-center gap-4">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {nextStatus && currentStatus !== OrderStatus.CANCELLED && (
             <button
               onClick={() => handleStatusChange(nextStatus)}
               disabled={isLoading}
               className={`
                 inline-flex items-center justify-center gap-2
-                px-6 py-2.5 rounded-lg font-medium text-sm
-                transition-all duration-200 ease-in-out
+                px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base
+                transition-all duration-300 ease-in-out
                 ${isAnimating ? 'animate-pulse' : ''}
-                ${currentStatus === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700 text-white' : 
-                  currentStatus === OrderStatus.CONFIRMED ? 'bg-purple-600 hover:bg-purple-700 text-white' :
-                  currentStatus === OrderStatus.SHIPPED ? 'bg-green-600 hover:bg-green-700 text-white' : 
-                  'bg-gray-600 hover:bg-gray-700 text-white'}
-                shadow-sm hover:shadow-md
+                ${currentStatus === OrderStatus.PENDING ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl' : 
+                  currentStatus === OrderStatus.CONFIRMED ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl' :
+                  currentStatus === OrderStatus.SHIPPED ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl' : 
+                  'bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-lg hover:shadow-xl'}
                 disabled:opacity-50 disabled:cursor-not-allowed
-                transform hover:-translate-y-0.5
+                transform hover:-translate-y-0.5 active:translate-y-0
+                shadow-lg hover:shadow-xl
               `}
             >
               {isLoading ? (
@@ -138,56 +158,138 @@ export default function DeliveryTracking({
         </div>
       </div>
 
+      {/* Status Display */}
       {currentStatus === OrderStatus.CANCELLED ? (
-        <div className="p-4 bg-red-50 rounded-xl flex items-start gap-3">
-          <div className="bg-red-100 p-2 rounded-full">
-            <Clock className="w-5 h-5 text-red-400" />
+        <div className="bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl p-6 flex items-start gap-4">
+          <div className="bg-red-100 p-3 rounded-full">
+            <Clock className="w-6 h-6 text-red-500" />
           </div>
-          <div>
-            <h3 className="font-medium text-red-500">Đơn hàng đã bị hủy</h3>
+          <div className="flex-1">
+            <h3 className="font-semibold text-red-700 text-lg mb-1">Đơn hàng đã bị hủy</h3>
+            <p className="text-red-600 text-sm">Đơn hàng này đã được hủy và không thể tiếp tục xử lý</p>
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between w-full max-w-3xl mx-auto">
-          {/* Pending */}
-          <div className="flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStatus === OrderStatus.PENDING || currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-              <Clock size={20} />
-            </div>
-            <div className="text-xs font-medium mt-2 text-center">Chờ xác nhận</div>
+        <div className="relative">
+          {/* Progress Bar */}
+          <div className="hidden sm:block absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000 ease-in-out"
+              style={{ width: `${(currentStep / 4) * 100}%` }}
+            ></div>
           </div>
           
-          {/* Pending connector */}
-          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
-          
-          {/* Confirmed */}
-          <div className="flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && (currentStatus === OrderStatus.CONFIRMED || currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED) ? 'animate-bounce' : ''}`}>
-              <Package size={20} />
+          {/* Status Steps */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+            {/* Step 1: Pending */}
+            <div className="flex flex-col items-center text-center">
+              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${
+                currentStep >= 1 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                <Clock size={24} />
+                {currentStep > 1 && (
+                  <CheckCircle className="absolute -top-1 -right-1 w-5 h-5 text-white bg-green-500 rounded-full" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className={`font-medium text-sm ${
+                  currentStep >= 1 ? 'text-slate-800' : 'text-slate-500'
+                }`}>
+                  Chờ xác nhận
+                </div>
+                <div className="text-xs text-slate-400">
+                  Đơn hàng mới
+                </div>
+              </div>
             </div>
-            <div className="text-xs font-medium mt-2 text-center">Đã xác nhận</div>
+            
+            {/* Step 2: Confirmed */}
+            <div className="flex flex-col items-center text-center">
+              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${
+                currentStep >= 2 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                <Package size={24} />
+                {currentStep > 2 && (
+                  <CheckCircle className="absolute -top-1 -right-1 w-5 h-5 text-white bg-green-500 rounded-full" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className={`font-medium text-sm ${
+                  currentStep >= 2 ? 'text-slate-800' : 'text-slate-500'
+                }`}>
+                  Đã xác nhận
+                </div>
+                <div className="text-xs text-slate-400">
+                  Chuẩn bị hàng
+                </div>
+              </div>
+            </div>
+            
+            {/* Step 3: Shipping */}
+            <div className="flex flex-col items-center text-center">
+              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${
+                currentStep >= 3 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                <Truck size={24} />
+                {currentStep > 3 && (
+                  <CheckCircle className="absolute -top-1 -right-1 w-5 h-5 text-white bg-green-500 rounded-full" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className={`font-medium text-sm ${
+                  currentStep >= 3 ? 'text-slate-800' : 'text-slate-500'
+                }`}>
+                  Đang vận chuyển
+                </div>
+                <div className="text-xs text-slate-400">
+                  Trên đường giao
+                </div>
+              </div>
+            </div>
+            
+            {/* Step 4: Delivered */}
+            <div className="flex flex-col items-center text-center">
+              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${
+                currentStep >= 4 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                <Home size={24} />
+                {currentStep >= 4 && (
+                  <CheckCircle className="absolute -top-1 -right-1 w-5 h-5 text-white bg-green-500 rounded-full" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className={`font-medium text-sm ${
+                  currentStep >= 4 ? 'text-slate-800' : 'text-slate-500'
+                }`}>
+                  Đã giao hàng
+                </div>
+                <div className="text-xs text-slate-400">
+                  Hoàn thành
+                </div>
+              </div>
+            </div>
           </div>
           
-          {/* Shipping connector */}
-          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
-          
-          {/* Shipping */}
-          <div className="flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && (currentStatus === OrderStatus.SHIPPED || currentStatus === OrderStatus.DELIVERED) ? 'animate-bounce' : ''}`}>
-              <Truck size={20} />
+          {/* Mobile Progress Indicator */}
+          <div className="sm:hidden mt-6">
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>Bước {currentStep}/4</span>
+              <span>{Math.round((currentStep / 4) * 100)}% hoàn thành</span>
             </div>
-            <div className="text-xs font-medium mt-2 text-center">Đang vận chuyển</div>
-          </div>
-          
-          {/* Delivered connector */}
-          <div className={`h-1 flex-1 mx-1 transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.DELIVERED ? 'bg-green-500' : 'bg-gray-200'} ${isAnimating ? 'animate-pulse' : ''}`}></div>
-          
-          {/* Delivered */}
-          <div className="flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-700 ease-in-out ${currentStatus === OrderStatus.DELIVERED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAnimating && currentStatus === OrderStatus.DELIVERED ? 'animate-bounce' : ''}`}>
-              <Home size={20} />
+            <div className="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000 ease-in-out"
+                style={{ width: `${(currentStep / 4) * 100}%` }}
+              ></div>
             </div>
-            <div className="text-xs font-medium mt-2 text-center">Đã giao hàng</div>
           </div>
         </div>
       )}

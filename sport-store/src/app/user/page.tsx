@@ -133,10 +133,10 @@ const CategoriesShowcase = memo(({ categories }: { categories: Category[] }) => 
               {infiniteCategories.map((category, index) => (
                 <div
                   key={`${category._id}-${index}`}
-                  className="group cursor-pointer bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 sm:hover:-translate-y-2 border border-gray-100 hover:border-purple-200 min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] flex-shrink-0"
+                  className="group cursor-pointer bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 border-2 border-gray-200 hover:border-purple-300 transition-all duration-500 transform hover:-translate-y-1 sm:hover:-translate-y-2 min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] flex-shrink-0"
                 >
                   {/* Icon Container - Mobile-first */}
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300 shadow-sm group-hover:shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-purple-100 to-red-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-red-200 transition-all duration-300 border border-gray-200 group-hover:border-purple-300">
                     {category.image ? (
                       <Image
                         src={category.image}
@@ -188,7 +188,7 @@ const BrandShowcase = memo(() => {
         
         {/* Brand Container - Mobile-first */}
         <div className="flex justify-center">
-          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center border border-gray-100 hover:border-gray-200">
+          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 bg-white rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 flex items-center justify-center">
             <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-400 tracking-widest select-none">
               Coming soon
             </span>
@@ -207,7 +207,7 @@ const SocialProof = memo(() => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 sm:pt-2 lg:pt-3 xl:pt-4 pb-2 sm:pb-3 lg:pb-4 xl:pb-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 text-center">
         {/* Khách hàng hài lòng */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-purple-50/30 rounded-xl sm:rounded-2xl border border-purple-100/50 hover:border-purple-200 transition-all duration-300">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-purple-50/30 rounded-xl sm:rounded-2xl border-2 border-purple-200 hover:border-purple-300 transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -221,7 +221,7 @@ const SocialProof = memo(() => (
         </div>
 
         {/* Sản phẩm đa dạng */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-red-50/30 rounded-xl sm:rounded-2xl border border-red-100/50 hover:border-red-200 transition-all duration-300">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-red-50/30 rounded-xl sm:rounded-2xl border-2 border-red-200 hover:border-red-300 transition-all duration-300">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -235,7 +235,7 @@ const SocialProof = memo(() => (
         </div>
 
         {/* Đánh giá trung bình */}
-        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-yellow-50/30 rounded-xl sm:rounded-2xl border border-yellow-100/50 hover:border-yellow-200 transition-all duration-300 sm:col-span-2 lg:col-span-1">
+        <div className="p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-white to-yellow-50/30 rounded-xl sm:rounded-2xl border-2 border-yellow-200 hover:border-yellow-300 transition-all duration-300 sm:col-span-2 lg:col-span-1">
           <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
             <span className="inline-flex items-center justify-center">
               <NumberTicker 
@@ -258,7 +258,7 @@ SocialProof.displayName = 'SocialProof';
 const HeroBanner = memo(() => (
   <div className="w-full bg-white">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 lg:mt-8">
-      <div className="relative rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden group shadow-lg hover:shadow-xl transition-all duration-500">
+      <div className="relative rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden group border-2 border-gray-200 hover:border-gray-300 transition-all duration-500">
         {/* Background Image with Zoom Effect - Mobile-first */}
         <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] xl:h-[400px] transform transition-transform duration-700 group-hover:scale-105">
           <Image
@@ -389,7 +389,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
           return (
             <div key={category._id} className="mb-8 sm:mb-10 lg:mb-12 xl:mb-16">
               {/* Category Header - Enhanced for accessibility and clickability */}
-              <div className="group relative bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 lg:mb-8 hover:from-purple-100 hover:to-pink-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+              <div className="group relative bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 lg:mb-8 hover:border-purple-300 transition-all duration-300 cursor-pointer"
                    onClick={() => handleCategoryClick(category)}
                    role="button"
                    tabIndex={0}
@@ -413,7 +413,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
                           alt={category.name}
                           width={40}
                           height={40}
-                          className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 border-white shadow-lg group-hover:scale-110 transition-transform duration-300"
+                          className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 border-white group-hover:scale-110 transition-transform duration-300"
                         />
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
@@ -441,7 +441,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
                     )}
                     
                     {/* Large, clear click indicator */}
-                    <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-purple-200/50 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border-2 border-purple-200 group-hover:border-purple-300 transition-all duration-300">
                       <span className="text-sm sm:text-base font-semibold text-purple-700 group-hover:text-purple-800">
                         Xem tất cả
                       </span>
@@ -468,7 +468,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
                 <div className="flex justify-center mt-6 sm:mt-8 lg:mt-10">
                   <button
                     onClick={() => isExpanded ? handleViewLess(category._id) : handleViewMore(category._id)}
-                    className="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3.5 overflow-hidden font-medium text-purple-600 transition duration-300 ease-out border-2 border-purple-500 rounded-xl shadow-md hover:scale-105 hover:shadow-lg"
+                    className="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3.5 overflow-hidden font-medium text-purple-600 transition duration-300 ease-out border-2 border-purple-500 rounded-xl hover:scale-105 hover:border-purple-600"
                   >
                     <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

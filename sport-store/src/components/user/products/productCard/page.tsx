@@ -73,8 +73,8 @@ const CartButton = ({
       onClick={handleClick}
       className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 overflow-hidden touch-manipulation ${
         isAdding || isClicked
-          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-          : 'bg-white/95 backdrop-blur-sm text-gray-700 hover:text-purple-600 border border-gray-200/60 hover:border-purple-300/70 shadow-sm hover:shadow-md'
+          ? 'bg-green-500 text-white border-2 border-green-400'
+          : 'bg-white/95 backdrop-blur-sm text-gray-700 hover:text-purple-600 border-2 border-gray-200 hover:border-purple-300'
       }`}
       disabled={disabled || isAdding}
       aria-label="Thêm vào giỏ hàng"
@@ -178,10 +178,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <article 
-      className="group relative bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-gray-100/80 shadow-sm hover:shadow-xl overflow-hidden transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 w-full mx-auto cursor-pointer"
+      className="group relative bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border-2 border-gray-200 hover:border-gray-300 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 w-full mx-auto cursor-pointer flex flex-col"
       style={{
-        minHeight: 'clamp(320px, 55vh, 420px)',
-        maxHeight: 'clamp(360px, 65vh, 480px)',
+        minHeight: '380px',
+        maxHeight: '500px',
         width: 'clamp(280px, 100%, 400px)'
       }}
       role="article"
@@ -198,11 +198,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Enhanced Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-50/40 via-pink-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       
-      {/* Product Image Container - Optimized for all devices */}
+      {/* Product Image Container - tăng chiều cao */}
       <div 
         className="relative bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center group/image overflow-hidden rounded-t-2xl sm:rounded-t-3xl"
         style={{
-          height: 'clamp(160px, 48%, 260px)'
+          height: 'clamp(200px, 60%, 300px)'
         }}
       >
         {/* Enhanced overlay effects */}
@@ -229,14 +229,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Enhanced Action Buttons - Higher z-index to ensure visibility */}
         <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 flex flex-col gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-30">
           <button
-            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/50 hover:border-white/80 transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Yêu thích sản phẩm"
             onClick={(e) => e.stopPropagation()}
           >
             <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
           </button>
           <button
-            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/30 hover:bg-white transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/50 hover:border-white/80 transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Xem nhanh sản phẩm"
             onClick={(e) => e.stopPropagation()}
           >
@@ -246,7 +246,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         {/* Enhanced Badges - Clean design without brand badge */}
         {salePrice > 0 && (
-          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full shadow-lg border border-white/20 truncate max-w-[clamp(60px,15vw,80px)] animate-pulse z-10">
+          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full border-2 border-white/30 truncate max-w-[clamp(60px,15vw,80px)] animate-pulse z-10">
             -{discountPercentage}%
           </div>
         )}
@@ -260,64 +260,45 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       
       {/* Enhanced Product Details - Mobile-first responsive */}
       <div 
-        className="relative flex flex-col flex-1"
-        style={{
-          padding: 'clamp(0.875rem, 2.5vw, 1.375rem)',
-          gap: 'clamp(0.375rem, 1.2vw, 0.625rem)'
-        }}
+        className="relative flex flex-col flex-1 gap-1 px-3 py-2 sm:px-4 sm:py-3"
       >
-        {/* Category + Rating - Enhanced responsive layout */}
-        <div 
-          className="flex items-center justify-between"
-          style={{
-            marginBottom: 'clamp(0.375rem, 1.2vw, 0.625rem)'
-          }}
-        >
-          <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] sm:text-[clamp(0.625rem,1.5vw,0.75rem)] font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 rounded-full border border-purple-200/50 truncate max-w-[60%] hover:from-purple-100 hover:to-pink-100 transition-colors duration-200">
+        {/* Category + Rating */}
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-2 py-1 rounded-full border border-purple-200/50 truncate max-w-[60%] hover:from-purple-100 hover:to-pink-100 transition-colors duration-200">
             {categoryName}
           </span>
           <RatingStars rating={4.5} />
         </div>
-        
-        {/* Enhanced Product Title - Fluid typography */}
-        <h3 className="text-[clamp(0.875rem,2.5vw,1rem)] sm:text-[clamp(1rem,3vw,1.125rem)] md:text-[clamp(1.125rem,3.5vw,1.25rem)] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300 hover:line-clamp-none">
+        {/* Product Name */}
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300">
           {name}
         </h3>
-        
-        {/* Enhanced Description - Better readability */}
-        <p className="text-gray-600 text-[clamp(0.75rem,2vw,0.875rem)] sm:text-[clamp(0.875rem,2.5vw,1rem)] mb-[clamp(0.625rem,1.8vw,0.875rem)] line-clamp-2 leading-relaxed flex-grow group-hover:line-clamp-3 transition-all duration-300">
-          {description}
-        </p>
-        
-        {/* Enhanced Price + Cart Button - Better responsive layout */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap mt-auto">
+        {/* Price + Cart */}
+        <div className="flex items-end gap-2 sm:gap-3 flex-wrap mt-1">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0 flex-1">
-            <span className="text-[clamp(1rem,3vw,1.125rem)] sm:text-[clamp(1.125rem,3.5vw,1.25rem)] md:text-[clamp(1.25rem,4vw,1.375rem)] font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent truncate">
+            <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent truncate">
               {formatCurrency(salePrice > 0 ? salePrice : originalPrice)}
             </span>
             {salePrice > 0 && (
-              <span className="text-[clamp(0.75rem,2vw,0.875rem)] sm:text-[clamp(0.875rem,2.5vw,1rem)] text-gray-400 line-through truncate">
+              <span className="text-xs sm:text-sm text-gray-400 line-through truncate">
                 {formatCurrency(originalPrice)}
               </span>
             )}
           </div>
-          
-          {/* Enhanced Cart Button - Better touch targets */}
           <CartButton 
             onClick={handleAddToCart}
             disabled={stock === 0}
             isAdding={isAddingToCart}
           />
         </div>
-        
-        {/* Enhanced Stock status - Better visual feedback */}
-        <div className="flex items-center justify-between text-[clamp(0.5rem,1.2vw,0.625rem)] sm:text-[clamp(0.625rem,1.5vw,0.75rem)] mt-[clamp(0.625rem,1.8vw,0.875rem)]">
+        {/* Stock status */}
+        <div className="flex items-center justify-between text-xs mt-1">
           <span className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors duration-200 ${
             stock > 0 
               ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' 
               : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
           }`}>
-            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-colors duration-200 ${
+            <span className={`w-2 h-2 rounded-full transition-colors duration-200 ${
               stock > 0 ? 'bg-green-500' : 'bg-red-500'
             }`}></span>
             {stock > 0 ? 'Còn hàng' : 'Hết hàng'}

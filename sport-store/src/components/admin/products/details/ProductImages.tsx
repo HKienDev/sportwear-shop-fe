@@ -2,6 +2,7 @@ import { AdminProduct } from '@/types/product';
 import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Image as ImageIcon, ZoomIn, Grid3X3 } from 'lucide-react';
 
 interface ProductImagesProps {
   product: AdminProduct;
@@ -15,58 +16,78 @@ export default function ProductImages({ product }: ProductImagesProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div>
-      <div className="flex flex-col gap-8">
-        {/* Main Image */}
-        <div className="relative aspect-square w-full">
-          {selectedImage ? (
-            <div className="relative w-full h-full overflow-hidden rounded-lg">
-              <Image
-                src={selectedImage}
-                alt={product.name}
-                fill
-                sizes="100vw"
-                quality={100}
-                priority
-                className="object-contain transition-transform duration-300"
-                onLoadingComplete={() => setIsLoading(false)}
-              />
-              {isLoading && (
-                <div className="absolute inset-0 bg-gray-100 animate-pulse rounded-lg" />
-              )}
+    <div className="space-y-6">
+      {/* Main Image Display */}
+      <div className="relative aspect-square w-full bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl overflow-hidden border border-slate-200">
+        {selectedImage ? (
+          <div className="relative w-full h-full">
+            <Image
+              src={selectedImage}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              quality={100}
+              priority
+              className="object-contain transition-all duration-300 hover:scale-105"
+              onLoadingComplete={() => setIsLoading(false)}
+            />
+            {isLoading && (
+              <div className="absolute inset-0 bg-slate-100 animate-pulse rounded-2xl flex items-center justify-center">
+                <div className="flex items-center gap-2 text-slate-500">
+                  <ImageIcon className="w-5 h-5 animate-pulse" />
+                  <span className="text-sm">Đang tải...</span>
+                </div>
+              </div>
+            )}
+            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg">
+              <ZoomIn className="w-4 h-4 text-slate-600" />
             </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-              <span className="text-gray-400">Không có hình ảnh</span>
-            </div>
-          )}
+          </div>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
+            <span className="text-slate-500 font-medium">Không có hình ảnh</span>
+            <span className="text-xs text-slate-400 mt-1">Vui lòng thêm ảnh sản phẩm</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Thumbnail Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <Grid3X3 className="w-4 h-4" />
+          <span>Hình ảnh sản phẩm ({mainImage ? 1 : 0 + subImages.length})</span>
         </div>
         
-        {/* Thumbnail Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {/* Main Image Thumbnail */}
           <motion.div 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`relative aspect-square cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
+            className={`relative aspect-square cursor-pointer rounded-xl overflow-hidden transition-all duration-300 border-2 ${
               selectedImage === mainImage 
-                ? 'ring-2 ring-blue-500 ring-offset-2' 
-                : 'hover:ring-2 hover:ring-gray-200'
+                ? 'border-blue-500 ring-2 ring-blue-200' 
+                : 'border-slate-200 hover:border-slate-300'
             }`}
             onClick={() => setSelectedImage(mainImage)}
           >
             {mainImage ? (
-              <Image
-                src={mainImage}
-                alt={`${product.name} - Ảnh chính`}
-                fill
-                sizes="(max-width: 768px) 50vw, 25vw"
-                quality={90}
-                className="object-cover"
-              />
+              <>
+                <Image
+                  src={mainImage}
+                  alt={`${product.name} - Ảnh chính`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  quality={90}
+                  className="object-cover"
+                />
+                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                  Chính
+                </div>
+              </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
-                Không có ảnh
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 text-xs">
+                <ImageIcon className="w-4 h-4" />
               </div>
             )}
           </motion.div>
@@ -77,10 +98,10 @@ export default function ProductImages({ product }: ProductImagesProps) {
               key={index}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`relative aspect-square cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
+              className={`relative aspect-square cursor-pointer rounded-xl overflow-hidden transition-all duration-300 border-2 ${
                 selectedImage === image 
-                  ? 'ring-2 ring-blue-500 ring-offset-2' 
-                  : 'hover:ring-2 hover:ring-gray-200'
+                  ? 'border-blue-500 ring-2 ring-blue-200' 
+                  : 'border-slate-200 hover:border-slate-300'
               }`}
               onClick={() => setSelectedImage(image)}
             >
@@ -92,8 +113,35 @@ export default function ProductImages({ product }: ProductImagesProps) {
                 quality={90}
                 className="object-cover"
               />
+              <div className="absolute top-1 left-1 bg-slate-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                {index + 2}
+              </div>
             </motion.div>
           ))}
+          
+          {/* Empty slots for visual balance */}
+          {subImages.length < 4 && Array.from({ length: 4 - subImages.length - (mainImage ? 1 : 0) }).map((_, index) => (
+            <div 
+              key={`empty-${index}`}
+              className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50"
+            >
+              <ImageIcon className="w-4 h-4 text-slate-400" />
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Image Info */}
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-slate-500" />
+            <span className="text-slate-600">Tổng số ảnh:</span>
+            <span className="font-semibold text-slate-800">{mainImage ? 1 : 0 + subImages.length}</span>
+          </div>
+          <div className="text-slate-500">
+            {selectedImage ? 'Đang xem ảnh được chọn' : 'Chưa chọn ảnh'}
+          </div>
         </div>
       </div>
     </div>

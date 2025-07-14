@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck } from "lucide-react";
+import { Truck, Calendar, Clock, Package } from "lucide-react";
 
 interface ShippingMethodProps {
   method: string;
@@ -82,18 +82,88 @@ export default function ShippingMethod({
   const calculatedExpectedDate = calculateExpectedDate(shippingMethod, orderDate);
   const shippingMethodText = getShippingMethodText(shippingMethod);
 
+  // Get shipping method color
+  const getShippingMethodColor = (method: string) => {
+    switch (method) {
+      case "standard":
+        return "from-blue-500 to-blue-600";
+      case "express":
+        return "from-purple-500 to-purple-600";
+      case "same_day":
+        return "from-red-500 to-red-600";
+      default:
+        return "from-slate-500 to-slate-600";
+    }
+  };
+
+  const shippingMethodColor = getShippingMethodColor(shippingMethod);
+
   return (
-    <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-4">
-      <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-        <Truck className="w-5 h-5" />
-        Phương Thức Vận Chuyển
-      </h3>
-      <div className="text-sm">
-        <div className="font-semibold text-gray-900">{method}</div>
-        {shippingMethod && (
-          <div className="text-gray-600 mt-1">Phương thức: {shippingMethodText}</div>
-        )}
-        <div className="text-gray-600 mt-1">Ngày dự kiến giao hàng: {calculatedExpectedDate}</div>
+    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg">
+          <Truck className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-800 text-lg">Phương Thức Vận Chuyển</h3>
+          <p className="text-sm text-slate-600">Thông tin giao hàng</p>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="space-y-4">
+        {/* Shipping Method */}
+        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
+          <div className="bg-slate-200 p-2 rounded-lg">
+            <Package className="w-4 h-4 text-slate-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm text-slate-500 mb-1">Phương thức</div>
+            <div className="font-semibold text-slate-900">{method}</div>
+            {shippingMethod && (
+              <div className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${shippingMethodColor} text-white`}>
+                {shippingMethodText}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Order Date */}
+        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
+          <div className="bg-slate-200 p-2 rounded-lg">
+            <Calendar className="w-4 h-4 text-slate-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm text-slate-500 mb-1">Ngày đặt hàng</div>
+            <div className="font-medium text-slate-900">
+              {new Date(orderDate).toLocaleDateString("vi-VN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </div>
+          </div>
+        </div>
+        
+        {/* Expected Delivery */}
+        <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+          <div className="bg-green-200 p-2 rounded-lg">
+            <Clock className="w-4 h-4 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm text-green-600 mb-1">Ngày dự kiến giao hàng</div>
+            <div className="font-semibold text-green-800">{calculatedExpectedDate}</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="mt-6 pt-4 border-t border-slate-200">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          <span>Phương thức vận chuyển đã được xác nhận</span>
+        </div>
       </div>
     </div>
   );

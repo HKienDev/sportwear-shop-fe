@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Order, OrderStatus } from "@/types/order";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, AlertTriangle, Package } from "lucide-react";
 
 interface OrderItem {
   product: {
@@ -161,12 +161,12 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
           disabled={isDisabled || isLoading || isRefreshing}
           className={`
             inline-flex items-center justify-center gap-2
-            px-6 py-2.5 rounded-lg font-medium text-sm
-            transition-all duration-200 ease-in-out
-            bg-red-600 hover:bg-red-700 text-white
-            shadow-sm hover:shadow-md
+            px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base
+            transition-all duration-300 ease-in-out
+            bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white
+            shadow-lg hover:shadow-xl
             disabled:opacity-50 disabled:cursor-not-allowed
-            transform hover:-translate-y-0.5
+            transform hover:-translate-y-0.5 active:translate-y-0
             ${isLoading ? 'animate-pulse' : ''}
           `}
         >
@@ -177,40 +177,63 @@ export default function CancelOrder({ orderId, items, status, isDisabled, onStat
             </>
           ) : (
             <>
-              <svg 
-                className="w-4 h-4" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-4 h-4" />
               <span>Hủy đơn hàng</span>
             </>
           )}
         </button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md mx-4">
         <AlertDialogHeader>
-          <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
-          <AlertDialogDescription>
-            Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này sẽ:
-          </AlertDialogDescription>
-          <div className="mt-2">
-            <ul className="list-disc list-inside space-y-1">
-              <li>Hoàn lại số lượng sản phẩm vào kho</li>
-              <li>Không thể hoàn tác sau khi hủy</li>
-            </ul>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-red-100 p-3 rounded-full">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <AlertDialogTitle className="text-lg font-semibold text-slate-800">
+                Xác nhận hủy đơn hàng
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-slate-600 mt-1">
+                Hành động này không thể hoàn tác
+              </AlertDialogDescription>
+            </div>
           </div>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancelOrder} className="bg-red-600 hover:bg-red-700">
+        
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Package className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-amber-800 mb-2">Hậu quả khi hủy đơn hàng:</h4>
+                <ul className="space-y-2 text-sm text-amber-700">
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                    Hoàn lại số lượng sản phẩm vào kho
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                    Không thể hoàn tác sau khi hủy
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                    Thông báo hủy đơn cho khách hàng
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <AlertDialogFooter className="mt-6">
+          <AlertDialogCancel className="bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300">
+            Không hủy
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleCancelOrder} 
+            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white border-0"
+          >
+            <X className="w-4 h-4 mr-2" />
             Xác nhận hủy
           </AlertDialogAction>
         </AlertDialogFooter>
