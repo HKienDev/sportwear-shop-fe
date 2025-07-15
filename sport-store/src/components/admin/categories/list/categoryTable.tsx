@@ -17,12 +17,14 @@ import { Category } from "@/types/category";
 import { toast } from "sonner";
 
 import CategoryStatusBadge from "./categoryStatusBadge";
+import { Switch } from "@/components/ui/switch";
 
 interface CategoryTableProps {
   categories: Category[];
   selectedCategories: string[];
   onToggleSelectAll: () => void;
   onToggleSelectCategory: (id: string) => void;
+  onCategoryUpdate?: (categoryId: string, updates: Partial<Category>) => void;
 }
 
 const CategoryTable = React.memo(
@@ -31,6 +33,7 @@ const CategoryTable = React.memo(
     selectedCategories,
     onToggleSelectAll,
     onToggleSelectCategory,
+    onCategoryUpdate,
   }: CategoryTableProps) => {
     const router = useRouter();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -58,8 +61,12 @@ const CategoryTable = React.memo(
         
         if (data.success) {
           toast.success(`Đã ${!currentStatus ? "Kích hoạt" : "Tạm dừng"} danh mục`);
-          // Reload trang để cập nhật dữ liệu
-          window.location.reload();
+          // Cập nhật state thay vì reload page
+          if (onCategoryUpdate) {
+            onCategoryUpdate(categoryId, { isActive: !currentStatus });
+          } else {
+            window.location.reload();
+          }
         } else {
           toast.error(data.message || "Có lỗi xảy ra");
         }
@@ -124,6 +131,7 @@ const CategoryTable = React.memo(
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Mã danh mục</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Số sản phẩm</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Hiển thị Sản phẩm Mới</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Thao tác</th>
                   </tr>
                 </thead>
@@ -159,6 +167,35 @@ const CategoryTable = React.memo(
                         </td>
                         <td className="px-6 py-4 text-center">
                           <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Switch
+                            checked={category.showInNewProducts !== false}
+                            onCheckedChange={async (checked) => {
+                              try {
+                                const response = await fetch(`/api/categories/${category._id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                  body: JSON.stringify({ showInNewProducts: checked })
+                                });
+                                const data = await response.json();
+                                if (data.success) {
+                                  toast.success(`Đã ${checked ? "bật" : "tắt"} hiển thị Sản phẩm Mới cho danh mục`);
+                                  // Cập nhật state thay vì reload page
+                                  if (onCategoryUpdate) {
+                                    onCategoryUpdate(category._id, { showInNewProducts: checked });
+                                  } else {
+                                    window.location.reload();
+                                  }
+                                } else {
+                                  toast.error(data.message || "Có lỗi xảy ra");
+                                }
+                              } catch {
+                                toast.error("Có lỗi xảy ra khi cập nhật");
+                              }
+                            }}
+                          />
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex gap-2 justify-center">

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useCallback, memo, useEffect, useMemo, useState } from "react";
+import React, { useCallback, memo, useEffect, useMemo, useState, useRef } from "react";
 import ProductCardWithTimer from "../ProductCardWithTimer/page";
 import { FeaturedProduct } from "@/types/product";
 import { featuredProductService } from "@/services/featuredProductService";
 import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 interface FeaturedProductsCarouselProps {
   products?: FeaturedProduct[];
@@ -16,6 +17,10 @@ const FeaturedProductsCarousel = ({
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch featured products from API
   const fetchFeaturedProducts = useCallback(async () => {
@@ -24,7 +29,7 @@ const FeaturedProductsCarousel = ({
       setError(null);
       
       console.log('🔄 Fetching featured products...');
-      const response = await featuredProductService.getFeaturedProducts(6);
+      const response = await featuredProductService.getFeaturedProducts(8);
       
       if (response.success && response.data?.products) {
         console.log('✅ Featured products loaded:', response.data.products.length);
@@ -42,12 +47,10 @@ const FeaturedProductsCarousel = ({
   }, []);
 
   useEffect(() => {
-    // Nếu có initialProducts được truyền vào, sử dụng chúng
     if (initialProducts && initialProducts.length > 0) {
       setProducts(initialProducts);
       setLoading(false);
     } else {
-      // Nếu không có, fetch từ API
       fetchFeaturedProducts();
     }
   }, [initialProducts, fetchFeaturedProducts]);
@@ -55,163 +58,185 @@ const FeaturedProductsCarousel = ({
   const displayProducts = useMemo(() => products || [], [products]);
   const count = displayProducts.length;
 
-  // Logic thông minh cho UI đẹp và responsive
-  const infiniteProducts = useMemo(() => {
-    if (count === 0) return [];
-    
-    // Nếu có 1-3 sản phẩm, không duplicate để giữ UI đẹp
-    if (count <= 3) {
-      return displayProducts;
-    }
-    
-    // Nếu có nhiều sản phẩm (>3), duplicate 2 lần để tạo hiệu ứng infinite
-    return [...displayProducts, ...displayProducts];
-  }, [displayProducts, count]);
-
-  // Auto scroll effect - chỉ hoạt động khi có nhiều sản phẩm
+  // Auto-scroll with pause on hover
   useEffect(() => {
-    if (count === 0 || count <= 3) return; // Không auto scroll khi có ít sản phẩm
-
-    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
-    if (!container) return;
-
-    let animationId: number;
-    let scrollDirection = 1; // 1 = right, -1 = left
-    const scrollSpeed = 0.8; // pixels per frame (chậm hơn categories)
+    if (count === 0 || !isAutoPlaying) return;
 
     const autoScroll = () => {
-      if (!container) return;
-
-      const scrollLeft = container.scrollLeft;
-      const scrollWidth = container.scrollWidth;
-      const clientWidth = container.clientWidth;
-      const maxScroll = scrollWidth - clientWidth;
-
-      // Đổi hướng khi đến cuối hoặc đầu
-      if (scrollLeft >= maxScroll) {
-        scrollDirection = -1;
-      } else if (scrollLeft <= 0) {
-        scrollDirection = 1;
-      }
-
-      container.scrollLeft += scrollSpeed * scrollDirection;
-      animationId = requestAnimationFrame(autoScroll);
+      setCurrentIndex(prev => (prev + 1) % count);
     };
 
-    // Bắt đầu auto scroll sau 3 giây (lâu hơn categories)
-    const startTimeout = setTimeout(() => {
-      animationId = requestAnimationFrame(autoScroll);
-    }, 3000);
+    autoPlayRef.current = setInterval(autoScroll, 5000);
 
     return () => {
-      clearTimeout(startTimeout);
-      if (animationId) {
-        cancelAnimationFrame(animationId);
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
       }
     };
-  }, [count]);
+  }, [count, isAutoPlaying]);
 
-  // Pause auto scroll on hover
   const handleMouseEnter = useCallback(() => {
-    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
-    if (container) {
-      container.style.scrollBehavior = 'auto';
+    setIsAutoPlaying(false);
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
     }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    const container = document.querySelector('.featured-products-scroll-container') as HTMLElement;
-    if (container) {
-      container.style.scrollBehavior = 'smooth';
+    setIsAutoPlaying(true);
+  }, []);
+
+  const scrollToIndex = useCallback((index: number) => {
+    setCurrentIndex(index);
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const cardWidth = container.offsetWidth;
+      container.scrollTo({
+        left: index * cardWidth,
+        behavior: 'smooth'
+      });
     }
   }, []);
 
-  // Loading state
+  const nextSlide = useCallback(() => {
+    scrollToIndex((currentIndex + 1) % count);
+  }, [currentIndex, count, scrollToIndex]);
+
+  const prevSlide = useCallback(() => {
+    scrollToIndex(currentIndex === 0 ? count - 1 : currentIndex - 1);
+  }, [currentIndex, count, scrollToIndex]);
+
+  // Loading State
   if (loading) {
     return (
-      <div className="relative w-full overflow-hidden">
-        <div className="flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 min-w-max px-4 sm:px-6 md:px-8">
-          {[1, 2, 3, 4].map((index) => (
-            <div key={index} className="flex-shrink-0">
-              <div className="bg-gray-200 rounded-lg h-56 w-64 animate-pulse"></div>
+      <div className="w-full">
+        {/* Section Header Skeleton */}
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="h-8 bg-gray-200 rounded w-40 animate-pulse"></div>
+          </div>
+          <div className="h-5 bg-gray-200 rounded w-64 animate-pulse mx-auto"></div>
+        </div>
+
+        {/* Product Skeleton */}
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="flex flex-col md:flex-row">
+                <div className="w-full md:w-2/5 h-64 bg-gray-200 animate-pulse"></div>
+                <div className="w-full md:w-3/5 p-6 space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="h-6 bg-gray-200 rounded w-full animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                  <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                  <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Error state
+  // Error State
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-500 mb-4">{error}</p>
-        <button 
-          onClick={fetchFeaturedProducts}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Thử lại
-        </button>
+      <div className="w-full">
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Sparkles className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Không thể tải sản phẩm</h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+            </div>
+            <button 
+              onClick={fetchFeaturedProducts}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
+            >
+              Thử lại
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Empty state
+  // Empty State
   if (count === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Chưa có sản phẩm nổi bật</p>
+      <div className="w-full">
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-gray-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Chưa có sản phẩm nổi bật</h3>
+            <p className="text-gray-600">Hãy quay lại sau để xem các sản phẩm đặc biệt!</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full overflow-hidden">
-      {/* Gradient Overlays for Scroll Indicators - chỉ hiển thị khi có nhiều sản phẩm */}
-      {count > 3 && (
-        <>
-          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-r from-white via-white to-transparent z-10 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 md:w-16 bg-gradient-to-l from-white via-white to-transparent z-10 pointer-events-none"></div>
-        </>
-      )}
-      
-      {/* Responsive Carousel Container - Mobile-first */}
-      <div 
-        className={`featured-products-scroll-container overflow-x-auto scrollbar-hide scroll-smooth ${
-          count <= 3 ? 'lg:overflow-x-visible' : ''
-        }`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <div className={`flex gap-4 sm:gap-6 md:gap-8 pb-4 sm:pb-6 px-4 sm:px-6 md:px-8 ${
-          count <= 3 ? 'lg:justify-center lg:mx-auto lg:max-w-fit' : 'min-w-max'
-        }`}
-        style={{
-          ...(count <= 3 && {
-            display: 'flex',
-            justifyContent: 'center',
-            margin: '0 auto',
-            maxWidth: 'fit-content'
-          })
-        }}>
-          {/* Render từng sản phẩm với responsive design */}
-          {infiniteProducts.map((product, index) => (
-            <div 
-              key={`${product.id}-${index}`}
-              className="flex-shrink-0"
-              style={{
-                width: '280px', // Fixed width cho mỗi card
-                minWidth: '280px',
-                maxWidth: '280px',
-              }}
+    <div className="w-full">
+      {/* Section Header */}
+      <div className="mb-8 text-center">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Sản Phẩm Nổi Bật
+          </h2>
+        </div>
+        <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
+          Khám phá những sản phẩm được ưa chuộng nhất với ưu đãi đặc biệt
+        </p>
+      </div>
+
+      {/* Carousel Container */}
+      <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        {/* Navigation Arrows */}
+        {count > 1 && (
+          <>
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-gray-200"
             >
-              <ProductCardWithTimer 
-                product={product}
-                isCompact={true}
-              />
-            </div>
-          ))}
+              <ChevronLeft className="w-5 h-5 text-gray-700 mx-auto" />
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-gray-200"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-700 mx-auto" />
+            </button>
+          </>
+        )}
+
+        {/* Carousel */}
+        <div className="flex justify-center">
+          <div 
+            ref={containerRef}
+            className="flex gap-6 overflow-x-auto max-w-6xl mx-auto px-4"
+          >
+            {displayProducts.map((product, index) => (
+              <div 
+                key={`${product.id}-${index}`}
+                className="flex-shrink-0 w-full max-w-4xl"
+              >
+                <ProductCardWithTimer 
+                  product={product}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

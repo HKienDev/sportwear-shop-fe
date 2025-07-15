@@ -340,14 +340,28 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
   const router = useRouter();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // Lọc category có showInNewProducts !== false
+  const filteredCategories = useMemo(() => {
+    return categories.filter(cat => cat.showInNewProducts !== false);
+  }, [categories]);
+
   const productsByCategory = useMemo(() => {
-    return categories.map(category => {
+    console.log('🔍 DEBUG - Products loaded:', products.length);
+    console.log('🔍 DEBUG - Products categoryIds:', products.map(p => p.categoryId));
+    console.log('🔍 DEBUG - Categories loaded:', filteredCategories.length);
+    console.log('🔍 DEBUG - Categories mapping:', filteredCategories.map(c => ({ name: c.name, _id: c._id, categoryId: c.categoryId })));
+    
+    const result = filteredCategories.map(category => {
       const productsInCategory = products.filter(
         (product) => product.categoryId === category._id || product.categoryId === category.categoryId
       );
+      console.log(`🔍 DEBUG - Category "${category.name}": found ${productsInCategory.length} products (categoryId: ${category.categoryId}, _id: ${category._id})`);
       return { category, products: productsInCategory };
-    }).filter(item => item.products.length > 0);
-  }, [products, categories]);
+    });
+    
+    console.log('🔍 DEBUG - Final result:', result.map(r => ({ name: r.category.name, productCount: r.products.length })));
+    return result;
+  }, [products, filteredCategories]);
 
   const handleViewMore = useCallback((categoryId: string) => {
     setExpandedCategories(prev => {
@@ -370,7 +384,17 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
   }, [router]);
 
   if (!productsByCategory.length) {
-    return <p className="text-center text-gray-500 px-4 text-sm sm:text-base">Không có sản phẩm nào</p>;
+    return (
+      <div className="w-full bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 xl:py-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 lg:mb-4 xl:mb-6 leading-tight">
+            Sản phẩm Mới
+          </h1>
+          
+          <p className="text-center text-gray-500 px-4 text-sm sm:text-base">Không có sản phẩm nào</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -385,6 +409,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
           const isExpanded = expandedCategories.has(category._id);
           const displayProducts = isExpanded ? products : products.slice(0, 8);
           const hasMoreProducts = products.length > 8;
+          const hasProducts = products.length > 0;
 
           return (
             <div key={category._id} className="mb-8 sm:mb-10 lg:mb-12 xl:mb-16">
@@ -423,7 +448,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
                         {category.name}
                       </h2>
                       <p className="text-sm sm:text-base text-gray-600 mt-1 group-hover:text-gray-700 transition-colors duration-300">
-                        {products.length} sản phẩm có sẵn
+                        {hasProducts ? `${products.length} sản phẩm có sẵn` : 'Chưa có sản phẩm'}
                       </p>
                     </div>
                   </div>
@@ -443,7 +468,7 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
                     {/* Large, clear click indicator */}
                     <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border-2 border-purple-200 group-hover:border-purple-300 transition-all duration-300">
                       <span className="text-sm sm:text-base font-semibold text-purple-700 group-hover:text-purple-800">
-                        Xem tất cả
+                        {hasProducts ? 'Xem tất cả' : 'Xem danh mục'}
                       </span>
                       <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 group-hover:text-purple-700 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -457,48 +482,68 @@ const ProductSection = memo(({ products, categories }: { products: UserProduct[]
               </div>
               
               {/* Products Grid - Mobile-first */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-                {displayProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} />
-                ))}
-              </div>
+              {hasProducts ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+                    {displayProducts.map((product) => (
+                      <ProductCard key={product._id} product={product} />
+                    ))}
+                  </div>
 
-              {/* View More/Less Button */}
-              {hasMoreProducts && (
-                <div className="flex justify-center mt-6 sm:mt-8 lg:mt-10">
+                  {/* View More/Less Button */}
+                  {hasMoreProducts && (
+                    <div className="flex justify-center mt-6 sm:mt-8 lg:mt-10">
+                      <button
+                        onClick={() => isExpanded ? handleViewLess(category._id) : handleViewMore(category._id)}
+                        className="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3.5 overflow-hidden font-medium text-purple-600 transition duration-300 ease-out border-2 border-purple-500 rounded-xl hover:scale-105 hover:border-purple-600"
+                      >
+                        <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {isExpanded ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            )}
+                          </svg>
+                        </span>
+                        <span className="absolute flex items-center justify-center w-full h-full text-purple-500 transition-all duration-300 transform group-hover:translate-x-full ease">
+                          {isExpanded ? (
+                            <>
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                              Thu gọn
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                              Xem thêm {products.length - 8} sản phẩm
+                            </>
+                          )}
+                        </span>
+                        <span className="relative invisible">
+                          {isExpanded ? "Thu gọn" : `Xem thêm ${products.length - 8} sản phẩm`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Chưa có sản phẩm</h3>
+                  <p className="text-gray-500 mb-4">Danh mục này chưa có sản phẩm nào</p>
                   <button
-                    onClick={() => isExpanded ? handleViewLess(category._id) : handleViewMore(category._id)}
-                    className="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3.5 overflow-hidden font-medium text-purple-600 transition duration-300 ease-out border-2 border-purple-500 rounded-xl hover:scale-105 hover:border-purple-600"
+                    onClick={() => handleCategoryClick(category)}
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
                   >
-                    <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {isExpanded ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        )}
-                      </svg>
-                    </span>
-                    <span className="absolute flex items-center justify-center w-full h-full text-purple-500 transition-all duration-300 transform group-hover:translate-x-full ease">
-                      {isExpanded ? (
-                        <>
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                          </svg>
-                          Thu gọn
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                          Xem thêm {products.length - 8} sản phẩm
-                        </>
-                      )}
-                    </span>
-                    <span className="relative invisible">
-                      {isExpanded ? "Thu gọn" : `Xem thêm ${products.length - 8} sản phẩm`}
-                    </span>
+                    Xem danh mục
                   </button>
                 </div>
               )}
@@ -744,7 +789,7 @@ const HomePage = () => {
   const fetchData = useCallback(async () => {
     try {
       const [productRes, categoryRes] = await Promise.all([
-        userProductService.getProducts(),
+        userProductService.getProducts({ limit: 100 }),
         categoryService.getCategories(),
       ]) as [ApiResponse<UserProductsResponse>, ApiResponse<CategoriesResponse>];
       
@@ -797,7 +842,12 @@ const HomePage = () => {
     <div className="min-h-screen bg-white">
       <HeroBanner />
       <CategoriesShowcase categories={categories} />
-      <FeaturedProductSection />
+      {/* Featured Products Section - Enhanced */}
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <FeaturedProductsCarousel />
+        </div>
+      </section>
       <ProductSection products={products} categories={categories} />
       <SocialProof />
       <BrandShowcase />

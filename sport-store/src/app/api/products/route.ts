@@ -114,7 +114,8 @@ export async function GET() {
       'Content-Type': 'application/json'
     };
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+    // Gửi limit=100 để lấy tất cả sản phẩm
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?limit=100`, {
       method: 'GET',
       headers
     });

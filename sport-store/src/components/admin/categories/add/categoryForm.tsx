@@ -133,9 +133,21 @@ export default function CategoryForm() {
       let imageUrl = '';
       try {
         console.log('🖼️ Bắt đầu xử lý ảnh...');
+        console.log('📋 Image data type:', typeof data.image);
+        console.log('📋 Image data length:', data.image?.length || 0);
+        
+        if (!data.image || !data.image.startsWith('data:image/')) {
+          throw new Error('Dữ liệu ảnh không hợp lệ');
+        }
         
         // Chuyển base64 thành file
         const base64Data = data.image.split(',')[1];
+        if (!base64Data) {
+          throw new Error('Không thể trích xuất dữ liệu ảnh');
+        }
+        
+        console.log('🔄 Chuyển đổi base64 thành file...');
+        
         const byteCharacters = atob(base64Data);
         const byteArrays = [];
         
@@ -145,7 +157,13 @@ export default function CategoryForm() {
         
         const byteArray = new Uint8Array(byteArrays);
         const blob = new Blob([byteArray], { type: 'image/jpeg' });
-        const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+        const file = new File([blob], 'category-image.jpg', { type: 'image/jpeg' });
+        
+        console.log('📁 File created:', {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
         
         console.log('📤 Bắt đầu upload lên Cloudinary...');
         

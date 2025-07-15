@@ -7,6 +7,7 @@ export interface Category {
   image: string;
   isActive: boolean;
   productCount: number;
+  showInNewProducts?: boolean;
   products?: {
     _id: string;
     name: string;

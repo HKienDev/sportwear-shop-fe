@@ -12,10 +12,10 @@ export async function PUT(
     console.log('PUT category request for ID:', decodedCategoryId, 'with body:', body);
     
     // Validate body
-    if (!body || typeof body.isActive !== 'boolean') {
+    if (!body || (typeof body.isActive !== 'boolean' && typeof body.showInNewProducts !== 'boolean')) {
       console.error('PUT /api/categories/[categoryId]: Invalid body:', body);
       return NextResponse.json(
-        { success: false, message: 'Invalid request body: isActive must be a boolean', body },
+        { success: false, message: 'Invalid request body: isActive or showInNewProducts must be a boolean', body },
         { status: 400 }
       );
     }

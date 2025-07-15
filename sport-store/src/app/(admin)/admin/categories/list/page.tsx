@@ -136,6 +136,17 @@ export default function CategoryListPage() {
     );
   }, []);
 
+  // Handle category updates (isActive, showInNewProducts)
+  const handleCategoryUpdate = useCallback((categoryId: string, updates: Partial<Category>) => {
+    setCategories(prevCategories => 
+      prevCategories.map(category => 
+        category._id === categoryId 
+          ? { ...category, ...updates }
+          : category
+      )
+    );
+  }, []);
+
   // Redirect if not authenticated or not admin
   if (!loading && (!isAuthenticated || user?.role !== 'admin')) {
     router.push('/admin/login');
@@ -305,6 +316,7 @@ export default function CategoryListPage() {
                 selectedCategories={selectedCategories}
                 onToggleSelectAll={handleToggleSelectAll}
                 onToggleSelectCategory={handleToggleSelectCategory}
+                onCategoryUpdate={handleCategoryUpdate}
               />
             )}
           </div>
