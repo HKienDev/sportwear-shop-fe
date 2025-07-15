@@ -31,8 +31,9 @@ export async function PUT(
       );
     }
 
-    console.log('Calling backend PUT:', `http://localhost:4000/api/categories/${decodedCategoryId}`);
-    const response = await fetch(`http://localhost:4000/api/categories/${decodedCategoryId}`, {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    console.log('Calling backend PUT:', `${API_URL}/categories/${decodedCategoryId}`);
+    const response = await fetch(`${API_URL}/categories/${decodedCategoryId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -83,8 +84,9 @@ export async function DELETE(
       );
     }
 
-    console.log('Calling backend DELETE:', `http://localhost:4000/api/categories/${decodedCategoryId}`);
-    const response = await fetch(`http://localhost:4000/api/categories/${decodedCategoryId}`, {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    console.log('Calling backend DELETE:', `${API_URL}/categories/${decodedCategoryId}`);
+    const response = await fetch(`${API_URL}/categories/${decodedCategoryId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

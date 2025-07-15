@@ -32,7 +32,7 @@ export default function CategoryListPage() {
       setIsLoading(true);
       const queryParams = new URLSearchParams({
         ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter && { status: statusFilter }),
+        ...(statusFilter && { isActive: statusFilter }),
         page: page.toString(),
         limit: limit.toString(),
       });
@@ -145,7 +145,7 @@ export default function CategoryListPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/40 via-indigo-50/40 to-emerald-50/40">
       {/* Glass Morphism Wrapper */}
-      <div className="mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div className="mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-full">
         {/* Header with 3D-like Effect */}
         <div className="mb-8 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-emerald-600/10 rounded-3xl transform -rotate-2"></div>
@@ -252,7 +252,7 @@ export default function CategoryListPage() {
         <div className="relative">
           <div className="absolute inset-0 bg-indigo-500 opacity-5 rounded-2xl transform rotate-1"></div>
           <div className="absolute inset-0 bg-emerald-500 opacity-5 rounded-2xl transform -rotate-1"></div>
-          <div className="bg-white backdrop-blur-sm bg-opacity-80 rounded-2xl shadow-lg border border-indigo-100/60 overflow-hidden relative z-10">
+          <div className="bg-white backdrop-blur-sm bg-opacity-80 rounded-2xl shadow-lg border border-indigo-100/60 relative z-10">
             {isLoading ? (
               <div className="p-12 flex flex-col items-center justify-center">
                 <div className="loading-animation">
@@ -305,8 +305,6 @@ export default function CategoryListPage() {
                 selectedCategories={selectedCategories}
                 onToggleSelectAll={handleToggleSelectAll}
                 onToggleSelectCategory={handleToggleSelectCategory}
-                searchQuery={searchTerm}
-                filters={{ status: statusFilter }}
               />
             )}
           </div>

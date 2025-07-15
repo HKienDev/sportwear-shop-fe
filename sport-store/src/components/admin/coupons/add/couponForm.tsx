@@ -58,7 +58,67 @@ type FormValues = z.infer<typeof formSchema>;
 const CouponForm = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isAuthenticated, checkAuthStatus } = useAuth();
+    const { isAuthenticated, checkAuthStatus } = useAuth();
+  
+  // Time input states
+  const [startTimeValue, setStartTimeValue] = useState("");
+  const [endTimeValue, setEndTimeValue] = useState("");
+  
+  // Format time function
+  const formatTime = (time: string) => {
+    if (time.length === 0) return "";
+    if (time.length === 1) return time;
+    if (time.length === 2) return time;
+    return time.slice(0, 2) + ":" + time.slice(2);
+  };
+  
+  // Handle time change with smart validation
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>, setValue: (val: string) => void, field: { onChange: (value: string) => void }) => {
+    let newValue = e.target.value.replace(/[^\d]/g, "");
+    
+    // Auto-validate và format thông minh
+    if (newValue.length >= 1) {
+      const hour = newValue.slice(0, 2);
+      const minute = newValue.slice(2, 4);
+      
+      // Giới hạn giờ 0-23
+      if (parseInt(hour) > 23) {
+        newValue = "23" + minute;
+      }
+      
+      // Giới hạn phút 0-59
+      if (newValue.length >= 3 && parseInt(minute) > 59) {
+        newValue = hour + "59";
+      }
+    }
+    
+    if (newValue.length <= 4) {
+      setValue(newValue);
+      
+      // Update form field when complete
+      if (newValue.length === 4) {
+        const hour = newValue.slice(0, 2);
+        const minute = newValue.slice(2);
+        const hourNum = parseInt(hour);
+        const minuteNum = parseInt(minute);
+        
+        if (hourNum >= 0 && hourNum <= 23 && minuteNum >= 0 && minuteNum <= 59) {
+          field.onChange(`${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`);
+        }
+      }
+    }
+  };
+  
+  // Handle backspace for time input
+  const handleTimeKeyDown = (e: React.KeyboardEvent, value: string, setValue: (val: string) => void) => {
+    // Backspace xóa cả dấu ":"
+    if (e.key === 'Backspace' && value.length === 3) {
+      setValue(value.slice(0, 2));
+      e.preventDefault();
+    }
+  };
+  
+
   
   console.log('CouponForm rendering');
   
@@ -76,6 +136,12 @@ const CouponForm = () => {
       endTime: "23:59",
     },
   });
+
+  // Sync time values with form on mount
+  useEffect(() => {
+    form.setValue('startTime', '00:00');
+    form.setValue('endTime', '23:59');
+  }, [form]);
 
   // Kiểm tra xác thực khi component mount
   useEffect(() => {
@@ -120,6 +186,32 @@ const CouponForm = () => {
         }
       }
       
+      // Validate required fields
+      if (!data.value || Number(data.value) <= 0) {
+        toast.error("Giá trị giảm giá phải lớn hơn 0");
+        return;
+      }
+
+      // Validate percentage value
+      if (data.type === "%" && Number(data.value) > 100) {
+        toast.error("Giá trị giảm giá theo phần trăm không được vượt quá 100%");
+        form.setError('value', {
+          type: 'manual',
+          message: 'Giá trị giảm giá theo phần trăm không được vượt quá 100%'
+        });
+        return;
+      }
+
+      // Validate fixed amount value
+      if (data.type === "VNĐ" && Number(data.value) > 10000000) {
+        toast.error("Giá trị giảm giá cố định không được vượt quá 10.000.000 VNĐ");
+        form.setError('value', {
+          type: 'manual',
+          message: 'Giá trị giảm giá cố định không được vượt quá 10.000.000 VNĐ'
+        });
+        return;
+      }
+
       // Format dates to ISO string
       const formattedData = {
         type: data.type === "%" ? "percentage" : "fixed" as "percentage" | "fixed",
@@ -127,8 +219,8 @@ const CouponForm = () => {
         usageLimit: data.usageLimit,
         userLimit: data.userLimit,
         minimumPurchaseAmount: data.minimumPurchaseAmount,
-        startDate: new Date(`${data.startDate}T${data.startTime}`).toISOString(),
-        endDate: new Date(`${data.endDate}T${data.endTime}`).toISOString(),
+        startDate: new Date(`${data.startDate}T${data.startTime || '00:00'}`).toISOString(),
+        endDate: new Date(`${data.endDate}T${data.endTime || '23:59'}`).toISOString(),
       };
 
       const response = await fetch('/api/coupons/admin', {
@@ -150,8 +242,25 @@ const CouponForm = () => {
         });
         router.push("/admin/coupons/list");
       } else {
-        console.error('Invalid response structure:', responseData);
-        toast.error(responseData.message || "Không thể tạo mã giảm giá");
+        // Handle validation errors from backend
+        if (responseData.errors && Array.isArray(responseData.errors)) {
+          responseData.errors.forEach((error: { field: string; message: string }) => {
+            if (error.field && error.message) {
+              try {
+                form.setError(error.field as keyof FormValues, {
+                  type: 'server',
+                  message: error.message
+                });
+              } catch (error) {
+                console.warn('Error setting form error:', error);
+              }
+            }
+          });
+          toast.error("Vui lòng kiểm tra lại thông tin nhập");
+        } else {
+          console.warn('Backend validation failed:', responseData);
+          toast.error(responseData.message || "Không thể tạo mã giảm giá");
+        }
       }
     } catch (error) {
       console.error("Error creating coupon:", error);
@@ -164,38 +273,64 @@ const CouponForm = () => {
 
 
   return (
-    <div>
+    <div className="space-y-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Loại giảm giá và Giá trị */}
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Loại giảm giá</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-indigo-500 to-emerald-500 flex items-center justify-center">
+                    <Percent className="w-3 h-3 text-white" />
+                  </div>
+                  Loại giảm giá
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                      <SelectValue placeholder="Chọn loại giảm giá" />
+                    <SelectTrigger className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl transition-all duration-300 hover:shadow-lg">
+                      <SelectValue placeholder="Chọn loại giảm giá">
+                        {field.value === "%" && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
+                              <Percent className="w-3 h-3 text-white" />
+                            </div>
+                            <span className="font-medium">Phần trăm (%)</span>
+                          </div>
+                        )}
+                        {field.value === "VNĐ" && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
+                              <Coins className="w-3 h-3 text-white" />
+                            </div>
+                            <span className="font-medium">Số tiền cố định (VNĐ)</span>
+                          </div>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="%" className="flex items-center gap-2">
-                      <Percent className="w-4 h-4" />
-                      Phần trăm (%)
+                  <SelectContent className="bg-white/95 backdrop-blur-sm border border-indigo-100/60 rounded-xl shadow-xl">
+                    <SelectItem value="%" className="flex items-center gap-3 hover:bg-indigo-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
+                        <Percent className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-medium">Phần trăm (%)</span>
                     </SelectItem>
-                    <SelectItem value="VNĐ" className="flex items-center gap-2">
-                      <Coins className="w-4 h-4" />
-                      Số tiền cố định (VNĐ)
+                    <SelectItem value="VNĐ" className="flex items-center gap-3 hover:bg-emerald-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
+                        <Coins className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-medium">Số tiền cố định (VNĐ)</span>
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Chọn loại giảm giá: phần trăm hoặc số tiền cố định
                 </FormDescription>
                 <FormMessage />
@@ -207,22 +342,39 @@ const CouponForm = () => {
             control={form.control}
             name="value"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Giá trị giảm giá</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
+                    <Coins className="w-3 h-3 text-white" />
+                  </div>
+                  Giá trị giảm giá
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      placeholder="Nhập giá trị giảm giá"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Percent className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="VD: 10"
+                        value={field.value ? String(field.value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value.replace(/\./g, "");
+                          if (newValue === "" || /^\d+$/.test(newValue)) {
+                            field.onChange(newValue);
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-indigo-500 to-emerald-500 flex items-center justify-center">
+                          <Percent className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Nhập giá trị giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -235,22 +387,39 @@ const CouponForm = () => {
             control={form.control}
             name="minimumPurchaseAmount"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Số tiền tối thiểu</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                    <ShoppingCart className="w-3 h-3 text-white" />
+                  </div>
+                  Số tiền tối thiểu
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      placeholder="Nhập số tiền tối thiểu để áp dụng mã"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <ShoppingCart className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="VD: 100.000"
+                        value={field.value ? String(field.value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value.replace(/\./g, "");
+                          if (newValue === "" || /^\d+$/.test(newValue)) {
+                            field.onChange(newValue);
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                          <ShoppingCart className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Số tiền tối thiểu khách hàng cần mua để áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -262,22 +431,39 @@ const CouponForm = () => {
             control={form.control}
             name="usageLimit"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Giới hạn sử dụng</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
+                    <Users className="w-3 h-3 text-white" />
+                  </div>
+                  Giới hạn sử dụng
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      placeholder="Nhập số lần sử dụng tối đa"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Users className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="VD: 100"
+                        value={field.value ? String(field.value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value.replace(/\./g, "");
+                          if (newValue === "" || /^\d+$/.test(newValue)) {
+                            field.onChange(newValue);
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
+                          <Users className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Số lần tối đa mã giảm giá có thể được sử dụng
                 </FormDescription>
                 <FormMessage />
@@ -290,22 +476,39 @@ const CouponForm = () => {
             control={form.control}
             name="userLimit"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Giới hạn sử dụng trên mỗi user</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center justify-center">
+                    <Users className="w-3 h-3 text-white" />
+                  </div>
+                  Giới hạn sử dụng trên mỗi user
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      placeholder="Nhập số lần sử dụng tối đa trên mỗi user"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Users className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="VD: 5"
+                        value={field.value ? String(field.value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value.replace(/\./g, "");
+                          if (newValue === "" || /^\d+$/.test(newValue)) {
+                            field.onChange(newValue);
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center justify-center">
+                          <Users className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Số lần tối đa mỗi user có thể sử dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -317,21 +520,32 @@ const CouponForm = () => {
             control={form.control}
             name="startDate"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Ngày bắt đầu</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                    <Calendar className="w-3 h-3 text-white" />
+                  </div>
+                  Ngày bắt đầu
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="date"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="date"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        {...field}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                          <Calendar className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Ngày bắt đầu áp dụng mã giảm giá (có thể chọn ngày trong quá khứ)
                 </FormDescription>
                 <FormMessage />
@@ -339,26 +553,41 @@ const CouponForm = () => {
             )}
           />
 
-          {/* Giờ bắt đầu và Ngày kết thúc */}
+          {/* Giờ bắt đầu - Smart Time Input */}
           <FormField
             control={form.control}
             name="startTime"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Giờ bắt đầu</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Calendar className="w-3 h-3 text-white" />
+                  </div>
+                  Giờ bắt đầu
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="time"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                                            <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="00:00"
+                        value={formatTime(startTimeValue)}
+                        onChange={(e) => handleTimeChange(e, setStartTimeValue, field)}
+                        onKeyDown={(e) => handleTimeKeyDown(e, startTimeValue, setStartTimeValue)}
+                        maxLength={5}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                          <Calendar className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Giờ bắt đầu áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -370,22 +599,32 @@ const CouponForm = () => {
             control={form.control}
             name="endDate"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Ngày kết thúc</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center">
+                    <Calendar className="w-3 h-3 text-white" />
+                  </div>
+                  Ngày kết thúc
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="date"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                      <Input
+                        type="date"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        {...field}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center">
+                          <Calendar className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Ngày kết thúc áp dụng mã giảm giá (phải lớn hơn ngày bắt đầu)
                 </FormDescription>
                 <FormMessage />
@@ -393,26 +632,41 @@ const CouponForm = () => {
             )}
           />
 
-          {/* Giờ kết thúc */}
+          {/* Giờ kết thúc - Smart Time Input */}
           <FormField
             control={form.control}
             name="endTime"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-medium">Giờ kết thúc</FormLabel>
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center">
+                    <Calendar className="w-3 h-3 text-white" />
+                  </div>
+                  Giờ kết thúc
+                </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="time"
-                      className="h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pl-10"
-                      {...field}
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar className="w-5 h-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-xl transform rotate-1 transition-transform group-hover:rotate-2"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-xl transform -rotate-1 transition-transform group-hover:-rotate-2"></div>
+                    <div className="relative">
+                                            <Input
+                        type="text"
+                        className="h-14 bg-white/80 backdrop-blur-sm border border-indigo-100/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 rounded-xl pl-12 transition-all duration-300 hover:shadow-lg"
+                        placeholder="00:00"
+                        value={formatTime(endTimeValue)}
+                        onChange={(e) => handleTimeChange(e, setEndTimeValue, field)}
+                        onKeyDown={(e) => handleTimeKeyDown(e, endTimeValue, setEndTimeValue)}
+                        maxLength={5}
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center">
+                          <Calendar className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </FormControl>
-                <FormDescription className="text-sm text-gray-500">
+                <FormDescription className="text-sm text-slate-600">
                   Giờ kết thúc áp dụng mã giảm giá
                 </FormDescription>
                 <FormMessage />
@@ -421,21 +675,32 @@ const CouponForm = () => {
           />
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button
-            type="submit"
-            className="h-12 px-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Đang tạo mã...
-              </>
-            ) : (
-              "Tạo mã giảm giá"
-            )}
-          </Button>
+        <div className="flex justify-end pt-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-2xl transform rotate-1"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 rounded-2xl transform -rotate-1"></div>
+            <div className="relative">
+              <Button
+                type="submit"
+                className="h-14 px-8 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    Đang tạo mã giảm giá...
+                  </>
+                ) : (
+                  <>
+                    <div className="w-5 h-5 mr-3 rounded-lg bg-white/20 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    Tạo mã giảm giá
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </form>
     </Form>

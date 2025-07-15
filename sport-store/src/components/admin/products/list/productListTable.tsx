@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, Star, Clock, Eye, Copy, Package, TrendingUp, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Power, AlertCircle, Star, Clock, Eye, Copy, Package, TrendingUp, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -91,7 +91,8 @@ const ProductListTable = React.memo(
     const [selectedProductForSetup, setSelectedProductForSetup] = React.useState<Product | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
-    const productsPerPage = 10;
+    const [imageErrors, setImageErrors] = React.useState<Set<string>>(new Set());
+    const productsPerPage = 10; // Giới hạn 10 sản phẩm mỗi trang
 
     // Pagination logic
     const indexOfLastProduct = currentPage * productsPerPage;
@@ -227,6 +228,8 @@ const ProductListTable = React.memo(
               </span>
             )}
           </div>
+          
+
         </div>
 
         {/* Enhanced Table Container with Glass Morphism */}
@@ -249,7 +252,7 @@ const ProductListTable = React.memo(
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-64">Sản Phẩm</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-36">Giá</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-32">Tồn Kho</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-48">Danh Mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Danh Mục</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-44">Trạng Thái</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">Thao Tác</th>
                   </tr>
@@ -272,13 +275,22 @@ const ProductListTable = React.memo(
                           <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0">
                               <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border border-slate-200/60">
-                                <Image
-                                  src={product.mainImage || '/default-image.png'}
-                                  alt={product.name}
-                                  width={48}
-                                  height={48}
-                                  className="w-full h-full object-cover"
-                                />
+                                {imageErrors.has(product._id) ? (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <ImageIcon size={20} className="text-gray-400" />
+                                  </div>
+                                ) : (
+                                  <Image
+                                    src={product.mainImage || '/default-image.png'}
+                                    alt={product.name}
+                                    width={48}
+                                    height={48}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setImageErrors(prev => new Set(prev).add(product._id))}
+                                    loading="lazy"
+                                    unoptimized={product.mainImage?.includes('cloudinary')}
+                                  />
+                                )}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
@@ -320,7 +332,12 @@ const ProductListTable = React.memo(
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-slate-600">
-                            {getCategoryName(product.categoryId)}
+                            <div 
+                              className="truncate max-w-36 hover:max-w-none hover:whitespace-normal hover:break-words cursor-help transition-all duration-200"
+                              title={getCategoryName(product.categoryId)}
+                            >
+                              {getCategoryName(product.categoryId)}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">

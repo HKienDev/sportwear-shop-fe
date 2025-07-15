@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit, Power, Trash } from "lucide-react";
 import {
@@ -23,10 +23,6 @@ interface CategoryTableProps {
   selectedCategories: string[];
   onToggleSelectAll: () => void;
   onToggleSelectCategory: (id: string) => void;
-  searchQuery?: string;
-  filters?: {
-    status: string | null;
-  };
 }
 
 const CategoryTable = React.memo(
@@ -35,53 +31,13 @@ const CategoryTable = React.memo(
     selectedCategories,
     onToggleSelectAll,
     onToggleSelectCategory,
-    searchQuery = "",
-    filters = { status: null },
   }: CategoryTableProps) => {
     const router = useRouter();
-    const [limit] = useState(10);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-    const [localCategories, setLocalCategories] = useState<Category[]>([]);
-
-    // Cập nhật localCategories khi categories thay đổi
-    useEffect(() => {
-      setLocalCategories(categories);
-    }, [categories]);
-
-    const fetchCategories = useCallback(async () => {
-      try {
-        const params = new URLSearchParams({
-          page: "1", // Always fetch page 1 for now
-          limit: limit.toString(),
-          ...(searchQuery && { search: searchQuery }),
-          ...(filters.status && !searchQuery && { isActive: filters.status === "active" ? "true" : "false" }),
-          _t: Date.now().toString(),
-        });
-        
-        const response = await fetch(`/api/categories/admin?${params}`, {
-          credentials: "include",
-        });
-        
-        const data = await response.json();
-        if (!data.success) {
-          toast.error(data.message || "Có lỗi xảy ra khi tải danh sách danh mục");
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải danh sách danh mục");
-      }
-    }, [limit, searchQuery, filters]);
-
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        fetchCategories();
-      }, 300);
-      return () => clearTimeout(timer);
-    }, [fetchCategories]);
 
     const handleEdit = (categoryId: string) => {
-      const category = localCategories.find(cat => cat._id === categoryId);
+      const category = categories.find((cat: Category) => cat._id === categoryId);
       if (category) {
         router.push(`/admin/categories/edit/${category.categoryId}`);
       }
@@ -89,17 +45,6 @@ const CategoryTable = React.memo(
 
     const handleToggleStatus = async (categoryId: string, currentStatus: boolean) => {
       try {
-        // Cập nhật trạng thái ngay lập tức trong UI
-        setLocalCategories(prevCategories => 
-          prevCategories.map(category => {
-            if (category._id === categoryId) {
-              return { ...category, isActive: !currentStatus };
-            }
-            return category;
-          })
-        );
-        
-        // Gọi API để cập nhật trạng thái
         const response = await fetch(`/api/categories/${categoryId}`, {
           method: "PUT",
           headers: {
@@ -113,30 +58,12 @@ const CategoryTable = React.memo(
         
         if (data.success) {
           toast.success(`Đã ${!currentStatus ? "Kích hoạt" : "Tạm dừng"} danh mục`);
-          // Cập nhật lại danh sách từ server
-          fetchCategories();
+          // Reload trang để cập nhật dữ liệu
+          window.location.reload();
         } else {
-          // Nếu API thất bại, hoàn tác lại trạng thái
-          setLocalCategories(prevCategories => 
-            prevCategories.map(category => {
-              if (category._id === categoryId) {
-                return { ...category, isActive: currentStatus };
-              }
-              return category;
-            })
-          );
           toast.error(data.message || "Có lỗi xảy ra");
         }
       } catch (error) {
-        // Nếu có lỗi, hoàn tác lại trạng thái
-        setLocalCategories(prevCategories => 
-          prevCategories.map(category => {
-            if (category._id === categoryId) {
-              return { ...category, isActive: currentStatus };
-            }
-            return category;
-          })
-        );
         console.error("Error toggling category status:", error);
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
       }
@@ -150,11 +77,6 @@ const CategoryTable = React.memo(
     const confirmDelete = async () => {
       if (!categoryToDelete) return;
       try {
-        // Cập nhật UI ngay lập tức
-        setLocalCategories(prevCategories => 
-          prevCategories.filter(category => category._id !== categoryToDelete)
-        );
-        
         const response = await fetch(`/api/categories/${categoryToDelete}`, {
           method: "DELETE",
           headers: {
@@ -165,10 +87,9 @@ const CategoryTable = React.memo(
         const data = await response.json();
         if (data.success) {
           toast.success("Đã xóa danh mục thành công");
-          // Không cần gọi fetchCategories() nữa vì đã cập nhật UI ngay lập tức
+          // Reload trang để cập nhật dữ liệu
+          window.location.reload();
         } else {
-          // Nếu API thất bại, hoàn tác lại trạng thái
-          fetchCategories();
           throw new Error(data.message || "Có lỗi xảy ra");
         }
       } catch (error) {
@@ -188,27 +109,27 @@ const CategoryTable = React.memo(
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-2xl transform -rotate-1"></div>
           <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-indigo-100/60 shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200/60">
+              <table className="w-full divide-y divide-slate-200/60" style={{ minWidth: '800px', tableLayout: 'auto' }}>
                 <thead>
                   <tr className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 backdrop-blur-sm">
                     <th className="px-6 py-4 w-12">
                       <input
                         type="checkbox"
-                        checked={selectedCategories.length === localCategories.length && localCategories.length > 0}
+                        checked={selectedCategories.length === categories.length && categories.length > 0}
                         onChange={onToggleSelectAll}
                         className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                       />
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Tên danh mục</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Mã danh mục</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Số sản phẩm</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Thao tác</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Tên danh mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Mã danh mục</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Số sản phẩm</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/60">
-                  {localCategories.length > 0 ? (
-                    localCategories.map((category, index) => (
+                  {categories.length > 0 ? (
+                    categories.map((category, index) => (
                       <tr key={category._id} className={`group hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-300 ${
                         index % 2 === 0 ? 'bg-white/60' : 'bg-slate-50/60'
                       }`}>
@@ -220,8 +141,15 @@ const CategoryTable = React.memo(
                             className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                           />
                         </td>
-                        <td className="px-6 py-4 font-semibold text-slate-800">
-                          {category.name}
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-slate-600">
+                            <div 
+                              className="whitespace-nowrap font-bold"
+                              title={category.name}
+                            >
+                              {category.name}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 font-mono text-xs text-slate-600">
                           {category.categoryId}
@@ -229,11 +157,11 @@ const CategoryTable = React.memo(
                         <td className="px-6 py-4 text-center font-semibold text-slate-800">
                           {category.productCount || 0}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <CategoryStatusBadge status={category.isActive ? "active" : "inactive"} />
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex gap-2 justify-center">
                             <button
                               onClick={() => handleEdit(category._id)}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all duration-200"

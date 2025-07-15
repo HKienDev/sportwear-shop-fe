@@ -44,8 +44,8 @@ export default function Pagination({
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // Temporarily show pagination even for single page for testing
-  // if (totalPages <= 1) return null;
+  // Chỉ hiển thị pagination khi có nhiều hơn 1 trang
+  if (totalPages <= 1) return null;
 
   return (
     <div className="relative">
@@ -69,7 +69,7 @@ export default function Pagination({
             <span className="font-medium text-slate-800">
               {totalItems.toLocaleString()}
             </span>
-            {" kết quả"}
+            {" sản phẩm"}
           </div>
 
           {/* Pagination Controls */}
@@ -129,7 +129,7 @@ export default function Pagination({
 
           {/* Page Info */}
           <div className="text-sm text-slate-500 font-medium hidden sm:block">
-            Trang {currentPage} / {totalPages}
+            Trang {currentPage} / {totalPages} ({itemsPerPage} sản phẩm/trang)
           </div>
         </div>
 
@@ -148,7 +148,7 @@ export default function Pagination({
             </Button>
             
             <div className="text-sm text-slate-600 font-medium">
-              {currentPage} / {totalPages}
+              {currentPage} / {totalPages} ({itemsPerPage}/trang)
             </div>
             
             <Button

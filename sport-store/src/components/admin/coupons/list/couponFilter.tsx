@@ -8,6 +8,7 @@ export const COUPON_STATUS = {
   ACTIVE: "Hoạt động",
   INACTIVE: "Tạm Dừng",
   EXPIRED: "Hết hạn",
+  UPCOMING: "Sắp diễn ra",
 } as const;
 
 // Hàm lấy màu sắc cho trạng thái

@@ -91,22 +91,60 @@ export const customerService = {
             console.log('⏭️ Skipping orders lookup for non-user role:', user.role, 'phone:', user.phone);
           }
           
-          // Tính toán thống kê từ tất cả đơn hàng
-          const totalOrders = allOrders.length;
-          const totalSpent = allOrders.reduce((total: number, order: Record<string, unknown>) => {
+          // Ưu tiên sử dụng dữ liệu trực tiếp từ user model
+          if (user.totalSpent !== undefined && user.orderCount !== undefined) {
+            console.log('✅ Using user model data for', user.phone, ':', {
+              totalSpent: user.totalSpent,
+              orderCount: user.orderCount
+            });
+            return {
+              ...user,
+              orderCount: user.orderCount || 0,
+              totalSpent: user.totalSpent || 0,
+              deliveredOrders: user.orderCount || 0,
+              realOrderCount: user.orderCount || 0,
+              realTotalSpent: user.totalSpent || 0,
+              realDeliveredOrders: user.orderCount || 0
+            };
+          }
+          
+          // Fallback: Sử dụng dữ liệu từ backend nếu có
+          if (user.realTotalSpent !== undefined && user.realDeliveredOrders !== undefined) {
+            console.log('✅ Using backend calculated data for', user.phone, ':', {
+              realTotalSpent: user.realTotalSpent,
+              realDeliveredOrders: user.realDeliveredOrders
+            });
+            return {
+              ...user,
+              orderCount: user.realDeliveredOrders || 0,
+              totalSpent: user.realTotalSpent || 0,
+              deliveredOrders: user.realDeliveredOrders || 0
+            };
+          }
+          
+          // Fallback: Tính toán thống kê từ tất cả đơn hàng đã thanh toán (không chỉ đơn đã giao hàng)
+          const paidOrders = allOrders.filter((order: Record<string, unknown>) => 
+            (order.status as string) === 'delivered' ||
+            (order.status as string) === 'confirmed' ||
+            (order.status as string) === 'shipped' ||
+            (order.paymentStatus as string) === 'paid'
+          );
+          const totalOrders = paidOrders.length;
+          const totalSpent = paidOrders.reduce((total: number, order: Record<string, unknown>) => {
             return total + ((order.totalPrice as number) || 0);
           }, 0);
-          const deliveredOrders = allOrders.filter((order: Record<string, unknown>) => 
-            (order.status as string) === 'delivered'
-          ).length;
           
-          console.log('Total orders for', user.phone, ':', totalOrders, 'Total spent:', totalSpent);
+          console.log('📊 Calculated data for', user.phone, ':', {
+            totalOrders,
+            totalSpent,
+            deliveredOrders: totalOrders
+          });
           
           return {
             ...user,
             orderCount: totalOrders,
             totalSpent: totalSpent,
-            deliveredOrders: deliveredOrders
+            deliveredOrders: totalOrders
           };
         } catch (error) {
           console.error(`Error getting orders for user ${user.phone}:`, error);
@@ -272,9 +310,15 @@ export const customerService = {
               console.error(`Error getting orders by phone for ${rawCustomer.phone}:`, error);
             }
             
-            // Tính toán thống kê từ tất cả đơn hàng
-            const totalOrders = allOrders.length;
-            const totalSpent = allOrders.reduce((total: number, order: Record<string, unknown>) => {
+            // Tính toán thống kê từ tất cả đơn hàng đã thanh toán
+            const paidOrders = allOrders.filter((order: Record<string, unknown>) => 
+              (order.status as string) === 'delivered' ||
+              (order.status as string) === 'confirmed' ||
+              (order.status as string) === 'shipped' ||
+              (order.paymentStatus as string) === 'paid'
+            );
+            const totalOrders = paidOrders.length;
+            const totalSpent = paidOrders.reduce((total: number, order: Record<string, unknown>) => {
               return total + ((order.totalPrice as number) || 0);
             }, 0);
             const deliveredOrders = allOrders.filter((order: Record<string, unknown>) => 

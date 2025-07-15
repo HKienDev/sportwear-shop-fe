@@ -7,6 +7,7 @@ const STATUS_MAPPING: Record<string, string> = {
   "Hoạt động": "active",
   "Tạm Dừng": "inactive", 
   "Hết hạn": "expired",
+  "Sắp diễn ra": "upcoming",
   // Frontend status (tiếng Anh)
   "active": "active",
   "inactive": "inactive",

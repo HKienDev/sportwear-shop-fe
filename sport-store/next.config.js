@@ -13,14 +13,22 @@ const nextConfig = {
                 port: '4000',
                 pathname: '/uploads/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+                pathname: '/**',
+            },
         ],
         // Tăng timeout cho images
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
         formats: ['image/webp'],
-        minimumCacheTTL: 60,
+        minimumCacheTTL: 300, // Tăng cache time
         dangerouslyAllowSVG: true,
         contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+        // Thêm cấu hình để xử lý timeout
+        loader: 'default',
+        loaderFile: undefined,
     },
     // Thêm cấu hình để tối ưu hiệu suất
     reactStrictMode: true,

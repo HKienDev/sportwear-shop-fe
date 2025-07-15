@@ -31,8 +31,10 @@ export default function CouponListPage() {
     const [loading, setLoading] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const couponsPerPage = 10;
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [total, setTotal] = useState(0);
+    const totalPages = Math.ceil(total / limit);
 
     const fetchCouponsWithStatus = useCallback(async (status: string | undefined) => {
         try {
@@ -40,6 +42,8 @@ export default function CouponListPage() {
             const params = new URLSearchParams({
                 ...(searchQuery && { search: searchQuery }),
                 ...(status && { status }),
+                page: page.toString(),
+                limit: limit.toString(),
             });
             
             const response = await fetch(`/api/coupons/admin?${params}`, {
@@ -49,6 +53,7 @@ export default function CouponListPage() {
             const data = await response.json();
             if (data.success && data.data) {
                 setCoupons(data.data.coupons);
+                setTotal(data.data.pagination?.total || data.data.coupons.length);
             } else {
                 toast.error("Không thể tải danh sách mã giảm giá");
             }
@@ -58,7 +63,7 @@ export default function CouponListPage() {
         } finally {
             setLoading(false);
         }
-    }, [searchQuery]);
+    }, [searchQuery, page, limit]);
 
     const fetchCoupons = useCallback(async () => {
         let apiStatus = undefined;
@@ -79,14 +84,16 @@ export default function CouponListPage() {
         } else {
             fetchCoupons();
         }
-    }, [user, router, fetchCoupons, authLoading, isAuthenticated]);
+    }, [user, router, fetchCoupons, authLoading, isAuthenticated, page]);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
+        setPage(1); // Reset về trang 1 khi search
     };
 
     const handleFilter = (status: string) => {
         setStatusFilter(status);
+        setPage(1); // Reset về trang 1 khi filter
         fetchCouponsWithStatus(status === "Hoạt động" ? "active" : 
                              status === "Tạm Dừng" ? "inactive" : 
                              status === "Hết hạn" ? "expired" : undefined);
@@ -245,14 +252,8 @@ export default function CouponListPage() {
         }
     }, [selectedCoupons, fetchCoupons]);
 
-    // Pagination logic
-    const indexOfLastCoupon = currentPage * couponsPerPage;
-    const indexOfFirstCoupon = indexOfLastCoupon - couponsPerPage;
-    const currentCoupons = coupons.slice(indexOfFirstCoupon, indexOfLastCoupon);
-    const totalPages = Math.ceil(coupons.length / couponsPerPage);
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
     };
 
     if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -465,7 +466,7 @@ export default function CouponListPage() {
                             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-indigo-500/5 rounded-3xl transform -rotate-1"></div>
                             <div className="bg-white/90 backdrop-blur-sm bg-opacity-80 rounded-3xl shadow-xl border border-indigo-100/60 overflow-hidden relative z-10">
                                 <CouponTable
-                                    coupons={currentCoupons}
+                                    coupons={coupons}
                                     selectedCoupons={selectedCoupons}
                                     onSelectCoupon={handleSelectCoupon}
                                     onSelectAll={handleSelectAll}
@@ -481,11 +482,11 @@ export default function CouponListPage() {
                     {coupons.length > 0 && (
                         <div className="mt-8">
                             <Pagination
-                                currentPage={currentPage}
+                                currentPage={page}
                                 totalPages={totalPages}
                                 onPageChange={handlePageChange}
-                                itemsPerPage={couponsPerPage}
-                                totalItems={coupons.length}
+                                itemsPerPage={limit}
+                                totalItems={total}
                             />
                         </div>
                     )}

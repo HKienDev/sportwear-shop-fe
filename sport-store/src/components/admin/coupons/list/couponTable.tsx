@@ -129,12 +129,12 @@ const CouponTable: React.FC<CouponTableProps> = ({
                     />
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Mã</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Loại</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Giá trị</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Bắt đầu</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Kết thúc</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Thao tác</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Loại</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Giá trị</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Bắt đầu</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Kết thúc</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Trạng thái</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-40">Thao tác</th>
                 </tr>
               </thead>
                               <tbody className="divide-y divide-slate-200/60">
@@ -151,36 +151,41 @@ const CouponTable: React.FC<CouponTableProps> = ({
                           className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 transition-all duration-200"
                         />
                       </td>
-                      <td className="px-6 py-4 font-semibold text-slate-800">
-                        {coupon.code}
-                      </td>
                       <td className="px-6 py-4">
+                        <button
+                          onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
+                          className="font-semibold text-slate-800 hover:text-indigo-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 rounded px-2 py-1"
+                        >
+                          {coupon.code.replace('VJUSPORTVOUCHER-', '')}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         {coupon.type === 'percentage' ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 justify-center">
                             <Percent className="h-4 w-4 text-indigo-500" />
                             <span className="text-slate-700">Phần trăm</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 justify-center">
                             <DollarSign className="h-4 w-4 text-emerald-500" />
                             <span className="text-slate-700">Số tiền</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-slate-800">
+                      <td className="px-6 py-4 text-center font-semibold text-slate-800">
                         {getDiscountDisplay(coupon)}
                       </td>
-                      <td className="px-6 py-4 text-slate-600">
+                      <td className="px-6 py-4 text-center text-slate-600">
                         {formatDate(coupon.startDate)}
                       </td>
-                      <td className="px-6 py-4 text-slate-600">
+                      <td className="px-6 py-4 text-center text-slate-600">
                         {formatDate(coupon.endDate)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center">
                         <CouponStatusBadge status={coupon.status} />
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => router.push(`/admin/coupons/${coupon._id}`)}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all duration-200"

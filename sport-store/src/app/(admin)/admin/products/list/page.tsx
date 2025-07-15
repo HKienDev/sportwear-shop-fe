@@ -63,6 +63,7 @@ export default function ProductListPage() {
       const queryParams = new URLSearchParams({
         search: searchTerm,
         category: categoryFilter,
+        limit: '1000', // Lấy tối đa 1000 sản phẩm cho admin
       });
       const response = await fetch(
         `/api/products/admin?${queryParams.toString()}`,

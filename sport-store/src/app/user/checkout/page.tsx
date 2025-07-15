@@ -170,8 +170,16 @@ export default function Checkout() {
         const coupon = response.data.data;
 
         // Kiểm tra trạng thái
-        if (coupon.status !== "Hoạt động") {
-          throw new Error("Mã giảm giá không hoạt động");
+        if (coupon.status === "Hết hạn") {
+          throw new Error("Mã giảm giá đã hết hạn");
+        }
+        
+        if (coupon.status === "Tạm Dừng") {
+          throw new Error("Mã giảm giá đang tạm dừng");
+        }
+        
+        if (coupon.status === "Sắp diễn ra") {
+          throw new Error("Mã giảm giá chưa có hiệu lực");
         }
 
         // Kiểm tra ngày hiệu lực

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Customer } from '@/types/customer';
-import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, AlertCircle, Power, Info } from 'lucide-react';
+import { Eye, Mail, Phone, Trash2, ShoppingBag, CreditCard, AlertCircle, Power } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -150,16 +150,6 @@ export function CustomerTable({
 
   return (
     <div className="space-y-6">
-      {/* Info about filtered customers */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center gap-2">
-          <Info className="w-5 h-5 text-blue-600" />
-          <span className="text-sm text-blue-700">
-            Chỉ hiển thị khách hàng có vai trò &quot;user&quot;. Các tài khoản admin và staff không được hiển thị ở đây.
-          </span>
-        </div>
-      </div>
-      
       {/* Table Container with Enhanced Glass Effect */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-emerald-500/5 rounded-3xl transform rotate-1"></div>
@@ -262,7 +252,7 @@ export function CustomerTable({
                         <div className="flex items-center gap-2">
                           <ShoppingBag size={16} className="text-slate-400" />
                           <span className="text-sm font-semibold text-slate-800">
-                            {customer.orderCount || customer.totalOrders || 0}
+                            {customer.orderCount || customer.realDeliveredOrders || customer.totalOrders || 0}
                           </span>
                         </div>
                       </td>
@@ -270,7 +260,7 @@ export function CustomerTable({
                         <div className="flex items-center gap-2">
                           <CreditCard size={16} className="text-slate-400" />
                           <span className="text-sm font-semibold text-slate-800">
-                            {formatCurrency(customer.totalSpent || 0)}
+                            {formatCurrency(customer.totalSpent || customer.realTotalSpent || 0)}
                           </span>
                         </div>
                       </td>
