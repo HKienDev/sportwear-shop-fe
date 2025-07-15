@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "./button";
@@ -25,23 +25,66 @@ const CLOUDINARY_CONFIG = {
 
 export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset image error when value changes
+  useEffect(() => {
+    if (value) {
+      setImageError(false);
+    }
+  }, [value]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    console.log("📁 File selected:", file.name, file.size, file.type);
+    uploadFile(file);
+  };
 
-    // Kiểm tra kích thước file
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error("Kích thước ảnh không được vượt quá 5MB");
-      return;
+  const handleRemove = () => {
+    onChange("");
+    setImageError(false);
+    // Reset file input để có thể chọn lại file cũ
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
+  };
 
-    // Kiểm tra định dạng file
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Chỉ chấp nhận ảnh định dạng JPG, PNG hoặc WEBP");
-      return;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      // Kiểm tra file trước khi upload
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("Kích thước ảnh không được vượt quá 5MB");
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast.error("Chỉ chấp nhận ảnh định dạng JPG, PNG hoặc WEBP");
+        return;
+      }
+      // Upload file
+      uploadFile(file);
     }
+  };
 
+  const uploadFile = async (file: File) => {
     console.log("Cloudinary config:", {
       ...CLOUDINARY_CONFIG,
       fileType: file.type,
@@ -50,6 +93,7 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
 
     try {
       setIsUploading(true);
+      setImageError(false); // Reset error state when starting new upload
 
       // Tạo FormData để gửi file
       const formData = new FormData();
@@ -76,6 +120,7 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
       }
 
       onChange(data.secure_url);
+      setImageError(false);
       toast.success("Upload ảnh thành công");
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -85,44 +130,79 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
     }
   };
 
-  const handleRemove = () => {
-    onChange("");
-  };
-
   return (
     <div className="space-y-4">
       {value ? (
-        <div className="relative w-full aspect-[4/3] min-h-[120px] max-h-[180px] bg-muted rounded-md overflow-hidden">
-          <Image
-            src={value}
-            alt="Uploaded image"
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+        <div className="relative w-full aspect-[4/3] min-h-[120px] max-h-[180px] bg-muted rounded-md overflow-hidden group">
+          {isUploading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+              <div className="flex items-center gap-2 text-white">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Đang upload...</span>
+              </div>
+            </div>
+          )}
+          {!imageError ? (
+            <Image
+              src={value}
+              alt="Uploaded image"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              onError={() => {
+                console.error("Image failed to load:", value);
+                setImageError(true);
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          )}
           <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2"
-              onClick={handleRemove}
-              disabled={disabled || isUploading}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={disabled || isUploading}
+                className="bg-white/90 hover:bg-white"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={handleRemove}
+                disabled={disabled || isUploading}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[120px] max-h-[180px] border-2 border-dashed rounded-md">
-          <Upload className="h-6 w-6 mb-1.5 text-gray-500" />
-          <p className="text-sm text-gray-500 mb-1.5">
-            Kéo thả ảnh vào đây hoặc click để chọn
-          </p>
-          <p className="text-xs text-gray-400 mb-1.5">
-            Tối đa 5MB, định dạng JPG, PNG hoặc WEBP
+        <div 
+          className={`flex flex-col items-center justify-center w-full aspect-[4/3] min-h-[120px] max-h-[180px] border-2 border-dashed rounded-xl transition-all duration-200 cursor-pointer ${
+            isDragOver 
+              ? 'border-blue-400 bg-blue-50' 
+              : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="h-8 w-8 mb-3 text-gray-400" />
+          <p className="text-sm font-medium text-gray-600 mb-3 text-center">
+            Click để chọn ảnh
           </p>
           <Input
+            ref={fileInputRef}
             type="file"
             accept={ACCEPTED_IMAGE_TYPES.join(",")}
             onChange={handleUpload}
@@ -130,21 +210,12 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
             className="hidden"
             id="image-upload"
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => document.getElementById("image-upload")?.click()}
-            disabled={disabled || isUploading}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang upload...
-              </>
-            ) : (
-              "Chọn ảnh"
-            )}
-          </Button>
+          {isUploading && (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Đang upload...</span>
+            </div>
+          )}
         </div>
       )}
     </div>

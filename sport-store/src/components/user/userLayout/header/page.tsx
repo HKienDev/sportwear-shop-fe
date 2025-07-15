@@ -237,6 +237,17 @@ const Header = () => {
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const fallback = document.createElement('div');
+                                      fallback.className = 'w-full h-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center';
+                                      fallback.innerHTML = '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
+                                      parent.appendChild(fallback);
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
@@ -385,6 +396,17 @@ const Header = () => {
                             width={32}
                             height={32}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'w-full h-full bg-red-50 flex items-center justify-center';
+                                fallback.innerHTML = '<svg class="w-3 h-3 sm:w-4 sm:h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
+                                parent.appendChild(fallback);
+                              }
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full bg-red-50 flex items-center justify-center">

@@ -29,6 +29,8 @@ const nextConfig = {
         // Thêm cấu hình để xử lý timeout
         loader: 'default',
         loaderFile: undefined,
+        // Thêm cấu hình để xử lý Cloudinary images
+        unoptimized: false,
     },
     // Thêm cấu hình để tối ưu hiệu suất
     reactStrictMode: true,
