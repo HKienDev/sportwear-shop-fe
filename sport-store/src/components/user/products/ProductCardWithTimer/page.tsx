@@ -384,15 +384,15 @@ const ProductCardWithTimer = ({
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <span className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                ${(product.price || 150000).toLocaleString('en-US')}
+                {(product.price || 150000).toLocaleString('en-US')}đ
               </span>
               <span className="text-lg text-gray-400 line-through">
-                ${(product.originalPrice || 200000).toLocaleString('en-US')}
+                {(product.originalPrice || 200000).toLocaleString('en-US')}đ
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
               <Zap className="w-4 h-4" />
-              <span>Tiết kiệm ${discountAmount.toLocaleString('en-US')} ({discountPercentage}%)</span>
+              <span>Tiết kiệm {discountAmount.toLocaleString('en-US')}đ ({discountPercentage}%)</span>
             </div>
           </div>
 
