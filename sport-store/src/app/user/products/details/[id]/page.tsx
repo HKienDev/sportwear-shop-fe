@@ -332,6 +332,10 @@ export default function ProductDetail() {
       <ProductDescription 
         description={product.description}
         specifications={product.specifications}
+        productSku={product.sku}
+        productName={product.name}
+        currentRating={product.rating}
+        numReviews={product.numReviews}
       />
     </div>
   );
