@@ -94,50 +94,33 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
 
   const fetchUserOrders = async () => {
     try {
-      console.log('Fetching user orders for product:', productSku);
-      
-      console.log('Fetching orders from /api/orders/user');
       const response = await fetch('/api/orders/user', {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies
+        credentials: 'include',
       });
-      
-      console.log('Response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Orders data:', data);
-        console.log('Data type:', typeof data);
-        console.log('Data.data type:', typeof data.data);
-        console.log('Data.data:', data.data);
-        console.log('Data.data.orders:', data.data?.orders);
-        console.log('Data.data.orders type:', typeof data.data?.orders);
+        
+        if (data.success) {
+          const orders = data.data || [];
           
-          if (data.success) {
-            // Backend returns data: orders (array directly)
-            const orders = data.data || [];
-            console.log('Orders array:', orders);
-            
-            // Filter orders that contain this product
-            const ordersWithProduct = orders.filter((order: any) => {
-              console.log('Checking order:', order.shortId, 'items:', order.items);
-              return order.items && order.items.some((item: any) => {
-                console.log('Checking item:', item.sku, 'vs productSku:', productSku);
-                return item.sku === productSku;
-              });
-            });
-            console.log('Orders with product:', ordersWithProduct);
-            setUserOrders(ordersWithProduct);
-            
-            if (ordersWithProduct.length === 0) {
-              toast.info('Bạn chưa có đơn hàng nào chứa sản phẩm này hoặc đơn hàng chưa được giao thành công. Chỉ có thể đánh giá sản phẩm sau khi đã mua và nhận hàng.');
-            }
+          // Filter orders that contain this product
+          const ordersWithProduct = orders.filter((order: any) =>
+            order.items && order.items.some((item: any) => item.sku === productSku)
+          );
+          
+          setUserOrders(ordersWithProduct);
+          
+          if (ordersWithProduct.length === 0) {
+            toast.info('Bạn chưa có đơn hàng nào chứa sản phẩm này hoặc đơn hàng chưa được giao thành công. Chỉ có thể đánh giá sản phẩm sau khi đã mua và nhận hàng.');
           }
-        } else {
-          console.error('Failed to fetch orders:', response.status, response.statusText);
         }
+      } else {
+        console.error('Failed to fetch orders:', response.status, response.statusText);
+      }
     } catch (error) {
       console.error('Error fetching user orders:', error);
     }
@@ -273,9 +256,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
     );
   };
 
-  // Debug logging
-  console.log('User review state:', userReview);
-  console.log('User:', user);
+
 
   if (loading) {
     return (

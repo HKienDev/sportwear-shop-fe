@@ -73,7 +73,7 @@ class ReviewService {
       });
 
       const response = await apiClient.get(`/api/reviews?${params}`);
-      return response.data;
+      return response.data as ReviewsResponse;
     } catch (error) {
       console.error('Error fetching product reviews:', error);
       throw error;
@@ -84,7 +84,7 @@ class ReviewService {
   async createReview(reviewData: CreateReviewData): Promise<CreateReviewResponse> {
     try {
       const response = await apiClient.post('/api/reviews/create', reviewData);
-      return response.data;
+      return response.data as CreateReviewResponse;
     } catch (error) {
       console.error('Error creating review:', error);
       throw error;
@@ -105,7 +105,7 @@ class ReviewService {
       });
 
       const response = await apiClient.get(`/api/reviews?${params}`);
-      return response.data;
+      return response.data as ReviewsResponse;
     } catch (error) {
       console.error('Error fetching user reviews:', error);
       throw error;
@@ -119,7 +119,7 @@ class ReviewService {
   ): Promise<CreateReviewResponse> {
     try {
       const response = await apiClient.put(`/reviews/${reviewId}`, updateData);
-      return response.data;
+      return response.data as CreateReviewResponse;
     } catch (error) {
       console.error('Error updating review:', error);
       throw error;
@@ -130,7 +130,7 @@ class ReviewService {
   async deleteReview(reviewId: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await apiClient.delete(`/api/reviews/delete/${reviewId}`);
-      return response.data;
+      return response.data as { success: boolean; message: string };
     } catch (error) {
       console.error('Error deleting review:', error);
       throw error;
@@ -141,7 +141,7 @@ class ReviewService {
   async toggleHelpful(reviewId: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await apiClient.post(`/reviews/${reviewId}/helpful`);
-      return response.data;
+      return response.data as { success: boolean; message: string };
     } catch (error) {
       console.error('Error toggling helpful:', error);
       throw error;

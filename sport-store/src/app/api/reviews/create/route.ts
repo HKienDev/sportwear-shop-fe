@@ -7,11 +7,7 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
     
-    console.log('🔍 Review API - Token present:', !!token);
-    console.log('🔍 Review API - Token length:', token?.length);
-    
     if (!token) {
-      console.log('❌ Review API - No access token found');
       return NextResponse.json(
         { success: false, message: 'No access token found' },
         { status: 401 }
@@ -29,15 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Review API - Calling backend with data:', {
-      productSku,
-      orderId,
-      rating,
-      title: title.substring(0, 20) + '...',
-      comment: comment.substring(0, 20) + '...',
-      imagesCount: images.length
-    });
-
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews`, {
       method: 'POST',
       headers: {
@@ -54,13 +41,9 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    console.log('🔍 Review API - Backend response status:', response.status);
-
     const data = await response.json();
-    console.log('🔍 Review API - Backend response data:', data);
 
     if (!response.ok) {
-      console.log('❌ Review API - Backend error:', data);
       return NextResponse.json(
         { success: false, message: data.message || 'Failed to create review' },
         { status: response.status }
