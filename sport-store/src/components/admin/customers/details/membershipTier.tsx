@@ -34,7 +34,7 @@ const tiers: TierInfo[] = [
   {
     name: "Hạng Sắt",
     minSpent: 0,
-    maxSpent: 5000000,
+    maxSpent: 500000,
     color: "#9C7F7F",
     gradient: "from-[#9C7F7F] to-[#B39B9B]",
     bgGradient: "from-slate-50 to-slate-100",
@@ -47,12 +47,12 @@ const tiers: TierInfo[] = [
       "Tích điểm 1% trên tổng đơn hàng"
     ],
     nextTier: "Hạng Bạc",
-    nextTierAmount: 5000000
+    nextTierAmount: 500000
   },
   {
     name: "Hạng Bạc",
-    minSpent: 5000000,
-    maxSpent: 20000000,
+    minSpent: 500000,
+    maxSpent: 2000000,
     color: "#797979",
     gradient: "from-[#797979] to-[#8F8F8F]",
     bgGradient: "from-slate-50 to-gray-100",
@@ -66,12 +66,12 @@ const tiers: TierInfo[] = [
       "Ưu tiên xử lý đơn hàng"
     ],
     nextTier: "Hạng Vàng",
-    nextTierAmount: 20000000
+    nextTierAmount: 2000000
   },
   {
     name: "Hạng Vàng",
-    minSpent: 20000000,
-    maxSpent: 30000000,
+    minSpent: 2000000,
+    maxSpent: 5000000,
     color: "#FFBE00",
     gradient: "from-[#FFBE00] to-[#FFD700]",
     bgGradient: "from-amber-50 to-yellow-100",
@@ -86,12 +86,12 @@ const tiers: TierInfo[] = [
       "Quà tặng sinh nhật đặc biệt"
     ],
     nextTier: "Hạng Bạch Kim",
-    nextTierAmount: 30000000
+    nextTierAmount: 5000000
   },
   {
     name: "Hạng Bạch Kim",
-    minSpent: 30000000,
-    maxSpent: 50000000,
+    minSpent: 5000000,
+    maxSpent: 10000000,
     color: "#4EB09D",
     gradient: "from-[#4EB09D] to-[#5BC4B0]",
     bgGradient: "from-teal-50 to-cyan-100",
@@ -107,11 +107,11 @@ const tiers: TierInfo[] = [
       "Được mời tham dự các sự kiện đặc biệt"
     ],
     nextTier: "Hạng Kim Cương",
-    nextTierAmount: 50000000
+    nextTierAmount: 10000000
   },
   {
     name: "Hạng Kim Cương",
-    minSpent: 50000000,
+    minSpent: 10000000,
     maxSpent: Infinity,
     color: "#7C54F3",
     gradient: "from-[#7C54F3] to-[#8F6FF3]",

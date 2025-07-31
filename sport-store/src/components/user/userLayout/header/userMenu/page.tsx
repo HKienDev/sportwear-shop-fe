@@ -2,7 +2,8 @@
 
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ShoppingBag, Heart, ChevronDown } from "lucide-react";
+import { LogOut, User, ShoppingBag, Heart, ChevronDown, Crown } from "lucide-react";
+import { getMembershipTier } from '@/utils/membershipUtils';
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { formatCurrency } from "@/utils/format";
@@ -137,7 +138,22 @@ const UserMenu = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 truncate">{user?.fullname}</p>
+                <div className="flex items-center gap-1">
+                  <p 
+                    className="text-sm sm:text-base md:text-lg font-semibold truncate"
+                    style={{ 
+                      color: getMembershipTier(user?.totalSpent || 0).color 
+                    }}
+                  >
+                    {user?.fullname}
+                  </p>
+                  <Crown 
+                    size={14} 
+                    style={{ 
+                      color: getMembershipTier(user?.totalSpent || 0).color 
+                    }}
+                  />
+                </div>
                 <p className="text-xs sm:text-sm text-gray-500 truncate">{user?.email}</p>
               </div>
             </div>
@@ -146,11 +162,25 @@ const UserMenu = () => {
             <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100">
               <div className="flex justify-between text-xs sm:text-sm text-gray-500">
                 <span>Cấp thành viên:</span>
-                <span className="font-medium text-purple-600 truncate ml-2">{user?.membershipLevel}</span>
+                <span 
+                  className="font-medium truncate ml-2"
+                  style={{ 
+                    color: getMembershipTier(user?.totalSpent || 0).color 
+                  }}
+                >
+                  {getMembershipTier(user?.totalSpent || 0).name}
+                </span>
               </div>
               <div className="flex justify-between text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5">
                 <span>Tổng chi tiêu:</span>
-                <span className="font-medium text-green-600 truncate ml-2">{formatCurrency(user?.totalSpent || 0)}</span>
+                <span 
+                  className="font-medium truncate ml-2"
+                  style={{ 
+                    color: getMembershipTier(user?.totalSpent || 0).color 
+                  }}
+                >
+                  {formatCurrency(user?.totalSpent || 0)}
+                </span>
               </div>
             </div>
           </div>

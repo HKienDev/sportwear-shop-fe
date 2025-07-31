@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, ThumbsUp, MessageCircle, Calendar, CheckCircle, Upload, X, Trash2, Send } from 'lucide-react';
+import { Star, ThumbsUp, MessageCircle, Calendar, CheckCircle, Upload, X, Trash2, Send, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { reviewService, Review, CreateReviewData } from '@/services/reviewService';
 import { useAuth } from '@/context/authContext';
+import { getMembershipTier } from '@/utils/membershipUtils';
 import Image from 'next/image';
 
 interface ProductReviewsProps {
@@ -585,9 +586,22 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900 text-base">
-                        {review.user.fullname}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span 
+                          className="font-semibold text-base"
+                          style={{ 
+                            color: getMembershipTier(review.user.totalSpent || 0).color 
+                          }}
+                        >
+                          {review.user.fullname}
+                        </span>
+                        <Crown 
+                          size={14} 
+                          style={{ 
+                            color: getMembershipTier(review.user.totalSpent || 0).color 
+                          }}
+                        />
+                      </div>
                       {review.isVerified && (
                         <div className="px-2 py-1 bg-green-50 text-green-700 rounded-md text-xs font-medium flex items-center gap-1">
                           <CheckCircle size={12} />

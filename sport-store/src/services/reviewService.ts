@@ -12,6 +12,7 @@ export interface Review {
     _id: string;
     fullname: string;
     avatar: string;
+    totalSpent?: number;
   };
   rating: number;
   title: string;
