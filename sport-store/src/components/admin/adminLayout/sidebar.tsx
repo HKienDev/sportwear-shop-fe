@@ -19,7 +19,8 @@ import {
   ChevronDown,
   Search,
   Home,
-  Activity
+  Activity,
+  Star
 } from "lucide-react";
 
 // Hook để lấy thống kê đơn hàng
@@ -139,6 +140,17 @@ const menuItems = [
     badge: "5",
     description: "Hỗ trợ khách hàng",
     color: "from-yellow-500 to-orange-500"
+  },
+  {
+    name: "Đánh Giá",
+    path: "/admin/reviews",
+    icon: Star,
+    subMenu: [
+      { name: "Danh Sách", path: "/admin/reviews/list" },
+    ],
+    badge: null,
+    description: "Quản lý đánh giá sản phẩm",
+    color: "from-amber-500 to-yellow-500"
   },
   {
     name: "Cấu Hình",

@@ -551,6 +551,30 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
                 </p>
               </div>
 
+              {/* Admin Reply */}
+              {review.adminNote && (
+                <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">A</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-blue-800">
+                        Phản hồi từ Admin
+                      </span>
+                      {review.reviewedAt && (
+                        <span className="text-xs text-blue-600">
+                          {formatDate(review.reviewedAt)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-blue-700 whitespace-pre-line">
+                    {review.adminNote}
+                  </p>
+                </div>
+              )}
+
               {/* Review Images */}
               {review.images && review.images.length > 0 && (
                 <div className="flex gap-2 mb-4">

@@ -19,6 +19,12 @@ export interface Review {
   images: string[];
   isVerified: boolean;
   isHelpful: number;
+  adminNote?: string;
+  reviewedBy?: {
+    _id: string;
+    fullname: string;
+  };
+  reviewedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
