@@ -52,7 +52,7 @@ const RatingStars = memo(({ rating }: { rating: number }) => (
         />
       ))}
     </div>
-    <span className="text-sm font-medium text-gray-600">({rating}.0)</span>
+    <span className="text-sm font-medium text-gray-600">({rating.toFixed(1)})</span>
     <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
       <TrendingUp className="w-3 h-3" />
       <span>Hot</span>
@@ -162,7 +162,7 @@ const ProductCardWithTimer = ({
     originalPrice: 200000,
     sold: 20,
     total: 60,
-    rating: 4,
+    rating: 0,
     image: "/default-image.png",
     sku: "DEFAULT-SKU",
     brand: "Default Brand",
@@ -176,7 +176,7 @@ const ProductCardWithTimer = ({
 
   // Countdown calculation
   const countdownConfig = useMemo(() => {
-    if (product.featuredConfig?.countdownEndDate && product.featuredConfig.isActive) {
+    if (product.featuredConfig?.countdownEndDate) {
       const endDate = new Date(product.featuredConfig.countdownEndDate);
       const now = new Date();
       const diff = endDate.getTime() - now.getTime();
@@ -368,7 +368,7 @@ const ProductCardWithTimer = ({
         {/* Product Details - Right Side (60%) */}
         <div className="w-full md:w-3/5 p-6 space-y-4">
           {/* Rating & Hot Badge */}
-          <RatingStars rating={product.rating || 4} />
+          <RatingStars rating={product.rating || 0} />
 
           {/* Product Title */}
           <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent uppercase leading-tight">
@@ -439,18 +439,16 @@ const ProductCardWithTimer = ({
           />
 
           {/* Enhanced Countdown Timer */}
-          {product.featuredConfig?.isActive && (
-            <div className="pt-4 border-t border-gray-100/50">
-              {isComplete ? (
-                <div className="text-red-600 font-bold text-center bg-red-50 rounded-lg py-3">
-                  <Zap className="w-5 h-5 inline mr-2" />
-                  HẾT HẠN ƯU ĐÃI!
-                </div>
-              ) : (
-                <CountdownTimer timeLeft={timeLeft} />
-              )}
-            </div>
-          )}
+          <div className="pt-4 border-t border-gray-100/50">
+            {isComplete ? (
+              <div className="text-red-600 font-bold text-center bg-red-50 rounded-lg py-3">
+                <Zap className="w-5 h-5 inline mr-2" />
+                HẾT HẠN ƯU ĐÃI!
+              </div>
+            ) : (
+              <CountdownTimer timeLeft={timeLeft} />
+            )}
+          </div>
         </div>
       </div>
 

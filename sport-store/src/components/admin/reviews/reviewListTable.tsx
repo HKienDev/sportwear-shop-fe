@@ -6,8 +6,6 @@ import {
   Trash2, 
   Edit,
   MoreHorizontal,
-  Package,
-  User,
   MessageSquare
 } from "lucide-react";
 import { AdminReview } from "@/services/adminReviewService";
@@ -98,6 +96,12 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
     return orderId.replace(/^VJUSPORT-ORDER-/, '');
   };
 
+  const formatProductSku = (sku: string) => {
+    if (!sku) return '';
+    // Remove prefix like "VJUSPORTPRODUCT-" and return the rest
+    return sku.replace(/^VJUSPORTPRODUCT-/, '');
+  };
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center gap-1">
@@ -111,126 +115,146 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
             }`}
           />
         ))}
-        <span className="text-sm text-gray-600 ml-1">({rating})</span>
       </div>
     );
   };
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="w-full min-w-[1400px]">
+            <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b border-indigo-100/60">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="px-6 py-4 text-left w-12">
                   <input
                     type="checkbox"
                     checked={selectedReviews.length === reviews.length && reviews.length > 0}
                     onChange={onToggleSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 focus:ring-2 focus:ring-offset-2"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-64">
                   Sản phẩm
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-64">
                   Người đánh giá
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-32">
                   Đánh giá
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
-                  Tiêu đề
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-96">
+                  Nội dung
                 </th>
-
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-48">
                   Ngày tạo
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 w-32">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-indigo-100/60">
               {reviews.map((review) => (
-                <tr key={review._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                <tr key={review._id} className="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-emerald-50/50 transition-all duration-200">
+                  <td className="px-6 py-4 w-12">
                     <input
                       type="checkbox"
                       checked={selectedReviews.includes(review._id)}
                       onChange={() => onToggleSelectReview(review._id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 focus:ring-2 focus:ring-offset-2"
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4 w-64">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={review.product.mainImage}
-                        alt={review.product.name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
+                      <div className="relative">
+                        <img
+                          src={review.product.mainImage || "/default-image.png"}
+                          alt={review.product.name}
+                          className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200/60 shadow-sm bg-slate-100"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/default-image.png";
+                            target.onerror = null; // Prevent infinite loop
+                          }}
+                        />
+                      </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-semibold text-slate-800 truncate">
                           {review.product.name}
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <Package className="w-3 h-3" />
-                          {review.product.sku}
+                        <div className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                          <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium">
+                            {formatProductSku(review.product.sku)}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                      <img
-                        src={review.userAvatar || review.user?.avatar || "/avatarDefault.jpg"}
-                        alt={review.userName || review.user?.fullname}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
+                  <td className="px-6 py-4 w-64">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <img
+                          src={review.userAvatar || review.user?.avatar || "/avatarDefault.jpg"}
+                          alt={review.userName || review.user?.fullname}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-slate-200/60 shadow-sm"
+                        />
+                      </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-semibold text-slate-800 truncate">
                           {review.userName || review.user?.fullname}
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {formatOrderId(review.orderShortId)}
+                        <div className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-600 rounded-md text-xs font-medium">
+                            {formatOrderId(review.orderShortId)}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    {renderStars(review.rating)}
+                  <td className="px-6 py-4 w-32">
+                    <div className="flex items-center gap-2">
+                      {renderStars(review.rating)}
+                      <span className="text-sm font-semibold text-slate-700 bg-gradient-to-r from-yellow-100 to-orange-100 px-2 py-1 rounded-md">
+                        {review.rating}/5
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="max-w-xs">
-                      <div className="font-medium text-gray-900 truncate">
+                  <td className="px-6 py-4 w-96">
+                    <div className="space-y-2">
+                      <div className="font-semibold text-slate-800 truncate">
                         {review.title}
                       </div>
-                      <div className="text-sm text-gray-500 line-clamp-2">
+                      <div className="text-sm text-slate-600 line-clamp-2">
                         {review.comment}
                       </div>
                       {review.adminNote && (
-                        <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-400 rounded-r">
-                          <div className="text-xs font-medium text-blue-800 mb-1">
-                            Phản hồi của Admin:
+                        <div className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-r-lg shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-4 h-4 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">A</span>
+                            </div>
+                            <div className="text-xs font-semibold text-blue-800">
+                              Phản hồi của Admin
+                            </div>
                           </div>
-                          <div className="text-xs text-blue-700">
+                          <div className="text-xs text-blue-700 leading-relaxed line-clamp-2">
                             {review.adminNote}
                           </div>
                         </div>
                       )}
                     </div>
                   </td>
-
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {formatDate(review.createdAt)}
+                  <td className="px-6 py-4 w-48">
+                    <div className="text-sm text-slate-500 font-medium whitespace-nowrap">
+                      {formatDate(review.createdAt)}
+                    </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center space-x-2">
+                  <td className="px-6 py-4 w-32">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleReply(review)}
-                        className="p-1 text-blue-600 hover:text-blue-800"
+                        className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm shadow-blue-500/25"
                         title="Phản hồi"
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -238,10 +262,14 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
                       <button
                         onClick={() => handleDelete(review._id)}
                         disabled={loadingActions[review._id]}
-                        className="p-1 text-red-600 hover:text-red-800 disabled:opacity-50"
+                        className="p-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 transition-all duration-200 shadow-sm shadow-red-500/25"
                         title="Xóa"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {loadingActions[review._id] ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>
@@ -252,8 +280,8 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
         </div>
         
         {reviews.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-gray-500">Không có review nào</div>
+          <div className="text-center py-12">
+            <div className="text-slate-500 font-medium">Không có đánh giá nào</div>
           </div>
         )}
       </div>
