@@ -6,9 +6,6 @@ interface ProductRatingProps {
 }
 
 const ProductRating: React.FC<ProductRatingProps> = ({ rating, numReviews }) => {
-  // Làm tròn rating xuống số nguyên gần nhất
-  const roundedRating = Math.floor(rating);
-  
   return (
     <div className="flex items-center mb-2">
       <div className="flex text-yellow-400">
@@ -16,8 +13,8 @@ const ProductRating: React.FC<ProductRatingProps> = ({ rating, numReviews }) => 
           <Star 
             key={index} 
             size={16} 
-            fill={index < roundedRating ? "currentColor" : "none"} 
-            className={index < roundedRating ? "text-yellow-400" : "text-gray-300"} 
+            fill={index < rating ? "currentColor" : "none"} 
+            className={index < rating ? "text-yellow-400" : "text-gray-300"} 
           />
         ))}
       </div>

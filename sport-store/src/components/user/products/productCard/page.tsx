@@ -267,7 +267,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="text-xs font-bold text-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 px-2 py-1 rounded-full border border-purple-200/50 truncate max-w-[60%] hover:from-purple-100 hover:to-pink-100 transition-colors duration-200">
             {categoryName}
           </span>
-          <RatingStars rating={4.5} />
+          <RatingStars rating={product.rating || 0} />
         </div>
         {/* Product Name */}
         <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-800 transition-colors duration-300">

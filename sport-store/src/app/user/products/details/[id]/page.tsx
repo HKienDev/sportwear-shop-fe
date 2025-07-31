@@ -71,6 +71,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<{ name: string; slug: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -131,7 +132,7 @@ export default function ProductDetail() {
     if (params.id) {
       fetchProduct();
     }
-  }, [params.id]);
+  }, [params.id, refreshKey]);
 
   const handleColorSelect = (color: string): void => {
     setSelectedColor(color);
@@ -336,6 +337,7 @@ export default function ProductDetail() {
         productName={product.name}
         currentRating={product.rating}
         numReviews={product.numReviews}
+        onReviewUpdate={() => setRefreshKey(prev => prev + 1)}
       />
     </div>
   );

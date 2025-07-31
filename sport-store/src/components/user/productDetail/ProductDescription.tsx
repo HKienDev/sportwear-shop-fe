@@ -19,6 +19,7 @@ interface ProductDescriptionProps {
   productName?: string;
   currentRating?: number;
   numReviews?: number;
+  onReviewUpdate?: () => void;
 }
 
 type TabType = 'description' | 'specifications' | 'reviews';
@@ -29,7 +30,8 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
   productSku, 
   productName, 
   currentRating = 0, 
-  numReviews = 0 
+  numReviews = 0,
+  onReviewUpdate
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('description');
 
@@ -98,6 +100,7 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
                 productName={productName}
                 currentRating={currentRating}
                 numReviews={numReviews}
+                onReviewUpdate={onReviewUpdate}
               />
             ) : (
               <div className="bg-gray-50 rounded-lg p-6">
