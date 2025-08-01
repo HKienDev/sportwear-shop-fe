@@ -153,6 +153,17 @@ const menuItems = [
     color: "from-amber-500 to-yellow-500"
   },
   {
+    name: "Hỏi & Đáp",
+    path: "/admin/questions",
+    icon: MessageSquare,
+    subMenu: [
+      { name: "Danh Sách", path: "/admin/questions" },
+    ],
+    badge: null,
+    description: "Quản lý câu hỏi và trả lời",
+    color: "from-blue-500 to-indigo-500"
+  },
+  {
     name: "Cấu Hình",
     path: "/admin/settings",
     icon: Settings,

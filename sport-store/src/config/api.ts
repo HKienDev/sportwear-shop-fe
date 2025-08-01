@@ -120,6 +120,20 @@ export const API_CONFIG = {
       ADD: '/api/favorites/add',
       REMOVE: '/api/favorites/remove',
     },
+    
+    // Questions
+    QUESTIONS: {
+      GET_PRODUCT: (productSku: string) => `/api/questions/product/${productSku}`,
+      CREATE: '/api/questions',
+      DELETE: (id: string) => `/api/questions/${id}`,
+      MARK_HELPFUL: (id: string) => `/api/questions/helpful/${id}`,
+      GET_USER: '/api/questions/user',
+      GET_ADMIN_PENDING: '/api/questions/admin/pending',
+      APPROVE: (id: string) => `/api/questions/admin/${id}/approve`,
+      REJECT: (id: string) => `/api/questions/admin/${id}/reject`,
+      ANSWER: (id: string) => `/api/questions/admin/${id}/answer`,
+      VERIFY: (id: string) => `/api/questions/admin/${id}/verify`,
+    },
   },
   
   // Socket configuration

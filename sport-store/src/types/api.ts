@@ -68,5 +68,115 @@ export interface OrderQueryParams extends PaginationParams {
     phone?: string;
 }
 
+// Question types
+export interface Question {
+  _id: string;
+  product: {
+    _id: string;
+    name: string;
+    images: string[];
+  };
+  productSku: string;
+  user: {
+    _id: string;
+    fullname: string;
+    avatar: string;
+    totalSpent: number;
+  };
+  userName: string;
+  userAvatar: string;
+  question: string;
+  orderId?: string;
+  orderShortId?: string;
+  purchasedItem?: {
+    sku: string;
+    name: string;
+    color: string;
+    size: string;
+    quantity: number;
+    price: number;
+  };
+  status: 'pending' | 'approved' | 'rejected';
+  visibility: 'public' | 'private';
+  isHelpful: number;
+  isVerified: boolean;
+  adminAnswer?: string;
+  answeredAt?: string;
+  answeredBy?: {
+    _id: string;
+    fullname: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuestionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    questions: Question[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface CreateQuestionData {
+  productSku: string;
+  question: string;
+}
+
+export interface AdminQuestion {
+  _id: string;
+  question: string;
+  answer?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+  helpfulCount: number;
+  isVerified: boolean;
+  user: {
+    _id: string;
+    fullname: string;
+    avatar?: string;
+  };
+  product: {
+    _id: string;
+    name: string;
+    sku: string;
+    images: string[];
+  };
+  orderShortId?: string;
+  purchasedItem?: {
+    sku: string;
+    name: string;
+    color: string;
+    size: string;
+    quantity: number;
+    price: number;
+  };
+}
+
+export interface AdminQuestionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    questions: AdminQuestion[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface AnswerQuestionData {
+  answer: string;
+}
+
 export type { User, Order, CartItem } from './base';
 export type { Product } from './product'; 

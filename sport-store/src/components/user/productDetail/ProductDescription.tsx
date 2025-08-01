@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ProductReviews from './ProductReviews';
+import ProductQuestions from './ProductQuestions';
 
 interface ProductDescriptionProps {
   description: string;
@@ -22,7 +23,7 @@ interface ProductDescriptionProps {
   onReviewUpdate?: () => void;
 }
 
-type TabType = 'description' | 'specifications' | 'reviews';
+type TabType = 'description' | 'specifications' | 'reviews' | 'questions';
 
 const ProductDescription: React.FC<ProductDescriptionProps> = ({ 
   description, 
@@ -118,6 +119,31 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
             )}
           </div>
         );
+      case 'questions':
+        return (
+          <div className="prose max-w-none">
+            {productSku && productName ? (
+              <ProductQuestions
+                productSku={productSku}
+                productName={productName}
+                onQuestionUpdate={onReviewUpdate}
+              />
+            ) : (
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Hỏi và đáp</h3>
+                <div className="text-center py-8">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 mb-2">Chưa có câu hỏi nào</p>
+                  <p className="text-sm text-gray-500">Hãy là người đầu tiên đặt câu hỏi về sản phẩm này!</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
       default:
         return null;
     }
@@ -156,6 +182,16 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
             }`}
           >
             Đánh giá
+          </button>
+          <button 
+            onClick={() => handleTabClick('questions')}
+            className={`pb-4 border-b-2 font-medium transition-colors ${
+              activeTab === 'questions' 
+                ? 'border-red-600 text-red-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Hỏi và đáp
           </button>
         </div>
       </div>

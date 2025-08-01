@@ -179,8 +179,8 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
       return;
     }
 
-    if (formData.comment.trim().length < 10) {
-      toast.error('Nội dung đánh giá phải có ít nhất 10 ký tự');
+    if (!formData.comment.trim()) {
+      toast.error('Nội dung đánh giá không được để trống');
       return;
     }
 
