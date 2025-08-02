@@ -337,7 +337,6 @@ export default function ProductDetail() {
         productName={product.name}
         currentRating={product.rating}
         numReviews={product.numReviews}
-        onReviewUpdate={() => setRefreshKey(prev => prev + 1)}
       />
     </div>
   );

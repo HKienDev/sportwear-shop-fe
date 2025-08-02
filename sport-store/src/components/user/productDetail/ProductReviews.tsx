@@ -13,7 +13,6 @@ interface ProductReviewsProps {
   productName: string;
   currentRating: number;
   numReviews: number;
-  onReviewUpdate?: () => void;
 }
 
 interface ReviewFormData {
@@ -49,8 +48,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
   productSku,
   productName,
   currentRating,
-  numReviews,
-  onReviewUpdate
+  numReviews
 }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -133,15 +131,34 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
             order.status === 'delivered'
           );
           
-          setUserOrders(ordersWithProduct);
+          // Get current reviews to filter out already reviewed orders
+          const currentReviews = reviews || [];
           
-          if (ordersWithProduct.length === 0) {
-            toast.info('📦 Chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã được giao thành công!', {
-              description: 'Vui lòng chờ đơn hàng chuyển sang trạng thái "Đã giao hàng" để có thể đánh giá sản phẩm.',
-              duration: 5000
-            });
+          // Filter out orders that user has already reviewed
+          const ordersNotReviewed = ordersWithProduct.filter((order: UserOrder) => {
+            // Check if user has already reviewed this order for this product
+            return !currentReviews.some((review: Review) => 
+              review.user._id === user?._id && 
+              review.orderShortId === order.shortId
+            );
+          });
+          
+          setUserOrders(ordersNotReviewed);
+          
+          if (ordersNotReviewed.length === 0) {
+            if (ordersWithProduct.length === 0) {
+              toast.info('📦 Chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã được giao thành công!', {
+                description: 'Vui lòng chờ đơn hàng chuyển sang trạng thái "Đã giao hàng" để có thể đánh giá sản phẩm.',
+                duration: 5000
+              });
+            } else {
+              toast.info('✅ Bạn đã đánh giá tất cả đơn hàng hợp lệ cho sản phẩm này!', {
+                description: 'Nếu bạn xóa đánh giá, đơn hàng sẽ xuất hiện lại trong danh sách.',
+                duration: 3000
+              });
+            }
           } else {
-            toast.success(`✅ Tìm thấy ${ordersWithProduct.length} đơn hàng hợp lệ để đánh giá!`, {
+            toast.success(`✅ Tìm thấy ${ordersNotReviewed.length} đơn hàng hợp lệ để đánh giá!`, {
               description: 'Vui lòng chọn đơn hàng bạn muốn đánh giá.',
               duration: 3000
             });
@@ -153,12 +170,17 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
     } catch (error) {
       console.error('Error fetching user orders:', error);
     }
-  }, [productSku]);
+  }, [productSku, reviews, user?._id]);
 
   // Fetch user orders for review form
   useEffect(() => {
     if (showReviewForm && user) {
-      fetchUserOrders();
+      // Wait a bit for reviews to load, then fetch orders
+      const timer = setTimeout(() => {
+        fetchUserOrders();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [showReviewForm, user, fetchUserOrders]);
 
@@ -174,8 +196,8 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
     }
 
     // Frontend validation
-    if (formData.title.trim().length < 5) {
-      toast.error('Tiêu đề đánh giá phải có ít nhất 5 ký tự');
+    if (!formData.title.trim()) {
+      toast.error('Tiêu đề đánh giá không được để trống');
       return;
     }
 
@@ -198,7 +220,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
       const response = await reviewService.createReview(reviewData);
       
       if (response.success) {
-        toast.success('Đánh giá đã được gửi và đang chờ phê duyệt');
+        toast.success('✅ Đánh giá đã được gửi thành công!');
         setShowReviewForm(false);
         setFormData({
           rating: 5,
@@ -214,10 +236,13 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
         // Refresh reviews to update the list
         fetchReviews();
         
-        // Notify parent component to refresh product data
-        if (onReviewUpdate) {
-          onReviewUpdate();
-        }
+        // Update local stats without re-fetching entire product
+        setAverageRating(prev => {
+          const newTotal = prev * totalReviews + formData.rating;
+          const newCount = totalReviews + 1;
+          return newTotal / newCount;
+        });
+        setTotalReviews(prev => prev + 1);
       }
     } catch (error: unknown) {
       console.error('Error submitting review:', error);
@@ -284,9 +309,14 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({
         }
         fetchReviews(); // Refresh reviews
         
-        // Notify parent component to refresh product data
-        if (onReviewUpdate) {
-          onReviewUpdate();
+        // Update local stats without re-fetching entire product
+        if (userReview) {
+          setAverageRating(prev => {
+            const newTotal = prev * totalReviews - userReview.rating;
+            const newCount = totalReviews - 1;
+            return newCount > 0 ? newTotal / newCount : 0;
+          });
+          setTotalReviews(prev => prev - 1);
         }
       }
     } catch (error: unknown) {

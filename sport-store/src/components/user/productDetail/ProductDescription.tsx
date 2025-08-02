@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProductReviews from './ProductReviews';
 import ProductQuestions from './ProductQuestions';
 
@@ -20,7 +20,6 @@ interface ProductDescriptionProps {
   productName?: string;
   currentRating?: number;
   numReviews?: number;
-  onReviewUpdate?: () => void;
 }
 
 type TabType = 'description' | 'specifications' | 'reviews' | 'questions';
@@ -31,13 +30,29 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
   productSku, 
   productName, 
   currentRating = 0, 
-  numReviews = 0,
-  onReviewUpdate
+  numReviews = 0
 }) => {
+  const tabRef = useRef<TabType>('description');
   const [activeTab, setActiveTab] = useState<TabType>('description');
+
+  // Get initial tab from URL hash or stored ref
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['description', 'specifications', 'reviews', 'questions'].includes(hash)) {
+      const tab = hash as TabType;
+      setActiveTab(tab);
+      tabRef.current = tab;
+    } else if (tabRef.current !== 'description') {
+      // Restore from ref if component re-renders
+      setActiveTab(tabRef.current);
+    }
+  }, []);
 
   const handleTabClick = (tab: TabType) => {
     setActiveTab(tab);
+    tabRef.current = tab;
+    // Update URL hash without causing page reload
+    window.history.replaceState(null, '', `#${tab}`);
   };
 
   const renderTabContent = () => {
@@ -101,7 +116,6 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
                 productName={productName}
                 currentRating={currentRating}
                 numReviews={numReviews}
-                onReviewUpdate={onReviewUpdate}
               />
             ) : (
               <div className="bg-gray-50 rounded-lg p-6">
@@ -126,7 +140,6 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({
               <ProductQuestions
                 productSku={productSku}
                 productName={productName}
-                onQuestionUpdate={onReviewUpdate}
               />
             ) : (
               <div className="bg-gray-50 rounded-lg p-6">

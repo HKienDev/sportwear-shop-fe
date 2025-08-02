@@ -7,7 +7,7 @@ export const createReviewSchema = z.object({
   order: z.string().min(1, { message: 'ID đơn hàng là bắt buộc' }),
   rating: z.number().min(1, { message: 'Đánh giá phải từ 1-5 sao' }).max(5, { message: 'Đánh giá phải từ 1-5 sao' }),
   title: z.string().min(1, { message: 'Tiêu đề là bắt buộc' }).max(100, { message: 'Tiêu đề không được vượt quá 100 ký tự' }),
-  content: z.string().min(10, { message: 'Nội dung phải có ít nhất 10 ký tự' }).max(1000, { message: 'Nội dung không được vượt quá 1000 ký tự' }),
+  content: z.string().min(1, { message: 'Nội dung là bắt buộc' }).max(1000, { message: 'Nội dung không được vượt quá 1000 ký tự' }),
   images: z.array(z.string().url({ message: 'URL hình ảnh không hợp lệ' })).optional(),
   isVerified: z.boolean().default(false),
   isPublic: z.boolean().default(true),
@@ -19,7 +19,7 @@ export const createReviewSchema = z.object({
 export const updateReviewSchema = z.object({
   rating: z.number().min(1).max(5).optional(),
   title: z.string().min(1).max(100).optional(),
-  content: z.string().min(10).max(1000).optional(),
+  content: z.string().min(1).max(1000).optional(),
   images: z.array(z.string().url()).optional(),
   isPublic: z.boolean().optional()
 });

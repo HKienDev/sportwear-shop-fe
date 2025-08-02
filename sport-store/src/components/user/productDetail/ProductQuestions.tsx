@@ -12,7 +12,6 @@ import Image from 'next/image';
 interface ProductQuestionsProps {
   productSku: string;
   productName: string;
-  onQuestionUpdate?: () => void;
 }
 
 interface QuestionFormData {
@@ -41,8 +40,7 @@ interface UserQuestion extends Question {
 
 const ProductQuestions: React.FC<ProductQuestionsProps> = ({
   productSku,
-  productName,
-  onQuestionUpdate
+  productName
 }) => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);

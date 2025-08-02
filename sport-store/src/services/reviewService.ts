@@ -26,6 +26,7 @@ export interface Review {
     fullname: string;
   };
   reviewedAt?: string;
+  orderShortId?: string;
   createdAt: string;
   updatedAt: string;
 }
