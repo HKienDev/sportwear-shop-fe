@@ -7,11 +7,11 @@ export interface BaseEntity {
 }
 
 export enum MembershipLevel {
-    IRON = "Hạng Sắt",
-    SILVER = "Hạng Bạc",
-    GOLD = "Hạng Vàng",
-    PLATINUM = "Hạng Bạch Kim",
-    DIAMOND = "Hạng Kim Cương"
+    BRONZE = "Đồng",
+    SILVER = "Bạc",
+    GOLD = "Vàng",
+    PLATINUM = "Bạch Kim",
+    DIAMOND = "Kim Cương"
 }
 
 export enum Gender {

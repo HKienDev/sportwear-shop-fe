@@ -161,9 +161,9 @@ const UserMenu = () => {
             {/* User Stats */}
             <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100">
               <div className="flex justify-between text-xs sm:text-sm text-gray-500">
-                <span>Cấp thành viên:</span>
+                <span className="font-semibold">Cấp thành viên:</span>
                 <span 
-                  className="font-medium truncate ml-2"
+                  className="font-semibold truncate ml-2"
                   style={{ 
                     color: getMembershipTier(user?.totalSpent || 0).color 
                   }}
@@ -172,9 +172,9 @@ const UserMenu = () => {
                 </span>
               </div>
               <div className="flex justify-between text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5">
-                <span>Tổng chi tiêu:</span>
+                <span className="font-semibold">Tổng chi tiêu:</span>
                 <span 
-                  className="font-medium truncate ml-2"
+                  className="font-semibold truncate ml-2"
                   style={{ 
                     color: getMembershipTier(user?.totalSpent || 0).color 
                   }}

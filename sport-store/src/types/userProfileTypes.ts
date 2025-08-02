@@ -37,7 +37,7 @@ export interface UserProfile {
   role?: string;
   createdAt?: string;
   updatedAt?: string;
-  membershipTier?: 'VIP' | 'GOLD' | 'SILVER' | 'BRONZE';
+  membershipTier?: 'Đồng' | 'Bạc' | 'Vàng' | 'Bạch Kim' | 'Kim Cương';
   totalSpent?: number;
   points?: number;
   nextTier?: {
