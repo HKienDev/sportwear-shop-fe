@@ -9,10 +9,44 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     console.log('🔒 Middleware - Processing request:', pathname);
     
-    // Handle 404 routes - redirect to not-found page
-    if (pathname === '/search' || pathname.startsWith('/search/')) {
-        console.log('🔍 Middleware - Search route detected, redirecting to not-found');
+    // Handle invalid/error routes - redirect to appropriate error pages
+    const notFoundRoutes = [
+        '/search',
+        '/invalid',
+        '/broken',
+        '/error',
+        '/404',
+        '/not-found',
+        '/page-not-found'
+    ];
+    
+    const serverErrorRoutes = [
+        '/500',
+        '/server-error',
+        '/internal-error'
+    ];
+    
+    const unauthorizedRoutes = [
+        '/401',
+        '/unauthorized',
+        '/access-denied',
+        '/forbidden',
+        '/403'
+    ];
+    
+    if (notFoundRoutes.includes(pathname) || pathname.startsWith('/search/')) {
+        console.log('🔍 Middleware - Not found route detected, redirecting to not-found');
         return NextResponse.redirect(new URL('/error-pages/not-found', request.url));
+    }
+    
+    if (serverErrorRoutes.includes(pathname)) {
+        console.log('🔍 Middleware - Server error route detected, redirecting to server-error');
+        return NextResponse.redirect(new URL('/error-pages/server-error', request.url));
+    }
+    
+    if (unauthorizedRoutes.includes(pathname)) {
+        console.log('🔍 Middleware - Unauthorized route detected, redirecting to unauthorized');
+        return NextResponse.redirect(new URL('/error-pages/unauthorized', request.url));
     }
     
     // Kiểm tra nếu là public route

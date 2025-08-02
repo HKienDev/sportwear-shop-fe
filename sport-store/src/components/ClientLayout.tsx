@@ -4,6 +4,8 @@ import { Providers } from "../app/providers";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import SessionTimeoutWarning from "./SessionTimeoutWarning";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import ErrorBoundaryWrapper from "./ErrorBoundary";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -27,11 +29,16 @@ function ToasterWrapper() {
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
+  // Initialize error handler
+  useErrorHandler();
+
   return (
-    <Providers>
-      {children}
-      <ToasterWrapper />
-      <SessionTimeoutWarning />
-    </Providers>
+    <ErrorBoundaryWrapper>
+      <Providers>
+        {children}
+        <ToasterWrapper />
+        <SessionTimeoutWarning />
+      </Providers>
+    </ErrorBoundaryWrapper>
   );
 } 
