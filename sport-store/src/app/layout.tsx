@@ -5,8 +5,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "Sport Store",
-  description: "Cửa hàng thể thao trực tuyến",
+  title: "Khánh Hoàn Shop - Quần Áo Nam Thời Trang, Năng Động & Lịch Lãm",
+  description: "Shop quần áo nam Khánh Hoàn: áo thun, sơ mi, quần jeans, đồ thể thao. Thời trang nam trẻ trung, phong cách, giá tốt, giao hàng toàn quốc.",
 };
 
 export default function RootLayout({

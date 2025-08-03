@@ -93,7 +93,7 @@ const LoginPage = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <span className="text-xl font-bold tracking-wider">VJUSPORT</span>
+                  <span className="text-xl font-bold tracking-wider">KHÁNH HOÀN SHOP</span>
                 </div>
                 <h1 className="text-5xl font-bold mb-4 leading-tight text-white">
                   <span className="inline-block">Kết nối.</span>
@@ -123,15 +123,15 @@ const LoginPage = () => {
                   ))}
                 </div>
                 <blockquote className="text-white/90 text-lg mb-4 italic">
-                  Nền tảng này đã thay đổi hoàn toàn cách tôi luyện tập và kết nối với cộng đồng thể thao.
+                Sản phẩm chất lượng, kiểu dáng đẹp, rất hài lòng khi mua sắm tại Khánh Hoàn Shop.
                 </blockquote>
                 <div className="flex items-center">
                   <div className="w-12 h-12 rounded-full border-2 border-white/50 overflow-hidden bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
                     <span className="font-bold">CT</span>
                   </div>
                   <div className="ml-4">
-                    <p className="font-semibold">Hán Cao Tổ</p>
-                    <p className="text-sm text-gray-300">Vận động viên chuyên nghiệp • Hà Nội</p>
+                    <p className="font-semibold">Nông Văn Hoan</p>
+                    <p className="text-sm text-gray-300">Kỹ sư xây dựng • Hà Nội</p>
                   </div>
                 </div>
               </div>

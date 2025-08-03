@@ -126,26 +126,42 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/user') || pathname.startsWith('/profile') || pathname.startsWith('/orders')) {
         console.log('🔍 Middleware - Checking auth for protected route:', pathname);
         
-        if (!accessToken || !userCookie) {
-            console.log("❌ Middleware - No access token or user cookie found, redirecting to login");
-            return NextResponse.redirect(new URL('/auth/login', request.url));
-        }
+        // Kiểm tra nếu có access token và user cookie
+        if (accessToken && userCookie) {
+            try {
+                // Decode user cookie
+                const decodedUserCookie = decodeURIComponent(userCookie);
+                const user = JSON.parse(decodedUserCookie);
+                
+                // Kiểm tra trạng thái xác thực
+                if (user.authStatus !== 'verified') {
+                    console.log('❌ Middleware - User not verified, redirecting to login');
+                    return NextResponse.redirect(new URL('/auth/login', request.url));
+                }
 
-        try {
-            // Decode user cookie
-            const decodedUserCookie = decodeURIComponent(userCookie);
-            const user = JSON.parse(decodedUserCookie);
-            
-            // Kiểm tra trạng thái xác thực
-            if (user.authStatus !== 'verified') {
-                console.log('❌ Middleware - User not verified, redirecting to login');
-                return NextResponse.redirect(new URL('/auth/login', request.url));
+                console.log('✅ Middleware - User authenticated for protected route');
+                const response = NextResponse.next();
+                response.headers.set(RATE_LIMIT_CONFIG.HEADERS.LIMIT, RATE_LIMIT_CONFIG.MAX_REQUESTS.toString());
+                response.headers.set(RATE_LIMIT_CONFIG.HEADERS.REMAINING, RATE_LIMIT_CONFIG.MAX_REQUESTS.toString());
+                response.headers.set(RATE_LIMIT_CONFIG.HEADERS.RESET, (Date.now() + RATE_LIMIT_CONFIG.WINDOW_MS).toString());
+                return response;
+            } catch (error) {
+                console.log("❌ Middleware - Error parsing user cookie for protected route:", error);
+                // Nếu có lỗi parse cookie, xóa cookies và cho phép truy cập như khách vãng lai
+                const response = NextResponse.next();
+                response.cookies.delete(TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME);
+                response.cookies.delete(TOKEN_CONFIG.USER.COOKIE_NAME);
+                response.cookies.delete(TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME);
+                return response;
             }
-
-            console.log('✅ Middleware - User authenticated for protected route');
-        } catch (error) {
-            console.log("❌ Middleware - Error parsing user cookie for protected route:", error);
-            return NextResponse.redirect(new URL('/auth/login', request.url));
+        } else {
+            // Không có token hoặc user cookie - cho phép truy cập như khách vãng lai
+            console.log('👥 Middleware - No auth tokens found, allowing access as guest');
+            const response = NextResponse.next();
+            response.headers.set(RATE_LIMIT_CONFIG.HEADERS.LIMIT, RATE_LIMIT_CONFIG.MAX_REQUESTS.toString());
+            response.headers.set(RATE_LIMIT_CONFIG.HEADERS.REMAINING, RATE_LIMIT_CONFIG.MAX_REQUESTS.toString());
+            response.headers.set(RATE_LIMIT_CONFIG.HEADERS.RESET, (Date.now() + RATE_LIMIT_CONFIG.WINDOW_MS).toString());
+            return response;
         }
     }
 

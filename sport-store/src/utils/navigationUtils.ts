@@ -64,10 +64,12 @@ export const handleRedirect = debounce(async (
                 return;
             }
             
-            // Nếu không có user và đang ở trang protected, redirect về login
-            if (currentPath.startsWith('/admin/') || currentPath.startsWith('/user/')) {
+            // Chỉ redirect admin routes khi không có user
+            // Cho phép khách vãng lai truy cập /user và các trang user khác
+            if (currentPath.startsWith('/admin/')) {
                 redirectPath = '/auth/login';
             }
+            // Không redirect khỏi /user routes cho khách vãng lai
         }
         
         await router.replace(redirectPath);

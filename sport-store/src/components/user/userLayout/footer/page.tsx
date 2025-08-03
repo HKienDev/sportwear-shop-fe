@@ -24,15 +24,15 @@ const Footer = ({ className = "" }: FooterProps) => (
               priority
             />
             <span className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent font-sans">
-              VJU SPORT
+              KHÁNH HOÀN SHOP
             </span>
           </div>
           <p className="text-xs sm:text-sm text-gray-600 font-sans leading-relaxed">
-            Địa chỉ: Phố Lưu Hữu Phước, Cầu Diễn, Nam Từ Liêm, Hà Nội
+            Địa chỉ: Chợ NEO, TDP 3, Phường Yên Dũng, Tỉnh Bắc Ninh, Việt Nam
           </p>
           <div className="flex space-x-3 sm:space-x-4">
             <a 
-              href="https://www.facebook.com/vjusport" 
+              href="https://www.facebook.com/khanhhoanshop/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-600 hover:text-blue-600 transition-colors p-1 sm:p-1.5 rounded-lg hover:bg-blue-50"
@@ -94,7 +94,7 @@ const Footer = ({ className = "" }: FooterProps) => (
           <ul className="space-y-1.5 sm:space-y-2">
             <li className="flex items-center text-gray-600">
               <Phone size={16} className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-              <span className="text-xs sm:text-sm">+84 362 195 258</span>
+              <span className="text-xs sm:text-sm">+84 36 770 8888</span>
             </li>
             <li className="flex items-center text-gray-600">
               <Mail size={16} className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
@@ -102,7 +102,7 @@ const Footer = ({ className = "" }: FooterProps) => (
             </li>
             <li className="flex items-start text-gray-600">
               <MapPin size={16} className="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0" />
-              <span className="text-xs sm:text-sm">Nam Từ Liêm, Hà Nội</span>
+              <span className="text-xs sm:text-sm">Chợ NEO, TDP 3, Phường Yên Dũng, Tỉnh Bắc Ninh, Việt Nam</span>
             </li>
           </ul>
         </div>
@@ -133,7 +133,7 @@ const Footer = ({ className = "" }: FooterProps) => (
       <div className="pt-4 sm:pt-6 border-t border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
           <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-            © 2025 VJU SPORT. All rights reserved.
+            © 2025 Khánh Hoàn Shop – Thời trang nam & thể thao. All rights reserved.
           </p>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6">
             <a href="#" className="text-xs sm:text-sm text-gray-500 hover:text-purple-600 transition-colors text-center sm:text-left">

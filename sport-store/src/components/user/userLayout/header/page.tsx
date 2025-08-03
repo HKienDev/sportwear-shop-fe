@@ -146,9 +146,9 @@ const Header = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent group-hover:from-red-700 group-hover:to-red-900 transition-all duration-300">
-                VJU SPORT
+                KHÁNH HOÀN SHOP
               </span>
-              <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors hidden sm:block">Thể thao chuyên nghiệp</span>
+              <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors hidden sm:block">Thời trang nam & thể thao – Phong cách năng động</span>
             </div>
           </Link>
 

@@ -782,9 +782,27 @@ const HomePage = () => {
 
   // Tối ưu auth check với useCallback
   const handleAuthCheck = useCallback(() => {
-    if (user === null && typeof window !== 'undefined' && !(window as Window & { __checkedAuth?: boolean }).__checkedAuth) {
+    console.log('🔍 HomePage - handleAuthCheck called:', {
+      user: !!user,
+      hasCheckedAuth: (window as Window & { __checkedAuth?: boolean }).__checkedAuth,
+      hasAccessToken: !!localStorage.getItem('access_token'),
+      hasRefreshToken: !!localStorage.getItem('refresh_token'),
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+    
+    // Chỉ gọi checkAuthStatus khi chưa được check và không phải khách vãng lai
+    if (
+      user === null && 
+      typeof window !== 'undefined' && 
+      !(window as Window & { __checkedAuth?: boolean }).__checkedAuth &&
+      // Kiểm tra xem có token trong localStorage không
+      (localStorage.getItem('access_token') || localStorage.getItem('refresh_token'))
+    ) {
+      console.log('🔍 HomePage - Calling checkAuthStatus');
       (window as Window & { __checkedAuth?: boolean }).__checkedAuth = true;
       checkAuthStatus();
+    } else {
+      console.log('🔍 HomePage - Skipping checkAuthStatus');
     }
   }, [user, checkAuthStatus]);
 
