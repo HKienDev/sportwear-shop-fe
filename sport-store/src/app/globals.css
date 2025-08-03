@@ -1483,3 +1483,90 @@ select:focus-visible {
     scroll-snap-align: center;
   }
 }
+
+/* Promotions Page Specific Styles */
+.coupon-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.coupon-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.coupon-card:hover::before {
+  left: 100%;
+}
+
+.discount-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.discount-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.coupon-code {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #fecaca;
+}
+
+.coupon-code:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #f87171;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.filter-button {
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.filter-button.active {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #f87171;
+  color: #dc2626;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.hero-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+}
+
+@media (max-width: 768px) {
+  .coupon-card {
+    margin-bottom: 1rem;
+  }
+  
+  .discount-badge {
+    font-size: 1.25rem;
+  }
+  
+  .coupon-code {
+    font-size: 0.875rem;
+  }
+}
