@@ -1,20 +1,18 @@
-import type { 
-    VerifyOTPRequest, 
-    UpdateProfileRequest,
-    GoogleAuthResponse,
-    LoginResponse,
-    AuthCheckResponse,
-    TokenVerifyResponse,
-    ProfileResponse,
-    EmptyResponse,
-    AuthUser
-} from '@/types/auth';
 import type { ApiResponse } from '@/types/api';
-import { isAdmin } from '@/utils/roleUtils';
-import { setAuthCookies, clearAuthCookies } from '@/utils/cookieUtils';
-import { setAuthStorage, clearAuthStorage } from '@/utils/storageUtils';
+import type { 
+  LoginResponse, 
+  RegisterRequest, 
+  LoginCredentials, 
+  EmptyResponse, 
+  ProfileResponse, 
+  TokenVerifyResponse, 
+  AuthCheckResponse, 
+  GoogleAuthResponse, 
+  VerifyOTPRequest, 
+  UpdateProfileRequest,
+  AuthUser 
+} from '@/types/auth';
 import { TOKEN_CONFIG } from '@/config/token';
-import type { LoginCredentials, RegisterRequest } from '@/types/auth';
 
 interface AuthData {
     accessToken: string;
@@ -26,10 +24,6 @@ const setAuthData = ({ accessToken, refreshToken, user }: AuthData): void => {
     // Set data in both cookies and localStorage
     setAuthCookies(accessToken, refreshToken, JSON.stringify(user));
     setAuthStorage(accessToken, refreshToken, user);
-    
-    // Log role check
-    console.log('🔑 User role:', user.role);
-    console.log('👑 Is admin:', isAdmin(user));
 };
 
 // Optimized fetch-based API client for auth operations
@@ -95,42 +89,184 @@ const authApiClient = {
 
 // Auth service functions
 export const authService = {
-  // Login
-  async login(credentials: LoginCredentials) {
-    const response = await authApiClient.post<ApiResponse<LoginResponse['data']>>('/api/auth/login', credentials);
-    return response;
+  // Đăng nhập
+  async login(email: string, password: string): Promise<ApiResponse<LoginResponse['data']>> {
+    try {
+      const response = await authApiClient.post<ApiResponse<LoginResponse['data']>>('/api/auth/login', { email, password });
+      
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Lưu token vào localStorage
+        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+        
+        // Lưu thông tin user vào localStorage
+        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+        
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('❌ AuthService - Login error:', error);
+      throw error;
+    }
   },
 
-  // Register
-  async register(userData: RegisterRequest) {
-    const response = await authApiClient.post<ApiResponse<LoginResponse['data']>>('/api/auth/register', userData);
-    return response;
+  // Đăng ký
+  async register(userData: RegisterRequest): Promise<ApiResponse<LoginResponse['data']>> {
+    try {
+      const response = await authApiClient.post<ApiResponse<LoginResponse['data']>>('/api/auth/register', userData);
+      
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Lưu token vào localStorage
+        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+        
+        // Lưu thông tin user vào localStorage
+        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+        
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('❌ AuthService - Register error:', error);
+      throw error;
+    }
   },
 
-  // Logout
-  async logout() {
-    const response = await authApiClient.post<ApiResponse<EmptyResponse['data']>>('/api/auth/logout');
-    return response;
+  // Đăng xuất
+  async logout(): Promise<ApiResponse<EmptyResponse['data']>> {
+    try {
+      // Gọi API logout để invalidate token trên server
+      const response = await authApiClient.post<ApiResponse<EmptyResponse['data']>>('/api/auth/logout');
+      
+      // Xóa token khỏi localStorage
+      localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+      localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+      
+      return response;
+    } catch (error) {
+      console.error('❌ AuthService - Logout error:', error);
+      // Clear auth data even if API call fails
+      localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+      localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+      localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+      throw error;
+    }
+  },
+
+  // Lấy thông tin user hiện tại
+  async getCurrentUser(): Promise<ApiResponse<ProfileResponse['data']>> {
+    try {
+      const response = await authApiClient.get<ApiResponse<ProfileResponse['data']>>('/api/auth/profile');
+      return response;
+    } catch (error) {
+      console.error('❌ AuthService - Get current user error:', error);
+      throw error;
+    }
   },
 
   // Refresh token
-  async refreshToken() {
-    const response = await authApiClient.post<ApiResponse<EmptyResponse['data']>>('/api/auth/refresh-token');
-    return response;
+  async refreshToken(): Promise<ApiResponse<EmptyResponse['data']>> {
+    try {
+      const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+      
+      if (!refreshToken) {
+        throw new Error('No refresh token found');
+      }
+      
+      const response = await authApiClient.post<ApiResponse<EmptyResponse['data']>>('/api/auth/refresh-token', { refreshToken });
+      
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken: newRefreshToken } = response.data as {
+          user: AuthUser;
+          accessToken: string;
+          refreshToken: string;
+        };
+        
+        // Cập nhật token trong localStorage
+        localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+        localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
+        
+        // Cập nhật thông tin user trong localStorage
+        localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+        
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('❌ AuthService - Refresh token error:', error);
+      throw error;
+    }
   },
 
-  // Get user profile
-  async getProfile() {
-    const response = await authApiClient.get<ApiResponse<ProfileResponse['data']>>('/api/auth/profile');
-    return response;
+  // Kiểm tra xem user có đăng nhập không
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+    return !!token;
   },
 
-  // Verify token
-  async verifyToken() {
-    const response = await authApiClient.get<ApiResponse<TokenVerifyResponse['data']>>('/api/auth/verify-token');
-    return response;
+  // Kiểm tra xem user có phải admin không
+  isAdmin(): boolean {
+    const userStr = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+    if (!userStr) return false;
+    
+    try {
+      const user = JSON.parse(userStr);
+      return user.role === 'admin';
+    } catch (error) {
+      console.error('❌ AuthService - Error parsing user data:', error);
+      return false;
+    }
+  },
+
+  // Lấy thông tin user từ localStorage
+  getCurrentUserFromStorage(): AuthUser | null {
+    const userStr = localStorage.getItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+    if (!userStr) return null;
+    
+    try {
+      return JSON.parse(userStr);
+    } catch (error) {
+      console.error('❌ AuthService - Error parsing user data from storage:', error);
+      return null;
+    }
+  },
+
+  // Lấy access token từ localStorage
+  getAccessToken(): string | null {
+    return localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
+  },
+
+  // Lấy refresh token từ localStorage
+  getRefreshToken(): string | null {
+    return localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
   }
 };
+
+// Helper functions for cookies and storage
+function setAuthCookies(accessToken: string, refreshToken: string, userStr: string): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; secure; samesite=strict`;
+    document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; secure; samesite=strict`;
+    document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
+  }
+}
+
+function setAuthStorage(accessToken: string, refreshToken: string, user: AuthUser): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+    localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+    localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, JSON.stringify(user));
+  }
+}
 
 // Individual exports for backward compatibility
 export const login = async (credentials: LoginCredentials): Promise<ApiResponse<LoginResponse['data']>> => {
@@ -160,15 +296,9 @@ export const register = async (userData: RegisterRequest): Promise<ApiResponse<L
 export const logout = async (): Promise<ApiResponse<EmptyResponse['data']>> => {
     try {
         const response = await authApiClient.post<ApiResponse<EmptyResponse['data']>>('/api/auth/logout');
-        // Clear auth data
-        clearAuthCookies();
-        clearAuthStorage();
         return response;
     } catch (error) {
         console.error('Logout error:', error);
-        // Clear auth data even if API call fails
-        clearAuthCookies();
-        clearAuthStorage();
         throw error;
     }
 };
@@ -220,11 +350,9 @@ export const updateProfile = async (data: UpdateProfileRequest): Promise<ApiResp
             const { user } = response.data;
             const userStr = JSON.stringify(user);
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userStr);
-            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
-            
-            // Log role check
-            console.log('🔑 User role:', user.role);
-            console.log('👑 Is admin:', isAdmin(user));
+            if (typeof document !== 'undefined') {
+                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
+            }
         }
         return response;
     } catch (error) {
@@ -290,11 +418,9 @@ export const updateUser = async (data: UpdateProfileRequest): Promise<ApiRespons
             const { user } = response.data;
             const userStr = JSON.stringify(user);
             localStorage.setItem(TOKEN_CONFIG.USER.STORAGE_KEY, userStr);
-            document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
-            
-            // Log role check
-            console.log('🔑 User role:', user.role);
-            console.log('👑 Is admin:', isAdmin(user));
+            if (typeof document !== 'undefined') {
+                document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
+            }
         }
         return response;
     } catch (error) {
@@ -325,7 +451,7 @@ export const verifyToken = async (): Promise<ApiResponse<TokenVerifyResponse['da
 
 export const checkAuth = async (): Promise<ApiResponse<AuthCheckResponse>> => {
     try {
-        const response = await authApiClient.get<ApiResponse<AuthCheckResponse>>('/api/auth/check-auth');
+        const response = await authApiClient.get<ApiResponse<AuthCheckResponse>>('/api/auth/check');
         return response;
     } catch (error) {
         console.error('Check auth error:', error);
@@ -346,16 +472,9 @@ export const getCurrentUser = async (): Promise<ApiResponse<ProfileResponse['dat
 export const loginWithGoogle = async (token: string): Promise<ApiResponse<LoginResponse['data']>> => {
     try {
         const response = await authApiClient.post<ApiResponse<LoginResponse['data']>>('/api/auth/google/login', { token });
-        if (response.success && response.data) {
-            const { user, accessToken, refreshToken } = response.data;
-            setAuthData({ accessToken, refreshToken, user });
-        }
         return response;
     } catch (error) {
         console.error('Login with Google error:', error);
         throw error;
     }
-};
-
-// Default export for backward compatibility
-export default authService; 
+}; 

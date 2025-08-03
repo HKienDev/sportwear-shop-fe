@@ -8,6 +8,7 @@ import type { AuthUser, RegisterRequest } from '@/types/auth';
 import type { Coupon } from '@/types/coupon';
 import { fetchWithAuthNextJS } from '@/utils/fetchWithAuth';
 import { TOKEN_CONFIG } from '@/config/token';
+import { handleAuthRedirect, shouldRedirectToLogin } from '@/utils/authRedirect';
 
 // Types for API data
 interface LoginCredentials {
@@ -85,7 +86,15 @@ class ApiClient {
         // Token hết hạn hoặc không hợp lệ
         if (this.isClient) {
           localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-          window.location.href = '/auth/login';
+          
+          // Sử dụng logic thông minh thay vì redirect trực tiếp
+          const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+          if (shouldRedirectToLogin(currentPath)) {
+            window.location.href = '/auth/login';
+          } else {
+            // Mở modal cho khách vãng lai
+            handleAuthRedirect();
+          }
         }
       }
     }
@@ -125,7 +134,15 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401 && this.isClient) {
         localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-        window.location.href = '/auth/login';
+        
+        // Sử dụng logic thông minh thay vì redirect trực tiếp
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (shouldRedirectToLogin(currentPath)) {
+          window.location.href = '/auth/login';
+        } else {
+          // Mở modal cho khách vãng lai
+          handleAuthRedirect();
+        }
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }

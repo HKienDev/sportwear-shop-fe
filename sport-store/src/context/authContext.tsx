@@ -241,10 +241,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = async (email: string, password: string) => {
         setLoading(true);
         try {
+            console.log('🔐 AuthContext - Starting login process...');
             const response = await axiosInstance.post('/auth/login', { email, password });
             
             if (response.data.success && response.data.data) {
                 const { user, accessToken, refreshToken } = response.data.data;
+                
+                console.log('🔐 AuthContext - Login successful, user data:', user);
                 
                 try {
                     // Lưu tokens vào localStorage trước
@@ -265,7 +268,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     // Set Authorization header cho axios
                     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     
+                    console.log('🔐 AuthContext - Updating auth state...');
                     updateAuthState(user, true);
+                    
+                    // Thêm delay nhỏ để đảm bảo state được cập nhật
+                    setTimeout(() => {
+                        console.log('🔐 AuthContext - Auth state after login:', {
+                            user: userRef.current,
+                            isAuthenticated: isAuthenticatedRef.current,
+                            loading
+                        });
+                    }, 100);
                     
                     return {
                         success: true,

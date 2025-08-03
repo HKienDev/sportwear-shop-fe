@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logInfo, logDebug, logError } from '@/utils/logger';
 
 // Interface cho cart item
 interface CartItem {
@@ -19,7 +20,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
       
       // If it's a 409 conflict and we haven't exhausted retries, wait and retry
       if (response.status === 409 && attempt < maxRetries) {
-        console.log(`🔄 Cart API 409 conflict, retrying... (attempt ${attempt}/${maxRetries})`);
+        logInfo(`🔄 Cart API 409 conflict, retrying... (attempt ${attempt}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
         continue;
       }
@@ -29,7 +30,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
       if (attempt === maxRetries) {
         throw error;
       }
-      console.log(`🔄 Cart API fetch error, retrying... (attempt ${attempt}/${maxRetries})`);
+      logInfo(`🔄 Cart API fetch error, retrying... (attempt ${attempt}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
   }
@@ -71,36 +72,25 @@ export async function GET(request: NextRequest) {
     
     const data = await response.json();
     
-    // Debug logs
-    console.log('Cart API Response:', {
-      success: data.success,
-      message: data.message,
-      data: data.data,
-      items: data.data?.items,
-      itemsType: typeof data.data?.items,
-      itemsIsArray: Array.isArray(data.data?.items),
-      itemsLength: data.data?.items?.length || 0,
-      itemDetails: data.data?.items?.map((item: CartItem) => {
-        return {
-          id: item._id,
-          quantity: item.quantity,
-          quantityType: typeof item.quantity,
-          sku: item.product?.sku,
-          color: item.color,
-          size: item.size
-        };
-      })
-    });
+    // Debug logs - chỉ log khi có items hoặc lỗi
+    if (data.data?.items?.length > 0 || !data.success) {
+      logInfo('Cart API Response:', {
+        success: data.success,
+        message: data.message,
+        itemsCount: data.data?.items?.length || 0,
+        hasItems: Array.isArray(data.data?.items) && data.data.items.length > 0
+      });
+    }
     
     // Đảm bảo items là array
     if (data.data && !Array.isArray(data.data.items)) {
-      console.error('Cart API - Items is not an array:', data.data.items);
+      logError('Cart API - Items is not an array:', data.data.items);
       data.data.items = [];
     }
     
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error getting cart:', error);
+    logError('Error getting cart:', error);
     return NextResponse.json(
       { success: false, message: 'Không thể lấy giỏ hàng' },
       { status: 500 }

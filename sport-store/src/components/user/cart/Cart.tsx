@@ -3,6 +3,7 @@ import CartList from './CartList';
 import CartSummary from './CartSummary';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShoppingBag, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface CartProps {
   cart: CartState;
@@ -37,9 +38,21 @@ export default function Cart({
     router.push('/user');
   };
 
+  // Breadcrumb component
+  const CartBreadcrumb = () => (
+    <nav className="flex mb-6 text-sm text-gray-600">
+      <Link href="/" className="hover:text-red-600 transition-colors duration-200">
+        Trang chủ
+      </Link>
+      <span className="mx-2 text-gray-400">/</span>
+      <span className="text-gray-800 font-medium">Giỏ hàng</span>
+    </nav>
+  );
+
   if (cart.loading) {
     return (
       <div className="container mx-auto px-4 py-8">
+        <CartBreadcrumb />
         <div className="flex justify-center items-center h-64">
           <p className="text-lg text-gray-500">Đang tải giỏ hàng...</p>
         </div>
@@ -50,6 +63,7 @@ export default function Cart({
   if (cart.error) {
     return (
       <div className="container mx-auto px-4 py-8">
+        <CartBreadcrumb />
         <div className="flex flex-col justify-center items-center h-64">
           <p className="text-lg text-red-500 mb-4">{cart.error}</p>
           <button 
@@ -65,27 +79,58 @@ export default function Cart({
 
   if (!cart.items || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col justify-center items-center h-64">
-          <div className="bg-gray-100 p-6 rounded-full mb-4">
-            <ShoppingBag size={48} className="text-gray-400" />
-          </div>
-          <p className="text-lg text-gray-500 mb-4">Giỏ hàng của bạn đang trống</p>
-          <div className="flex space-x-4">
-            <button 
-              onClick={handleGoBack}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
-            >
-              <ArrowLeft size={16} className="mr-1" />
-              Quay lại
-            </button>
-            <button 
-              onClick={handleContinueShopping} 
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center"
-            >
-              Tiếp tục mua sắm
-              <ArrowRight size={16} className="ml-1" />
-            </button>
+      <div className="min-h-fit bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="container mx-auto px-4 py-4">
+          {/* Breadcrumb */}
+          <CartBreadcrumb />
+          
+          {/* Empty Cart Content */}
+          <div className="flex flex-col items-center justify-center min-h-[30vh] px-4 pb-4">
+            {/* Animated Icon */}
+            <div className="relative mb-4">
+              {/* Background circles for depth */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-100 to-pink-100 rounded-full blur-xl opacity-60 animate-pulse"></div>
+              <div className="relative bg-white rounded-full p-8 shadow-2xl border border-gray-100">
+                <div className="relative">
+                  {/* Main shopping bag icon */}
+                  <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                    <ShoppingBag size={48} className="text-white drop-shadow-sm" />
+                  </div>
+                  
+                  {/* Floating elements for visual interest */}
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }}></div>
+                  <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Message */}
+            <div className="text-center mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Giỏ hàng của bạn đang trống
+              </h2>
+              <p className="text-gray-600 text-lg max-w-md leading-relaxed">
+                Khám phá bộ sưu tập mới nhất của chúng tôi và tìm kiếm những sản phẩm phù hợp với phong cách của bạn
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              <button 
+                onClick={handleGoBack}
+                className="flex-1 px-6 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center group font-medium"
+              >
+                <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+                Quay lại
+              </button>
+              <button 
+                onClick={handleContinueShopping} 
+                className="flex-1 px-6 py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center group font-medium"
+              >
+                Tiếp tục mua sắm
+                <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -94,16 +139,11 @@ export default function Cart({
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      <CartBreadcrumb />
+      
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center">
-          <button 
-            onClick={handleGoBack}
-            className="flex items-center text-gray-500 hover:text-gray-700 mr-6"
-          >
-            <ArrowLeft size={18} className="mr-1" />
-            <span>Quay lại</span>
-          </button>
-          <h1 className="text-2xl font-bold">Giỏ hàng của bạn</h1>
         </div>
         <button
           onClick={handleContinueShopping}

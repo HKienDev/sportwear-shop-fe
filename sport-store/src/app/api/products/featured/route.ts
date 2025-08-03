@@ -5,8 +5,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '6';
     
-    console.log('🔄 Getting featured products with limit:', limit);
-    
     // Gọi API backend trực tiếp không cần authentication
     let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     
@@ -16,13 +14,14 @@ export async function GET(request: NextRequest) {
     }
     
     const url = `${API_URL}/api/products/featured?limit=${limit}`;
-    console.log('🌐 Calling backend URL:', url);
     
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      // Thêm cache để tối ưu hiệu suất
+      next: { revalidate: 300 }, // Cache trong 5 phút
     });
     
     if (!response.ok) {
@@ -35,7 +34,6 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('✅ Featured products response:', data);
     
     return NextResponse.json(data);
   } catch (error) {

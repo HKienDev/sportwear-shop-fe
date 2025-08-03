@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { useAuth } from '@/context/authContext';
+import { useAuthModal } from '@/context/authModalContext';
+import { useCartOptimized } from './useCartOptimized';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/apiClient';
 import { safePromise } from '@/utils/promiseUtils';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/config/constants';
-import type { Product, ProductFormData } from '@/types/product';
 
 interface CartData {
   sku: string;
@@ -15,92 +15,56 @@ interface CartData {
 }
 
 export function useProductActions(productId?: string) {
-  const router = useRouter();
-  const { isAuthenticated, checkAuthStatus } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const { openModal } = useAuthModal();
+  const { addToCart, fetchCart } = useCartOptimized();
+  const router = useRouter();
 
-  // Create product
-  const createProduct = useCallback(async (productData: ProductFormData) => {
-    try {
-      setLoading(true);
-      
-      const response = await apiClient.createProduct(productData);
-      
-      if (response.data.success) {
-        toast.success(SUCCESS_MESSAGES.PRODUCT_CREATED);
-        return response.data.data as Product;
-      } else {
-        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      toast.error(errorMessage);
-      console.error('Create product error:', err);
-      throw err;
-    } finally {
-      setLoading(false);
+  const handleAuthRequired = (action: string, callback: () => void) => {
+    if (!isAuthenticated) {
+      const configs = {
+        'addToCart': {
+          title: 'Đăng nhập để thêm vào giỏ hàng',
+          description: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng'
+        },
+        'buyNow': {
+          title: 'Đăng nhập để mua hàng',
+          description: 'Vui lòng đăng nhập để tiếp tục mua hàng'
+        },
+        'addToFavorites': {
+          title: 'Đăng nhập để thêm vào yêu thích',
+          description: 'Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích'
+        }
+      };
+
+      const config = configs[action as keyof typeof configs] || {
+        title: 'Đăng nhập để tiếp tục',
+        description: 'Vui lòng đăng nhập để sử dụng tính năng này'
+      };
+
+      openModal({
+        ...config,
+        pendingAction: {
+          type: action as any,
+          callback
+        }
+      });
+      return true; // Indicates auth is required
     }
-  }, []);
+    return false; // Indicates auth is not required
+  };
 
-  // Update product
-  const updateProduct = useCallback(async (id: string, productData: ProductFormData) => {
-    try {
-      setLoading(true);
-      
-      const response = await apiClient.updateProduct(id, productData);
-      
-      if (response.data.success) {
-        toast.success(SUCCESS_MESSAGES.PRODUCT_UPDATED);
-        return response.data.data as Product;
-      } else {
-        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      toast.error(errorMessage);
-      console.error('Update product error:', err);
-      throw err;
-    } finally {
-      setLoading(false);
+  const addToCartAction = async (data: CartData) => {
+    if (handleAuthRequired('addToCart', () => addToCartAction(data))) {
+      return { success: false, message: 'Vui lòng đăng nhập' };
     }
-  }, []);
 
-  // Delete product
-  const deleteProduct = useCallback(async (id: string) => {
-    try {
-      setLoading(true);
-      
-      const response = await apiClient.deleteProduct(id);
-      
-      if (response.data.success) {
-        toast.success(SUCCESS_MESSAGES.PRODUCT_DELETED);
-        return response.data.data;
-      } else {
-        throw new Error(response.data.message || ERROR_MESSAGES.NETWORK_ERROR);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      toast.error(errorMessage);
-      console.error('Delete product error:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const addToCart = async (data: CartData) => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('🛒 Bắt đầu thêm vào giỏ hàng:', data);
-
-      // Kiểm tra và refresh token nếu cần
-      await checkAuthStatus();
-      
-      console.log('🔐 Token đã được kiểm tra');
-      
       const result = await safePromise(
         apiClient.addToCart(data),
         'Không thể thêm sản phẩm vào giỏ hàng'
@@ -118,12 +82,13 @@ export function useProductActions(productId?: string) {
       
       if (response.data && response.data.success) {
         toast.success('Đã thêm sản phẩm vào giỏ hàng');
+        fetchCart();
         return { success: true, data: response.data };
       } else {
         throw new Error(response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
     } catch (error) {
-      console.error('❌ Error adding to cart:', error);
+      console.error('Error adding to cart:', error);
       const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -134,9 +99,7 @@ export function useProductActions(productId?: string) {
   };
 
   const buyNow = async (data: CartData) => {
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để mua hàng');
-      router.push('/auth/login');
+    if (handleAuthRequired('buyNow', () => buyNow(data))) {
       return { success: false, message: 'Vui lòng đăng nhập' };
     }
 
@@ -178,9 +141,7 @@ export function useProductActions(productId?: string) {
   };
 
   const toggleFavorite = async () => {
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích');
-      router.push('/auth/login');
+    if (handleAuthRequired('addToFavorites', () => toggleFavorite())) {
       return { success: false, message: 'Vui lòng đăng nhập' };
     }
 
@@ -232,13 +193,10 @@ export function useProductActions(productId?: string) {
   };
 
   return {
-    loading,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    addToCart,
+    addToCart: addToCartAction,
     buyNow,
     toggleFavorite,
+    loading,
     error
   };
 } 

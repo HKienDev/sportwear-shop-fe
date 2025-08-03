@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cartStore';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import { useAuth } from '@/context/authContext';
+import { logInfo, logDebug } from '@/utils/logger';
 
 interface CartProviderProps {
   children: React.ReactNode;
@@ -11,6 +13,7 @@ interface CartProviderProps {
 
 export default function CartProvider({ children }: CartProviderProps) {
   const { fetchCart, error, resetError } = useCartStore();
+  const { isAuthenticated, user } = useAuth();
   const isSyncing = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -19,33 +22,37 @@ export default function CartProvider({ children }: CartProviderProps) {
     const syncCart = async () => {
       // Prevent multiple simultaneous requests
       if (isSyncing.current) {
-        console.log('Cart sync already in progress, skipping...');
+        logDebug('Cart sync already in progress, skipping...');
         return;
       }
 
       try {
         isSyncing.current = true;
-        console.log('🛒 Starting cart sync...');
+        logInfo('🛒 Starting cart sync...');
         await fetchCart();
-        console.log('✅ Cart sync completed');
+        logInfo('✅ Cart sync completed');
       } catch (error) {
-        console.error('❌ Failed to sync cart:', error);
+        logInfo('❌ Failed to sync cart:', error);
         // Don't show error toast for 409 conflicts as they're usually temporary
         if (error instanceof Error && !error.message.includes('409')) {
-          console.warn('Cart sync failed but continuing...');
+          logDebug('Cart sync failed but continuing...');
         }
       } finally {
         isSyncing.current = false;
       }
     };
 
-    // Check if user is logged in
-    const token = localStorage.getItem('accessToken');
-    if (token) {
+    // Chỉ fetch cart khi user thực sự đã đăng nhập
+    if (isAuthenticated && user) {
+      logInfo('👤 User authenticated, syncing cart...');
       // Add delay to prevent immediate sync on page load
       syncTimeoutRef.current = setTimeout(() => {
         syncCart();
       }, 1000);
+    } else {
+      logInfo('👥 Guest user, skipping cart sync');
+      // Clear cart for guest users
+      useCartStore.setState({ cart: null, error: null, loading: false });
     }
 
     // Listen for auth changes
@@ -76,7 +83,7 @@ export default function CartProvider({ children }: CartProviderProps) {
         clearTimeout(syncTimeoutRef.current);
       }
     };
-  }, [fetchCart]);
+  }, [isAuthenticated, user]); // Chỉ depend vào auth state, không depend vào fetchCart
 
   // Handle errors
   useEffect(() => {

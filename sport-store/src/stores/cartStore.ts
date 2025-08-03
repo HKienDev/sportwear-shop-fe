@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { handleCartError, calculateCartTotals } from '@/utils/cartUtils';
 import type { CartItem, Cart } from '@/types/cart';
+import { cartService } from '@/services/cartService';
+import { logInfo, logDebug, logError } from '@/utils/logger';
 
 interface CartState {
   // State
@@ -65,10 +67,21 @@ export const useCartStore = create<CartState>()(
               return;
             }
             
-            const errorMessage = handleCartError(error, 'fetch');
+            // Handle 401 errors specifically for guest users
+            if (error instanceof Error && error.message.includes('401')) {
+              logInfo('Cart fetch 401 - Guest user or expired token, clearing cart');
+              set((state) => {
+                state.cart = null;
+                state.loading = false;
+                state.error = null; // Don't show error for 401
+              });
+              return;
+            }
+
+            logError('Failed to fetch cart:', error);
             set((state) => {
-              state.error = errorMessage;
               state.loading = false;
+              state.error = error instanceof Error ? error.message : 'Failed to fetch cart';
             });
           }
         },

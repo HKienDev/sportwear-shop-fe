@@ -3,11 +3,13 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { handleCartError, calculateCartTotals } from '@/utils/cartUtils';
 import type { Cart } from '@/types/cart';
+import { useAuth } from '@/context/authContext';
 
 export function useCart() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, user } = useAuth();
 
   // Fetch cart data
   const fetchCart = useCallback(async () => {
@@ -131,10 +133,15 @@ export function useCart() {
     return calculateCartTotals(cart?.items || []);
   }, [cart?.items]);
 
-  // Load cart on mount
+  // Load cart on mount - CHỈ KHI USER ĐÃ ĐĂNG NHẬP
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    if (isAuthenticated && user) {
+      console.log('🛒 useCart - Fetching cart for authenticated user');
+      fetchCart();
+    } else {
+      console.log('👥 useCart - Guest user, skipping cart fetch');
+    }
+  }, [fetchCart, isAuthenticated, user]);
 
   return {
     cart,

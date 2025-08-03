@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cartStore';
-import { debounce } from 'lodash';
 import { calculateCartTotals } from '@/utils/cartUtils';
-import { CartItem } from '@/types/cart';
+import { debounce } from 'lodash';
+import type { Cart, CartItem } from '@/types/cart';
+import { useAuth } from '@/context/authContext';
+import { logInfo, logDebug } from '@/utils/logger';
 
 export function useCartOptimized() {
   const {
@@ -18,6 +21,8 @@ export function useCartOptimized() {
     getItemById,
     getItemBySku,
   } = useCartStore();
+  
+  const { isAuthenticated, user } = useAuth();
 
   // Tính toán cartTotals bằng useMemo
   const cartTotals = useMemo(() => {
@@ -27,30 +32,33 @@ export function useCartOptimized() {
   }, [cart?.items]);
 
   // Debounced update function
-  const debouncedUpdate = useRef(
-    debounce(async (productData: { sku: string; color?: string; size?: string; quantity?: number }) => {
+  const debouncedUpdate = useMemo(
+    () => debounce(async (data: { sku: string; color?: string; size?: string; quantity: number }) => {
       try {
-        await updateCartItem(productData);
+        await updateCartItem(data);
       } catch (error) {
-        console.error('Debounced update failed:', error);
+        console.error('Failed to update cart item:', error);
+        toast.error('Không thể cập nhật giỏ hàng');
       }
-    }, 500)
-  ).current;
+    }, 500),
+    [updateCartItem]
+  );
 
-  // Optimized update quantity with debounce
+  // Optimized update quantity function
   const updateQuantityOptimized = useCallback(
     async (itemId: string, quantity: number) => {
       const item = getItemById(itemId);
-      if (!item) return;
+      if (!item) {
+        console.warn('Item not found in cart:', itemId);
+        return;
+      }
 
-      // Immediate optimistic update
+      // Optimistic update
       useCartStore.setState((state) => {
         if (state.cart) {
-          const itemIndex = state.cart.items.findIndex(i => i._id === itemId);
-          if (itemIndex !== -1) {
-            state.cart.items[itemIndex].quantity = quantity;
-            const price = item.product.salePrice ?? item.product.originalPrice;
-            state.cart.items[itemIndex].totalPrice = quantity * price;
+          const item = state.cart.items.find(i => i._id === itemId);
+          if (item) {
+            item.quantity = quantity;
           }
         }
       });
@@ -104,24 +112,30 @@ export function useCartOptimized() {
     [getItemById, removeFromCart]
   );
 
-  // Auto-refresh cart on mount và khi cart thay đổi
-  useEffect(() => {
-    if (!cart && !loading) {
-      fetchCart();
-    }
-  }, [cart, loading, fetchCart]);
+  // CartProvider đã handle fetchCart, không cần tự động fetch ở đây
+  // useEffect(() => {
+  //   if (isAuthenticated && user && !cart && !loading) {
+  //     logInfo(`🛒 useCartOptimized - Fetching cart for authenticated user at ${new Date().toISOString()}`);
+  //     fetchCart();
+  //   } else if (!isAuthenticated || !user) {
+  //     // Clear cart khi user logout
+  //     logInfo(`🛒 useCartOptimized - User logged out, clearing cart at ${new Date().toISOString()}`);
+  //     useCartStore.setState({ cart: null, error: null, loading: false });
+  //   }
+  // }, [isAuthenticated, user]); // Chỉ depend vào auth state, không depend vào cart/loading/fetchCart
 
-  // Refresh cart khi window focus (user quay lại tab)
+  // Refresh cart khi window focus (user quay lại tab) - CHỈ KHI USER ĐÃ ĐĂNG NHẬP
   useEffect(() => {
     const handleFocus = () => {
-      if (cart && !loading) {
+      if (isAuthenticated && user && cart && !loading) {
+        logInfo(`🛒 useCartOptimized - Refreshing cart on window focus at ${new Date().toISOString()}`);
         fetchCart();
       }
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [cart, loading, fetchCart]);
+  }, [isAuthenticated, user]); // Chỉ depend vào auth state, không depend vào cart/loading/fetchCart
 
   // Cleanup debounced function
   useEffect(() => {

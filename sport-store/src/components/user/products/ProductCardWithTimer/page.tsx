@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useMemo, useCallback, memo, useState } from "react";
-import Image from "next/image";
-import { Star, Heart, Eye, ShoppingCart, Zap, TrendingUp, Clock } from "lucide-react";
-import { useCountdown } from "@/hooks/useCountdown";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useCartOptimized } from "@/hooks/useCartOptimized";
-import { toast } from "sonner";
 import { useAuth } from "@/context/authContext";
+import { useAuthModal } from "@/context/authModalContext";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ShoppingCart, Heart, Eye, Clock, Star, TrendingUp, Zap } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCountdown } from "@/hooks/useCountdown";
 
 // Enhanced Countdown Timer with Circular Progress
 const CountdownTimer = memo(({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) => (
@@ -170,8 +172,9 @@ const ProductCardWithTimer = ({
     description: "Lorem ipsum dolor sit amet consectetur Lorem ipsum dolor dolor sit amet consectetur Lorem ipsum dolor"
   }
 }: ProductCardWithTimerProps) => {
-  const { addToCart, fetchCart } = useCartOptimized();
+  const { addToCart } = useCartOptimized();
   const { isAuthenticated } = useAuth();
+  const { openModal } = useAuthModal();
   const router = useRouter();
 
   // Countdown calculation
@@ -229,8 +232,19 @@ const ProductCardWithTimer = ({
 
   const handleAddToCart = useCallback(async () => {
     if (!isAuthenticated) {
-      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
-      router.push('/auth/login');
+      // Mở auth modal thay vì redirect
+      openModal({
+        title: 'Đăng nhập để thêm vào giỏ hàng',
+        description: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng',
+        pendingAction: {
+          type: 'addToCart',
+          data: product,
+          callback: () => {
+            // Thực hiện lại action sau khi đăng nhập
+            handleAddToCart();
+          }
+        }
+      });
       return;
     }
 
@@ -309,13 +323,13 @@ const ProductCardWithTimer = ({
       if (size) cartData.size = size;
 
       await addToCart(cartData);
-      fetchCart();
+      // Không cần fetchCart vì addToCart đã tự động sync
       toast.success("Đã thêm vào giỏ hàng!");
     } catch (error) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
       toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
     }
-  }, [isAuthenticated, product, addToCart, fetchCart, router, isComplete]);
+  }, [isAuthenticated, product, addToCart, router, isComplete, openModal]);
 
   const handleViewDetails = useCallback(() => {
     router.push(`/user/products/${product.sku}`);

@@ -105,9 +105,7 @@ class AdminReviewService {
   // Lấy thống kê review
   async getReviewStats(): Promise<ReviewStatsResponse> {
     try {
-      console.log('🔍 AdminReviewService - Calling stats API...');
       const response = await apiClient.get('/api/reviews/admin/stats');
-      console.log('🔍 AdminReviewService - Stats response:', response.data);
       return response.data as ReviewStatsResponse;
     } catch (error) {
       console.error('Error fetching review stats:', error);

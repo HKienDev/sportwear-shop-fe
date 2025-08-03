@@ -23,15 +23,11 @@ export default function CartPage() {
     loading,
     error,
     cartTotals,
-    fetchCart,
     updateCartItem,
     removeFromCart
   } = useCartOptimized();
 
-  // Force refresh cart khi vào trang
-  useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+  // CartProvider đã handle fetchCart, không cần gọi lại ở đây
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     try {

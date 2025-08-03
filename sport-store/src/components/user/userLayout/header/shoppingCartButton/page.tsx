@@ -2,6 +2,7 @@
 
 import { useCartOptimized } from "@/hooks/useCartOptimized";
 import { useAuth } from "@/context/authContext";
+import { useAuthModal } from "@/context/authModalContext";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,7 @@ import { useEffect } from "react";
 const ShoppingCartButton = () => {
   const { cart } = useCartOptimized();
   const { isAuthenticated, checkAuthStatus } = useAuth();
+  const { openModal } = useAuthModal();
   const router = useRouter();
   const itemCount = cart?.items?.length || 0;
 
@@ -18,18 +20,18 @@ const ShoppingCartButton = () => {
     e.preventDefault();
     
     if (!isAuthenticated) {
-      // Kiểm tra xác thực trước khi chuyển hướng
-      try {
-        // Kiểm tra flag justLoggedOut
-        if (getJustLoggedOut()) {
-          router.push('/auth/login');
-          return;
+      // Mở auth modal thay vì redirect
+      openModal({
+        title: 'Đăng nhập để xem giỏ hàng',
+        description: 'Vui lòng đăng nhập để xem giỏ hàng của bạn',
+        pendingAction: {
+          type: 'viewCart',
+          callback: () => {
+            router.push('/user/cart');
+          }
         }
-        
-        await checkAuthStatus();
-      } catch (error) {
-        console.error('Error checking auth:', error);
-      }
+      });
+      return;
     }
     
     // Nếu đã xác thực, chuyển hướng đến giỏ hàng
@@ -41,18 +43,20 @@ const ShoppingCartButton = () => {
       try {
         // Kiểm tra flag justLoggedOut
         if (getJustLoggedOut()) {
-          router.push('/auth/login');
           return;
         }
         
-        await checkAuthStatus();
+        // Chỉ check auth nếu chưa có thông tin auth
+        if (!isAuthenticated) {
+          await checkAuthStatus();
+        }
       } catch (error) {
         console.error('Error checking auth:', error);
       }
     };
 
     checkAuth();
-  }, [checkAuthStatus, router]);
+  }, []); // Chỉ chạy một lần khi component mount
 
   return (
     <Link

@@ -25,12 +25,9 @@ export const customerService = {
       totalPages: number;
     };
   }>> {
-    console.log("🚀 customerService.getCustomers() called");
     const response = await apiClient.getUsers();
-    console.log("📡 apiClient.getUsers() response:", response);
     // API trả về array trực tiếp, không bọc trong data
     const users = Array.isArray(response.data) ? response.data : [];
-    console.log("👥 Raw users from API:", users.length, "users");
     
     // Tính toán thống kê thực tế cho từng customer
     const usersWithRealStats = await Promise.all(
@@ -42,21 +39,13 @@ export const customerService = {
           if (user.role === 'user') {
             // Tìm theo userId
             try {
-              console.log('🔍 Searching orders by userId for:', user._id);
               const ordersByUserIdResponse = await apiClient.get(`/orders?userId=${user._id}`);
-              console.log('📡 ordersByUserIdResponse:', ordersByUserIdResponse);
               if (ordersByUserIdResponse.data && typeof ordersByUserIdResponse.data === 'object' && 'success' in ordersByUserIdResponse.data) {
                 const responseData = ordersByUserIdResponse.data as { success: boolean; data?: unknown };
-                console.log('📊 userId responseData:', responseData);
                 if (responseData.success && responseData.data) {
                   const userIdOrders = Array.isArray(responseData.data) ? responseData.data : [];
                   allOrders = [...allOrders, ...userIdOrders];
-                  console.log('📦 Orders found by userId for', user.phone, ':', userIdOrders.length);
-                } else {
-                  console.log('❌ ordersByUserIdResponse not successful or no data');
                 }
-              } else {
-                console.log('❌ ordersByUserIdResponse.data is not valid');
               }
             } catch (error) {
               console.error(`❌ Error getting orders by userId for ${user.phone}:`, error);
@@ -64,39 +53,25 @@ export const customerService = {
             
             // Tìm theo phone
             try {
-              console.log('🔍 Searching orders by phone for:', user.phone);
               const ordersByPhoneResponse = await apiClient.getOrdersByPhone(user.phone as string);
-              console.log('📡 ordersByPhoneResponse:', ordersByPhoneResponse);
               if (ordersByPhoneResponse.data && typeof ordersByPhoneResponse.data === 'object' && 'success' in ordersByPhoneResponse.data) {
                 const responseData = ordersByPhoneResponse.data as { success: boolean; data?: unknown };
-                console.log('📊 responseData:', responseData);
                 if (responseData.success && responseData.data) {
                   const phoneOrders = Array.isArray(responseData.data) ? responseData.data : [];
-                  console.log('📦 Orders found by phone for', user.phone, ':', phoneOrders.length);
                   
                   // Loại bỏ trùng lặp dựa trên _id
                   const existingIds = new Set(allOrders.map(order => (order._id as string)));
                   const uniquePhoneOrders = phoneOrders.filter(order => !existingIds.has(order._id as string));
                   allOrders = [...allOrders, ...uniquePhoneOrders];
-                } else {
-                  console.log('❌ ordersByPhoneResponse not successful or no data');
                 }
-              } else {
-                console.log('❌ ordersByPhoneResponse.data is not valid');
               }
             } catch (error) {
               console.error(`❌ Error getting orders by phone for ${user.phone}:`, error);
             }
-          } else {
-            console.log('⏭️ Skipping orders lookup for non-user role:', user.role, 'phone:', user.phone);
           }
           
           // Ưu tiên sử dụng dữ liệu trực tiếp từ user model
           if (user.totalSpent !== undefined && user.orderCount !== undefined) {
-            console.log('✅ Using user model data for', user.phone, ':', {
-              totalSpent: user.totalSpent,
-              orderCount: user.orderCount
-            });
             return {
               ...user,
               orderCount: user.orderCount || 0,
@@ -110,10 +85,6 @@ export const customerService = {
           
           // Fallback: Sử dụng dữ liệu từ backend nếu có
           if (user.realTotalSpent !== undefined && user.realDeliveredOrders !== undefined) {
-            console.log('✅ Using backend calculated data for', user.phone, ':', {
-              realTotalSpent: user.realTotalSpent,
-              realDeliveredOrders: user.realDeliveredOrders
-            });
             return {
               ...user,
               orderCount: user.realDeliveredOrders || 0,
@@ -133,12 +104,6 @@ export const customerService = {
           const totalSpent = paidOrders.reduce((total: number, order: Record<string, unknown>) => {
             return total + ((order.totalPrice as number) || 0);
           }, 0);
-          
-          console.log('📊 Calculated data for', user.phone, ':', {
-            totalOrders,
-            totalSpent,
-            deliveredOrders: totalOrders
-          });
           
           return {
             ...user,

@@ -48,15 +48,21 @@ const UserMenu = () => {
 
   // Debug log để kiểm tra auth state
   useEffect(() => {
-    if (user && isAuthenticated) {
-      // User data đã sẵn sàng
-    }
+    console.log('👤 UserMenu - Auth state changed:', {
+      hasUser: !!user,
+      isAuthenticated,
+      userRole: user?.role,
+      userName: user?.fullname || user?.email
+    });
   }, [user, isAuthenticated]);
 
   // Nếu không có user hoặc chưa xác thực, không hiển thị menu
   if (!user || !isAuthenticated) {
+    console.log('🚫 UserMenu - Not showing menu:', { hasUser: !!user, isAuthenticated });
     return null;
   }
+
+  console.log('✅ UserMenu - Showing menu for user:', user.fullname || user.email);
 
   const handleLogout = async () => {
     try {
