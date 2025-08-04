@@ -39,7 +39,25 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
 ];
 
 export const getMembershipTier = (totalSpent: number = 0): MembershipTier => {
-  return MEMBERSHIP_TIERS.find(tier => 
-    totalSpent >= tier.minSpent && totalSpent < tier.maxSpent
-  ) || MEMBERSHIP_TIERS[0]; // Default to Đồng
-}; 
+  // Find the appropriate tier based on totalSpent
+  // Use >= logic to match backend behavior
+  if (totalSpent >= 50000000) {
+    return MEMBERSHIP_TIERS[4]; // Kim Cương
+  } else if (totalSpent >= 10000000) {
+    return MEMBERSHIP_TIERS[3]; // Bạch Kim
+  } else if (totalSpent >= 5000000) {
+    return MEMBERSHIP_TIERS[2]; // Vàng
+  } else if (totalSpent >= 2000000) {
+    return MEMBERSHIP_TIERS[1]; // Bạc
+  } else {
+    return MEMBERSHIP_TIERS[0]; // Đồng
+  }
+};
+
+// Test cases (matching backend logic):
+// totalSpent = 0 → Đồng (0 < 2000000)
+// totalSpent = 2000000 → Bạc (2000000 >= 2000000)
+// totalSpent = 5000000 → Vàng (5000000 >= 5000000)
+// totalSpent = 10000000 → Bạch Kim (10000000 >= 10000000)
+// totalSpent = 50000000 → Kim Cương (50000000 >= 50000000)
+// totalSpent = 100000000 → Kim Cương (100000000 >= 50000000) 

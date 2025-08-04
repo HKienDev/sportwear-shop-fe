@@ -66,22 +66,22 @@ const Footer = ({ className = "" }: FooterProps) => (
           <h3 className="text-sm sm:text-base font-semibold text-gray-900 uppercase tracking-wider mb-3 sm:mb-4">Liên kết nhanh</h3>
           <ul className="space-y-1.5 sm:space-y-2">
             <li>
-              <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
+              <a href="/" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
                 Trang chủ
               </a>
             </li>
             <li>
-              <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
+              <a href="/user/products" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
                 Sản phẩm
               </a>
             </li>
             <li>
-              <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
-                Giới thiệu
+              <a href="/promotions" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
+                Khuyến mãi
               </a>
             </li>
             <li>
-              <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
+              <a href="/contact" className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors block py-1 hover:translate-x-1 transform duration-200">
                 Liên hệ
               </a>
             </li>

@@ -7,10 +7,12 @@ import { toast } from 'sonner';
 
 interface SessionTimeoutWarningProps {
   warningThreshold?: number; // Thời gian (ms) trước khi hiển thị warning
+  checkInterval?: number; // Thời gian (ms) giữa các lần kiểm tra
 }
 
 export default function SessionTimeoutWarning({ 
-  warningThreshold = 2 * 60 * 1000 // 2 phút
+  warningThreshold = 2 * 60 * 1000, // 2 phút
+  checkInterval = 10000 // 10 giây - kiểm tra thường xuyên hơn
 }: SessionTimeoutWarningProps) {
   const { logout, checkAuthStatus } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
@@ -22,6 +24,7 @@ export default function SessionTimeoutWarning({
       const accessToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       
       if (!accessToken) {
+        setShowWarning(false);
         return;
       }
 
@@ -30,18 +33,24 @@ export default function SessionTimeoutWarning({
       const currentTime = Date.now();
       const timeUntilExpiry = expirationTime - currentTime;
 
-      if (timeUntilExpiry <= warningThreshold && timeUntilExpiry > 0) {
-        setShowWarning(true);
-        setTimeLeft(Math.ceil(timeUntilExpiry / 1000));
-      } else if (timeUntilExpiry <= 0) {
-        // Session đã hết hạn
+      // Nếu token đã hết hạn
+      if (timeUntilExpiry <= 0) {
+        setShowWarning(false);
         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         logout();
+        return;
+      }
+
+      // Nếu token sắp hết hạn trong khoảng warning threshold
+      if (timeUntilExpiry <= warningThreshold) {
+        setShowWarning(true);
+        setTimeLeft(Math.ceil(timeUntilExpiry / 1000));
       } else {
         setShowWarning(false);
       }
     } catch (error) {
       console.error('Error checking session expiry:', error);
+      setShowWarning(false);
     }
   }, [warningThreshold, logout]);
 
@@ -61,7 +70,12 @@ export default function SessionTimeoutWarning({
         if (timeUntilExpiry > warningThreshold) {
           setShowWarning(false);
           toast.success('Phiên đăng nhập đã được gia hạn');
+        } else {
+          // Nếu vẫn còn trong warning threshold, cập nhật timeLeft
+          setTimeLeft(Math.ceil(timeUntilExpiry / 1000));
         }
+      } else {
+        throw new Error('No new token received');
       }
     } catch (error) {
       console.error('Error extending session:', error);
@@ -76,7 +90,17 @@ export default function SessionTimeoutWarning({
     logout();
   }, [logout]);
 
-  // Kiểm tra session mỗi giây khi warning hiển thị
+  // Kiểm tra session định kỳ
+  useEffect(() => {
+    // Kiểm tra ngay lập tức
+    checkSessionExpiry();
+    
+    const interval = setInterval(checkSessionExpiry, checkInterval);
+    
+    return () => clearInterval(interval);
+  }, [checkSessionExpiry, checkInterval]);
+
+  // Countdown timer khi warning hiển thị
   useEffect(() => {
     if (showWarning) {
       const interval = setInterval(() => {
@@ -93,13 +117,6 @@ export default function SessionTimeoutWarning({
       return () => clearInterval(interval);
     }
   }, [showWarning, logout]);
-
-  // Kiểm tra session định kỳ
-  useEffect(() => {
-    const interval = setInterval(checkSessionExpiry, 30000); // Kiểm tra mỗi 30 giây
-    
-    return () => clearInterval(interval);
-  }, [checkSessionExpiry]);
 
   if (!showWarning) {
     return null;

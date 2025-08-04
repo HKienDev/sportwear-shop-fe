@@ -112,9 +112,20 @@ const tiers: TierInfo[] = [
 ];
 
 export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) {
-  const currentTier = tiers.find(tier => 
-    totalSpent >= tier.minSpent && totalSpent < tier.maxSpent
-  ) || tiers[0];
+  // Use >= logic to match backend behavior
+  let currentTier = tiers[0]; // Default to Đồng
+  
+  if (totalSpent >= 50000000) {
+    currentTier = tiers[4]; // Kim Cương
+  } else if (totalSpent >= 10000000) {
+    currentTier = tiers[3]; // Bạch Kim
+  } else if (totalSpent >= 5000000) {
+    currentTier = tiers[2]; // Vàng
+  } else if (totalSpent >= 2000000) {
+    currentTier = tiers[1]; // Bạc
+  } else {
+    currentTier = tiers[0]; // Đồng
+  }
 
   const nextTier = tiers.find(tier => tier.minSpent > currentTier.minSpent);
   const nextTierAmount = nextTier ? nextTier.minSpent - totalSpent : 0;
@@ -216,4 +227,4 @@ export default function MembershipTier({ totalSpent = 0 }: MembershipTierProps) 
       )}
     </Card>
   );
-} 
+}
