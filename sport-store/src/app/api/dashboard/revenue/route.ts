@@ -5,15 +5,16 @@ import { callBackendAPI } from '@/utils/apiAuth';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || 'day';
+    const period = searchParams.get('period') || 'month';
     
     const response = await callBackendAPI(`/dashboard/revenue?period=${period}`);
     const data = await response.json();
+    
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Revenue stats error:', error);
+    console.error('❌ Revenue API error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { success: false, message: 'Failed to fetch revenue data' },
       { status: 500 }
     );
   }

@@ -122,7 +122,7 @@ export function AnalyticsCard({
                   ) : (
                     <div className="w-2 h-0.5 sm:w-3 sm:h-0.5 bg-current mr-1 sm:mr-1.5"></div>
                   )}
-                  <span className="font-semibold text-xs sm:text-sm">{Math.abs(percentage)}%</span>
+                  <span className="font-semibold text-xs sm:text-sm">{Math.abs(percentage).toFixed(2)}%</span>
                 </>
               )}
             </div>

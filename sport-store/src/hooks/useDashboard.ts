@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/authContext';
 import { apiClient } from '@/lib/apiClient';
 import { ERROR_MESSAGES } from '@/config/constants';
@@ -7,12 +7,13 @@ import { processRevenueData, createFallbackStats } from '@/utils/dashboardUtils'
 
 type TimeRange = 'day' | 'month' | 'year';
 
-export const useDashboard = (timeRange: TimeRange = 'month') => {
+export const useDashboard = (timeRange: TimeRange = 'day') => {
   const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -24,31 +25,17 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
         return;
       }
 
-      console.log('🔄 Fetching dashboard data for timeRange:', timeRange);
+      const revenueParams = { period: timeRange };
 
       // Gọi các API riêng lẻ và kết hợp dữ liệu
       const [statsRes, revenueRes, bestSellingRes, recentOrdersRes] = await Promise.all([
         apiClient.getDashboardStats(),
-        apiClient.getRevenueStats({ period: timeRange }),
+        apiClient.getRevenueStats(revenueParams),
         apiClient.getBestSellingProducts(),
         apiClient.getRecentOrders(),
       ]);
 
-      console.log('✅ Dashboard API responses:', {
-        stats: statsRes.data.success,
-        revenue: revenueRes.data.success,
-        bestSelling: bestSellingRes.data.success,
-        recentOrders: recentOrdersRes.data.success
-      });
-
-      console.log('🔍 Best selling response structure:', {
-        success: bestSellingRes.data.success,
-        data: bestSellingRes.data.data,
-        dataType: typeof bestSellingRes.data.data,
-        hasProducts: bestSellingRes.data.data?.products,
-        productsType: typeof bestSellingRes.data.data?.products,
-        productsLength: bestSellingRes.data.data?.products?.length
-      });
+      const revenue = revenueRes.data.data || { revenue: [] };
 
       // Kiểm tra response
       if (!statsRes.data.success || !revenueRes.data.success || !bestSellingRes.data.success || !recentOrdersRes.data.success) {
@@ -57,7 +44,6 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
 
       // Trích xuất dữ liệu từ response với fallback
       const stats = statsRes.data.data || createFallbackStats();
-      const revenue = revenueRes.data.data || [];
       const bestSelling = bestSellingRes.data.data?.products || [];
       
       // Xử lý recentOrders - có thể là array hoặc object
@@ -81,7 +67,7 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
       }
 
       // Xử lý dữ liệu doanh thu theo khoảng thời gian
-      const processedRevenue = processRevenueData(revenue, timeRange);
+      const processedRevenue = processRevenueData((revenue as any).revenue || [], timeRange);
 
       const newDashboardData: DashboardData = {
         stats,
@@ -89,13 +75,6 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
         bestSellingProducts: bestSelling,
         recentOrders: recentOrdersData,
       };
-
-      console.log('📊 Processed dashboard data:', {
-        statsKeys: Object.keys(newDashboardData.stats),
-        revenueLength: newDashboardData.revenue.length,
-        bestSellingLength: newDashboardData.bestSellingProducts.length,
-        recentOrdersLength: newDashboardData.recentOrders.orders.length
-      });
 
       setDashboardData(newDashboardData);
       setRetryCount(0); // Reset retry count on success
@@ -106,17 +85,45 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
       
       // Auto retry logic
       if (retryCount < 3) {
-        console.log(`🔄 Retrying dashboard fetch (${retryCount + 1}/3)...`);
-        setTimeout(() => {
+        // Clear existing timeout
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+        
+        retryTimeoutRef.current = setTimeout(() => {
           setRetryCount(prev => prev + 1);
         }, 2000 * (retryCount + 1)); // Exponential backoff
       }
     } finally {
       setIsLoading(false);
     }
-  }, [timeRange, isAuthenticated, retryCount]);
+  }, [timeRange, isAuthenticated]);
 
+  // Main data fetch effect
   useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [timeRange, isAuthenticated]);
+
+  // Retry effect
+  useEffect(() => {
+    if (retryCount > 0 && isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [retryCount, isAuthenticated]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const refetch = useCallback(() => {
+    setRetryCount(0); // Reset retry count
     fetchDashboardData();
   }, [fetchDashboardData]);
 
@@ -124,6 +131,6 @@ export const useDashboard = (timeRange: TimeRange = 'month') => {
     dashboardData,
     isLoading,
     error,
-    refetch: fetchDashboardData,
+    refetch,
   };
 }; 

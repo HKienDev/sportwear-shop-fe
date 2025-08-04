@@ -17,15 +17,10 @@ export default function AdminLayout({
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
 
-    // Kiểm tra xem có đang ở messages page không
-    const isMessagesPage = pathname === '/admin/messages';
-    
-    console.log('🔍 AdminLayout - Current pathname:', pathname);
-    console.log('🔍 AdminLayout - isMessagesPage:', isMessagesPage);
+
 
     useEffect(() => {
         const verifyAuth = async () => {
-            console.log('🔍 AdminLayout - Checking auth status...');
             await checkAuthStatus();
             
             // Đợi một chút để đảm bảo auth state đã được cập nhật
@@ -40,7 +35,6 @@ export default function AdminLayout({
     useEffect(() => {
         // Chỉ redirect khi không còn loading và user không phải admin
         if (!isLoading && !loading && (!user || user.role !== 'admin')) {
-            console.log('❌ AdminLayout - User not admin, redirecting to login');
             router.replace(ROUTES.LOGIN);
         }
     }, [isLoading, loading, user, router]);

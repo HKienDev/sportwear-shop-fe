@@ -70,27 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticatedRef.current = isAuthenticated;
     }, [user, isAuthenticated]);
 
-    // Debug effect để theo dõi thay đổi trạng thái
-    useEffect(() => {
-        // Chỉ log khi có thay đổi quan trọng
-        if (user || isAuthenticated) {
-            console.log("🔄 Auth state changed:", {
-                hasUser: !!user,
-                isAuthenticated,
-                loading,
-                userRole: user?.role
-            });
-        }
-    }, [user, isAuthenticated, loading]);
+
 
     const updateAuthState = useCallback((user: AuthUser | null, isAuthenticated: boolean) => {
-        console.log('🔄 updateAuthState called:', {
-            hasUser: !!user,
-            isAuthenticated,
-            userRole: user?.role,
-            timestamp: new Date().toISOString()
-        });
-        
         try {
             setUser(user);
             setIsAuthenticated(isAuthenticated);
@@ -100,8 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             userRef.current = user;
             isAuthenticatedRef.current = isAuthenticated;
             lastCheckRef.current = Date.now();
-            
-            console.log('✅ updateAuthState completed successfully');
         } catch (error) {
             console.error('❌ updateAuthState error:', error);
         }
@@ -294,7 +274,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
         } catch (error) {
             console.error('Login error:', error);
-            throw error;
+            setLoading(false);
+            
+            // Xử lý lỗi cụ thể
+            if (error instanceof Error) {
+                if (error.message.includes('Network Error') || error.message.includes('ECONNREFUSED')) {
+                    throw new Error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+                } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                    throw new Error('Email hoặc mật khẩu không đúng.');
+                } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+                    throw new Error('Lỗi máy chủ. Vui lòng thử lại sau.');
+                } else {
+                    throw error;
+                }
+            } else {
+                throw new Error('Đã xảy ra lỗi không xác định.');
+            }
         } finally {
             setLoading(false);
         }

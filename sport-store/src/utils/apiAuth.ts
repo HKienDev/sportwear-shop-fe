@@ -17,12 +17,10 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
     const userCookie = cookieStore.get(TOKEN_CONFIG.USER.COOKIE_NAME)?.value;
     
     if (!accessToken || !userCookie) {
-      console.log('🔍 API Auth - No tokens found in cookies');
       return null;
     }
 
     const user = JSON.parse(decodeURIComponent(userCookie));
-    console.log('✅ API Auth - User authenticated:', { id: user._id, role: user.role });
     return user;
   } catch (error) {
     console.error('❌ API Auth - Error parsing user cookie:', error);
@@ -37,14 +35,12 @@ export async function requireAuth(): Promise<{ user: AuthenticatedUser; accessTo
     const user = await getAuthenticatedUser();
     
     if (!accessToken || !user) {
-      console.log('❌ API Auth - Authentication required but not provided');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    console.log('✅ API Auth - User authenticated successfully');
     return { user, accessToken };
   } catch (error) {
     console.error('❌ API Auth - Error in requireAuth:', error);
@@ -66,14 +62,12 @@ export async function requireAdmin(): Promise<{ user: AuthenticatedUser; accessT
     const { user, accessToken } = authResult;
     
     if (user.role !== 'admin') {
-      console.log('❌ API Auth - User is not admin:', { userId: user._id, role: user.role });
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
       );
     }
 
-    console.log('✅ API Auth - Admin access granted:', { userId: user._id });
     return { user, accessToken };
   } catch (error) {
     console.error('❌ API Auth - Error in requireAdmin:', error);
@@ -91,18 +85,14 @@ export async function callBackendAPI(
   try {
     let API_URL = process.env.NEXT_PUBLIC_API_URL;
     
-    console.log('🔍 callBackendAPI - Initial API_URL:', API_URL);
-    
     // Đảm bảo API_URL không kết thúc bằng /api để tránh duplicate
     if (API_URL?.endsWith('/api')) {
       API_URL = API_URL.slice(0, -4); // Loại bỏ /api ở cuối
-      console.log('🔍 callBackendAPI - Removed /api suffix, new API_URL:', API_URL);
     }
     
     const authResult = await requireAdmin();
     
     if (authResult instanceof NextResponse) {
-      console.log('❌ callBackendAPI - Authentication failed');
       throw new Error('Authentication failed');
     }
 
@@ -110,15 +100,6 @@ export async function callBackendAPI(
     // Đảm bảo endpoint không bắt đầu bằng /api để tránh duplicate
     const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.slice(4) : endpoint;
     const url = `${API_URL}/api${cleanEndpoint}`;
-    
-    console.log('🌐 callBackendAPI - Calling backend:', { 
-      endpoint, 
-      method: options.method || 'GET',
-      fullUrl: url,
-      apiUrl: API_URL,
-      hasToken: !!accessToken,
-      tokenLength: accessToken?.length
-    });
 
     const response = await fetch(url, {
       ...options,
@@ -127,12 +108,6 @@ export async function callBackendAPI(
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    });
-
-    console.log('📥 callBackendAPI - Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
     });
 
     if (!response.ok) {
@@ -145,7 +120,6 @@ export async function callBackendAPI(
       throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ callBackendAPI - Backend API call successful:', { endpoint, status: response.status });
     return response;
   } catch (error) {
     console.error('❌ callBackendAPI - Error calling backend API:', error);

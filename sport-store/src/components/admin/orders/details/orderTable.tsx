@@ -67,8 +67,8 @@ export default function OrderTable({
   const total = totalPrice > 0 ? totalPrice : (subtotal - discount - couponDiscount + shipping);
 
   // Tính phần trăm giảm giá trực tiếp
-  const directDiscountPercentage = subtotal > 0 ? Math.round((discount / subtotal) * 100) : 0;
-  const directDiscountText = directDiscountPercentage > 0 ? ` (${directDiscountPercentage}%)` : '';
+  const directDiscountPercentage = subtotal > 0 ? ((discount / subtotal) * 100) : 0;
+  const directDiscountText = directDiscountPercentage > 0 ? ` (${directDiscountPercentage.toFixed(2)}%)` : '';
 
   // Tính phần trăm giảm giá từ mã
   let couponDiscountPercentage = 0;
@@ -76,9 +76,9 @@ export default function OrderTable({
     couponDiscountPercentage = appliedCoupon.value;
   } else if (subtotal > 0) {
     const priceAfterDirectDiscount = subtotal - discount;
-    couponDiscountPercentage = priceAfterDirectDiscount > 0 ? Math.round((couponDiscount / priceAfterDirectDiscount) * 100) : 0;
+    couponDiscountPercentage = priceAfterDirectDiscount > 0 ? ((couponDiscount / priceAfterDirectDiscount) * 100) : 0;
   }
-  const couponDiscountText = couponDiscountPercentage > 0 ? ` (${couponDiscountPercentage}%)` : '';
+  const couponDiscountText = couponDiscountPercentage > 0 ? ` (${couponDiscountPercentage.toFixed(2)}%)` : '';
 
   return (
     <div className="space-y-6">

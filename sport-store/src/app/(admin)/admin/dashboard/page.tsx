@@ -7,7 +7,7 @@ import BestSellingProducts from '@/components/admin/dashboard/bestSellingProduct
 import { ActiveDeliveries } from '@/components/admin/dashboard/activeDeliveries';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 
@@ -15,28 +15,33 @@ import { useAuth } from '@/context/authContext';
 type TimeRange = 'day' | 'month' | 'year';
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const { dashboardData, isLoading, error, refetch } = useDashboard(timeRange);
+  
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'admin')) {
-      router.replace('/auth/login');
+    if (!loading) {
+      if (!user || user.role !== 'admin') {
+        router.replace('/auth/login');
+      }
     }
   }, [loading, user, router]);
 
+  const handleOrderDeleted = useCallback(() => {
+    if (refetch) {
+      refetch();
+    }
+  }, [refetch]);
+
+  const handleProductDeleted = useCallback(() => {
+    if (refetch) {
+      refetch();
+    }
+  }, [refetch]);
+
   useEffect(() => {
-    // Lắng nghe sự kiện xóa đơn hàng
-    const handleOrderDeleted = () => {
-      refetch();
-    };
-
-    // Lắng nghe sự kiện xóa sản phẩm
-    const handleProductDeleted = () => {
-      refetch();
-    };
-
     window.addEventListener('orderDeleted', handleOrderDeleted);
     window.addEventListener('productDeleted', handleProductDeleted);
 
@@ -44,7 +49,16 @@ export default function Dashboard() {
       window.removeEventListener('orderDeleted', handleOrderDeleted);
       window.removeEventListener('productDeleted', handleProductDeleted);
     };
-  }, [refetch]);
+  }, [handleOrderDeleted, handleProductDeleted]);
+
+  // Format currency function - memoized
+  const formatCurrency = useCallback((value: number): string => {
+    return new Intl.NumberFormat('vi-VN', { 
+      style: 'currency', 
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(value);
+  }, []);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -59,15 +73,6 @@ export default function Dashboard() {
   }
 
   const { stats, revenue, recentOrders } = dashboardData;
-
-  // Format currency function
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('vi-VN', { 
-      style: 'currency', 
-      currency: 'VND',
-      maximumFractionDigits: 0
-    }).format(value);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">

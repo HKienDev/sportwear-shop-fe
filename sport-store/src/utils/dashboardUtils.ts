@@ -52,12 +52,12 @@ export const processRevenueData = (data: RevenueData[], period: TimeRange): Reve
 
   switch (period) {
     case 'day':
-      // Lấy 7 ngày gần nhất
+      // Lấy 7 ngày gần nhất - từ ngày xa nhất đến ngày gần nhất
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
-        date.setDate(date.getDate() - i);
+        date.setDate(date.getDate() - (6 - i)); // Đồng bộ với frontend logic
         return date.toISOString().split('T')[0];
-      }).reverse();
+      });
 
       filteredData = last7Days.map(date => {
         const [year, month, day] = date.split('-');
@@ -72,12 +72,12 @@ export const processRevenueData = (data: RevenueData[], period: TimeRange): Reve
       break;
 
     case 'month':
-      // Lấy 12 tháng gần nhất
+      // Lấy 12 tháng gần nhất - từ tháng xa nhất đến tháng gần nhất
       const last12Months = Array.from({ length: 12 }, (_, i) => {
         const date = new Date();
-        date.setMonth(date.getMonth() - i);
+        date.setMonth(date.getMonth() - (11 - i)); // Đồng bộ với frontend logic
         return date.toISOString().slice(0, 7);
-      }).reverse();
+      });
 
       filteredData = last12Months.map(date => {
         const [year, month] = date.split('-');
@@ -92,12 +92,11 @@ export const processRevenueData = (data: RevenueData[], period: TimeRange): Reve
       break;
 
     case 'year':
-      // Lấy 5 năm gần nhất
+      // Lấy 5 năm gần nhất - từ năm xa nhất đến năm gần nhất
       const last5Years = Array.from({ length: 5 }, (_, i) => {
-        const date = new Date();
-        date.setFullYear(date.getFullYear() - i);
-        return date.getFullYear().toString();
-      }).reverse();
+        const year = new Date().getFullYear() - (4 - i); // Đồng bộ với frontend logic
+        return year.toString();
+      });
 
       filteredData = last5Years.map(year => {
         const existingData = data.find(item => item.date === year);

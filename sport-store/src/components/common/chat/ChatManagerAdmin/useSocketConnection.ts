@@ -6,11 +6,8 @@ const SOCKET_URL = (() => {
   const apiUrl: string = process.env.NEXT_PUBLIC_API_URL || '';
   
   if (!apiUrl) {
-    console.log('🔌 ChatManagerAdmin - No NEXT_PUBLIC_API_URL found, using default localhost');
     return "http://localhost:4000";
   }
-  
-  console.log('🔌 ChatManagerAdmin - Original API URL:', apiUrl);
   
   // Loại bỏ /api và chuyển đổi protocol
   const baseUrl = apiUrl.replace(/\/api$/, '');
@@ -25,11 +22,8 @@ const SOCKET_URL = (() => {
     socketUrl = baseUrl;
   }
   
-  console.log('🔌 ChatManagerAdmin - Converted Socket URL:', socketUrl);
   return socketUrl;
 })();
-
-console.log('🔌 ChatManagerAdmin - Final Socket URL:', SOCKET_URL);
 
 // Tạo hook để quản lý kết nối socket
 export const useSocketConnection = (onMessageReceived?: (message: ServerMessage) => void) => {
@@ -43,8 +37,6 @@ export const useSocketConnection = (onMessageReceived?: (message: ServerMessage)
     const connectSocket = () => {
       if (socketRef.current?.connected) return;
 
-      console.log('🔌 ChatManagerAdmin - Attempting to connect to:', SOCKET_URL);
-      
       const socket = io(SOCKET_URL, {
         reconnection: true,
         reconnectionAttempts: maxReconnectAttempts,
@@ -56,34 +48,27 @@ export const useSocketConnection = (onMessageReceived?: (message: ServerMessage)
       });
 
       socket.on("connect", () => {
-        console.log("✅ ChatManagerAdmin Socket connected:", socket.id);
         setIsConnected(true);
         reconnectAttempts.current = 0;
         
         // Xác định danh tính admin
         socket.emit("identifyUser", { isAdmin: true, userName: "Admin" });
-        console.log("📤 Sent identifyUser event for admin");
       });
 
       socket.on("identified", (data) => {
-        console.log("✅ ChatManagerAdmin identification response:", data);
-        if (data.status === 'success' && data.role === 'admin') {
-          console.log("✅ ChatManagerAdmin successfully identified with socket ID:", data.socketId);
-        } else {
+        if (data.status !== 'success' || data.role !== 'admin') {
           console.error("❌ ChatManagerAdmin identification failed:", data);
         }
       });
 
       // Thêm listener cho tin nhắn real-time
       socket.on("receiveMessage", (message) => {
-        console.log("📨 ChatManagerAdmin received real-time message:", message);
         if (onMessageReceived) {
           onMessageReceived(message);
         }
       });
 
       socket.on("disconnect", (reason) => {
-        console.log("❌ ChatManagerAdmin Socket disconnected:", reason);
         setIsConnected(false);
       });
 
@@ -94,7 +79,6 @@ export const useSocketConnection = (onMessageReceived?: (message: ServerMessage)
         // Thử kết nối lại nếu chưa vượt quá số lần thử
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current++;
-          console.log(`🔄 Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`);
           setTimeout(connectSocket, reconnectInterval);
         } else {
           console.error("❌ Max reconnection attempts reached");

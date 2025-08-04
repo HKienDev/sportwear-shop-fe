@@ -107,7 +107,7 @@ const CouponTable: React.FC<CouponTableProps> = ({
   };
 
   const getDiscountDisplay = (coupon: Coupon) =>
-    coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')} VNĐ`;
+    coupon.type === 'percentage' ? `${Number(coupon.value).toFixed(2)}%` : `${coupon.value.toLocaleString('vi-VN')} VNĐ`;
 
   return (
     <div className="space-y-6">

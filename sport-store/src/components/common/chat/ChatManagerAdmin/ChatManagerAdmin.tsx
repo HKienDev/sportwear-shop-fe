@@ -55,7 +55,6 @@ const ChatManagerAdmin: React.FC = () => {
 
   // Load conversations
   const loadConversations = useCallback(async () => {
-    console.log('📡 ChatManagerAdmin - Loading conversations...');
     const fetchedConversations = await fetchConversations();
     setConversations(fetchedConversations);
     
@@ -65,7 +64,6 @@ const ChatManagerAdmin: React.FC = () => {
       try {
         const parsed = JSON.parse(savedConversations);
         setConversations(parsed);
-        console.log('📡 ChatManagerAdmin - Loaded conversations from localStorage:', parsed);
       } catch (error) {
         console.error('❌ ChatManagerAdmin - Error parsing localStorage conversations:', error);
       }
@@ -101,8 +99,6 @@ const ChatManagerAdmin: React.FC = () => {
 
     // Lắng nghe tin nhắn mới
     const handleNewMessage = (data: ServerMessage) => {
-      console.log('📨 ChatManagerAdmin - New message received:', data);
-      
       const newMessage: Message = {
         sender: data.senderId,
         text: data.text,
@@ -126,13 +122,11 @@ const ChatManagerAdmin: React.FC = () => {
 
     // Lắng nghe cuộc trò chuyện mới
     const handleNewConversation = (data: NewConversationData) => {
-      console.log('💬 ChatManagerAdmin - New conversation received:', data);
       loadConversations();
     };
 
     // Lắng nghe cập nhật trạng thái
     const handleStatusUpdate = (data: StatusUpdateData) => {
-      console.log('🔄 ChatManagerAdmin - Status update received:', data);
       loadConversations();
     };
 
@@ -149,7 +143,6 @@ const ChatManagerAdmin: React.FC = () => {
 
   // Load messages for selected conversation
   const loadMessages = useCallback(async (conversationId: string) => {
-    console.log('📡 ChatManagerAdmin - Loading messages for conversation:', conversationId);
     const fetchedMessages = await fetchMessages(conversationId);
     setMessages(fetchedMessages);
     
@@ -171,7 +164,6 @@ const ChatManagerAdmin: React.FC = () => {
 
   // Handle conversation selection
   const handleSelectConversation = useCallback((conversation: Conversation) => {
-    console.log('💬 ChatManagerAdmin - Selecting conversation:', conversation);
     setSelectedConversation(conversation);
     loadMessages(conversation.id);
   }, [loadMessages]);
@@ -179,9 +171,6 @@ const ChatManagerAdmin: React.FC = () => {
   // Handle sending message
   const handleSendMessage = useCallback(async (messageText: string) => {
     if (!selectedConversation || !socket) return;
-
-    console.log('📤 ChatManagerAdmin - Sending message:', messageText);
-    console.log('📤 ChatManagerAdmin - To recipient:', selectedConversation.id);
     
     const newMessage: Message = {
       sender: 'admin',
@@ -210,8 +199,6 @@ const ChatManagerAdmin: React.FC = () => {
         senderId: 'admin',
         senderName: 'Admin'
       });
-      
-      console.log('📤 ChatManagerAdmin - Socket message sent to recipientId:', selectedConversation.id);
     } else {
       // Remove message if failed
       setMessages(prev => prev.filter(msg => msg.messageId !== newMessage.messageId));
@@ -220,7 +207,6 @@ const ChatManagerAdmin: React.FC = () => {
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
-    console.log('🔄 ChatManagerAdmin - Refreshing...');
     clearError();
     if (selectedConversation) {
       loadMessages(selectedConversation.id);
@@ -250,7 +236,6 @@ const ChatManagerAdmin: React.FC = () => {
         try {
           const parsed = JSON.parse(savedMessages);
           setMessages(parsed);
-          console.log('📡 ChatManagerAdmin - Loaded messages from localStorage:', parsed);
         } catch (error) {
           console.error('❌ ChatManagerAdmin - Error parsing localStorage messages:', error);
         }

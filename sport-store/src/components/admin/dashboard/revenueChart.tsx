@@ -1,11 +1,17 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState, useMemo, useCallback } from 'react';
 import { TrendingUp, Calendar, DollarSign, BarChart3, ChevronDown } from 'lucide-react';
+
+interface RevenueData {
+  revenue: ChartData[];
+  lastUpdated: string;
+}
 
 interface ChartData {
   date: string;
   revenue: number;
   orderCount: number;
+  displayDate?: string;
 }
 
 interface TooltipData {
@@ -19,7 +25,7 @@ interface TooltipData {
 type TimeRange = 'day' | 'month' | 'year';
 
 interface RevenueChartProps {
-  chartData?: ChartData[] | null;
+  chartData?: ChartData[] | RevenueData | null;
   formatCurrency: (value: number) => string;
   timeRange: TimeRange;
   onTimeRangeChange: Dispatch<SetStateAction<TimeRange>>;
@@ -39,29 +45,40 @@ export function RevenueChart({
   const convertToChartData = (data: RevenueChartProps['chartData']): ChartData[] => {
     if (!data) return [];
     
+    // Nếu data là array, trả về trực tiếp
     if (Array.isArray(data)) {
       return data;
+    }
+    
+    // Nếu data là object có property revenue, lấy revenue array
+    if (data && typeof data === 'object' && 'revenue' in data) {
+      const revenueData = (data as RevenueData).revenue;
+      if (Array.isArray(revenueData)) {
+        return revenueData;
+      }
     }
     
     return [];
   };
 
-  // Xử lý dữ liệu an toàn
   const safeChartData = convertToChartData(chartData);
   
-  // Tạo dữ liệu mẫu khi không có dữ liệu
-  const generateEmptyData = (): ChartData[] => {
+  // Tạo dữ liệu trống cho tất cả các period - Logic chính xác
+  const generateEmptyData = useCallback((): ChartData[] => {
     const now = new Date();
     const emptyData: ChartData[] = [];
     
     switch (timeRange) {
       case 'day':
-        // 7 ngày gần nhất
+        // 7 ngày gần nhất - từ ngày xa nhất đến ngày gần nhất
         for (let i = 6; i >= 0; i--) {
           const date = new Date(now);
           date.setDate(date.getDate() - i);
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
           emptyData.push({
-            date: date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/'),
+            date: `${day}/${month}/${year}`,
             revenue: 0,
             orderCount: 0
           });
@@ -69,11 +86,13 @@ export function RevenueChart({
         break;
         
       case 'month':
-        // 12 tháng gần nhất
+        // 12 tháng gần nhất - từ tháng xa nhất đến tháng gần nhất
         for (let i = 11; i >= 0; i--) {
           const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
           emptyData.push({
-            date: date.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' }),
+            date: `${month}/${year}`,
             revenue: 0,
             orderCount: 0
           });
@@ -81,7 +100,7 @@ export function RevenueChart({
         break;
         
       case 'year':
-        // 5 năm gần nhất
+        // 5 năm gần nhất - từ năm xa nhất đến năm gần nhất
         for (let i = 4; i >= 0; i--) {
           const year = now.getFullYear() - i;
           emptyData.push({
@@ -94,33 +113,79 @@ export function RevenueChart({
     }
     
     return emptyData;
-  };
+  }, [timeRange]);
+
+  // Kết hợp dữ liệu thực với dữ liệu trống
+  const combineData = useCallback((realData: ChartData[], emptyData: ChartData[]): ChartData[] => {
+    const combined = [...emptyData];
+    
+    // Cập nhật dữ liệu thực vào các vị trí tương ứng
+    realData.forEach(realItem => {
+      const index = combined.findIndex(emptyItem => {
+        return emptyItem.date === realItem.date;
+      });
+      if (index !== -1) {
+        combined[index] = realItem;
+      }
+    });
+    
+    return combined;
+  }, []);
   
-  // Sử dụng dữ liệu thực hoặc dữ liệu mẫu nếu không có dữ liệu
-  const displayData = safeChartData.length > 0 ? safeChartData : generateEmptyData();
+  // Format date cho hiển thị (tiếng Việt) - Tối ưu cho tất cả period
+  const formatDisplayDate = useCallback((dateStr: string, period: TimeRange): string => {
+    if (period === 'day') {
+      // Format DD/MM/YYYY -> DD/MM/YYYY (giữ nguyên cho ngày)
+      return dateStr;
+    } else if (period === 'month') {
+      // Format MM/YYYY -> "thg M YYYY"
+      const [month, year] = dateStr.split('/');
+      const monthNum = parseInt(month);
+      return `thg ${monthNum} ${year}`;
+    } else if (period === 'year') {
+      // Format YYYY -> "Năm YYYY"
+      return `Năm ${dateStr}`;
+    } else {
+      return dateStr;
+    }
+  }, []);
+
+  const emptyData = generateEmptyData();
+  const displayData = combineData(safeChartData, emptyData);
   
+  // Tạo dữ liệu hiển thị với date đã format
+  const displayDataWithFormattedDates = useMemo(() => 
+    displayData.map(item => ({
+      ...item,
+      displayDate: formatDisplayDate(item.date, timeRange)
+    })), [displayData, formatDisplayDate, timeRange]);
+  
+
+
   // Tính tổng doanh thu và trung bình
-  const totalRevenue = displayData.reduce((sum, item) => sum + (item?.revenue || 0), 0);
-  const averageRevenue = displayData.length > 0 ? totalRevenue / displayData.length : 0;
+  const totalRevenue = useMemo(() => 
+    displayData.reduce((sum, item) => sum + (item?.revenue || 0), 0), [displayData]);
+  const averageRevenue = useMemo(() => 
+    displayData.length > 0 ? totalRevenue / displayData.length : 0, [displayData.length, totalRevenue]);
 
   // Tính phần trăm tăng trưởng
-  const calculateGrowth = () => {
+  const calculateGrowth = useCallback(() => {
     if (displayData.length < 2) return 0;
     const currentPeriod = displayData.slice(-1)[0]?.revenue || 0;
     const previousPeriod = displayData.slice(-2)[0]?.revenue || 0;
     if (previousPeriod === 0) return currentPeriod > 0 ? 100 : 0;
     return ((currentPeriod - previousPeriod) / previousPeriod) * 100;
-  };
+  }, [displayData]);
 
-  const growthPercentage = calculateGrowth();
+  const growthPercentage = useMemo(() => calculateGrowth(), [calculateGrowth]);
 
   // Custom tooltip for the chart
-  const CustomTooltip = ({ active, payload }: TooltipData) => {
+  const CustomTooltip = useCallback(({ active, payload }: TooltipData) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm p-4 shadow-xl rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-          <p className="font-semibold text-gray-900 dark:text-white mb-2">{data.date}</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-2">{data.displayDate}</p>
           <div className="space-y-1">
             <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">
               {formatCurrency(data.revenue)}
@@ -133,49 +198,49 @@ export function RevenueChart({
       );
     }
     return null;
-  };
+  }, [formatCurrency]);
 
-  const getTimeRangeLabel = () => {
+  const getTimeRangeLabel = useCallback(() => {
     switch (timeRange) {
       case 'day': return '7 ngày gần nhất';
       case 'month': return '12 tháng gần nhất';
       case 'year': return '5 năm gần nhất';
       default: return '';
     }
-  };
+  }, [timeRange]);
 
-  const getAverageLabel = () => {
+  const getAverageLabel = useCallback(() => {
     switch (timeRange) {
       case 'day': return 'Trung bình/ngày';
       case 'month': return 'Trung bình/tháng';
       case 'year': return 'Trung bình/năm';
       default: return '';
     }
-  };
+  }, [timeRange]);
 
-  const getTotalLabel = () => {
+  const getTotalLabel = useCallback(() => {
     switch (timeRange) {
       case 'day': return 'Tổng 7 ngày';
       case 'month': return 'Tổng 12 tháng';
       case 'year': return 'Tổng 5 năm';
       default: return '';
     }
-  };
+  }, [timeRange]);
 
-  const getCurrentTimeRangeText = () => {
+  const getCurrentTimeRangeText = useCallback(() => {
     switch (timeRange) {
       case 'day': return '7 ngày';
       case 'month': return '12 tháng';
       case 'year': return '5 năm';
       default: return '';
     }
-  };
+  }, [timeRange]);
 
-  const timeRangeOptions = [
+  const timeRangeOptions = useMemo(() => [
     { value: 'day', label: '7 ngày' },
     { value: 'month', label: '12 tháng' },
     { value: 'year', label: '5 năm' }
-  ];
+  ], []);
 
   return (
     <div className="relative group overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300">
@@ -247,7 +312,7 @@ export function RevenueChart({
               <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tăng trưởng</span>
             </div>
             <p className={`text-sm sm:text-lg font-bold ${growthPercentage >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {growthPercentage >= 0 ? '+' : ''}{growthPercentage.toFixed(1)}%
+              {growthPercentage >= 0 ? '+' : ''}{growthPercentage.toFixed(2)}%
             </p>
           </div>
           
@@ -289,7 +354,7 @@ export function RevenueChart({
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={displayData}
+                data={displayDataWithFormattedDates}
                 margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
               >
                 <defs>
@@ -300,7 +365,7 @@ export function RevenueChart({
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" opacity={0.5} />
                 <XAxis 
-                  dataKey="date" 
+                  dataKey="displayDate" 
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 500 }}

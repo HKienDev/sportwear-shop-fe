@@ -150,7 +150,21 @@ class ApiClient {
   // Generic methods using fetch for Next.js API routes
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     if (this.isClient && url.startsWith('/api/')) {
-      const { data, status } = await this.fetchApi<T>(url);
+      // Xử lý query parameters cho client-side
+      let fullUrl = url;
+      if (config?.params) {
+        const searchParams = new URLSearchParams();
+        Object.entries(config.params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            searchParams.append(key, String(value));
+          }
+        });
+        const queryString = searchParams.toString();
+        if (queryString) {
+          fullUrl = `${url}?${queryString}`;
+        }
+      }
+      const { data, status } = await this.fetchApi<T>(fullUrl);
       return { data, status } as AxiosResponse<T>;
     }
     if (!this.client) {
@@ -367,7 +381,7 @@ class ApiClient {
   }
 
   async getRevenueStats(params?: Record<string, unknown>): Promise<import('axios').AxiosResponse<{ success: boolean; message: string; data: RevenueData[] }>> {
-    return this.get('/api/dashboard/revenue', params ? { params } : undefined);
+    return this.get('/api/dashboard/revenue', { params });
   }
 
   // Chat methods
