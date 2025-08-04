@@ -33,11 +33,13 @@ export const handleRedirect = debounce(async (
         
         // Nếu vừa logout, không redirect
         if (getJustLoggedOut()) {
+            console.log('[handleRedirect] 🚫 Just logged out, skipping redirect');
             return;
         }
         
         // Nếu không có user thực tế trong localStorage, không redirect
         if (!hasActualUser) {
+            console.log('[handleRedirect] 🚫 No actual user data, skipping redirect');
             return;
         }
         
@@ -55,7 +57,14 @@ export const handleRedirect = debounce(async (
             if (user.role === UserRole.ADMIN) {
                 redirectPath = '/admin/dashboard';
             } else {
-                redirectPath = '/user';
+                // Chỉ redirect về /user nếu không phải vừa logout và đang ở trang khác
+                if (!getJustLoggedOut() && currentPath !== '/user') {
+                    redirectPath = '/user';
+                } else {
+                    // Nếu vừa logout hoặc đang ở /user, không redirect
+                    isRedirecting = false;
+                    return;
+                }
             }
         } else {
             // Nếu không có user và đang ở trang auth, không redirect
@@ -72,6 +81,7 @@ export const handleRedirect = debounce(async (
             // Không redirect khỏi /user routes cho khách vãng lai
         }
         
+        console.log('[handleRedirect] 🔄 Redirecting to:', redirectPath);
         await router.replace(redirectPath);
         await new Promise(resolve => setTimeout(resolve, REDIRECT_DELAY));
         isRedirecting = false;

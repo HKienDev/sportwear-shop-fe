@@ -67,7 +67,8 @@ const UserMenu = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/');
+      // Không redirect ngay lập tức, để user tự chọn nơi họ muốn đi
+      // router.push('/');
     } catch (error) {
       console.error('Logout failed:', error);
     }

@@ -315,10 +315,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         try {
-            await logoutService();
-            
             // Set flag để tránh redirect ngay sau logout
             setJustLoggedOut();
+            
+            await logoutService();
             
             // Clear session manager
             sessionManager.clearSession();
@@ -350,13 +350,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             isInitializedRef.current = false;
             
             // Thêm delay để đảm bảo state được reset hoàn toàn
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 500));
             
-            // Clear flag sau 5 giây để cho phép auth check hoạt động bình thường
+            // Clear flag sau 10 giây để cho phép auth check hoạt động bình thường
             setTimeout(() => {
                 // Clear justLoggedOut flag
                 localStorage.removeItem('justLoggedOut');
-            }, 5000);
+            }, 10000);
             
             toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
             // Không redirect ở đây, để component hoặc route bảo vệ tự redirect
