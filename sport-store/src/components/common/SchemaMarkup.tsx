@@ -15,8 +15,8 @@ export default function SchemaMarkup({ type, data }: SchemaMarkupProps) {
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: 'Khánh Hoàn Shop',
-          url: 'https://www.khanhhoanshop.com',
-          logo: 'https://www.khanhhoanshop.com/Logo_vju.png',
+          url: 'https://www.vjusport.com',
+          logo: 'https://www.vjusport.com/Logo_vju.png',
           description: 'Cửa hàng thể thao Khánh Hoàn Shop - Chuyên cung cấp các sản phẩm thể thao chất lượng cao',
           address: {
             '@type': 'PostalAddress',
@@ -30,11 +30,11 @@ export default function SchemaMarkup({ type, data }: SchemaMarkupProps) {
             '@type': 'ContactPoint',
             telephone: '+84-xxx-xxx-xxxx',
             contactType: 'customer service',
-            email: 'contact@khanhhoanshop.com'
+            email: 'contact@vjusport.com'
           },
           sameAs: [
-            'https://www.facebook.com/khanhhoanshop',
-            'https://www.instagram.com/khanhhoanshop'
+            'https://www.facebook.com/vjusport',
+            'https://www.instagram.com/vjusport'
           ]
         };
       
@@ -43,11 +43,11 @@ export default function SchemaMarkup({ type, data }: SchemaMarkupProps) {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'Khánh Hoàn Shop',
-          url: 'https://www.khanhhoanshop.com',
+          url: 'https://www.vjusport.com',
           description: 'Cửa hàng thể thao Khánh Hoàn Shop - Chuyên cung cấp các sản phẩm thể thao chất lượng cao',
           potentialAction: {
             '@type': 'SearchAction',
-            target: 'https://www.khanhhoanshop.com/search?q={search_term_string}',
+            target: 'https://www.vjusport.com/search?q={search_term_string}',
             'query-input': 'required name=search_term_string'
           }
         };
@@ -63,7 +63,7 @@ export default function SchemaMarkup({ type, data }: SchemaMarkupProps) {
             name: data.brand || 'Khánh Hoàn Shop'
           },
           category: data.category || 'Thể thao',
-          image: data.image || 'https://www.khanhhoanshop.com/default-image.png',
+          image: data.image || 'https://www.vjusport.com/default-image.png',
           offers: {
             '@type': 'Offer',
             price: data.price || 0,

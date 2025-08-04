@@ -19,7 +19,7 @@ export default function SEOHead({
   description = 'Khánh Hoàn Shop - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.',
   keywords = 'thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, Khánh Hoàn Shop',
   image = '/Logo_vju.png',
-  url = 'https://www.khanhhoanshop.com',
+  url = 'https://www.vjusport.com',
   type = 'website',
   productData,
   breadcrumbData
