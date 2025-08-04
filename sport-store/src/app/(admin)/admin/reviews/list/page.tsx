@@ -41,6 +41,8 @@ export default function ReviewListPage() {
   const fetchReviews = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log('🔍 ReviewListPage - Fetching reviews with filters:', filters);
+      
       const response = await adminReviewService.getReviews(
         currentPage,
         10,
@@ -52,10 +54,14 @@ export default function ReviewListPage() {
         'desc'
       );
 
+      console.log('🔍 ReviewListPage - Reviews response:', response);
+
       if (response.success) {
         setReviews(response.data.reviews);
         setTotalPages(response.data.pagination.totalPages);
+        console.log('🔍 ReviewListPage - Reviews set:', response.data.reviews.length);
       } else {
+        console.error('🔍 ReviewListPage - Response not successful:', response);
         toast.error(response.message || "Lỗi khi tải danh sách review");
       }
     } catch (error) {
@@ -166,7 +172,16 @@ export default function ReviewListPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/40 via-indigo-50/40 to-emerald-50/40">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user || user.role !== 'admin') {

@@ -58,8 +58,10 @@ export async function GET(request: NextRequest) {
     console.log('🔍 API - Backend response status:', response.status);
 
     if (!response.ok) {
+      const errorText = await response.text();
       console.log('❌ API - Backend error:', response.status, response.statusText);
-      throw new Error(`Backend responded with ${response.status}`);
+      console.log('❌ API - Error response:', errorText);
+      throw new Error(`Backend responded with ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -69,7 +71,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching admin reviews:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { 
+        success: false, 
+        message: 'Internal server error',
+        error: error.message 
+      },
       { status: 500 }
     );
   }

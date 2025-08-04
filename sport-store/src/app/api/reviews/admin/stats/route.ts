@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAccessToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,14 +17,13 @@ export async function GET(request: NextRequest) {
     
     console.log('✅ Stats API - Admin access granted');
 
-    // Backend doesn't have stats endpoint, calculate from reviews list
+    // Call backend API to get stats
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    // Remove /api if it's already in the baseUrl
     const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
-    const reviewsUrl = `${cleanBaseUrl}/api/reviews/admin?limit=50`;
-    console.log('🔍 Stats API - Calling backend for reviews:', reviewsUrl);
+    const backendUrl = `${cleanBaseUrl}/api/reviews/admin/stats`;
+    console.log('🔍 Stats API - Calling backend for reviews:', backendUrl);
     
-    const response = await fetch(reviewsUrl, {
+    const response = await fetch(backendUrl, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -35,8 +33,12 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Stats API - Backend response status:', response.status);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.log('❌ Stats API - Backend error:', response.status, response.statusText);
+      console.log('❌ Stats API - Error response:', errorText);
       console.log('❌ Stats API - Backend error, using fallback stats');
-      // Final fallback
+      
+      // Return fallback stats instead of throwing error
       return NextResponse.json({
         success: true,
         data: {
@@ -44,39 +46,19 @@ export async function GET(request: NextRequest) {
           averageRating: 0,
           totalHelpful: 0
         },
-        message: 'Review stats retrieved successfully'
+        message: 'Review stats retrieved successfully (fallback)'
       });
     }
 
-    const reviewsData = await response.json();
-    console.log('✅ Stats API - Backend data received:', reviewsData);
-    
-    const reviews = reviewsData.data?.reviews || [];
-    console.log('🔍 Stats API - Reviews count:', reviews.length);
-    console.log('🔍 Stats API - Sample review:', reviews[0]);
-    
-    const total = reviews.length;
-    const averageRating = reviews.length > 0 
-      ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
-      : 0;
-    const totalHelpful = reviews.reduce((sum: number, review: any) => sum + (review.isHelpful || 0), 0);
-    
-    console.log('🔍 Stats API - Calculated stats:', { total, averageRating, totalHelpful });
-    
-    return NextResponse.json({
-      success: true,
-      data: {
-        total,
-        averageRating: parseFloat(averageRating.toFixed(1)),
-        totalHelpful
-      },
-      message: 'Review stats retrieved successfully'
-    });
+    const data = await response.json();
+    console.log('✅ Stats API - Backend data received:', data);
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Error fetching review stats:', error);
+    console.log('❌ Stats API - Backend error, using fallback stats');
     
-    // Return default stats on error
+    // Return fallback stats on error
     return NextResponse.json({
       success: true,
       data: {
@@ -84,7 +66,7 @@ export async function GET(request: NextRequest) {
         averageRating: 0,
         totalHelpful: 0
       },
-      message: 'Review stats retrieved successfully'
+      message: 'Review stats retrieved successfully (fallback)'
     });
   }
 } 

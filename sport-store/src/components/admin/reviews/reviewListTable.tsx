@@ -38,12 +38,19 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
     reviewTitle: string;
     currentReply?: string;
     mode: 'create' | 'edit';
+    reviewData?: {
+      rating: number;
+      userName: string;
+      createdAt: string;
+      productName: string;
+    };
   }>({
     isOpen: false,
     reviewId: "",
     reviewTitle: "",
     currentReply: "",
-    mode: 'create'
+    mode: 'create',
+    reviewData: undefined
   });
 
 
@@ -76,7 +83,13 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
       reviewId: review._id,
       reviewTitle: review.title,
       currentReply: review.adminNote,
-      mode: hasExistingReply ? 'edit' : 'create'
+      mode: hasExistingReply ? 'edit' : 'create',
+      reviewData: {
+        rating: review.rating,
+        userName: review.userName,
+        createdAt: review.createdAt,
+        productName: review.product?.name
+      }
     });
   };
 
@@ -86,7 +99,8 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
       reviewId: "",
       reviewTitle: "",
       currentReply: "",
-      mode: 'create'
+      mode: 'create',
+      reviewData: undefined
     });
   };
 
@@ -294,6 +308,7 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
         currentReply={replyModal.currentReply}
         mode={replyModal.mode}
         onReplySuccess={onRefresh}
+        reviewData={replyModal.reviewData}
       />
     </>
   );

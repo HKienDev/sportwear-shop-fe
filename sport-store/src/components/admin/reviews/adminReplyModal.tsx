@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Send, MessageSquare } from "lucide-react";
+import { X, Send, MessageSquare, Star, User, Clock, Edit3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { adminReviewService } from "@/services/adminReviewService";
 
@@ -13,6 +13,12 @@ interface AdminReplyModalProps {
   currentReply?: string;
   onReplySuccess: () => void;
   mode?: 'create' | 'edit';
+  reviewData?: {
+    rating?: number;
+    userName?: string;
+    createdAt?: string;
+    productName?: string;
+  };
 }
 
 const AdminReplyModal: React.FC<AdminReplyModalProps> = ({
@@ -22,24 +28,33 @@ const AdminReplyModal: React.FC<AdminReplyModalProps> = ({
   reviewTitle,
   currentReply,
   onReplySuccess,
-  mode = 'create'
+  mode = 'create',
+  reviewData
 }) => {
-  console.log('🔍 AdminReplyModal props:', {
-    isOpen,
-    reviewId,
-    reviewTitle,
-    currentReply,
-    mode
-  });
-  
   const [reply, setReply] = useState(currentReply || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Update reply state when currentReply prop changes
   useEffect(() => {
     setReply(currentReply || "");
   }, [currentReply]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,101 +117,127 @@ const AdminReplyModal: React.FC<AdminReplyModalProps> = ({
     }
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
             <MessageSquare className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold">
               {mode === 'edit' ? 'Chỉnh sửa phản hồi' : 'Phản hồi đánh giá'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1 hover:bg-gray-100 rounded"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Đánh giá:
-            </label>
-            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-              {reviewTitle}
+        {/* Content */}
+        <div className="p-4">
+          {/* Review Info */}
+          <div className="mb-4 p-3 bg-gray-50 rounded">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-600" />
+                <span className="font-medium">{reviewData?.userName || 'Khách hàng'}</span>
+              </div>
+              {reviewData?.rating && (
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < reviewData.rating! ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {reviewData?.productName && (
+              <div className="mb-2">
+                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                  {reviewData.productName}
+                </span>
+              </div>
+            )}
+            
+            <div className="text-sm text-gray-600">
+              <p className="font-medium">"{reviewTitle}"</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {formatDate(reviewData?.createdAt || '')}
+              </p>
             </div>
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="reply" className="block text-sm font-medium text-gray-700 mb-2">
-              Phản hồi của admin:
-            </label>
-            <textarea
-              id="reply"
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              rows={4}
-              maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Nhập phản hồi của bạn..."
-            />
-            <div className="text-xs text-gray-500 mt-1 text-right">
-              {reply.length}/500 ký tự
+          {/* Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phản hồi của Admin
+              </label>
+              <textarea
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                rows={4}
+                maxLength={500}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Nhập phản hồi của bạn..."
+              />
+              <div className="text-xs text-gray-500 mt-1 text-right">
+                {reply.length}/500 ký tự
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-end space-x-3">
-            {mode === 'edit' && (
+            {/* Buttons */}
+            <div className="flex justify-end space-x-2">
+              {mode === 'edit' && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-3 py-2 text-sm text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isDeleting ? 'Đang xóa...' : 'Xóa'}
+                </button>
+              )}
+              
               <button
                 type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                onClick={onClose}
+                className="px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
               >
-                {isDeleting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Đang xóa...</span>
-                  </>
-                ) : (
-                  <>
-                    <X className="w-4 h-4" />
-                    <span>Xóa phản hồi</span>
-                  </>
-                )}
+                Hủy
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || !reply.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Đang gửi...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  <span>{mode === 'edit' ? 'Cập nhật' : 'Gửi phản hồi'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+              
+              <button
+                type="submit"
+                disabled={isSubmitting || !reply.trim()}
+                className="px-3 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Đang gửi...' : (mode === 'edit' ? 'Cập nhật' : 'Gửi')}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
