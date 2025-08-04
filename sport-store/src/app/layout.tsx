@@ -3,35 +3,46 @@ import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import GoogleAnalytics from "@/components/common/GoogleAnalytics";
+import SchemaMarkup from "@/components/common/SchemaMarkup";
 
 export const metadata: Metadata = {
-  title: "Khánh Hoàn Shop - Quần Áo Nam Thời Trang, Năng Động & Lịch Lãm",
-  description: "Shop quần áo nam Khánh Hoàn: áo thun, sơ mi, quần jeans, đồ thể thao. Thời trang nam trẻ trung, phong cách, giá tốt, giao hàng toàn quốc.",
-  keywords: "quần áo nam, thời trang nam, áo thun nam, sơ mi nam, quần jeans nam, đồ thể thao nam",
-  authors: [{ name: "Khánh Hoàn Shop" }],
-  creator: "Khánh Hoàn Shop",
-  publisher: "Khánh Hoàn Shop",
+  title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
+  description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao. Giao hàng toàn quốc, giá tốt nhất.",
+  keywords: "thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, VJU Sport, cửa hàng thể thao",
+  authors: [{ name: "VJU Sport" }],
+  creator: "VJU Sport",
+  publisher: "VJU Sport",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vjusport.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "Khánh Hoàn Shop - Quần Áo Nam Thời Trang",
-    description: "Shop quần áo nam Khánh Hoàn: áo thun, sơ mi, quần jeans, đồ thể thao. Thời trang nam trẻ trung, phong cách, giá tốt.",
+    title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
+    description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.",
     url: '/',
-    siteName: 'Khánh Hoàn Shop',
+    siteName: 'VJU Sport',
     locale: 'vi_VN',
     type: 'website',
+    images: [
+      {
+        url: '/Logo_vju.png',
+        width: 1200,
+        height: 630,
+        alt: 'VJU Sport Logo',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Khánh Hoàn Shop - Quần Áo Nam Thời Trang",
-    description: "Shop quần áo nam Khánh Hoàn: áo thun, sơ mi, quần jeans, đồ thể thao. Thời trang nam trẻ trung, phong cách, giá tốt.",
+    title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
+    description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao.",
+    images: ['/Logo_vju.png'],
   },
   robots: {
     index: true,
@@ -45,8 +56,11 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/vju-logo-main.png',
-    apple: '/vju-logo-main.png',
+    icon: '/Logo_vju.png',
+    apple: '/Logo_vju.png',
+  },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
   },
 };
 
@@ -76,6 +90,9 @@ export default function RootLayout({
         </ClientLayout>
         <SpeedInsights />
         <Analytics />
+        <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        <SchemaMarkup type="Organization" data={{}} />
+        <SchemaMarkup type="WebSite" data={{}} />
       </body>
     </html>
   );

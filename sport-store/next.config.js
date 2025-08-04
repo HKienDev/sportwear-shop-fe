@@ -81,11 +81,11 @@ const nextConfig = {
                         key: 'Content-Security-Policy',
                         value: `
                             default-src 'self';
-                            script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://accounts.google.com;
+                            script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com;
                             style-src 'self' 'unsafe-inline';
-                            img-src 'self' data: https: http:;
+                            img-src 'self' data: https: http: https://www.google-analytics.com;
                             frame-src 'self';
-                            connect-src 'self' http://localhost:4000 ws://localhost:4000 https://sport-store-be-graduation-production.up.railway.app wss://sport-store-be-graduation-production.up.railway.app https://sportwear-shop-be-production.up.railway.app wss://sportwear-shop-be-production.up.railway.app https://provinces.open-api.vn https://api.cloudinary.com;
+                            connect-src 'self' http://localhost:4000 ws://localhost:4000 https://sport-store-be-graduation-production.up.railway.app wss://sport-store-be-graduation-production.up.railway.app https://sportwear-shop-be-production.up.railway.app wss://sportwear-shop-be-production.up.railway.app https://provinces.open-api.vn https://api.cloudinary.com https://www.google-analytics.com https://analytics.google.com;
                             font-src 'self' data: https: http:;
                             object-src 'none';
                             media-src 'self';

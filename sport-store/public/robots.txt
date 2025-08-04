@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.vjusport.com/sitemap.xml
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important pages
+Allow: /user/
+Allow: /auth/
+Allow: /brands/
+Allow: /contact/
+Allow: /promotions/
+
+# Crawl delay (optional)
+Crawl-delay: 1 
