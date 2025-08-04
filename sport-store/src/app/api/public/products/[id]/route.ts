@@ -127,7 +127,7 @@ export async function GET(
       }
 
       return NextResponse.json(data);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
         return NextResponse.json(
           { success: false, message: "Yêu cầu đã hết thời gian chờ" },
@@ -135,22 +135,24 @@ export async function GET(
         );
       }
       console.error("Error in fetch:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         { 
           success: false, 
           message: "Lỗi khi gọi API",
-          details: error instanceof Error ? error.message : String(error)
+          details: errorMessage
         },
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in route handler:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { 
         success: false, 
         message: "Lỗi server",
-        details: error instanceof Error ? error.message : String(error)
+        details: errorMessage
       },
       { status: 500 }
     );

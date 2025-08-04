@@ -43,10 +43,11 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     console.log('✅ Test successful:', data);
     return NextResponse.json({ success: true, message: 'Backend connection successful', data });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Test error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, message: 'Test failed', error: error instanceof Error ? error.message : 'Unknown error' },
+      { success: false, message: 'Test failed', error: errorMessage },
       { status: 500 }
     );
   }

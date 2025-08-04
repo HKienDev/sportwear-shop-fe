@@ -68,13 +68,14 @@ export async function GET(request: NextRequest) {
     console.log('✅ API - Backend data received:', data);
     return NextResponse.json(data);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching admin reviews:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { 
         success: false, 
         message: 'Internal server error',
-        error: error.message 
+        error: errorMessage 
       },
       { status: 500 }
     );

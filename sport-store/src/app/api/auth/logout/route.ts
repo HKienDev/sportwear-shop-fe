@@ -62,12 +62,13 @@ export async function POST() {
     });
 
     return responseData;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in logout:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json(
       { 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal Server Error' 
+        message: errorMessage
       },
       { status: 500 }
     );

@@ -95,13 +95,14 @@ export async function POST(req: Request) {
         const result = await response.json();
         console.log('Backend success response:', result);
         return NextResponse.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error in POST /api/products:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
             { 
                 success: false,
                 message: 'Internal Server Error',
-                error: error instanceof Error ? error.message : String(error)
+                error: errorMessage
             },
             { status: 500 }
         );

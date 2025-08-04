@@ -195,13 +195,15 @@ export async function GET(request: Request) {
     
     // Trả về dữ liệu từ backend
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching products:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    const errorStack = error instanceof Error ? error.stack : String(error);
     return NextResponse.json(
       { 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal Server Error',
-        error: error instanceof Error ? error.stack : String(error)
+        message: errorMessage,
+        error: errorStack
       },
       { status: 500 }
     );
@@ -354,13 +356,15 @@ export async function POST(request: Request) {
     
     // Trả về dữ liệu từ backend
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating product:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    const errorStack = error instanceof Error ? error.stack : String(error);
     return NextResponse.json(
       { 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal Server Error',
-        error: error instanceof Error ? error.stack : String(error)
+        message: errorMessage,
+        error: errorStack
       },
       { status: 500 }
     );

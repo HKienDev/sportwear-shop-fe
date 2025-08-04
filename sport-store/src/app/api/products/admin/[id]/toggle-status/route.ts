@@ -54,12 +54,13 @@ export async function PATCH(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating product status:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json(
       { 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal Server Error' 
+        message: errorMessage
       },
       { status: 500 }
     );
