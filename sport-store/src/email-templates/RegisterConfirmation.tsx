@@ -31,7 +31,7 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Chào mừng bạn đến với Sport Store! Xác nhận đăng ký tài khoản</Preview>
+      <Preview>Chào mừng bạn đến với Khánh Hoàn Shop! Xác nhận đăng ký tài khoản</Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans">
           <Container className="mx-auto my-10 max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
@@ -44,7 +44,7 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
                 className="mx-auto mb-6"
               />
               <Heading className="text-2xl font-bold text-gray-900">
-                Chào mừng đến với Sport Store!
+                Chào mừng đến với Khánh Hoàn Shop!
               </Heading>
               <Text className="text-gray-600">
                 Xin chào <Text style={{ fontWeight: 'bold', display: 'inline' }}>{fullname}</Text>,
@@ -84,13 +84,13 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
 
             <Section className="text-center">
               <Text className="text-xs text-gray-500">
-                © 2025 Sport Store. Tất cả các quyền được bảo lưu.
+                © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
                 Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh
               </Text>
               <Text className="mt-4 text-xs text-blue-700 font-medium">
-                Cam kết bảo mật: Sport Store cam kết bảo vệ tuyệt đối thông tin cá nhân và tài khoản của bạn. Mọi dữ liệu đều được mã hóa và không chia sẻ cho bên thứ ba.
+                Cam kết bảo mật: Khánh Hoàn Shop cam kết bảo vệ tuyệt đối thông tin cá nhân và tài khoản của bạn. Mọi dữ liệu đều được mã hóa và không chia sẻ cho bên thứ ba.
               </Text>
             </Section>
           </Container>

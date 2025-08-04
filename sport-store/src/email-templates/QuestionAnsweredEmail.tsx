@@ -41,7 +41,7 @@ const QuestionAnsweredEmail: React.FC<QuestionAnsweredEmailProps> = ({
         </h3>
         <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '6px', marginBottom: '15px' }}>
           <p style={{ color: '#333', margin: '0', fontSize: '14px', lineHeight: '1.5' }}>
-            "{question}"
+            &ldquo;{question}&rdquo;
           </p>
         </div>
 

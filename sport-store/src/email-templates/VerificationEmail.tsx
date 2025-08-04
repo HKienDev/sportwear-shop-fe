@@ -26,7 +26,7 @@ const VerificationEmail: React.FC<VerificationEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Mã OTP xác thực tài khoản của bạn tại Sport Store</Preview>
+      <Preview>Mã OTP xác thực tài khoản của bạn tại Khánh Hoàn Shop</Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans">
           <Container className="mx-auto my-10 max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
@@ -45,7 +45,7 @@ const VerificationEmail: React.FC<VerificationEmailProps> = ({
                 Xin chào <Text style={{ fontWeight: 'bold', display: 'inline' }}>{name}</Text>,
               </Text>
               <Text className="mt-2 text-gray-600">
-                Cảm ơn bạn đã đăng ký tài khoản tại Sport Store. Vui lòng sử dụng mã OTP dưới đây để xác thực tài khoản của bạn.
+                Cảm ơn bạn đã đăng ký tài khoản tại Khánh Hoàn Shop. Vui lòng sử dụng mã OTP dưới đây để xác thực tài khoản của bạn.
               </Text>
             </Section>
 
@@ -86,10 +86,10 @@ const VerificationEmail: React.FC<VerificationEmailProps> = ({
 
             <Section className="text-center">
               <Text className="text-xs text-gray-500">
-                © 2025 Sport Store. Tất cả các quyền được bảo lưu.
+                © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
-                Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh
+                Địa chỉ: Chợ NEO, TDP 3, Phường Yên Dũng, Tỉnh Bắc Ninh, Việt Nam
               </Text>
             </Section>
           </Container>

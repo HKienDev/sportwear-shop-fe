@@ -60,7 +60,7 @@ const NewOrderEmail: React.FC<NewOrderEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Xác nhận đơn hàng #{shortId} từ Sport Store</Preview>
+      <Preview>Xác nhận đơn hàng #{shortId} từ Khánh Hoàn Shop</Preview>
       <Body style={{ background: '#f4f7fa', fontFamily: 'Arial, sans-serif', margin: 0, padding: 0 }}>
         <Container style={{ maxWidth: 650, margin: '32px auto', background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px #e0e7ef', padding: 0, overflow: 'hidden' }}>
           {/* Header với background gradient và logo */}
@@ -190,7 +190,7 @@ const NewOrderEmail: React.FC<NewOrderEmailProps> = ({
               Mọi thắc mắc vui lòng liên hệ <Link href="mailto:support@sportstore.com" style={{ color: '#2563eb', textDecoration: 'underline' }}>support@sportstore.com</Link> hoặc <Link href="tel:0362195258" style={{ color: '#2563eb', textDecoration: 'underline' }}>0362195258</Link>
             </Text>
             <Text style={{ color: '#94a3b8', fontSize: 12, margin: '8px 0 0 0' }}>
-              © 2025 Sport Store. Tất cả các quyền được bảo lưu.<br />Email này được gửi tự động, vui lòng không trả lời.
+              © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.<br />Email này được gửi tự động, vui lòng không trả lời.
             </Text>
           </Section>
         </Container>

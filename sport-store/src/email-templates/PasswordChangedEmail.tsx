@@ -45,7 +45,7 @@ const PasswordChangedEmail: React.FC<PasswordChangedEmailProps> = ({
                 Xin chào <Text style={{ fontWeight: 'bold', display: 'inline' }}>{name}</Text>,
               </Text>
               <Text className="mt-2 text-gray-600">
-                Chúng tôi xác nhận rằng mật khẩu tài khoản Sport Store của bạn đã được thay đổi thành công vào lúc {time}.
+                Chúng tôi xác nhận rằng mật khẩu tài khoản Khánh Hoàn Shop của bạn đã được thay đổi thành công vào lúc {time}.
               </Text>
             </Section>
 
@@ -91,7 +91,7 @@ const PasswordChangedEmail: React.FC<PasswordChangedEmailProps> = ({
 
             <Section className="text-center">
               <Text className="text-xs text-gray-500">
-                © 2025 Sport Store. Tất cả các quyền được bảo lưu.
+                © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
                 Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh

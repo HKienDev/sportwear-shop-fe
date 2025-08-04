@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Send, MessageSquare, Star, User, Clock, Edit3, Trash2 } from "lucide-react";
+import { X, MessageSquare, Star, User } from "lucide-react";
 import { toast } from "sonner";
 import { adminReviewService } from "@/services/adminReviewService";
 
@@ -181,7 +181,7 @@ const AdminReplyModal: React.FC<AdminReplyModalProps> = ({
             )}
             
             <div className="text-sm text-gray-600">
-              <p className="font-medium">"{reviewTitle}"</p>
+              <p className="font-medium">&ldquo;{reviewTitle}&rdquo;</p>
               <p className="text-xs text-gray-500 mt-1">
                 {formatDate(reviewData?.createdAt || '')}
               </p>

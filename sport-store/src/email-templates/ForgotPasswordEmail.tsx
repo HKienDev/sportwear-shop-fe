@@ -26,7 +26,7 @@ const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Mã OTP đặt lại mật khẩu tại Sport Store</Preview>
+      <Preview>Mã OTP đặt lại mật khẩu tại Khánh Hoàn Shop</Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans">
           <Container className="mx-auto my-10 max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
@@ -78,7 +78,7 @@ const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({
 
             <Section className="mt-8 text-center">
               <Text className="text-sm text-gray-600">
-                Nếu bạn cần hỗ trợ, hãy liên hệ với chúng tôi qua email: <Link href="mailto:support@sportstore.com" className="text-blue-600 underline">support@sportstore.com</Link>
+                Nếu bạn cần hỗ trợ, hãy liên hệ với chúng tôi qua email: <Link href="mailto:support@sportstore.com" className="text-blue-600 underline">khanhhoanshop@gmail.com</Link>
               </Text>
             </Section>
 
@@ -86,10 +86,10 @@ const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({
 
             <Section className="text-center">
               <Text className="text-xs text-gray-500">
-                © 2025 Sport Store. Tất cả các quyền được bảo lưu.
+                © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
-                Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh
+                Địa chỉ: Chợ NEO, TDP 3, Phường Yên Dũng, Tỉnh Bắc Ninh, Việt Nam
               </Text>
             </Section>
           </Container>

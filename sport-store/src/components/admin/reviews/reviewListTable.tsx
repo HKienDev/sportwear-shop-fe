@@ -4,8 +4,6 @@ import React, { useState } from "react";
 import { 
   Star, 
   Trash2, 
-  Edit,
-  MoreHorizontal,
   MessageSquare
 } from "lucide-react";
 import { AdminReview } from "@/services/adminReviewService";
@@ -63,7 +61,7 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
       await adminReviewService.deleteReview(reviewId);
       toast.success("Xóa review thành công");
       onRefresh();
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi xóa review");
     } finally {
       setLoadingActions(prev => ({ ...prev, [reviewId]: false }));

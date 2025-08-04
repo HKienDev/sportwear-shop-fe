@@ -138,7 +138,7 @@ const AdminNewOrderEmail: React.FC<AdminNewOrderEmailProps> = ({
         {/* Footer */}
         <Section style={{ background: '#f1f5f9', marginTop: 32, padding: '32px 0 0 0', textAlign: 'center', borderTop: '1px solid #e5e7eb' }}>
           <Text style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
-            Đây là email tự động từ hệ thống Sport Store. Vui lòng không trả lời email này.<br />Mọi thắc mắc liên hệ: <Link href="mailto:support@sportstore.com" style={{ color: '#2563eb', textDecoration: 'underline' }}>support@sportstore.com</Link>
+            Đây là email tự động từ hệ thống Khánh Hoàn Shop. Vui lòng không trả lời email này.<br />Mọi thắc mắc liên hệ: <Link href="mailto:support@sportstore.com" style={{ color: '#2563eb', textDecoration: 'underline' }}>support@sportstore.com</Link>
           </Text>
         </Section>
       </Container>

@@ -47,7 +47,7 @@ const ProfileUpdateEmail: React.FC<ProfileUpdateEmailProps> = ({
                 Xin chào <Text style={{ fontWeight: 'bold', display: 'inline' }}>{name}</Text>,
               </Text>
               <Text className="mt-2 text-gray-600">
-                Thông tin tài khoản của bạn tại Sport Store đã được cập nhật thành công vào lúc {time}.
+                Thông tin tài khoản của bạn tại Khánh Hoàn Shop đã được cập nhật thành công vào lúc {time}.
               </Text>
             </Section>
 
@@ -102,10 +102,10 @@ const ProfileUpdateEmail: React.FC<ProfileUpdateEmailProps> = ({
 
             <Section className="text-center">
               <Text className="text-xs text-gray-500">
-                © 2025 Sport Store. Tất cả các quyền được bảo lưu.
+                © 2025 Khánh Hoàn Shop. Tất cả các quyền được bảo lưu.
               </Text>
               <Text className="mt-1 text-xs text-gray-500">
-                Địa chỉ: 97 Đường Võ Văn Tần, Phường 6, Quận 3, Thành phố Hồ Chí Minh
+                Địa chỉ: Chợ NEO, TDP 3, Phường Yên Dũng, Tỉnh Bắc Ninh, Việt Nam
               </Text>
             </Section>
           </Container>
