@@ -73,10 +73,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         // Close modal
         onClose();
         
-        // Reload page để đảm bảo tất cả components được cập nhật
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        // Execute pending action if exists
+        if (pendingAction?.callback) {
+          setTimeout(() => {
+            pendingAction.callback!();
+          }, 500);
+        } else {
+          // Reload page để đảm bảo tất cả components được cập nhật
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }
       } else {
         toast.error(result.message);
       }

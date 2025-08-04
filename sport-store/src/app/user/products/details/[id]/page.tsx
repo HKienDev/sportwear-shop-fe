@@ -14,8 +14,10 @@ import ProductActions from '@/components/user/productDetail/ProductActions';
 import ProductBenefits from '@/components/user/productDetail/ProductBenefits';
 import ProductDescription from '@/components/user/productDetail/ProductDescription';
 import { checkAuth } from '@/services/authService';
-import { cartService } from '@/services/cartService';
 import { getCategoryById } from '@/services/categoryService';
+import { useAuthModal } from '@/context/authModalContext';
+import { useAuth } from '@/context/authContext';
+import { useCartOptimized } from '@/hooks/useCartOptimized';
 
 interface Product {
   _id: string;
@@ -64,6 +66,9 @@ interface Product {
 export default function ProductDetail() {
   const params = useParams();
   const router = useRouter();
+  const { openModal } = useAuthModal();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCartOptimized();
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
@@ -150,6 +155,29 @@ export default function ProductDetail() {
     try {
       console.log('🛒 Bắt đầu thêm vào giỏ hàng');
       
+      // Kiểm tra đăng nhập trước
+      if (!isAuthenticated) {
+        console.log('❌ Chưa đăng nhập, mở modal đăng nhập');
+        openModal({
+          title: 'Đăng nhập để thêm vào giỏ hàng',
+          description: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng',
+          pendingAction: {
+            type: 'addToCart',
+            data: {
+              sku: product?.sku,
+              color: selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định'),
+              size: selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định'),
+              quantity
+            },
+            callback: () => {
+              // Thực hiện lại action sau khi đăng nhập
+              handleAddToCart();
+            }
+          }
+        });
+        return;
+      }
+      
       // Nếu sản phẩm không có colors hoặc sizes, sử dụng giá trị mặc định
       const color = selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định');
       const size = selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định');
@@ -174,30 +202,46 @@ export default function ProductDetail() {
       }
 
       console.log('📤 Gọi API thêm vào giỏ hàng');
-      const response = await cartService.addToCart({
+      await addToCart({
         sku: product.sku,
         color: color,
         size: size,
         quantity
       });
 
-      console.log('📥 Kết quả API:', response);
-
-      if (response.success) {
-        console.log('✅ Thêm vào giỏ hàng thành công');
-        toast.success('Đã thêm sản phẩm vào giỏ hàng');
-        router.push('/user/cart');
-      } else {
-        console.log('❌ Thêm vào giỏ hàng thất bại:', response.message);
-        toast.error(response.message || 'Không thể thêm sản phẩm vào giỏ hàng');
-      }
+      console.log('✅ Thêm vào giỏ hàng thành công');
+      // Toast đã được hiển thị trong addToCart function
+      
+      // Không redirect ngay, để user có thể tiếp tục shopping
+      // router.push('/user/cart');
     } catch (error) {
       console.error('❌ Lỗi khi thêm vào giỏ hàng:', error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+      
+      // Xử lý lỗi 401 - chưa đăng nhập
+      if (error instanceof Error && (error.message.includes('401') || error.message.includes('Unauthorized') || (error as any).isAuthError)) {
+        console.log('❌ Lỗi 401 - Chưa đăng nhập, mở modal');
+        openModal({
+          title: 'Đăng nhập để thêm vào giỏ hàng',
+          description: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng',
+          pendingAction: {
+            type: 'addToCart',
+            data: {
+              sku: product?.sku,
+              color: selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định'),
+              size: selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định'),
+              quantity
+            },
+            callback: () => {
+              // Thực hiện lại action sau khi đăng nhập
+              handleAddToCart();
+            }
+          }
+        });
+        return;
       }
+      
+      // Các lỗi khác đã được xử lý trong addToCart function
+      // Không cần hiển thị toast error ở đây nữa
     }
   };
 
@@ -207,46 +251,73 @@ export default function ProductDetail() {
       return;
     }
     
+    // Kiểm tra đăng nhập trước
+    if (!isAuthenticated) {
+      console.log('❌ Chưa đăng nhập, mở modal đăng nhập');
+      openModal({
+        title: 'Đăng nhập để mua hàng',
+        description: 'Vui lòng đăng nhập để mua sản phẩm này',
+        pendingAction: {
+          type: 'buyNow',
+          data: {
+            sku: product.sku,
+            color: selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định'),
+            size: selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định'),
+            quantity
+          },
+          callback: () => {
+            // Thực hiện lại action sau khi đăng nhập
+            handleBuyNow();
+          }
+        }
+      });
+      return;
+    }
+    
     // Nếu sản phẩm không có colors hoặc sizes, sử dụng giá trị mặc định
     const color = selectedColor || (product?.colors && product.colors.length > 0 ? product.colors[0] : 'Mặc Định');
     const size = selectedSize || (product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Mặc Định');
 
     try {
-      // Kiểm tra đăng nhập
-      const authResponse = await checkAuth();
-      if (!authResponse.success || !authResponse.data?.user) {
-        toast.error("Vui lòng đăng nhập để mua hàng");
-        router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
-        return;
-      }
-
       // Thêm vào giỏ hàng
-      const response = await cartService.addToCart({
+      await addToCart({
         sku: product.sku,
         color: color,
         size: size,
         quantity
       });
       
-      if (response.success) {
-        toast.success("Đã thêm sản phẩm vào giỏ hàng!");
-        // Chuyển hướng đến trang giỏ hàng
-        router.push('/user/cart');
-      } else {
-        toast.error(response.message || "Có lỗi xảy ra khi thêm vào giỏ hàng!");
-      }
+      // Toast đã được hiển thị trong addToCart function
+      // Chuyển hướng đến trang giỏ hàng
+      router.push('/user/cart');
     } catch (error) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      if (error instanceof Error) {
-        if (error.message.includes("No token found")) {
-          toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
-          router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
-          return;
-        }
-        toast.error(error.message);
-      } else {
-        toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+      
+      // Xử lý lỗi 401 - chưa đăng nhập
+      if (error instanceof Error && (error.message.includes('401') || error.message.includes('Unauthorized') || (error as any).isAuthError)) {
+        console.log('❌ Lỗi 401 - Chưa đăng nhập, mở modal');
+        openModal({
+          title: 'Đăng nhập để mua hàng',
+          description: 'Vui lòng đăng nhập để mua sản phẩm này',
+          pendingAction: {
+            type: 'buyNow',
+            data: {
+              sku: product.sku,
+              color: color,
+              size: size,
+              quantity
+            },
+            callback: () => {
+              // Thực hiện lại action sau khi đăng nhập
+              handleBuyNow();
+            }
+          }
+        });
+        return;
       }
+      
+      // Các lỗi khác đã được xử lý trong addToCart function
+      // Không cần hiển thị toast error ở đây nữa
     }
   };
 

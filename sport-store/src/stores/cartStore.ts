@@ -7,6 +7,7 @@ import { handleCartError, calculateCartTotals } from '@/utils/cartUtils';
 import type { CartItem, Cart } from '@/types/cart';
 import { cartService } from '@/services/cartService';
 import { logInfo, logDebug, logError } from '@/utils/logger';
+import type { UserProduct } from '@/types/product';
 
 interface CartState {
   // State
@@ -93,6 +94,72 @@ export const useCartStore = create<CartState>()(
               state.error = null;
             });
             
+            // Optimistic update - thêm item vào cart ngay lập tức
+            const { cart } = get();
+            if (cart) {
+              // Tìm sản phẩm để lấy thông tin
+              const productInfo: UserProduct = {
+                _id: `temp-${Date.now()}`, // Temporary ID
+                name: 'Đang tải...', // Placeholder
+                description: '',
+                brand: '',
+                originalPrice: 0,
+                salePrice: 0,
+                stock: 0,
+                categoryId: '',
+                isActive: true,
+                mainImage: '',
+                subImages: [],
+                colors: [],
+                sizes: [],
+                sku: productData.sku,
+                tags: [],
+                rating: 0,
+                numReviews: 0,
+                viewCount: 0,
+                soldCount: 0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+              
+              const newItem: CartItem = {
+                _id: `temp-${Date.now()}`,
+                product: productInfo,
+                color: productData.color || 'Mặc Định',
+                size: productData.size || 'Mặc Định',
+                quantity: productData.quantity || 1,
+                totalPrice: 0 // Sẽ được cập nhật sau
+              };
+              
+              // Kiểm tra xem item đã tồn tại chưa
+              const existingItem = cart.items.find(i => 
+                i.product.sku === productData.sku && 
+                i.color === newItem.color && 
+                i.size === newItem.size
+              );
+              
+              if (existingItem) {
+                // Cập nhật quantity nếu item đã tồn tại
+                set((state) => {
+                  if (state.cart) {
+                    const itemIndex = state.cart.items.findIndex(i => i._id === existingItem._id);
+                    if (itemIndex !== -1) {
+                      state.cart.items[itemIndex].quantity += (productData.quantity || 1);
+                      const price = existingItem.product.salePrice ?? existingItem.product.originalPrice;
+                      state.cart.items[itemIndex].totalPrice = state.cart.items[itemIndex].quantity * price;
+                    }
+                  }
+                });
+              } else {
+                // Thêm item mới
+                set((state) => {
+                  if (state.cart) {
+                    state.cart.items.push(newItem);
+                  }
+                });
+              }
+            }
+            
             const response = await apiClient.addToCart(productData);
             
             if (response.data.success) {
@@ -105,6 +172,13 @@ export const useCartStore = create<CartState>()(
               throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
             }
           } catch (error) {
+            // Revert optimistic update by refetching cart
+            try {
+              await get().fetchCart();
+            } catch (refetchError) {
+              console.error('Failed to refetch cart after error:', refetchError);
+            }
+            
             const errorMessage = handleCartError(error, 'add');
             set((state) => {
               state.error = errorMessage;

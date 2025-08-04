@@ -207,4 +207,10 @@ export interface FeaturedProduct {
   sku: string;
   brand: string;
   category: string;
+  featuredConfig?: {
+    countdownEndDate?: string;
+    soldCount?: number;
+    remainingStock?: number;
+    isActive?: boolean;
+  } | null;
 } 

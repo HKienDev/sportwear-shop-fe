@@ -55,7 +55,25 @@ const FeaturedProductsCarousel = ({
     }
   }, [initialProducts, fetchFeaturedProducts]);
 
-  const displayProducts = useMemo(() => products || [], [products]);
+  // Filter out expired featured products
+  const validProducts = useMemo(() => {
+    return products.filter(product => {
+      // Kiểm tra nếu sản phẩm có featuredConfig và countdownEndDate
+      if (product.featuredConfig?.countdownEndDate) {
+        const endDate = new Date(product.featuredConfig.countdownEndDate);
+        const now = new Date();
+        const diff = endDate.getTime() - now.getTime();
+        
+        // Chỉ hiển thị sản phẩm chưa hết hạn (diff > 0)
+        return diff > 0;
+      }
+      
+      // Nếu không có countdownEndDate, vẫn hiển thị sản phẩm
+      return true;
+    });
+  }, [products]);
+
+  const displayProducts = useMemo(() => validProducts || [], [validProducts]);
   const count = displayProducts.length;
 
   // Auto-scroll with pause on hover
@@ -166,17 +184,31 @@ const FeaturedProductsCarousel = ({
     );
   }
 
-  // Empty State
+  // Empty State - Hiển thị UI giống "Coming soon" như trong BrandShowcase
   if (count === 0) {
     return (
       <div className="w-full">
-        <div className="text-center py-12">
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-gray-500" />
+        {/* Section Header */}
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Chưa có sản phẩm nổi bật</h3>
-            <p className="text-gray-600">Hãy quay lại sau để xem các sản phẩm đặc biệt!</p>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Sản Phẩm Nổi Bật
+            </h2>
+          </div>
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
+            Khám phá những sản phẩm được ưa chuộng nhất với ưu đãi đặc biệt
+          </p>
+        </div>
+
+        {/* Coming Soon Container - Giống BrandShowcase */}
+        <div className="flex justify-center">
+          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 bg-white rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 flex items-center justify-center">
+            <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-400 tracking-widest select-none">
+              Sắp ra mắt
+            </span>
           </div>
         </div>
       </div>

@@ -135,14 +135,11 @@ class ApiClient {
       if (response.status === 401 && this.isClient) {
         localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         
-        // Sử dụng logic thông minh thay vì redirect trực tiếp
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        if (shouldRedirectToLogin(currentPath)) {
-          window.location.href = '/auth/login';
-        } else {
-          // Mở modal cho khách vãng lai
-          handleAuthRedirect();
-        }
+        // Tạo custom error với message thân thiện
+        const error = new Error('Vui lòng đăng nhập để thực hiện hành động này');
+        (error as any).status = 401;
+        (error as any).isAuthError = true;
+        throw error;
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }

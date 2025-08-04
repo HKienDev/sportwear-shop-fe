@@ -10,6 +10,7 @@ import { ShoppingCart, Heart, Eye, Clock, Star, TrendingUp, Zap } from "lucide-r
 import Image from "next/image";
 import Link from "next/link";
 import { useCountdown } from "@/hooks/useCountdown";
+import { FeaturedProduct } from "@/types/product";
 
 // Enhanced Countdown Timer with Circular Progress
 const CountdownTimer = memo(({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) => (
@@ -134,24 +135,8 @@ const QuickActions = memo(({ onViewDetails, onWishlist }: {
 QuickActions.displayName = 'QuickActions';
 
 interface ProductCardWithTimerProps {
-  product?: {
-    name?: string;
-    price?: number;
-    originalPrice?: number;
-    sold?: number;
-    total?: number;
-    rating?: number;
-    image?: string;
-    sku?: string;
-    brand?: string;
-    category?: string;
+  product?: FeaturedProduct & {
     description?: string;
-    featuredConfig?: {
-      countdownEndDate?: string;
-      soldCount?: number;
-      remainingStock?: number;
-      isActive?: boolean;
-    } | null;
     colors?: string[];
     sizes?: string[];
   };
@@ -159,6 +144,7 @@ interface ProductCardWithTimerProps {
 
 const ProductCardWithTimer = ({ 
   product = {
+    id: "default-id",
     name: "SHAMPOO, CONDITIONER & FACEWASH PACKS",
     price: 150000,
     originalPrice: 200000,

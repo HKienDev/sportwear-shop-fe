@@ -202,7 +202,7 @@ const BrandShowcase = memo(() => {
         <div className="flex justify-center">
           <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 bg-white rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 flex items-center justify-center">
             <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-400 tracking-widest select-none">
-              Coming soon
+              Sắp ra mắt
             </span>
           </div>
         </div>
