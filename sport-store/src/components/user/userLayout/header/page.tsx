@@ -138,7 +138,7 @@ const Header = () => {
             <div className="relative w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 transform transition-transform duration-300 group-hover:scale-110">
               <Image
                 src="/vju-logo-main.png"
-                alt="VJU SPORT"
+                alt="Khánh Hoàn Shop"
                 fill
                 className="object-contain"
                 priority
@@ -338,9 +338,9 @@ const Header = () => {
             {/* Mobile Logo */}
             <Link href="/" className="mb-4 sm:mb-6 flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
               <div className="relative w-7 h-7 sm:w-8 sm:h-8">
-                <Image src="/vju-logo-main.png" alt="VJU SPORT" fill className="object-contain" />
+                <Image src="/vju-logo-main.png" alt="Khánh Hoàn Shop" fill className="object-contain" />
               </div>
-              <span className="text-base sm:text-lg font-bold text-red-700">VJU SPORT</span>
+              <span className="text-base sm:text-lg font-bold text-red-700">KHÁNH HOÀN SHOP</span>
             </Link>
             
             {/* Mobile Navigation */}

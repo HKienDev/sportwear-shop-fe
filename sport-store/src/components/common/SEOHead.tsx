@@ -15,11 +15,11 @@ interface SEOHeadProps {
 }
 
 export default function SEOHead({
-  title = 'VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao',
-  description = 'VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.',
-  keywords = 'thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, VJU Sport',
+  title = 'Khánh Hoàn Shop - Cửa Hàng Thể Thao Chất Lượng Cao',
+  description = 'Khánh Hoàn Shop - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.',
+  keywords = 'thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, Khánh Hoàn Shop',
   image = '/Logo_vju.png',
-  url = 'https://www.vjusport.com',
+  url = 'https://www.khanhhoanshop.com',
   type = 'website',
   productData,
   breadcrumbData
@@ -41,7 +41,7 @@ export default function SEOHead({
       <meta property="og:image" content={`${url}${image}`} />
       <meta property="og:url" content={fullUrl} />
       <meta property="og:type" content={type} />
-      <meta property="og:site_name" content="VJU Sport" />
+      <meta property="og:site_name" content="Khánh Hoàn Shop" />
       <meta property="og:locale" content="vi_VN" />
       
       {/* Twitter Card */}
@@ -51,7 +51,7 @@ export default function SEOHead({
       <meta name="twitter:image" content={`${url}${image}`} />
       
       {/* Additional Meta Tags */}
-      <meta name="author" content="VJU Sport" />
+      <meta name="author" content="Khánh Hoàn Shop" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       
       {/* Schema.org Markup */}

@@ -10,7 +10,7 @@ export default function Footer() {
         {/* Glassmorphism gradient overlay */}
         <div className="pointer-events-none absolute inset-0 rounded-none bg-gradient-to-tr from-white/60 via-white/40 to-blue-100/30 opacity-80 -z-10" />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-[clamp(0.8rem,1.2vw,1rem)] text-neutral-700 font-medium select-none">
-          <span className="text-center sm:text-left">© 2024 <span className="font-semibold tracking-wide text-blue-700 transition-colors duration-200 hover:text-blue-500">VJU SPORT</span></span>
+          <span className="text-center sm:text-left">© 2024 <span className="font-semibold tracking-wide text-blue-700 transition-colors duration-200 hover:text-blue-500">KHÁNH HOÀN SHOP</span></span>
           <span className="hidden sm:inline text-neutral-400">|</span>
           <span className="text-center sm:text-left">All rights reserved</span>
         </div>

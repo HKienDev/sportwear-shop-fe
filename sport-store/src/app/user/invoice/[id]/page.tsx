@@ -250,7 +250,7 @@ export default function InvoicePage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
               <div className="text-center sm:text-left">
                 <div className="invoice-title font-bold">HÓA ĐƠN</div>
-                <div className="invoice-subtitle mt-1 text-red-100">Cảm ơn bạn đã mua hàng tại VJU SPORT</div>
+                <div className="invoice-subtitle mt-1 text-red-100">Cảm ơn bạn đã mua hàng tại KHÁNH HOÀN SHOP</div>
               </div>
               <div className="text-center sm:text-right">
                 <div className="invoice-order-id font-bold">#{order.shortId}</div>

@@ -7,26 +7,26 @@ import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 import SchemaMarkup from "@/components/common/SchemaMarkup";
 
 export const metadata: Metadata = {
-  title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
-  description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao. Giao hàng toàn quốc, giá tốt nhất.",
-  keywords: "thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, VJU Sport, cửa hàng thể thao",
-  authors: [{ name: "VJU Sport" }],
-  creator: "VJU Sport",
-  publisher: "VJU Sport",
+  title: "Khánh Hoàn Shop - Cửa Hàng Thể Thao Chất Lượng Cao",
+  description: "Khánh Hoàn Shop - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao. Giao hàng toàn quốc, giá tốt nhất.",
+  keywords: "thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao, Khánh Hoàn Shop, cửa hàng thể thao",
+  authors: [{ name: "Khánh Hoàn Shop" }],
+  creator: "Khánh Hoàn Shop",
+  publisher: "Khánh Hoàn Shop",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vjusport.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.khanhhoanshop.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
-    description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.",
+    title: "Khánh Hoàn Shop - Cửa Hàng Thể Thao Chất Lượng Cao",
+    description: "Khánh Hoàn Shop - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao, giày thể thao, quần áo thể thao, phụ kiện thể thao.",
     url: '/',
-    siteName: 'VJU Sport',
+    siteName: 'Khánh Hoàn Shop',
     locale: 'vi_VN',
     type: 'website',
     images: [
@@ -34,14 +34,14 @@ export const metadata: Metadata = {
         url: '/Logo_vju.png',
         width: 1200,
         height: 630,
-        alt: 'VJU Sport Logo',
+        alt: 'Khánh Hoàn Shop Logo',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "VJU Sport - Cửa Hàng Thể Thao Chất Lượng Cao",
-    description: "VJU Sport - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao.",
+    title: "Khánh Hoàn Shop - Cửa Hàng Thể Thao Chất Lượng Cao",
+    description: "Khánh Hoàn Shop - Cửa hàng thể thao chuyên cung cấp các sản phẩm thể thao chất lượng cao.",
     images: ['/Logo_vju.png'],
   },
   robots: {

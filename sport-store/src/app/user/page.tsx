@@ -311,7 +311,7 @@ const HeroBanner = memo(() => (
           <p className="text-white/90 font-medium max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mb-4 sm:mb-6 md:mb-8 leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
             Đăng ký thành viên để nhận ưu đãi đặc biệt từ{' '}
             <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
-              VJU SPORT
+              KHÁNH HOÀN SHOP
             </span>{' '}
             và cập nhật sản phẩm mới nhất.
           </p>

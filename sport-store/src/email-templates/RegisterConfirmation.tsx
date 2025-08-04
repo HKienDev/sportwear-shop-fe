@@ -70,7 +70,7 @@ const RegisterConfirmation: React.FC<RegisterConfirmationProps> = ({
 
             <Section className="mt-8 text-center">
               <Link 
-                href="https://www.vjusport.com/auth/login" 
+                href="https://www.khanhhoanshop.com/auth/login" 
                 className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-center font-medium text-white shadow-sm hover:bg-blue-700"
               >
                 Đăng nhập ngay
