@@ -11,8 +11,7 @@ import {
   ConversationList,
   ChatHeader,
   MessageList,
-  MessageInput,
-  ThemeSelector
+  MessageInput
 } from './index';
 
 // Define proper types for socket events
@@ -32,7 +31,6 @@ const ChatManagerAdmin: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   // Custom hooks
@@ -254,53 +252,53 @@ const ChatManagerAdmin: React.FC = () => {
   const themeColors = getThemeColors();
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-full min-h-[600px] bg-gradient-to-br from-slate-50/50 to-blue-50/50 rounded-2xl overflow-hidden">
       {/* Conversation List */}
-      <ConversationList
-        conversations={conversations}
-        selectedConversation={selectedConversation}
-        onSelectConversation={handleSelectConversation}
-        themeColors={themeColors}
-        loading={loading}
-      />
+      <div className="w-1/3 min-w-[300px] border-r border-slate-200 bg-white/80 backdrop-blur-sm">
+        <ConversationList
+          conversations={conversations}
+          selectedConversation={selectedConversation}
+          onSelectConversation={handleSelectConversation}
+          themeColors={themeColors}
+          loading={loading}
+        />
+      </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full">
         {/* Header */}
-        <ChatHeader
-          conversation={selectedConversation}
-          themeColors={themeColors}
-          isConnected={isConnected}
-          onRefresh={handleRefresh}
-        />
+        <div className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-slate-200">
+          <ChatHeader
+            conversation={selectedConversation}
+            themeColors={themeColors}
+            isConnected={isConnected}
+            onRefresh={handleRefresh}
+          />
+        </div>
 
-        {/* Messages */}
-        <MessageList
-          messages={messages}
-          themeColors={themeColors}
-          loading={loading}
-          error={error}
-          onRetry={handleRefresh}
-        />
+        {/* Messages - Fixed height with scroll */}
+        <div className="flex-1 min-h-0 overflow-hidden bg-gradient-to-br from-gray-50/50 to-blue-50/30">
+          <MessageList
+            messages={messages}
+            themeColors={themeColors}
+            loading={loading}
+            error={error}
+            onRetry={handleRefresh}
+          />
+        </div>
 
         {/* Input */}
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          themeColors={themeColors}
-          disabled={!selectedConversation || !isConnected}
-          loading={loading}
-        />
+        <div className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-t border-slate-200">
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            themeColors={themeColors}
+            disabled={!selectedConversation || !isConnected}
+            loading={loading}
+          />
+        </div>
       </div>
 
-      {/* Theme Selector */}
-      <div className="absolute top-4 right-4">
-        <ThemeSelector
-          currentTheme={currentTheme}
-          onThemeChange={changeTheme}
-          isOpen={showThemeSelector}
-          onToggle={() => setShowThemeSelector(!showThemeSelector)}
-        />
-      </div>
+
     </div>
   );
 };

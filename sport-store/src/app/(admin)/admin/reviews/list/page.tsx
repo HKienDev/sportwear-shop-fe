@@ -4,15 +4,16 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/authContext";
 import { toast } from "sonner";
-import { Trash2, Download } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { adminReviewService, AdminReview, ReviewStats as ReviewStatsType } from "@/services/adminReviewService";
 import ReviewListTable from "@/components/admin/reviews/reviewListTable";
 import ReviewFilters from "@/components/admin/reviews/reviewFilters";
 import { ReviewStatusCards } from "@/components/admin/reviews/reviewStatusCards";
+import Pagination from "@/components/admin/categories/list/pagination";
 
 export default function ReviewListPage() {
   const router = useRouter();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [selectedReviews, setSelectedReviews] = useState<string[]>([]);
   const [stats, setStats] = useState<ReviewStatsType>({
@@ -45,7 +46,7 @@ export default function ReviewListPage() {
       
       const response = await adminReviewService.getReviews(
         currentPage,
-        10,
+        5,
         {
           rating: filters.rating ? parseInt(filters.rating) : undefined,
           productSku: filters.productSku || undefined,
@@ -60,6 +61,7 @@ export default function ReviewListPage() {
         setReviews(response.data.reviews);
         setTotalPages(response.data.pagination.totalPages);
         console.log('🔍 ReviewListPage - Reviews set:', response.data.reviews.length);
+        console.log('🔍 ReviewListPage - Pagination:', response.data.pagination);
       } else {
         console.error('🔍 ReviewListPage - Response not successful:', response);
         toast.error(response.message || "Lỗi khi tải danh sách review");
@@ -96,7 +98,11 @@ export default function ReviewListPage() {
   }, [user, fetchReviews, fetchStats]);
 
   // Handle filters change
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: {
+    rating: string;
+    productSku: string;
+    searchTerm: string;
+  }) => {
     setFilters(newFilters);
     setCurrentPage(1);
   };
@@ -380,48 +386,15 @@ export default function ReviewListPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl p-6">
-              <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-xl hover:from-slate-200 hover:to-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold border border-slate-300/60"
-                  >
-                    Trước
-                  </button>
-                  
-                  {[...Array(totalPages)].map((_, index) => {
-                    const page = index + 1;
-                    const isCurrentPage = page === currentPage;
-                    
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
-                          isCurrentPage
-                            ? "bg-gradient-to-r from-indigo-600 to-emerald-600 text-white shadow-lg shadow-indigo-500/25"
-                            : "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 hover:from-slate-200 hover:to-slate-300 border border-slate-300/60"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                  
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-xl hover:from-slate-200 hover:to-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold border border-slate-300/60"
-                  >
-                    Sau
-                  </button>
-                </div>
-              </div>
-            </div>
+        {totalPages >= 1 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              itemsPerPage={5}
+              totalItems={stats.total}
+            />
           </div>
         )}
       </div>

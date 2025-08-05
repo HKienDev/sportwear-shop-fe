@@ -17,8 +17,8 @@ export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => 
     // Chuẩn bị headers
     const headers = new Headers(fetchOptions.headers || {});
     
-    // Thêm Content-Type nếu chưa có và có body
-    if (fetchOptions.body && !headers.has('Content-Type')) {
+    // Thêm Content-Type nếu chưa có và có body (chỉ cho JSON, không cho FormData)
+    if (fetchOptions.body && !headers.has('Content-Type') && !(fetchOptions.body instanceof FormData)) {
       headers.set('Content-Type', 'application/json');
     }
     

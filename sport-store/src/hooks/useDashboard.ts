@@ -14,9 +14,29 @@ export const useDashboard = (timeRange: TimeRange = 'day') => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchRef = useRef<{ timeRange: TimeRange; timestamp: number } | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
+    // Prevent duplicate calls
+    if (isFetchingRef.current) {
+      console.log('🚫 Dashboard - Already fetching, skipping...');
+      return;
+    }
+
+    // Check if we already fetched this timeRange recently (within 1 second)
+    const now = Date.now();
+    const lastFetch = lastFetchRef.current;
+    if (lastFetch && 
+        lastFetch.timeRange === timeRange && 
+        now - lastFetch.timestamp < 1000) {
+      console.log('🚫 Dashboard - Recently fetched same timeRange, skipping...');
+      return;
+    }
+
     try {
+      console.log('🔄 Dashboard - Fetching data for timeRange:', timeRange);
+      isFetchingRef.current = true;
       setIsLoading(true);
       setError(null);
 
@@ -78,6 +98,14 @@ export const useDashboard = (timeRange: TimeRange = 'day') => {
 
       setDashboardData(newDashboardData);
       setRetryCount(0); // Reset retry count on success
+      
+      // Update last fetch info
+      lastFetchRef.current = {
+        timeRange,
+        timestamp: Date.now()
+      };
+      
+      console.log('✅ Dashboard - Data fetched successfully');
     } catch (error) {
       console.error('❌ Dashboard data fetch error:', error);
       const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR;
@@ -96,29 +124,37 @@ export const useDashboard = (timeRange: TimeRange = 'day') => {
       }
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, [timeRange, isAuthenticated]);
 
-  // Main data fetch effect
+  // Main data fetch effect - optimized to prevent spam
   useEffect(() => {
     if (isAuthenticated) {
-      fetchDashboardData();
-    }
-  }, [timeRange, isAuthenticated]);
+      // Debounce the fetch to prevent rapid successive calls
+      const timeoutId = setTimeout(() => {
+        fetchDashboardData();
+      }, 100); // 100ms debounce
 
-  // Retry effect
+      return () => clearTimeout(timeoutId);
+    }
+  }, [timeRange, isAuthenticated, fetchDashboardData]);
+
+  // Retry effect - only when retryCount changes
   useEffect(() => {
     if (retryCount > 0 && isAuthenticated) {
       fetchDashboardData();
     }
   }, [retryCount, isAuthenticated]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout and refs on unmount
   useEffect(() => {
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
       }
+      isFetchingRef.current = false;
+      lastFetchRef.current = null;
     };
   }, []);
 

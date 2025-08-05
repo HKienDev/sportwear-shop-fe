@@ -1,5 +1,5 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Dispatch, SetStateAction, useState, useMemo, useCallback } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Dispatch, SetStateAction, useState, useMemo, useCallback, useEffect } from 'react';
 import { TrendingUp, Calendar, DollarSign, BarChart3, ChevronDown } from 'lucide-react';
 
 interface RevenueData {
@@ -40,6 +40,16 @@ export function RevenueChart({
   loading = false 
 }: RevenueChartProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [debouncedTimeRange, setDebouncedTimeRange] = useState(timeRange);
+
+  // Debounce timeRange changes to prevent spam API calls
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedTimeRange(timeRange);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [timeRange]);
 
   // Chuyển đổi dữ liệu thành mảng ChartData
   const convertToChartData = (data: RevenueChartProps['chartData']): ChartData[] => {
@@ -236,6 +246,33 @@ export function RevenueChart({
     }
   }, [timeRange]);
 
+  // Function để tính toán màu sắc cho từng cột
+  const getBarColor = useCallback((entry: any, index: number) => {
+    const data = displayDataWithFormattedDates;
+    if (!data || data.length === 0) return '#ECECEC';
+
+    // Tìm giá trị cao nhất
+    const maxRevenue = Math.max(...data.map(item => item.revenue || 0));
+    
+    // Cột có giá trị cao nhất
+    if (entry.revenue === maxRevenue && entry.revenue > 0) {
+      return '#FF4D4D';
+    }
+    
+    // Cột ngày mới nhất (cuối cùng)
+    if (index === data.length - 1) {
+      return '#232121';
+    }
+    
+    // Cột ngày cũ nhất (đầu tiên)
+    if (index === 0) {
+      return '#C8C8C8';
+    }
+    
+    // Các cột còn lại
+    return '#ECECEC';
+  }, [displayDataWithFormattedDates]);
+
   const timeRangeOptions = useMemo(() => [
     { value: 'day', label: '7 ngày' },
     { value: 'month', label: '12 tháng' },
@@ -284,7 +321,10 @@ export function RevenueChart({
                   <button
                     key={option.value}
                     onClick={() => {
-                      onTimeRangeChange(option.value as TimeRange);
+                      // Only change if different to prevent unnecessary API calls
+                      if (timeRange !== option.value) {
+                        onTimeRangeChange(option.value as TimeRange);
+                      }
                       setIsDropdownOpen(false);
                     }}
                     className={`w-full flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 text-xs sm:text-sm ${
@@ -357,12 +397,6 @@ export function RevenueChart({
                 data={displayDataWithFormattedDates}
                 margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
               >
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#059669" stopOpacity={0.6}/>
-                  </linearGradient>
-                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" opacity={0.5} />
                 <XAxis 
                   dataKey="displayDate" 
@@ -383,11 +417,15 @@ export function RevenueChart({
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }} />
                 <Bar 
                   dataKey="revenue" 
-                  fill="url(#revenueGradient)"
                   radius={[4, 4, 0, 0]} 
                   barSize={20}
                   animationDuration={1500}
-                />
+                  fill="#ECECEC"
+                >
+                  {displayDataWithFormattedDates.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getBarColor(entry, index)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}

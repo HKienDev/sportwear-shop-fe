@@ -83,34 +83,35 @@ export const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 bg-gray-50 overflow-y-auto p-4">
-      <div className="space-y-4">
+    <div className="h-full bg-gradient-to-br from-slate-50/50 to-blue-50/30 overflow-y-auto p-6 flex flex-col">
+      <div className="flex-1 space-y-4">
         {messages.map((message, index) => {
           const isAdmin = message.sender === 'admin' || message.senderId === 'admin';
           
           return (
             <div
               key={message.messageId || index}
-              className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} group`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md ${
                   isAdmin 
-                    ? 'rounded-br-none' 
-                    : 'rounded-bl-none'
+                    ? 'rounded-br-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white' 
+                    : 'rounded-bl-md bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-800'
                 }`}
-                style={{
-                  backgroundColor: isAdmin ? themeColors.primary : 'white',
-                  color: isAdmin ? 'white' : '#374151'
-                }}
               >
-                <div className="text-sm">{message.text}</div>
+                <div className="text-sm leading-relaxed">{message.text}</div>
                 <div 
-                  className={`text-xs mt-1 ${
-                    isAdmin ? 'text-blue-100' : 'text-gray-500'
+                  className={`text-xs mt-2 flex items-center gap-1 ${
+                    isAdmin ? 'text-blue-100' : 'text-slate-500'
                   }`}
                 >
-                  {formatTime(message.time || message.timestamp || new Date().toISOString())}
+                  <span>{formatTime(message.time || message.timestamp || new Date().toISOString())}</span>
+                  {isAdmin && (
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </div>
               </div>
             </div>

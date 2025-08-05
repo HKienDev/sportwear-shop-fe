@@ -143,11 +143,9 @@ const menuItems = [
   },
   {
     name: "Đánh Giá",
-    path: "/admin/reviews",
+    path: "/admin/reviews/list",
     icon: Star,
-    subMenu: [
-      { name: "Danh Sách", path: "/admin/reviews/list" },
-    ],
+    subMenu: [],
     badge: null,
     description: "Quản lý đánh giá sản phẩm",
     color: "from-amber-500 to-yellow-500"
@@ -156,9 +154,7 @@ const menuItems = [
     name: "Hỏi & Đáp",
     path: "/admin/questions",
     icon: MessageSquare,
-    subMenu: [
-      { name: "Danh Sách", path: "/admin/questions" },
-    ],
+    subMenu: [],
     badge: null,
     description: "Quản lý câu hỏi và trả lời",
     color: "from-blue-500 to-indigo-500"
@@ -169,6 +165,7 @@ const menuItems = [
     icon: Settings,
     subMenu: [
       { name: "Cài Đặt Chung", path: "/admin/settings/general" },
+      { name: "Thương Hiệu Đối Tác", path: "/admin/settings/partners" },
       { name: "Bảo Mật", path: "/admin/settings/security" },
     ],
     badge: null,

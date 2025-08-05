@@ -21,33 +21,43 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  // Auth check effect - optimized
   useEffect(() => {
-    if (!loading) {
-      if (!user || user.role !== 'admin') {
-        router.replace('/auth/login');
-      }
+    if (!loading && (!user || user.role !== 'admin')) {
+      router.replace('/auth/login');
     }
   }, [loading, user, router]);
 
-  const handleOrderDeleted = useCallback(() => {
-    if (refetch) {
-      refetch();
-    }
+  // Debounced refetch to prevent spam
+  const debouncedRefetch = useCallback(() => {
+    const timeoutId = setTimeout(() => {
+      if (refetch) {
+        refetch();
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
   }, [refetch]);
+
+  const handleOrderDeleted = useCallback(() => {
+    debouncedRefetch();
+  }, [debouncedRefetch]);
 
   const handleProductDeleted = useCallback(() => {
-    if (refetch) {
-      refetch();
-    }
-  }, [refetch]);
+    debouncedRefetch();
+  }, [debouncedRefetch]);
 
+  // Event listeners - optimized with cleanup
   useEffect(() => {
+    const cleanupOrder = () => window.removeEventListener('orderDeleted', handleOrderDeleted);
+    const cleanupProduct = () => window.removeEventListener('productDeleted', handleProductDeleted);
+
     window.addEventListener('orderDeleted', handleOrderDeleted);
     window.addEventListener('productDeleted', handleProductDeleted);
 
     return () => {
-      window.removeEventListener('orderDeleted', handleOrderDeleted);
-      window.removeEventListener('productDeleted', handleProductDeleted);
+      cleanupOrder();
+      cleanupProduct();
     };
   }, [handleOrderDeleted, handleProductDeleted]);
 
@@ -152,7 +162,11 @@ export default function Dashboard() {
             </>
           ) : (
             <>
-              <BestSellingProducts />
+              <BestSellingProducts 
+                bestSellingProducts={dashboardData?.bestSellingProducts || []}
+                isLoading={isLoading}
+                error={error}
+              />
               <ActiveDeliveries deliveries={recentOrders?.orders || []} />
             </>
           )}

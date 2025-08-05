@@ -1,11 +1,19 @@
 import { TrendingUp, Package, Star, Award, Trophy, Medal, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function BestSellingProducts() {
-  const { dashboardData, isLoading, error } = useDashboard();
+interface BestSellingProductsProps {
+  bestSellingProducts?: any[];
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+export default function BestSellingProducts({ 
+  bestSellingProducts = [], 
+  isLoading = false, 
+  error = null 
+}: BestSellingProductsProps) {
   const router = useRouter();
 
   // Hàm xử lý chuyển hướng đến trang chi tiết sản phẩm
@@ -13,7 +21,7 @@ export default function BestSellingProducts() {
     router.push(`/admin/products/details/${productSku}`);
   };
 
-  if (isLoading || !dashboardData) {
+  if (isLoading || !bestSellingProducts) {
     return (
       <div className="relative group overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300">
         {/* Background Pattern */}
@@ -75,8 +83,8 @@ export default function BestSellingProducts() {
     );
   }
 
-  const bestSellingProducts = Array.isArray(dashboardData.bestSellingProducts) 
-    ? dashboardData.bestSellingProducts.slice(0, 7) // Giới hạn tối đa 7 sản phẩm
+  const products = Array.isArray(bestSellingProducts) 
+    ? bestSellingProducts.slice(0, 7) // Giới hạn tối đa 7 sản phẩm
     : [];
 
   const getRankIcon = (rank: number) => {
