@@ -97,6 +97,12 @@ export default function MessagesPage() {
                     type="text"
                     placeholder="Tìm kiếm theo tên khách hàng, nội dung tin nhắn..."
                     className="block w-full pl-12 pr-12 py-4 border-2 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition-all duration-300 border-slate-200 hover:border-slate-300"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </div>
               </div>

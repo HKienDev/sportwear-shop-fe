@@ -7,6 +7,13 @@ interface FetchOptions extends RequestInit {
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+// Utility function to construct backend URL without duplicate /api
+export const getBackendUrl = (endpoint: string): string => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
+  return `${cleanBaseUrl}/api${endpoint}`;
+};
+
 export const fetchApi = async (endpoint: string, options: FetchOptions = {}) => {
   try {
     const { requireAuth = true, ...fetchOptions } = options;

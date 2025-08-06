@@ -1,6 +1,6 @@
 import React from 'react';
-import { Conversation } from './types';
-import { ThemeColors } from './types';
+import { Conversation, ThemeColors, translateStatus, translatePriority } from './types';
+import { Crown, Star, Medal, Gem } from 'lucide-react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -9,6 +9,24 @@ interface ConversationListProps {
   themeColors: ThemeColors;
   loading: boolean;
 }
+
+// Component để hiển thị icon membership tier
+const MembershipIcon = ({ tier }: { tier: string }) => {
+  switch (tier) {
+    case 'Kim Cương':
+      return <Gem size={12} />;
+    case 'Bạch Kim':
+      return <Crown size={12} />;
+    case 'Vàng':
+      return <Star size={12} />;
+    case 'Bạc':
+      return <Medal size={12} />;
+    case 'Đồng':
+      return <Medal size={12} />;
+    default:
+      return <Star size={12} />;
+  }
+};
 
 export const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
@@ -86,10 +104,30 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-slate-900 truncate">
-                      {conversation.name}
-                    </h3>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <h3 
+                        className="text-sm font-semibold text-slate-900 truncate"
+                        style={{
+                          color: conversation.membershipTier?.color || '#374151'
+                        }}
+                      >
+                        {conversation.name}
+                      </h3>
+                      {conversation.membershipTier && (
+                        <span 
+                          className="text-xs px-2 py-1 rounded-full font-medium shadow-sm flex items-center gap-1"
+                          style={{
+                            backgroundColor: `${conversation.membershipTier.color}20`,
+                            color: conversation.membershipTier.color,
+                            border: `1px solid ${conversation.membershipTier.color}40`
+                          }}
+                        >
+                          <MembershipIcon tier={conversation.membershipTier.name} />
+                          <span className="text-xs font-medium">{conversation.membershipTier.name}</span>
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full ml-2 flex-shrink-0">
                       {formatTime(conversation.lastMessageTime)}
                     </span>
                   </div>
@@ -108,7 +146,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                             color: conversation.status === 'active' ? themeColors.primaryText : '#92400E'
                           }}
                         >
-                          {conversation.status}
+                          {translateStatus(conversation.status)}
                         </span>
                       )}
                       
@@ -120,7 +158,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                             color: conversation.priority === 'high' ? '#DC2626' : '#065F46'
                           }}
                         >
-                          {conversation.priority}
+                          {translatePriority(conversation.priority)}
                         </span>
                       )}
                     </div>

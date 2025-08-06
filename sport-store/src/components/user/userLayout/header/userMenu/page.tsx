@@ -1,36 +1,32 @@
 "use client";
 
-import { useAuth } from "@/context/authContext";
-import { useRouter } from "next/navigation";
-import { LogOut, User, ShoppingBag, Heart, ChevronDown, Crown } from "lucide-react";
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/authContext';
+import { User, ShoppingBag, Heart, LogOut, ChevronDown, Crown } from 'lucide-react';
+import Image from 'next/image';
 import { getMembershipTier } from '@/utils/membershipUtils';
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { formatCurrency } from "@/utils/format";
-import { getJustLoggedOut } from "@/utils/navigationUtils";
+import { formatCurrency } from '@/utils/format';
 
 const UserMenu = () => {
-  const { user, logout, isAuthenticated, checkAuthStatus } = useAuth();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { user, logout, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Kiểm tra flag justLoggedOut
-        if (getJustLoggedOut()) {
-          return;
-        }
-        
-        await checkAuthStatus();
+        // Không cần gọi checkAuthStatus nữa vì context đã handle
+        console.log('🔍 UserMenu - Auth initialized');
       } catch (error) {
         console.error('Error initializing auth:', error);
       }
     };
 
     initializeAuth();
-  }, [checkAuthStatus]);
+  }, []);
 
   // Xử lý click outside để đóng menu
   useEffect(() => {
@@ -40,10 +36,8 @@ const UserMenu = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Nếu không có user hoặc chưa xác thực, không hiển thị menu
@@ -52,12 +46,25 @@ const UserMenu = () => {
   }
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
+      console.log('🔍 UserMenu - Starting logout process...');
+      
+      // Reload page ngay lập tức
+      console.log('🔍 UserMenu - Reloading page immediately...');
+      window.location.reload();
+      
+      // Gọi logout function (có thể không cần thiết nếu reload đã xảy ra)
       await logout();
-      // Không redirect ngay lập tức, để user tự chọn nơi họ muốn đi
-      // router.push('/');
+      
     } catch (error) {
       console.error('Logout failed:', error);
+      
+      // Nếu có lỗi, vẫn reload page
+      console.log('🔍 UserMenu - Logout failed, but reloading page anyway...');
+      window.location.reload();
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -204,10 +211,21 @@ const UserMenu = () => {
           <div className="border-t border-gray-100 py-1">
             <button
               onClick={handleLogout}
-              className="w-full px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center space-x-2 sm:space-x-2.5 md:space-x-3 transition-colors duration-200 touch-friendly"
+              disabled={isLoggingOut}
+              className={`w-full px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base flex items-center space-x-2 sm:space-x-2.5 md:space-x-3 transition-all duration-300 touch-friendly ${
+                isLoggingOut 
+                  ? 'text-gray-400 bg-gray-50 cursor-not-allowed' 
+                  : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+              }`}
             >
-              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              <span className="flex-1 text-left">Đăng xuất</span>
+              {isLoggingOut ? (
+                <div className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+              ) : (
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              )}
+              <span className="flex-1 text-left">
+                {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+              </span>
             </button>
           </div>
         </div>

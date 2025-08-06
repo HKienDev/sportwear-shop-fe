@@ -6,14 +6,18 @@ export async function GET(
 ) {
   try {
     const { conversationId } = await params;
-    console.log('🔍 Chat Messages API called for conversation:', conversationId);
     
+    if (!conversationId) {
+      return NextResponse.json(
+        { success: false, message: 'ConversationId là bắt buộc' },
+        { status: 400 }
+      );
+    }
+
     // Lấy token từ header
     const authHeader = request.headers.get('authorization');
-    console.log('🔑 Auth header:', authHeader ? 'Present' : 'Missing');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No valid authorization header');
       return NextResponse.json(
         { success: false, message: 'Token không hợp lệ' },
         { status: 401 }
@@ -21,9 +25,8 @@ export async function GET(
     }
 
     const token = authHeader.substring(7);
-    console.log('🔑 Token extracted:', token ? 'Present' : 'Missing');
 
-    // Lấy URL từ environment variable
+    // Gọi backend API
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
@@ -33,11 +36,7 @@ export async function GET(
       );
     }
 
-    // Tạo URL cho backend API
     const backendUrl = `${apiUrl}/chat/messages/${conversationId}`;
-    console.log('🌐 Backend URL:', backendUrl);
-
-    // Gọi backend API
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
@@ -46,11 +45,8 @@ export async function GET(
       },
     });
 
-    console.log('📡 Backend response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Backend error:', errorText);
       
       if (response.status === 401) {
         return NextResponse.json(
@@ -66,7 +62,6 @@ export async function GET(
     }
 
     const data = await response.json();
-    console.log('✅ Backend response data received');
 
     return NextResponse.json(data);
 

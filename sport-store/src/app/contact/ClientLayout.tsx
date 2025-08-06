@@ -3,6 +3,7 @@
 import { Montserrat } from "next/font/google";
 import Header from "@/components/user/userLayout/header/page";
 import Footer from "@/components/user/userLayout/footer/page";
+import UserChat from "@/components/common/chat/userChat";
 import { AuthProvider } from "../../context/authContext";
 import { CartProvider } from "../../context/cartContext";
 
@@ -22,6 +23,7 @@ export default function ContactClientLayout({
             {children}
           </main>
           <Footer className="mt-auto" />
+          <UserChat />
         </div>
       </CartProvider>
     </AuthProvider>

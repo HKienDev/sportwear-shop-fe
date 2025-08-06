@@ -3,7 +3,7 @@ import { verifyAccessToken } from '@/lib/auth';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get token from cookies instead of headers
@@ -15,7 +15,7 @@ export async function DELETE(
     // Temporarily bypass token verification for testing
     const user = { role: 'admin' }; // Mock admin user
 
-    const { id } = params;
+    const { id } = await params;
 
     // Call backend API to delete review
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';

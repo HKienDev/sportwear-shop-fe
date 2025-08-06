@@ -15,12 +15,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify token và kiểm tra role (có thể thêm logic verify token ở đây)
-    // Tạm thời bỏ qua việc verify token để test
-
     // Fetch real data from conversations API
     try {
-      const conversationsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/chat/conversations`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
+      const conversationsResponse = await fetch(`${cleanBaseUrl}/api/chat/conversations`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
         const conversationsData = await conversationsResponse.json();
         const conversations = conversationsData.data?.conversations || [];
         
-        // Calculate real stats
+        // Calculate real stats from database
         const totalConversations = conversations.length;
         const activeConversations = conversations.filter((conv: any) => conv.status === 'active').length;
         
@@ -66,6 +65,8 @@ export async function GET(request: NextRequest) {
           averageResponseTime: 2.3 // Mock for now
         };
         
+        console.log('📊 Real message stats from database:', stats);
+        
         return NextResponse.json({
           success: true,
           data: stats,
@@ -76,16 +77,18 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching real stats:', error);
     }
 
-    // Fallback to mock data if real data fetch fails
+    // Return empty stats if no data available
     const stats = {
-      totalMessages: 11, // Based on logs showing 11 messages
-      pendingMessages: 1,
+      totalMessages: 0,
+      pendingMessages: 0,
       repliedMessages: 0,
       completedMessages: 0,
-      totalConversations: 1,
-      activeConversations: 1,
-      averageResponseTime: 2.3
+      totalConversations: 0,
+      activeConversations: 0,
+      averageResponseTime: 0
     };
+
+    console.log('📊 Empty message stats (no data available):', stats);
 
     return NextResponse.json({
       success: true,

@@ -325,6 +325,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
             localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
             
+            // Xóa chat-related localStorage
+            localStorage.removeItem('currentUserId');
+            localStorage.removeItem('tempUserId');
+            localStorage.removeItem('userId');
+            
             // Xóa tokens từ cookies với đúng tên
             document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
             document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;

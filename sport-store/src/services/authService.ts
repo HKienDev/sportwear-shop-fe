@@ -150,6 +150,11 @@ export const authService = {
       localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
       localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
       
+      // Xóa chat-related localStorage
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('tempUserId');
+      localStorage.removeItem('userId');
+      
       return response;
     } catch (error) {
       console.error('❌ AuthService - Logout error:', error);
@@ -157,6 +162,12 @@ export const authService = {
       localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
       localStorage.removeItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
       localStorage.removeItem(TOKEN_CONFIG.USER.STORAGE_KEY);
+      
+      // Clear chat-related localStorage even if API call fails
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('tempUserId');
+      localStorage.removeItem('userId');
+      
       throw error;
     }
   },

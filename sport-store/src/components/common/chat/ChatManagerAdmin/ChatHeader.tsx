@@ -1,5 +1,6 @@
 import React from 'react';
-import { Conversation, ThemeColors } from './types';
+import { Conversation, ThemeColors, translateStatus } from './types';
+import { Crown, Star, Medal, Gem } from 'lucide-react';
 
 interface ChatHeaderProps {
   conversation: Conversation | null;
@@ -7,6 +8,24 @@ interface ChatHeaderProps {
   isConnected: boolean;
   onRefresh: () => void;
 }
+
+// Component để hiển thị icon membership tier
+const MembershipIcon = ({ tier }: { tier: string }) => {
+  switch (tier) {
+    case 'Kim Cương':
+      return <Gem size={14} />;
+    case 'Bạch Kim':
+      return <Crown size={14} />;
+    case 'Vàng':
+      return <Star size={14} />;
+    case 'Bạc':
+      return <Medal size={14} />;
+    case 'Đồng':
+      return <Medal size={14} />;
+    default:
+      return <Star size={14} />;
+  }
+};
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   conversation,
@@ -69,10 +88,37 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         
         <div>
-          <h3 className="text-lg font-semibold text-gray-800">{conversation.name}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 
+              className="text-lg font-semibold text-gray-800"
+              style={{
+                color: conversation.membershipTier?.color || '#1F2937'
+              }}
+            >
+              {conversation.name}
+            </h3>
+            {conversation.membershipTier && (
+              <span 
+                className="text-xs px-2 py-1 rounded-full font-medium shadow-sm flex items-center gap-1"
+                style={{
+                  backgroundColor: `${conversation.membershipTier.color}20`,
+                  color: conversation.membershipTier.color,
+                  border: `1px solid ${conversation.membershipTier.color}40`
+                }}
+              >
+                <MembershipIcon tier={conversation.membershipTier.name} />
+                <span className="text-xs font-medium">{conversation.membershipTier.name}</span>
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {conversation.userInfo?.email || 'Khách'}
+              {conversation.userInfo?.phone ? 
+                conversation.userInfo.phone : 
+                conversation.userInfo?.email ? 
+                  conversation.userInfo.email : 
+                  'Khách'
+              }
             </span>
             {conversation.status && (
               <span 
@@ -82,7 +128,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   color: conversation.status === 'active' ? themeColors.primaryText : '#92400E'
                 }}
               >
-                {conversation.status}
+                {translateStatus(conversation.status)}
               </span>
             )}
           </div>

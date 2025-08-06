@@ -23,21 +23,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleSendMessage();
     }
   };
 
   return (
-    <div className="p-6 bg-white/90 backdrop-blur-sm border-t border-slate-200">
+    <div 
+      className="p-6 bg-white/90 backdrop-blur-sm border-t border-slate-200"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
       <div className="flex items-end space-x-4">
         <div className="flex-1">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Nhập tin nhắn..."
             className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/80 backdrop-blur-sm"
             rows={1}
@@ -50,6 +59,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
         
         <button
+          type="button"
           onClick={handleSendMessage}
           disabled={!message.trim() || disabled || loading}
           className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center shadow-lg ${

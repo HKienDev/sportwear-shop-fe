@@ -16,6 +16,12 @@ interface RawConversation {
     fullname?: string;
     email?: string;
     phone?: string;
+    totalSpent?: number;
+  };
+  membershipTier?: {
+    name: string;
+    color: string;
+    icon: string;
   };
   status?: string;
   priority?: string;
@@ -65,16 +71,13 @@ export const useChatAPI = () => {
 
   // Lấy danh sách cuộc trò chuyện
   const fetchConversations = useCallback(async (): Promise<Conversation[]> => {
-    console.log('🚀 fetchConversations called');
     setLoading(true);
     setError(null);
     
     try {
       const url = `${API_BASE_URL}/chat/conversations`;
-      console.log('📡 Fetching conversations from:', url);
       
       const token = getAuthToken();
-      console.log('🔑 Token present:', !!token);
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -89,68 +92,35 @@ export const useChatAPI = () => {
         credentials: 'include',
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('📡 Raw API response:', data);
-      console.log('📡 Response type:', typeof data);
-      console.log('📡 Is array:', Array.isArray(data));
-      console.log('📡 Object keys:', data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-      console.log('📡 Data.data:', data?.data);
-      console.log('📡 Data.data.conversations:', data?.data?.conversations);
       
       // Handle different response formats
       let conversationsData: RawConversation[] = [];
       
       if (Array.isArray(data)) {
-        // Direct array response
-        console.log('📡 Processing as direct array');
         conversationsData = data as RawConversation[];
       } else if (data && typeof data === 'object') {
-        // Object response with conversations property (backend format)
         if (data.conversations && Array.isArray(data.conversations)) {
-          console.log('📡 Processing as data.conversations');
           conversationsData = data.conversations as RawConversation[];
         } else if (data.data && data.data.conversations && Array.isArray(data.data.conversations)) {
-          // Backend format: { success: true, message: "...", data: { conversations: [...] } }
-          console.log('📡 Processing as data.data.conversations');
           conversationsData = data.data.conversations as RawConversation[];
         } else if (data.data && Array.isArray(data.data)) {
-          console.log('📡 Processing as data.data (array)');
           conversationsData = data.data as RawConversation[];
         } else if (data.success && data.data && data.data.conversations && Array.isArray(data.data.conversations)) {
-          console.log('📡 Processing as success.data.conversations');
           conversationsData = data.data.conversations as RawConversation[];
         } else if (Object.keys(data).length === 0) {
-          // Empty object response - no conversations yet
-          console.log('📡 No conversations found (empty response)');
           conversationsData = [];
         } else {
-          console.error('❌ Unexpected response format:', data);
-          console.log('📡 Data structure analysis:');
-          console.log('  - Has conversations:', !!data.conversations);
-          console.log('  - Has data:', !!data.data);
-          console.log('  - Has success:', !!data.success);
-          console.log('  - Data.data type:', typeof data.data);
-          console.log('  - Data.data.conversations:', data.data?.conversations);
-          // Instead of throwing error, return empty array for now
-          console.log('📡 Returning empty conversations array due to unexpected format');
           conversationsData = [];
         }
       } else {
-        console.error('❌ Invalid response type:', typeof data);
-        // Instead of throwing error, return empty array for now
-        console.log('📡 Returning empty conversations array due to invalid type');
         conversationsData = [];
       }
       
-      console.log('📡 Conversations data to process:', conversationsData);
-
       const conversations: Conversation[] = conversationsData.map((conv: RawConversation) => ({
         id: conv.id || '',
         name: conv.name || 'Unknown User',
@@ -163,14 +133,16 @@ export const useChatAPI = () => {
           name: conv.userInfo.fullname || 'Unknown',
           email: conv.userInfo.email || '',
           fullName: conv.userInfo.fullname,
-          tempId: undefined
-        } : null,
+          tempId: undefined,
+          phone: conv.userInfo.phone,
+          totalSpent: conv.userInfo.totalSpent
+        } : undefined,
         status: conv.status || 'active',
         priority: conv.priority || 'normal',
-        tags: conv.tags || []
+        tags: conv.tags || [],
+        membershipTier: conv.membershipTier || undefined
       }));
 
-      console.log('📡 Processed conversations:', conversations);
       return conversations;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch conversations';
@@ -189,7 +161,6 @@ export const useChatAPI = () => {
     
     try {
       const url = `${API_BASE_URL}/chat/messages/${conversationId}`;
-      console.log('📡 Fetching messages for conversation:', url);
       
       const token = getAuthToken();
       const headers: Record<string, string> = {
@@ -211,7 +182,6 @@ export const useChatAPI = () => {
       }
 
       const data = await response.json();
-      console.log('📡 Raw messages response:', data);
       
       // Handle different response formats
       let messagesData: RawMessage[] = [];
@@ -222,26 +192,17 @@ export const useChatAPI = () => {
         if (data.messages && Array.isArray(data.messages)) {
           messagesData = data.messages as RawMessage[];
         } else if (data.data && data.data.messages && Array.isArray(data.data.messages)) {
-          // Backend format: { success: true, message: "...", data: { messages: [...] } }
           messagesData = data.data.messages as RawMessage[];
         } else if (data.data && Array.isArray(data.data)) {
           messagesData = data.data as RawMessage[];
         } else if (data.success && data.data && data.data.messages && Array.isArray(data.data.messages)) {
           messagesData = data.data.messages as RawMessage[];
         } else if (Object.keys(data).length === 0) {
-          // Empty object response - no messages yet
-          console.log('📡 No messages found (empty response)');
           messagesData = [];
         } else {
-          console.error('❌ Unexpected messages response format:', data);
-          // Instead of throwing error, return empty array for now
-          console.log('📡 Returning empty messages array due to unexpected format');
           messagesData = [];
         }
       } else {
-        console.error('❌ Invalid messages response type:', typeof data);
-        // Instead of throwing error, return empty array for now
-        console.log('📡 Returning empty messages array due to invalid type');
         messagesData = [];
       }
 
@@ -251,8 +212,8 @@ export const useChatAPI = () => {
         time: msg.timestamp || msg.time || new Date().toISOString(),
         senderId: msg.senderId,
         senderName: msg.senderName || msg.sender,
-        timestamp: msg.timestamp,
-        messageId: msg._id || msg.messageId
+        timestamp: msg.timestamp || msg.time,
+        messageId: msg.messageId || msg._id
       }));
 
       return messages;
@@ -273,7 +234,6 @@ export const useChatAPI = () => {
     
     try {
       const url = `${API_BASE_URL}/chat/send`;
-      console.log('📡 Sending message to conversation:', url);
       
       const token = getAuthToken();
       const headers: Record<string, string> = {
@@ -291,7 +251,7 @@ export const useChatAPI = () => {
         body: JSON.stringify({
           conversationId,
           message,
-          senderId: 'admin', // Admin sender
+          senderId: 'admin',
           senderName: 'Admin'
         }),
       });
@@ -301,7 +261,6 @@ export const useChatAPI = () => {
       }
 
       const data = await response.json();
-      console.log('📡 Message sent successfully:', data);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
@@ -313,11 +272,10 @@ export const useChatAPI = () => {
     }
   }, []);
 
-  // Đánh dấu tin nhắn đã đọc
+  // Đánh dấu đã đọc
   const markAsRead = useCallback(async (conversationId: string): Promise<boolean> => {
     try {
       const url = `${API_BASE_URL}/chat/mark-read/${conversationId}`;
-      console.log('📡 Marking conversation as read:', url);
       
       const token = getAuthToken();
       const headers: Record<string, string> = {
@@ -338,7 +296,6 @@ export const useChatAPI = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log('📡 Conversation marked as read successfully');
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to mark as read';

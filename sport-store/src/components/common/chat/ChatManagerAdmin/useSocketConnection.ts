@@ -32,65 +32,93 @@ export const useSocketConnection = (onMessageReceived?: (message: ServerMessage)
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectInterval = 3000; // 3 giây
+  const isConnectingRef = useRef(false);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    const connectSocket = () => {
-      if (socketRef.current?.connected) return;
-
-      // Tạm thời disable WebSocket để tránh lỗi connection
-      console.log('🔌 ChatManagerAdmin - WebSocket temporarily disabled');
-      setIsConnected(true); // Giả lập connected state
+    // Tránh khởi tạo nhiều lần trong development mode
+    if (isInitializedRef.current) {
       return;
+    }
 
-      const socket = io(SOCKET_URL, {
-        reconnection: true,
-        reconnectionAttempts: maxReconnectAttempts,
-        reconnectionDelay: reconnectInterval,
-        timeout: 10000,
-        transports: ['websocket', 'polling'],
-        forceNew: true,
-        autoConnect: true
-      });
+    const connectSocket = () => {
+      // Tránh tạo nhiều connection cùng lúc
+      if (socketRef.current?.connected || isConnectingRef.current) {
+        return;
+      }
 
-      socket.on("connect", () => {
-        setIsConnected(true);
-        reconnectAttempts.current = 0;
-        
-        // Xác định danh tính admin
-        socket.emit("identifyUser", { isAdmin: true, userName: "Admin" });
-      });
+      isConnectingRef.current = true;
+      console.log('🔌 ChatManagerAdmin - Connecting to socket:', SOCKET_URL);
 
-      socket.on("identified", (data) => {
-        if (data.status !== 'success' || data.role !== 'admin') {
-          console.error("❌ ChatManagerAdmin identification failed:", data);
-        }
-      });
+      try {
+        const socket = io(SOCKET_URL, {
+          reconnection: true,
+          reconnectionAttempts: maxReconnectAttempts,
+          reconnectionDelay: reconnectInterval,
+          timeout: 10000,
+          transports: ['websocket', 'polling'],
+          forceNew: false, // Thay đổi từ true thành false để tránh tạo connection mới
+          autoConnect: true
+        });
 
-      // Thêm listener cho tin nhắn real-time
-      socket.on("receiveMessage", (message) => {
+        socket.on("connect", () => {
+          console.log('🔌 ChatManagerAdmin - Socket connected:', socket.id);
+          setIsConnected(true);
+          reconnectAttempts.current = 0;
+          isConnectingRef.current = false;
+          
+          // Xác định danh tính admin
+          socket.emit("identifyUser", { isAdmin: true, userName: "Admin" });
+          console.log('🔌 ChatManagerAdmin - Sent identifyUser event for admin');
+        });
+
+        socket.on("identified", (data) => {
+          console.log('🔌 ChatManagerAdmin - Identification response:', data);
+          if (data.status !== 'success' || data.role !== 'admin') {
+            console.error("❌ ChatManagerAdmin identification failed:", data);
+          } else {
+            console.log('✅ ChatManagerAdmin - Admin successfully identified');
+          }
+        });
+
+        // Thêm listener cho tin nhắn real-time - chỉ khi có callback
         if (onMessageReceived) {
-          onMessageReceived(message);
+          socket.on("receiveMessage", (message) => {
+            console.log('🔌 ChatManagerAdmin - Received message:', message);
+            onMessageReceived(message);
+          });
         }
-      });
 
-      socket.on("disconnect", (reason) => {
-        setIsConnected(false);
-      });
+        socket.on("disconnect", (reason) => {
+          console.log('🔌 ChatManagerAdmin - Socket disconnected:', reason);
+          setIsConnected(false);
+          isConnectingRef.current = false;
+        });
 
-      socket.on("connect_error", (error) => {
-        console.error("❌ ChatManagerAdmin Socket connection error:", error);
-        setIsConnected(false);
-        
-        // Thử kết nối lại nếu chưa vượt quá số lần thử
-        if (reconnectAttempts.current < maxReconnectAttempts) {
-          reconnectAttempts.current++;
-          setTimeout(connectSocket, reconnectInterval);
-        } else {
-          console.error("❌ Max reconnection attempts reached");
-        }
-      });
+        socket.on("connect_error", (error) => {
+          console.error("❌ ChatManagerAdmin Socket connection error:", error);
+          setIsConnected(false);
+          isConnectingRef.current = false;
+          
+          // Thử kết nối lại nếu chưa vượt quá số lần thử
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            setTimeout(() => {
+              if (!socketRef.current?.connected) {
+                connectSocket();
+              }
+            }, reconnectInterval);
+          } else {
+            console.error("❌ Max reconnection attempts reached");
+          }
+        });
 
-      socketRef.current = socket;
+        socketRef.current = socket;
+        isInitializedRef.current = true;
+      } catch (error) {
+        console.error("❌ Error creating socket connection:", error);
+        isConnectingRef.current = false;
+      }
     };
 
     // Kiểm tra xem đã đăng nhập chưa
@@ -108,7 +136,20 @@ export const useSocketConnection = (onMessageReceived?: (message: ServerMessage)
     return () => {
       if (socketRef.current) {
         console.log("🧹 Cleaning up ChatManagerAdmin socket connection");
-        socketRef.current.disconnect();
+        // Remove all listeners trước khi disconnect
+        socketRef.current.off("connect");
+        socketRef.current.off("identified");
+        socketRef.current.off("disconnect");
+        socketRef.current.off("connect_error");
+        socketRef.current.off("receiveMessage");
+        
+        // Chỉ disconnect nếu socket đang connected
+        if (socketRef.current.connected) {
+          socketRef.current.disconnect();
+        }
+        socketRef.current = null;
+        isConnectingRef.current = false;
+        isInitializedRef.current = false;
       }
     };
   }, [onMessageReceived]);

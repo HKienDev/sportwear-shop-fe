@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/authContext';
 import { TOKEN_CONFIG } from '@/config/token';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface SessionTimeoutWarningProps {
   warningThreshold?: number; // Thời gian (ms) trước khi hiển thị warning
@@ -15,9 +16,13 @@ export default function SessionTimeoutWarning({
   checkInterval = 10000 // 10 giây - kiểm tra thường xuyên hơn
 }: SessionTimeoutWarningProps) {
   const { logout, checkAuthStatus } = useAuth();
+  const router = useRouter();
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isExtending, setIsExtending] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const checkSessionExpiry = useCallback(() => {
     try {
@@ -37,7 +42,7 @@ export default function SessionTimeoutWarning({
       if (timeUntilExpiry <= 0) {
         setShowWarning(false);
         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        logout();
+        handleLogout();
         return;
       }
 
@@ -51,72 +56,163 @@ export default function SessionTimeoutWarning({
     } catch (error) {
       console.error('Error checking session expiry:', error);
       setShowWarning(false);
+      // Nếu có lỗi parse token, có thể token không hợp lệ
+      toast.error('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+      setTimeout(() => {
+        handleLogout();
+      }, 1000);
     }
-  }, [warningThreshold, logout]);
+  }, [warningThreshold]);
 
   const extendSession = useCallback(async () => {
     try {
       setIsExtending(true);
-      await checkAuthStatus();
+      
+      // Gọi trực tiếp refresh token API thay vì checkAuthStatus
+      const refreshToken = localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY);
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+      
+      const response = await fetch('/api/auth/refresh-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to refresh token');
+      }
+      
+      // Cập nhật tokens
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = data.data;
+      localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, newAccessToken);
+      localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, newRefreshToken);
       
       // Kiểm tra lại sau khi extend
-      const newToken = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-      if (newToken) {
-        const payload = JSON.parse(atob(newToken.split('.')[1]));
-        const expirationTime = payload.exp * 1000;
-        const currentTime = Date.now();
-        const timeUntilExpiry = expirationTime - currentTime;
+      const payload = JSON.parse(atob(newAccessToken.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+      
+      if (timeUntilExpiry > warningThreshold) {
+        setShowWarning(false);
+        toast.success('Phiên đăng nhập đã được gia hạn');
         
-        if (timeUntilExpiry > warningThreshold) {
-          setShowWarning(false);
-          toast.success('Phiên đăng nhập đã được gia hạn');
-        } else {
-          // Nếu vẫn còn trong warning threshold, cập nhật timeLeft
-          setTimeLeft(Math.ceil(timeUntilExpiry / 1000));
+        // Clear countdown timer
+        if (countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
         }
       } else {
-        throw new Error('No new token received');
+        // Nếu vẫn còn trong warning threshold, cập nhật timeLeft
+        setTimeLeft(Math.ceil(timeUntilExpiry / 1000));
+        toast.warning('Phiên đăng nhập vẫn sắp hết hạn. Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Error extending session:', error);
-      toast.error('Không thể gia hạn phiên đăng nhập');
+      toast.error('Không thể gia hạn phiên đăng nhập. Vui lòng đăng nhập lại.');
+      
+      // Nếu không thể gia hạn, logout sau 2 giây
+      setTimeout(() => {
+        handleLogout();
+      }, 2000);
     } finally {
       setIsExtending(false);
     }
-  }, [checkAuthStatus, warningThreshold]);
+  }, [warningThreshold]);
 
-  const handleLogout = useCallback(() => {
-    setShowWarning(false);
-    logout();
-  }, [logout]);
+  const handleLogout = useCallback(async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Clear countdown timer trước
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      
+      // Clear check interval
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+      
+      // Đóng modal trước
+      setShowWarning(false);
+      
+      // Thực hiện logout
+      await logout();
+      
+      // Redirect về trang chủ
+      router.push('/');
+      
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Có lỗi xảy ra khi đăng xuất');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout, router]);
 
   // Kiểm tra session định kỳ
   useEffect(() => {
     // Kiểm tra ngay lập tức
     checkSessionExpiry();
     
-    const interval = setInterval(checkSessionExpiry, checkInterval);
+    checkIntervalRef.current = setInterval(checkSessionExpiry, checkInterval);
     
-    return () => clearInterval(interval);
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
   }, [checkSessionExpiry, checkInterval]);
 
   // Countdown timer khi warning hiển thị
   useEffect(() => {
     if (showWarning) {
-      const interval = setInterval(() => {
+      countdownRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
+            // Clear interval trước khi logout
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            
             setShowWarning(false);
-            logout();
+            handleLogout();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
 
-      return () => clearInterval(interval);
+      return () => {
+        if (countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
+        }
+      };
     }
-  }, [showWarning, logout]);
+  }, [showWarning, handleLogout]);
+
+  // Cleanup khi component unmount
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, []);
 
   if (!showWarning) {
     return null;
@@ -144,17 +240,38 @@ export default function SessionTimeoutWarning({
           <div className="flex space-x-3">
             <button
               onClick={extendSession}
-              disabled={isExtending}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={isExtending || isLoggingOut}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
-              {isExtending ? 'Đang gia hạn...' : 'Gia hạn phiên'}
+              {isExtending ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang gia hạn...
+                </>
+              ) : (
+                'Gia hạn phiên'
+              )}
             </button>
             
             <button
               onClick={handleLogout}
-              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+              disabled={isExtending || isLoggingOut}
+              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
-              Đăng xuất
+              {isLoggingOut ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang đăng xuất...
+                </>
+              ) : (
+                'Đăng xuất'
+              )}
             </button>
           </div>
         </div>
