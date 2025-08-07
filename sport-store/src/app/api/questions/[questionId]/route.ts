@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/utils/apiAuth';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function DELETE(
   request: NextRequest,
@@ -7,7 +8,7 @@ export async function DELETE(
 ) {
   try {
     const { questionId } = await params;
-    console.log('🔍 Delete Question API called for question:', questionId);
+
     
     // Check authentication
     const authResult = await requireAuth();
@@ -19,7 +20,7 @@ export async function DELETE(
     console.log('🔑 User authenticated:', user._id);
 
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function DELETE(
       },
     });
 
-    console.log('📡 Backend response status:', response.status);
+
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -54,7 +55,7 @@ export async function DELETE(
     }
 
     const data = await response.json();
-    console.log('✅ Backend response data received');
+
 
     return NextResponse.json(data);
 

@@ -13,7 +13,7 @@ interface ReviewStatusCardsProps {
 
 export function ReviewStatusCards({ reviews, stats }: ReviewStatusCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" style={{ isolation: 'isolate' }}>
       {/* Total Reviews */}
       <div className="relative group">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-emerald-500/10 rounded-2xl transform rotate-1 transition-transform duration-300 group-hover:rotate-2"></div>

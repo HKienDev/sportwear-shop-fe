@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function DELETE(
   request: NextRequest,
@@ -18,7 +19,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/${id}`, {
+    const response = await fetch(getBackendUrl(`/reviews/${id}`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

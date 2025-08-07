@@ -1,32 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
     const { phone, email } = await request.json();
     
-    if (!phone) {
+    if (!phone && !email) {
       return NextResponse.json(
-        { success: false, message: 'Số điện thoại là bắt buộc' },
+        { success: false, message: 'Phone hoặc email là bắt buộc' },
         { status: 400 }
       );
     }
 
-    // Gọi API backend để kiểm tra số điện thoại và email
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/validate-phone`, {
+    // Gọi backend API để kiểm tra
+    const apiUrl = getBackendUrl('/users/check-exists');
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ phone, email }),
+      body: JSON.stringify({ 
+        phone: phone?.trim() || '',
+        email: email?.trim() || ''
+      }),
     });
+
+    if (!response.ok) {
+      console.error('❌ Backend validation error:', response.status);
+      return NextResponse.json(
+        { success: false, message: 'Lỗi kiểm tra thông tin' },
+        { status: 500 }
+      );
+    }
 
     const data = await response.json();
     
-    return NextResponse.json(data);
+    if (data.exists) {
+      return NextResponse.json({
+        success: true,
+        isUsed: true,
+        message: data.message || 'Email hoặc số điện thoại đã được sử dụng'
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      isUsed: false,
+      message: 'Thông tin hợp lệ'
+    });
+
   } catch (error) {
-    console.error('❌ Error validating phone:', error);
+    console.error('❌ Chat validation error:', error);
     return NextResponse.json(
-      { success: false, message: 'Lỗi kiểm tra thông tin' },
+      { success: false, message: 'Lỗi server' },
       { status: 500 }
     );
   }

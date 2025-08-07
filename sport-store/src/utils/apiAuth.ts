@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { TOKEN_CONFIG } from '@/config/token';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export interface AuthenticatedUser {
   _id: string;
@@ -83,13 +84,6 @@ export async function callBackendAPI(
   options: RequestInit = {}
 ): Promise<Response> {
   try {
-    let API_URL = process.env.NEXT_PUBLIC_API_URL;
-    
-    // Đảm bảo API_URL không kết thúc bằng /api để tránh duplicate
-    if (API_URL?.endsWith('/api')) {
-      API_URL = API_URL.slice(0, -4); // Loại bỏ /api ở cuối
-    }
-    
     const authResult = await requireAdmin();
     
     if (authResult instanceof NextResponse) {
@@ -97,9 +91,7 @@ export async function callBackendAPI(
     }
 
     const { accessToken } = authResult;
-    // Đảm bảo endpoint không bắt đầu bằng /api để tránh duplicate
-    const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.slice(4) : endpoint;
-    const url = `${API_URL}/api${cleanEndpoint}`;
+    const url = getBackendUrl(endpoint);
 
     const response = await fetch(url, {
       ...options,
@@ -123,6 +115,46 @@ export async function callBackendAPI(
     return response;
   } catch (error) {
     console.error('❌ callBackendAPI - Error calling backend API:', error);
+    throw error;
+  }
+}
+
+export async function callBackendAPIWithAuth(
+  endpoint: string, 
+  options: RequestInit = {}
+): Promise<Response> {
+  try {
+    const authResult = await requireAuth();
+    
+    if (authResult instanceof NextResponse) {
+      throw new Error('Authentication failed');
+    }
+
+    const { accessToken } = authResult;
+    const url = getBackendUrl(endpoint);
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      console.error('❌ callBackendAPIWithAuth - Backend API error:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        endpoint,
+        url
+      });
+      throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error('❌ callBackendAPIWithAuth - Error calling backend API:', error);
     throw error;
   }
 } 

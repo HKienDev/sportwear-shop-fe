@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews`, {
+    const response = await fetch(getBackendUrl("/reviews"), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

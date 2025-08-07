@@ -9,19 +9,18 @@ export async function GET(
     const token = request.headers.get('authorization')?.replace('Bearer ', '') || 
                   request.cookies.get('accessToken')?.value;
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Thêm Authorization header nếu có token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`http://localhost:4000/api/products/${id}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     const data = await response.json();

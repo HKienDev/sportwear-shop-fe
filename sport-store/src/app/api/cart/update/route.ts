@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function PUT(request: NextRequest) {
   console.log('🔧 PUT /api/cart/update called');
@@ -21,7 +22,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Gọi API backend để cập nhật giỏ hàng
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/cart/update`;
+    const apiUrl = getBackendUrl("/cart/update");
     const response = await fetch(apiUrl, {
       method: 'PUT',
       headers: {

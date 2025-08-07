@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logInfo, logDebug, logError } from '@/utils/logger';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 // Interface cho cart item
 interface CartItem {
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Gọi API backend để lấy giỏ hàng với retry logic
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/cart`;
+    const apiUrl = getBackendUrl('/cart');
     const response = await fetchWithRetry(apiUrl, {
       method: 'GET',
       headers: {

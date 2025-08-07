@@ -80,13 +80,19 @@ const ChatManagerAdmin: React.FC = () => {
   // Load conversations on mount
   useEffect(() => {
     if (isClient) {
+      console.log('🔍 ChatManagerAdmin - Loading conversations on mount');
       loadConversations();
     }
   }, [isClient, loadConversations]);
 
   // Socket event listeners
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('🔍 ChatManagerAdmin - Socket not available');
+      return;
+    }
+
+    console.log('🔍 ChatManagerAdmin - Setting up socket listeners');
 
     // Lắng nghe tin nhắn mới
     const handleNewMessage = (data: ServerMessage) => {
@@ -286,23 +292,27 @@ const ChatManagerAdmin: React.FC = () => {
 
   // Load messages for selected conversation
   const loadMessages = useCallback(async (conversationId: string) => {
-    const fetchedMessages = await fetchMessages(conversationId);
-    setMessages(fetchedMessages);
-    
-    // Save to localStorage
-    localStorage.setItem(`adminMessages_${conversationId}`, JSON.stringify(fetchedMessages));
-    
-    // Mark as read
-    await markAsRead(conversationId);
-    
-    // Update conversation unread count
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === conversationId 
-          ? { ...conv, unread: 0 }
-          : conv
-      )
-    );
+    try {
+      console.log('🔍 ChatManagerAdmin - Loading messages for conversation:', conversationId);
+      const fetchedMessages = await fetchMessages(conversationId);
+      console.log('🔍 ChatManagerAdmin - Fetched messages:', fetchedMessages);
+      setMessages(fetchedMessages);
+      
+      // Mark as read
+      await markAsRead(conversationId);
+      
+      // Update conversation unread count
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, unread: 0 }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('❌ ChatManagerAdmin - Error loading messages:', error);
+      setMessages([]);
+    }
   }, [fetchMessages, markAsRead]);
 
   // Handle conversation selection
@@ -359,34 +369,27 @@ const ChatManagerAdmin: React.FC = () => {
     loadConversations();
   }, [selectedConversation, loadMessages, loadConversations, clearError]);
 
-  // Save conversations to localStorage
+  // Clear localStorage cache để tránh lỗi
   useEffect(() => {
-    if (conversations.length > 0) {
-      localStorage.setItem('adminConversations', JSON.stringify(conversations));
-    }
-  }, [conversations]);
-
-  // Save messages to localStorage
-  useEffect(() => {
-    if (selectedConversation && messages.length > 0) {
-      localStorage.setItem(`adminMessages_${selectedConversation.id}`, JSON.stringify(messages));
-    }
-  }, [messages, selectedConversation]);
+    // Clear old cache khi component mount
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('adminMessages_') || key === 'adminConversations') {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
 
   // Load messages from localStorage on conversation selection
   useEffect(() => {
     if (selectedConversation) {
-      const savedMessages = localStorage.getItem(`adminMessages_${selectedConversation.id}`);
-      if (savedMessages) {
-        try {
-          const parsed = JSON.parse(savedMessages);
-          setMessages(parsed);
-        } catch (error) {
-          console.error('❌ ChatManagerAdmin - Error parsing localStorage messages:', error);
-        }
-      }
+      // Clear localStorage cache để tránh lỗi
+      localStorage.removeItem(`adminMessages_${selectedConversation.id}`);
+      
+      // Load messages từ API thay vì localStorage
+      loadMessages(selectedConversation.id);
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, loadMessages]);
 
   if (!isClient) {
     return (

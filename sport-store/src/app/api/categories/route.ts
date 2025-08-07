@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(request: Request) {
   try {
@@ -16,7 +15,7 @@ export async function GET(request: Request) {
     });
 
     const response = await fetch(
-      `${API_URL}/categories?${queryParams}`,
+      getBackendUrl(`/categories?${queryParams}`),
       {
         headers: {
           'Content-Type': 'application/json'
@@ -71,8 +70,9 @@ export async function POST(
       );
     }
 
-    console.log('Calling backend POST:', `http://localhost:4000/api/categories`);
-    const response = await fetch(`http://localhost:4000/api/categories`, {
+    const backendUrl = getBackendUrl('/categories');
+    console.log('Calling backend POST:', backendUrl);
+    const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

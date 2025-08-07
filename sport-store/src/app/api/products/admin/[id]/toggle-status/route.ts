@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function PATCH(
   request: Request,
@@ -33,10 +34,10 @@ export async function PATCH(
 
     // Log request URL for debugging
     console.log('Updating product status:', productId, isActive);
-    console.log('Requesting URL:', `${process.env.NEXT_PUBLIC_API_URL}/products/${productId}/status`);
+    console.log('Requesting URL:', getBackendUrl(`/products/${productId}/status`));
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products/${productId}/status`,
+      getBackendUrl(`/products/${productId}/status`),
       {
         method: 'PUT',
         headers: {

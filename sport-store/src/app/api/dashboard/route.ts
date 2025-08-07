@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { callBackendAPI } from '@/utils/apiAuth';
+import { callBackendAPIWithAuth } from '@/utils/apiAuth';
 
 // GET /api/dashboard/stats
 export async function GET() {
   try {
-    const response = await callBackendAPI('/dashboard/stats');
+    const response = await callBackendAPIWithAuth('/dashboard/stats');
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {

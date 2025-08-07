@@ -140,14 +140,14 @@ export const customerService = {
 
   // Get customer by ID
   async getCustomerById(id: string): Promise<ApiResponse<Customer>> {
-    const response = await apiClient.get(`/admin/users/${id}`);
+    const response = await apiClient.get(`/api/admin/users/${id}`);
     return response.data as ApiResponse<Customer>;
   },
 
   // Update customer
   async updateCustomer(id: string, customerData: Partial<Customer>): Promise<ApiResponse<Customer>> {
     try {
-      const response = await apiClient.put(`/admin/users/${id}`, customerData);
+      const response = await apiClient.put(`/api/admin/users/${id}`, customerData);
       return response.data as ApiResponse<Customer>;
     } catch (error) {
       console.error('Error updating customer:', error);
@@ -158,7 +158,7 @@ export const customerService = {
   // Delete customer
   async deleteCustomer(id: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.delete(`/admin/users/${id}`);
+      const response = await apiClient.delete(`/api/admin/users/${id}`);
       return response.data as ApiResponse<{ message: string }>;
     } catch (error) {
       console.error('Error deleting customer:', error);
@@ -169,7 +169,7 @@ export const customerService = {
   // Change password
   async changePassword(id: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.put(`/admin/users/${id}/reset-password`, { password: newPassword });
+      const response = await apiClient.put(`/api/admin/users/${id}/reset-password`, { password: newPassword });
       return response.data as ApiResponse<{ message: string }>;
     } catch (error) {
       console.error('Error changing password:', error);
@@ -179,14 +179,14 @@ export const customerService = {
 
   // Toggle user status
   async toggleUserStatus(id: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.patch(`/admin/users/${id}/toggle-status`);
+    const response = await apiClient.patch(`/api/admin/users/${id}/toggle-status`);
     return response.data as ApiResponse<{ message: string }>;
   },
 
   // Tạo khách hàng mới
   createCustomer: async (customerData: Partial<Customer>): Promise<ApiResponse<Customer>> => {
     try {
-      const response = await apiClient.post("/admin/users", customerData);
+      const response = await apiClient.post("/api/admin/users", customerData);
       return {
         success: true,
         message: "Tạo khách hàng thành công",
@@ -201,7 +201,7 @@ export const customerService = {
   // Xóa nhiều khách hàng
   deleteManyCustomers: async (ids: string[]): Promise<ApiResponse<{ message: string }>> => {
     try {
-      await apiClient.delete("/admin/users/bulk", { data: { ids } });
+      await apiClient.delete("/api/admin/users/bulk", { data: { ids } });
       return {
         success: true,
         message: "Xóa nhiều khách hàng thành công",
@@ -222,7 +222,7 @@ export const customerService = {
     totalPages: number;
   }>> => {
     try {
-      const response = await apiClient.get(`/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`/api/admin/users/search?q=${query}&page=${page}&limit=${limit}`);
       
       // Xử lý dữ liệu để thêm thông tin về số đơn hàng đã giao
       const customersWithDeliveredOrders = await Promise.all(

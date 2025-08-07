@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch real data from conversations API
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const baseUrl = getBackendBaseUrl();
       const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
       const conversationsResponse = await fetch(`${cleanBaseUrl}/api/chat/conversations`, {
         headers: {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
           averageResponseTime: 2.3 // Mock for now
         };
         
-        console.log('📊 Real message stats from database:', stats);
+    
         
         return NextResponse.json({
           success: true,

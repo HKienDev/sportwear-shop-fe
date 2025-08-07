@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
     const token = authHeader.substring(7);
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       return NextResponse.json(
         { success: false, message: 'Cấu hình API không hợp lệ' },
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
     // Tạo URL cho backend API
-    const backendUrl = `${apiUrl}/admin/users`;
+    const backendUrl = `${apiUrl}/api/admin/users`;
     // Gọi backend API
     const response = await fetch(backendUrl, {
       method: 'GET',

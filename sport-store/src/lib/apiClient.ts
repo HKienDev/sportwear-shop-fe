@@ -312,7 +312,28 @@ class ApiClient {
 
   // Product methods
   async getProducts(params?: ProductQueryParams): Promise<AxiosResponse<{ success: boolean; message: string; data: { products: Product[]; total: number; page: number; limit: number; totalPages: number } }>> {
-    return this.get('/api/products', { params });
+    // Kiểm tra nếu có params và có thể là admin request
+    const isAdminRequest = params && typeof params === 'object' && 'limit' in params && (params as any).limit >= 1000;
+    const endpoint = isAdminRequest ? '/api/products/admin' : '/api/products';
+    
+    // Nếu là admin request, gọi Next.js API route
+    if (isAdminRequest && typeof window !== 'undefined') {
+      const queryParams = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+          }
+        });
+      }
+      
+      const res = await fetchWithAuthNextJS(`${endpoint}?${queryParams.toString()}`);
+      const data = await res.json();
+      return { data, status: 200, statusText: 'OK', headers: {}, config: {} } as AxiosResponse<{ success: boolean; message: string; data: { products: Product[]; total: number; page: number; limit: number; totalPages: number } }>;
+    }
+    
+    // Nếu không phải admin request, gọi backend trực tiếp
+    return this.get(endpoint, { params });
   }
 
   async getProductById(id: string): Promise<AxiosResponse<{ success: boolean; message: string; data: Product }>> {

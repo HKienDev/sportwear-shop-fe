@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function POST(
   request: NextRequest,
@@ -6,10 +7,10 @@ export async function POST(
 ) {
   try {
     const { questionId } = await params;
-    console.log('🔍 Mark Question Helpful API called for question:', questionId);
+
     
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -30,7 +31,7 @@ export async function POST(
       },
     });
 
-    console.log('📡 Backend response status:', response.status);
+
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -43,7 +44,7 @@ export async function POST(
     }
 
     const data = await response.json();
-    console.log('✅ Backend response data received');
+
 
     return NextResponse.json(data);
 

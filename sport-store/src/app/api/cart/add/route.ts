@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Gọi API backend để thêm vào giỏ hàng
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/cart/add`;
+    const apiUrl = getBackendUrl("/cart/add");
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {

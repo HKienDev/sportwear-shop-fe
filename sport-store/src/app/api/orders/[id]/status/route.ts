@@ -27,7 +27,7 @@ export async function PUT(
     }
     
     const data = await response.json();
-    console.log('✅ Order status updated successfully:', data);
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('❌ Error updating order status:', error);

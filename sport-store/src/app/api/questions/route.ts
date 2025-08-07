@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/utils/apiAuth';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Get Questions API called');
+
     
     // Check authentication
     const authResult = await requireAuth();
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (productSku) queryParams.append('productSku', productSku);
 
     // Get API URL from environment
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Create Question API called');
+
     
     // Check authentication
     const authResult = await requireAuth();
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(

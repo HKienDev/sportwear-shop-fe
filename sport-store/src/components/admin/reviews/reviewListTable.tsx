@@ -133,7 +133,7 @@ const ReviewListTable: React.FC<ReviewListTableProps> = ({
 
   return (
     <>
-      <div className="overflow-hidden">
+      <div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1400px]">
             <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b border-indigo-100/60">

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/admin/pending?${queryParams.toString()}`, {
+    const response = await fetch(getBackendUrl(`/questions/admin/pending?${queryParams.toString()}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

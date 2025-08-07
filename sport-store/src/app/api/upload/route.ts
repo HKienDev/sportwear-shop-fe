@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
     try {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
         backendFormData.append('file', file);
 
         // Gửi file đến backend API
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/product`, {
+        const response = await fetch(getBackendUrl("/upload/product"), {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

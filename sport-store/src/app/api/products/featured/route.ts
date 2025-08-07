@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -6,14 +7,9 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '6';
     
     // Gọi API backend trực tiếp không cần authentication
-    let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const url = getBackendUrl(`/products/featured?limit=${limit}`);
     
-    // Đảm bảo API_URL không kết thúc bằng /api để tránh duplicate
-    if (API_URL.endsWith('/api')) {
-      API_URL = API_URL.slice(0, -4); // Loại bỏ /api ở cuối
-    }
-    
-    const url = `${API_URL}/api/products/featured?limit=${limit}`;
+
     
     const response = await fetch(url, {
       method: 'GET',

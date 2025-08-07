@@ -25,7 +25,7 @@ export async function GET(
     }
     
     const data = await response.json();
-    console.log('✅ Order details retrieved successfully');
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('❌ Error getting order details:', error);
@@ -62,7 +62,7 @@ export async function PUT(
     }
     
     const data = await response.json();
-    console.log('✅ Order updated successfully');
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('❌ Error updating order:', error);

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+const API_URL = getBackendBaseUrl();
 
 export async function GET(request: Request) {
   try {
@@ -16,7 +17,15 @@ export async function GET(request: Request) {
     // Nếu không có token trong header, thử lấy từ cookies
     if (!accessToken) {
       const cookieStore = await cookies();
-      accessToken = cookieStore.get(process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'accessToken')?.value;
+      const cookieName = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'accessToken';
+      accessToken = cookieStore.get(cookieName)?.value;
+      // Nếu không có token trong cookie, thử lấy từ Authorization header của request gốc
+      if (!accessToken) {
+        const originalAuthHeader = request.headers.get('Authorization');
+        if (originalAuthHeader && originalAuthHeader.startsWith('Bearer ')) {
+          accessToken = originalAuthHeader.substring(7);
+        }
+      }
     }
 
     if (!accessToken) {
@@ -54,10 +63,7 @@ export async function GET(request: Request) {
     });
 
     // Log request URL for debugging
-    const apiUrl = `${API_URL}/products/admin?${queryParams}`;
-    console.log('Requesting URL:', apiUrl);
-    console.log('Search param value:', search);
-    console.log('Access token:', accessToken ? 'Token exists' : 'No token');
+    const apiUrl = `${API_URL}/api/products/admin?${queryParams}`;
 
     // Kiểm tra API URL
     if (!API_URL) {
@@ -81,9 +87,6 @@ export async function GET(request: Request) {
       }
     );
 
-    // Log response status
-    console.log('Backend response status:', response.status);
-
     if (!response.ok) {
       // Thử đọc response body
       let errorMessage = `Backend error: ${response.status}`;
@@ -97,17 +100,14 @@ export async function GET(request: Request) {
           errorData = JSON.parse(text);
           errorMessage = errorData.message || errorMessage;
         } catch (e) {
-          console.error('Failed to parse error response as JSON:', e);
           // Nếu không phải JSON, có thể là HTML error page
           if (text.includes('<!DOCTYPE html>')) {
             errorMessage = 'Server returned HTML instead of JSON. Please check server logs.';
           }
         }
       } catch (e) {
-        console.error('Failed to read error response body:', e);
+        // Silent error handling
       }
-      
-      console.error('Backend error response:', errorData);
       
       // Nếu backend trả về lỗi 404 (Not Found), trả về thông báo lỗi phù hợp
       if (response.status === 404) {
@@ -250,9 +250,6 @@ export async function POST(request: Request) {
         body: JSON.stringify(productData)
       }
     );
-
-    // Log response status
-    console.log('Backend response status:', response.status);
 
     if (!response.ok) {
       // Thử đọc response body

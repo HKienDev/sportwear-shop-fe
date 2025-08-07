@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function PUT(
   request: NextRequest,
@@ -14,20 +15,16 @@ export async function PUT(
       );
     }
 
-    // Lấy token từ header
+    // Lấy token từ header (optional cho khách vãng lai)
     const authHeader = request.headers.get('authorization');
+    let token = '';
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, message: 'Token không hợp lệ' },
-        { status: 401 }
-      );
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
     }
 
-    const token = authHeader.substring(7);
-
     // Gọi backend API
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -36,13 +33,19 @@ export async function PUT(
       );
     }
 
-    const backendUrl = `${apiUrl}/chat/mark-read/${conversationId}`;
+    const backendUrl = `${apiUrl}/api/chat/mark-read/${conversationId}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Chỉ thêm Authorization header nếu có token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(backendUrl, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {

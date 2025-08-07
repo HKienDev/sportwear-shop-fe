@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, Filter, X, Star, Package } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Search, X, Star, Package, ChevronDown, Check } from "lucide-react";
 
 interface ReviewFiltersProps {
   filters: {
@@ -9,7 +9,11 @@ interface ReviewFiltersProps {
     productSku: string;
     searchTerm: string;
   };
-  onFiltersChange: (filters: any) => void;
+  onFiltersChange: (filters: {
+    rating: string;
+    productSku: string;
+    searchTerm: string;
+  }) => void;
   onClearFilters: () => void;
 }
 
@@ -20,18 +24,28 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState(filters.searchTerm);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isRatingDropdownOpen, setIsRatingDropdownOpen] = useState(false);
+  const ratingDropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  const debouncedFiltersChange = useCallback(
+    (newFilters: typeof filters) => {
+      onFiltersChange(newFilters);
+    },
+    [onFiltersChange]
+  );
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchQuery !== filters.searchTerm) {
-        onFiltersChange({
+        debouncedFiltersChange({
           ...filters,
           searchTerm: searchQuery
         });
       }
     }, 400);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, filters, debouncedFiltersChange]);
 
   const handleFilterChange = (key: string, value: string) => {
     onFiltersChange({
@@ -39,6 +53,52 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
       [key]: value
     });
   };
+
+  const handleRatingSelect = (rating: string) => {
+    handleFilterChange("rating", rating);
+    setIsRatingDropdownOpen(false);
+  };
+
+  const updateDropdownPosition = () => {
+    if (ratingDropdownRef.current) {
+      const rect = ratingDropdownRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  };
+
+  const handleDropdownToggle = () => {
+    if (!isRatingDropdownOpen) {
+      updateDropdownPosition();
+    }
+    setIsRatingDropdownOpen(!isRatingDropdownOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(event.target as Node)) {
+        setIsRatingDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Force re-render when dropdown opens to ensure proper positioning
+  useEffect(() => {
+    if (isRatingDropdownOpen) {
+      updateDropdownPosition();
+    }
+  }, [isRatingDropdownOpen]);
+
+
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -48,7 +108,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
   const hasActiveFilters = Object.values(filters).some(value => value !== "") || searchQuery;
 
   return (
-    <div className="relative">
+    <div className="relative" style={{ position: 'relative', zIndex: 9999999 }}>
       {/* Glass Morphism Background */}
       <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-emerald-600/10 rounded-3xl transform -rotate-2"></div>
       <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-indigo-600/10 rounded-3xl transform rotate-2"></div>
@@ -81,25 +141,119 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
           </div>
           {/* Rating Filter */}
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <div className="relative w-full sm:w-64 group">
-              <select
-                className={`block w-full pl-12 pr-10 py-4 border-2 rounded-xl bg-white/70 backdrop-blur-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm appearance-none transition-all duration-300 cursor-pointer ${
-                  filters.rating !== "" ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-200 hover:border-slate-300'
-                }`}
-                value={filters.rating}
-                onChange={e => handleFilterChange("rating", e.target.value)}
-              >
-                <option value="">Tất cả đánh giá</option>
-                <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
-                <option value="4">⭐⭐⭐⭐ 4 sao</option>
-                <option value="3">⭐⭐⭐ 3 sao</option>
-                <option value="2">⭐⭐ 2 sao</option>
-                <option value="1">⭐ 1 sao</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                <svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+            <div className="relative w-full sm:w-64 group" ref={ratingDropdownRef} style={{ position: 'relative', zIndex: 9999999 }}>
+              <div className="relative">
+                {/* Custom Select Button */}
+                <button
+                  type="button"
+                  className={`relative w-full pl-12 pr-10 py-4 border-2 rounded-xl bg-white/70 backdrop-blur-sm text-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all duration-300 cursor-pointer group-hover:shadow-lg ${
+                    filters.rating !== "" ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                  onClick={handleDropdownToggle}
+                >
+                  {/* Star Icon */}
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                    <Star className={`h-4 w-4 transition-colors duration-200 ${
+                      filters.rating !== "" ? 'text-emerald-500' : 'text-slate-400'
+                    }`} />
+                  </div>
+                  
+                  {/* Display Text */}
+                  <div className="text-left">
+                    {filters.rating === "" ? "Tất cả đánh giá" :
+                     filters.rating === "5" ? "⭐⭐⭐⭐⭐ 5 sao" :
+                     filters.rating === "4" ? "⭐⭐⭐⭐ 4 sao" :
+                     filters.rating === "3" ? "⭐⭐⭐ 3 sao" :
+                     filters.rating === "2" ? "⭐⭐ 2 sao" :
+                     filters.rating === "1" ? "⭐ 1 sao" : "Tất cả đánh giá"}
+                  </div>
+                  
+                  {/* Custom Chevron Icon */}
+                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                    <div className="relative">
+                      <ChevronDown className={`h-4 w-4 transition-all duration-200 ${
+                        isRatingDropdownOpen ? 'rotate-180' : ''
+                      } ${filters.rating !== "" ? 'text-emerald-500' : 'text-slate-400'}`} />
+                      {/* Hover Effect */}
+                      <div className="absolute inset-0 bg-emerald-500/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                    </div>
+                  </div>
+                </button>
+                
+                {/* Custom Dropdown Menu */}
+                {isRatingDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-sm border-2 border-emerald-200 rounded-xl shadow-xl overflow-hidden" style={{ zIndex: 9999999 }}>
+                    <div className="py-2">
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("")}
+                      >
+                        {filters.rating === "" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <Star className={`h-4 w-4 mr-2 ${filters.rating === "" ? 'text-white' : 'text-emerald-500'}`} />
+                        Tất cả đánh giá
+                      </button>
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "5" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("5")}
+                      >
+                        {filters.rating === "5" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <span className="mr-2">⭐⭐⭐⭐⭐</span>
+                        5 sao
+                      </button>
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "4" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("4")}
+                      >
+                        {filters.rating === "4" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <span className="mr-2">⭐⭐⭐⭐</span>
+                        4 sao
+                      </button>
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "3" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("3")}
+                      >
+                        {filters.rating === "3" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <span className="mr-2">⭐⭐⭐</span>
+                        3 sao
+                      </button>
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "2" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("2")}
+                      >
+                        {filters.rating === "2" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <span className="mr-2">⭐⭐</span>
+                        2 sao
+                      </button>
+                      <button
+                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-50 transition-colors duration-200 flex items-center ${
+                          filters.rating === "1" ? 'bg-blue-500 text-white' : 'text-slate-700'
+                        }`}
+                        onClick={() => handleRatingSelect("1")}
+                      >
+                        {filters.rating === "1" && <Check className="h-4 w-4 mr-2 text-white" />}
+                        <span className="mr-2">⭐</span>
+                        1 sao
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Floating Label Effect */}
+                {filters.rating !== "" && (
+                  <div className="absolute -top-2 left-4 px-2 bg-white text-xs font-medium text-emerald-600 transition-all duration-200">
+                    Đánh giá
+                  </div>
+                )}
               </div>
             </div>
           </div>

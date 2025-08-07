@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function GET(
     }
 
     // Kiểm tra biến môi trường
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error("NEXT_PUBLIC_API_URL is not defined");
       return NextResponse.json(
@@ -78,7 +79,7 @@ export async function GET(
 
       // Lấy response text để debug
       const responseText = await response.text();
-      console.log(`Response text: ${responseText}`);
+      
 
       // Parse JSON từ text
       let data;

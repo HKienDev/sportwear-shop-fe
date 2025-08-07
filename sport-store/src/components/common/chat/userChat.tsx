@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
 import { MessageCircle, X, Send, User, Edit, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ const SOCKET_URL = getSocketUrl();
 console.log('🔌 User Chat - Socket URL:', SOCKET_URL);
 
 // Tạo socket instance với error handling tốt hơn
-let socket: any = null;
+let socket: Socket | null = null;
 
 try {
   socket = io(SOCKET_URL, {
@@ -53,6 +53,26 @@ interface UserInfo {
   email: string;
   phone: string;
   gender: string;
+}
+
+interface IdentificationData {
+  status: string;
+  role: string;
+  socketId: string;
+  userId: string;
+}
+
+interface SocketError {
+  message: string;
+  type?: string;
+  code?: string;
+}
+
+interface ChatMessage {
+  text: string;
+  senderId: string;
+  senderName: string;
+  timestamp?: string;
 }
 
 // Custom Dropdown Component
@@ -167,10 +187,11 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
       console.log('🔍 UserChat - User authenticated, loading chat history');
       loadChatHistory();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, loading]);
 
   // Force re-identification function
-  const forceReidentify = () => {
+  const forceReidentify = useCallback(() => {
     if (socket && socket.connected) {
       console.log('🔍 UserChat - Force re-identifying user due to auth state change');
       
@@ -180,12 +201,9 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
         userId = user._id;
         console.log('🔍 UserChat - Re-identifying as authenticated user:', userId);
       } else {
-        userId = localStorage.getItem('tempUserId');
-        if (!userId) {
-          userId = "temp_" + Math.random().toString(36).substring(2, 9);
-          localStorage.setItem('tempUserId', userId);
-        }
-        console.log('🔍 UserChat - Re-identifying as temp user:', userId);
+        // Khách vãng lai: tạo session tạm thời mới mỗi lần
+        userId = "temp_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+        console.log('🔍 UserChat - Creating new temp session for guest:', userId);
       }
       
       // Cập nhật localStorage với userId hiện tại
@@ -205,7 +223,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
       });
       console.log('🔍 UserChat - Re-identification sent for user:', { userId, userName });
     }
-  };
+  }, [isAuthenticated, user, userInfo.name]);
 
   // Force re-identification khi authentication state thay đổi
   useEffect(() => {
@@ -214,7 +232,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
       if (!isAuthenticated) {
         console.log('🔍 UserChat - User logged out, clearing userId');
         localStorage.removeItem('currentUserId');
-        localStorage.removeItem('tempUserId');
+        // Không cần clear tempUserId vì sẽ tạo mới mỗi lần
       }
       
       // Disconnect và reconnect để đảm bảo clean state
@@ -234,7 +252,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
         forceReidentify();
       }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, forceReidentify]);
 
   // Xác định danh tính khi kết nối
   useEffect(() => {
@@ -279,7 +297,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
       console.log("Sent identifyUser event for user:", { userId, userName });
     };
 
-    const handleIdentified = (data: any) => {
+    const handleIdentified = (data: IdentificationData) => {
       console.log("Identification response:", data);
       if (data.status === 'success' && data.role === 'user') {
         console.log("User successfully identified with socket ID:", data.socketId);
@@ -291,7 +309,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
       console.log("Socket disconnected");
     };
 
-    const handleConnectError = (error: any) => {
+    const handleConnectError = (error: SocketError) => {
       console.error("Socket connection error:", error);
     };
 
@@ -314,7 +332,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceiveMessage = (msg: any) => {
+    const handleReceiveMessage = (msg: ChatMessage) => {
       console.log("🔍 UserChat - Received message:", msg);
       
       // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh hiển thị trùng lặp
@@ -368,7 +386,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
         // Sử dụng userId từ user đã login
         userId = user._id || `user_${user._id}`;
       } else {
-        // Tạo userId tạm thời cho user không login
+        // Khách vãng lai: tạo session tạm thời mới
         userId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       }
       localStorage.setItem("currentUserId", userId);
@@ -393,9 +411,49 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
   };
 
   const toggleChat = () => {
-    setIsOpen(!isOpen);
-    if (!isOpen) {
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    
+    if (!newIsOpen) {
+      // Khi đóng chat
       setNewMessageAlert(false);
+      
+      // Nếu là khách vãng lai và đã có tin nhắn, xóa tin nhắn
+      if (!isAuthenticated && messages.length > 0) {
+        const currentUserId = localStorage.getItem('currentUserId');
+        if (currentUserId && currentUserId.startsWith('temp_')) {
+          console.log('🔍 UserChat - Guest closing chat, clearing messages for:', currentUserId);
+          
+          // Xóa tin nhắn từ backend
+          fetch('/api/chat/clear-guest-messages', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: currentUserId }),
+          }).catch(error => {
+            console.error('❌ Error clearing guest messages:', error);
+          });
+        }
+      }
+    } else {
+      // Khi mở chat, reset state cho khách vãng lai
+      if (!isAuthenticated) {
+        console.log('🔍 UserChat - Guest opening chat, resetting state');
+        setMessages([]);
+        setIsChatStarted(false);
+        setMessage("");
+        setUserInfo({
+          name: "",
+          email: "",
+          phone: "",
+          gender: "Anh"
+        });
+        // Tạo session mới cho khách vãng lai
+        const newUserId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('currentUserId', newUserId);
+        console.log('🔍 UserChat - Created new session for guest:', newUserId);
+      }
     }
   };
 
@@ -415,12 +473,22 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
         return;
       }
       
+      // Validate thông tin cho khách vãng lai
+      if (!isAuthenticated) {
+        const isValid = await validateUserInfo();
+        if (!isValid) {
+          console.log('🔍 UserChat - Validation failed for guest user');
+          return;
+        }
+      }
+      
       // Get or create user ID
       let userId = localStorage.getItem('currentUserId');
       if (!userId) {
         if (isAuthenticated && user) {
           userId = user._id;
         } else {
+          // Khách vãng lai: tạo session tạm thời mới
           userId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
         localStorage.setItem('currentUserId', userId);
@@ -547,7 +615,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
   };
 
   // Load chat history cho user đã login
-  const loadChatHistory = async () => {
+  const loadChatHistory = useCallback(async () => {
     if (!isAuthenticated || !user) {
       console.log('🔍 UserChat - Cannot load chat history: not authenticated or no user');
       return;
@@ -588,7 +656,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
     } catch (error) {
       console.error('❌ Error loading chat history:', error);
     }
-  };
+  }, [isAuthenticated, user]);
 
   return (
     <div>
@@ -858,7 +926,7 @@ export default function UserChat({ height = "h-80" }: { height?: string }) {
 
           {/* Footer */}
           <div className="px-4 py-2 bg-gray-50 text-right">
-            <span className="text-xs text-green-600 font-medium">HKienDev</span>
+            <span className="text-xs text-green-600 font-medium">Developed by HKienDev</span>
           </div>
         </div>
       )}

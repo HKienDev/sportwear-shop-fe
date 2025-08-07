@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(
   req: NextRequest,
@@ -31,7 +32,7 @@ export async function GET(
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/sku/${decodedSku}`, {
+    const response = await fetch(getBackendUrl(`/products/sku/${decodedSku}`), {
       method: 'GET',
       headers
     });
@@ -76,8 +77,9 @@ export async function DELETE(
       );
     }
 
-    console.log('Calling backend DELETE:', `http://localhost:4000/api/products/${decodedSku}`);
-    const response = await fetch(`http://localhost:4000/api/products/${decodedSku}`, {
+    const deleteUrl = getBackendUrl(`/products/${decodedSku}`);
+    console.log('Calling backend DELETE:', deleteUrl);
+    const response = await fetch(deleteUrl, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -137,8 +139,9 @@ export async function PATCH(
       );
     }
 
-    console.log('Calling backend PATCH:', `http://localhost:4000/api/products/${decodedSku}/status`);
-    const response = await fetch(`http://localhost:4000/api/products/${decodedSku}/status`, {
+    const patchUrl = getBackendUrl(`/products/${decodedSku}/status`);
+    console.log('Calling backend PATCH:', patchUrl);
+    const response = await fetch(patchUrl, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,

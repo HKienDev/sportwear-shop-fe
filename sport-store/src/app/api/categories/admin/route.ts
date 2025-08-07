@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     });
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/categories/admin?${queryParams}`,
+      getBackendUrl(`/categories/admin?${queryParams}`),
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,

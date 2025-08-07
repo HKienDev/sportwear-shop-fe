@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Search, Filter, Clock, TrendingUp, Star, Eye, ShoppingBag, ImageIcon } from "lucide-react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Search, Filter, Clock, TrendingUp, ShoppingBag, ImageIcon } from "lucide-react";
 import { debounce } from "lodash";
 import Image from "next/image";
-import Link from "next/link";
-import { API_URL } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 
@@ -26,25 +24,21 @@ interface Category {
 interface Product {
   _id: string;
   name: string;
-  price: number;
-  discountPrice?: number;
-  category: Category;
-  images: {
-    main: string;
-    sub?: string[];
-  };
+  originalPrice: number;
+  salePrice?: number;
+  categoryId: string;
+  mainImage: string;
+  subImages?: string[];
   slug: string;
   rating?: number;
   numReviews?: number;
   viewCount?: number;
   soldCount?: number;
+  brand?: string;
+  sku?: string;
 }
 
-interface SearchSuggestion {
-  type: 'product' | 'category' | 'keyword';
-  text: string;
-  count?: number;
-}
+
 
 interface SearchFilter {
   category?: string;
@@ -59,16 +53,19 @@ interface AdvancedSearchBarProps {
 }
 
 const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestion[]>([]);
+
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [hotKeywords, setHotKeywords] = useState<string[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilter>({});
   const searchRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  
+  // Thêm một ref để track việc navigation
+  const isNavigatingRef = useRef(false);
 
   // Load search history and hot keywords
   useEffect(() => {
@@ -80,70 +77,35 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     // Mock hot keywords - in real app, this would come from analytics
     setHotKeywords([
       'giày bóng đá', 'áo đấu', 'quần thể thao', 'vợt tennis', 
-      'bóng rổ', 'chạy bộ', 'gym', 'yoga', 'bơi lội'
+      'bóng rổ', 'chạy bộ', 'gym', 'yoga', 'bơi lội',
+      'VJUSPORTPRODUCT', 'Nike', 'Adidas', 'Puma'
     ]);
   }, []);
 
-  // Generate search suggestions
-  const generateSuggestions = useCallback((query: string): SearchSuggestion[] => {
-    if (!query.trim()) return [];
-    
-    const suggestions: SearchSuggestion[] = [];
-    
-    // Category suggestions
-    categories.forEach(category => {
-      if (category.name.toLowerCase().includes(query.toLowerCase())) {
-        suggestions.push({
-          type: 'category',
-          text: category.name,
-          count: category.productCount
-        });
-      }
-    });
-    
-    // Keyword suggestions based on query
-    const keywordSuggestions = [
-      `${query} nam`, `${query} nữ`, `${query} trẻ em`,
-      `${query} cao cấp`, `${query} giá rẻ`, `${query} khuyến mãi`
-    ];
-    
-    keywordSuggestions.forEach(keyword => {
-      suggestions.push({
-        type: 'keyword',
-        text: keyword
-      });
-    });
-    
-    return suggestions.slice(0, 8);
-  }, [categories]);
+
 
   // Debounced search handler
   const debouncedHandler = useMemo(() => {
     return debounce(async (value: string) => {
       if (!value.trim()) {
         setSearchResults([]);
-        setSearchSuggestions([]);
         return;
       }
-      
-      // Generate suggestions
-      const suggestions = generateSuggestions(value);
-      setSearchSuggestions(suggestions);
       
       try {
         setIsSearching(true);
         const response = await fetch(
-          `${API_URL}/products/search?keyword=${encodeURIComponent(value)}`
+          `/api/products/search?keyword=${encodeURIComponent(value)}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        if (data.success && Array.isArray(data.products)) {
-          setSearchResults(data.products);
+        if (data.success && data.data && Array.isArray(data.data.products)) {
+          setSearchResults(data.data.products);
           
           // Track search for analytics
-          trackSearch(value, data.products.length);
+          trackSearch(value, data.data.products.length);
         } else {
           setSearchResults([]);
         }
@@ -154,7 +116,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
         setIsSearching(false);
       }
     }, 300);
-  }, [generateSuggestions]);
+  }, []);
 
   // Track search for SEO and analytics
   const trackSearch = (query: string, resultCount: number) => {
@@ -191,7 +153,6 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     setSearchQuery(value);
     if (!value.trim()) {
       setSearchResults([]);
-      setSearchSuggestions([]);
     }
     debouncedHandler(value);
   };
@@ -215,26 +176,32 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
     }
   };
 
-  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-    if (suggestion.type === 'category') {
-      // Navigate to category page
-      router.push(`/user?category=${encodeURIComponent(suggestion.text)}`);
-    } else {
-      handleSearchSubmit(suggestion.text);
-    }
-  };
+
 
   const clearSearchHistory = () => {
     setSearchHistory([]);
     localStorage.removeItem('searchHistory');
   };
 
-  // Click outside to close
+
+
+  // Cập nhật handleClickOutside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Nếu đang navigation thì không làm gì cả
+      if (isNavigatingRef.current) {
+        return;
+      }
+
+      const target = event.target as HTMLElement;
+      
+      // Kiểm tra nếu click vào product item thì không đóng dropdown
+      if (target.closest('[data-product-item]')) {
+        return; // Không đóng dropdown khi click vào product
+      }
+      
       if (!searchRef.current?.contains(event.target as Node)) {
         setSearchResults([]);
-        setSearchSuggestions([]);
         setShowAdvancedFilters(false);
       }
     };
@@ -249,18 +216,17 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
         <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5 group-hover:text-red-500 transition-colors" />
         <input
           type="text"
-          placeholder="Tìm kiếm sản phẩm, danh mục..."
+          placeholder="Tìm kiếm sản phẩm, SKU, thương hiệu..."
           className="w-full px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 pl-9 sm:pl-10 md:pl-12 pr-14 sm:pr-16 md:pr-20 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white group-hover:border-red-200 text-sm sm:text-base"
           value={searchQuery}
           onChange={handleSearchChange}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               handleSearchSubmit(searchQuery);
-            } else if (e.key === 'Escape') {
-              setSearchQuery("");
-              setSearchResults([]);
-              setSearchSuggestions([]);
-            }
+                    } else if (e.key === 'Escape') {
+          setSearchQuery("");
+          setSearchResults([]);
+        }
           }}
         />
         <button
@@ -273,47 +239,30 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
       </div>
 
       {/* Advanced Search Dropdown - Enhanced Responsive */}
-      {(searchQuery || showAdvancedFilters) && (
-        <div className="absolute top-full left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 mt-1.5 sm:mt-2 z-[100] max-h-[500px] sm:max-h-[600px] overflow-hidden">
+      {(() => { 
+        console.log('🔍 Dropdown condition:', { 
+          searchQuery, 
+          showAdvancedFilters, 
+          searchResultsLength: searchResults.length,
+          shouldRender: !!(searchQuery || showAdvancedFilters || searchResults.length > 0)
+        }); 
+        return null; 
+      })()}
+      {(searchQuery || showAdvancedFilters || searchResults.length > 0) && (
+        <div className="absolute top-full left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 mt-1.5 sm:mt-2 z-[9999] max-h-[350px] sm:max-h-[400px] overflow-hidden">
           <div className="flex flex-col lg:flex-row">
             {/* Main Content */}
             <div className="flex-1 p-2.5 sm:p-3 md:p-4">
-              {/* Search Suggestions */}
-              {searchQuery && searchSuggestions.length > 0 && (
-                <div className="mb-3 sm:mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                    Gợi ý tìm kiếm
-                  </h3>
-                  <div className="space-y-1">
-                    {searchSuggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="w-full text-left p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-between group"
-                      >
-                        <span className="text-sm text-gray-700 group-hover:text-red-600 truncate">
-                          {suggestion.text}
-                        </span>
-                        {suggestion.count && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ml-2 flex-shrink-0">
-                            {suggestion.count} sản phẩm
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+
 
               {/* Search History */}
               {!searchQuery && searchHistory.length > 0 && (
                 <div className="mb-3 sm:mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                      Lịch sử tìm kiếm
-                    </h3>
+                                      <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                    Lịch sử tìm kiếm
+                  </h3>
                     <button
                       onClick={clearSearchHistory}
                       className="text-xs text-red-500 hover:text-red-700"
@@ -338,7 +287,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
               {/* Hot Keywords */}
               {!searchQuery && hotKeywords.length > 0 && (
                 <div className="mb-3 sm:mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Từ khóa hot
                   </h3>
@@ -359,7 +308,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
               {/* Search Results */}
               {searchQuery && (isSearching || searchResults.length > 0) && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     Kết quả tìm kiếm ({searchResults.length})
                   </h3>
@@ -368,22 +317,114 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                       <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-red-500"></div>
                     </div>
                   ) : searchResults.length > 0 ? (
-                    <div className="space-y-1.5 sm:space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto">
+                    <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-[250px] overflow-y-auto">
+                      {(() => { 
+                        console.log('🔍 Rendering search results:', searchResults.length);
+                        console.log('🔍 Product items should be clickable');
+                        console.log('🔍 Safari debug - Element should be clickable');
+                        return null; 
+                      })()}
                       {searchResults.map((product) => (
-                        <Link
+                        <div
                           key={product._id}
-                          href={`/user/products/details/${product._id}`}
-                          className="flex items-center gap-2.5 sm:gap-3 md:gap-4 p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-all duration-200 group"
-                          onClick={() => {
+                          data-product-item
+                          role="button"
+                          tabIndex={0}
+                          className="flex items-center gap-2.5 sm:gap-3 md:gap-4 p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-all duration-200 group cursor-pointer relative z-[9999] pointer-events-auto select-none touch-manipulation"
+                          style={{ 
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: 'none',
+                            WebkitTapHighlightColor: 'transparent'
+                          }}
+                          ref={(el) => {
+                            if (el) {
+                              // Native JavaScript event listener for Safari
+                              el.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('🖱️ Product native click (Safari):', product.sku);
+                                
+                                // Clear state ngay lập tức
+                                setSearchQuery("");
+                                setSearchResults([]);
+                                setShowAdvancedFilters(false);
+                                
+                                // Navigate ngay lập tức cho Safari
+                                window.location.href = `/user/products/details/${product.sku}`;
+                              }, { passive: false });
+                            }
+                          }}
+                          onTouchStart={(e) => {
+                            // Safari-specific touch handling
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🖱️ Product touch start (Safari):', product.sku);
+                            
+                            // Clear state ngay lập tức
                             setSearchQuery("");
                             setSearchResults([]);
-                            setSearchSuggestions([]);
+                            setShowAdvancedFilters(false);
+                            
+                            // Navigate ngay lập tức cho Safari
+                            window.location.href = `/user/products/details/${product.sku}`;
+                          }}
+                          onPointerDown={(e) => {
+                            // Safari-specific pointer handling
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🖱️ Product pointer down (Safari):', product.sku);
+                            
+                            // Clear state ngay lập tức
+                            setSearchQuery("");
+                            setSearchResults([]);
+                            setShowAdvancedFilters(false);
+                            
+                            // Navigate ngay lập tức cho Safari
+                            window.location.href = `/user/products/details/${product.sku}`;
+                          }}
+                          onMouseDown={(e) => {
+                            // Safari-specific mouse down handling
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🖱️ Product mouse down (Safari):', product.sku);
+                            
+                            // Clear state ngay lập tức
+                            setSearchQuery("");
+                            setSearchResults([]);
+                            setShowAdvancedFilters(false);
+                            
+                            // Navigate với delay nhỏ cho Safari
+                            setTimeout(() => {
+                              window.location.href = `/user/products/details/${product.sku}`;
+                            }, 50);
+                          }}
+                          onKeyDown={(e) => {
+                            // Keyboard navigation for Safari
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('🖱️ Product key down (Safari):', product.sku);
+                              
+                              // Clear state ngay lập tức
+                              setSearchQuery("");
+                              setSearchResults([]);
+                              setShowAdvancedFilters(false);
+                              
+                              // Navigate ngay lập tức
+                              window.location.href = `/user/products/details/${product.sku}`;
+                            }
+                          }}
+                          onFocus={() => {
+                            console.log('🖱️ Product focused (Safari):', product.sku);
+                          }}
+                          onBlur={() => {
+                            console.log('🖱️ Product blurred (Safari):', product.sku);
                           }}
                         >
                           <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg group-hover:scale-105 transition-transform duration-200">
-                            {product.images?.main ? (
+                            {product.mainImage ? (
                               <Image
-                                src={product.images.main}
+                                src={product.mainImage}
                                 alt={product.name}
                                 width={64}
                                 height={64}
@@ -396,56 +437,41 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-red-600 transition-colors">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
                               {product.name}
                             </h3>
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                              {product.category?.name || "Chưa phân loại"}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 truncate">
+                              <span className="font-medium">{product.brand || "Chưa phân loại"}</span>
+                              {product.sku && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-blue-600 font-mono font-semibold">SKU: {product.sku.split('-').pop()}</span>
+                                </>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1.5 sm:gap-2 mt-1">
-                              <span className="text-xs sm:text-sm font-medium text-red-500">
-                                {product.discountPrice
-                                  ? product.discountPrice.toLocaleString("vi-VN", {
+                              <span className="text-xs sm:text-sm font-bold text-red-500">
+                                {product.salePrice
+                                  ? product.salePrice.toLocaleString("vi-VN", {
                                       style: "currency",
                                       currency: "VND",
                                     })
-                                  : product.price.toLocaleString("vi-VN", {
+                                  : product.originalPrice.toLocaleString("vi-VN", {
                                       style: "currency",
                                       currency: "VND",
                                     })}
                               </span>
-                              {product.discountPrice && (
+                              {product.salePrice && (
                                 <span className="text-xs sm:text-sm text-gray-500 line-through">
-                                  {product.price.toLocaleString("vi-VN", {
+                                  {product.originalPrice.toLocaleString("vi-VN", {
                                     style: "currency",
                                     currency: "VND",
                                   })}
                                 </span>
                               )}
                             </div>
-                            {/* Product stats */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mt-1 text-xs text-gray-400">
-                              {product.rating && (
-                                <div className="flex items-center">
-                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-0.5 sm:mr-1" />
-                                  {product.rating}
-                                </div>
-                              )}
-                              {product.viewCount && (
-                                <div className="flex items-center">
-                                  <Eye className="w-3 h-3 mr-0.5 sm:mr-1" />
-                                  {product.viewCount}
-                                </div>
-                              )}
-                              {product.soldCount && (
-                                <div className="flex items-center">
-                                  <ShoppingBag className="w-3 h-3 mr-0.5 sm:mr-1" />
-                                  {product.soldCount}
-                                </div>
-                              )}
-                            </div>
                           </div>
-                        </Link>
+                        </div>
                       ))}
                     </div>
                   ) : (
@@ -460,7 +486,7 @@ const AdvancedSearchBar: React.FC<AdvancedSearchBarProps> = ({ categories }) => 
             {/* Advanced Filters Sidebar - Enhanced Responsive */}
             {showAdvancedFilters && (
               <div className="w-full lg:w-64 border-t lg:border-l lg:border-t-0 border-gray-100 p-2.5 sm:p-3 md:p-4 bg-gray-50">
-                <h3 className="text-sm font-medium text-gray-700 mb-2.5 sm:mb-3">Bộ lọc nâng cao</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2.5 sm:mb-3">Bộ lọc nâng cao</h3>
                 
                 {/* Category Filter */}
                 <div className="mb-3 sm:mb-4">

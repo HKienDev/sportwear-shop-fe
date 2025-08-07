@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function PUT(
   request: NextRequest,
@@ -32,7 +33,7 @@ export async function PUT(
     }
 
     // Clean base URL to prevent duplicate /api
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const baseUrl = getBackendBaseUrl();
     const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
 
     const response = await fetch(`${cleanBaseUrl}/api/reviews/admin/${id}/reply/update`, {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(req: Request) {
     try {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
         // Kiểm tra danh mục tồn tại
         try {
-            const categoryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${data.categoryId}`, {
+            const categoryResponse = await fetch(getBackendUrl(`/categories/${data.categoryId}`), {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
         }
 
         // Gọi admin endpoint để tạo sản phẩm
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+        const response = await fetch(getBackendUrl("/products"), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
                 errorData = { message: 'Unknown error occurred' };
             }
             
-            console.error('Backend error response:', errorData);
+
             return NextResponse.json(
                 { 
                     success: false,
@@ -93,10 +94,9 @@ export async function POST(req: Request) {
         }
 
         const result = await response.json();
-        console.log('Backend success response:', result);
         return NextResponse.json(result);
     } catch (error: unknown) {
-        console.error('Error in POST /api/products:', error);
+
         const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
             { 
@@ -116,14 +116,14 @@ export async function GET() {
     };
 
     // Gửi limit=100 để lấy tất cả sản phẩm
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?limit=100`, {
+    const response = await fetch(getBackendUrl("/products?limit=100"), {
       method: 'GET',
       headers
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('API Error:', errorData);
+
       return NextResponse.json(
         { error: errorData.message || 'Failed to fetch products' },
         { status: response.status }
@@ -132,11 +132,10 @@ export async function GET() {
 
     const products = await response.json();
     return NextResponse.json(products);
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    );
-  }
+      } catch {
+      return NextResponse.json(
+        { error: 'Failed to fetch products' },
+        { status: 500 }
+      );
+    }
 } 

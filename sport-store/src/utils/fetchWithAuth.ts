@@ -35,12 +35,7 @@ function getTokenFromCookie(): string | null {
     .find(row => row.startsWith(`${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=`))
     ?.split('=')[1] || null;
   
-  console.log('🔍 fetchWithAuth - Token from cookie:', {
-    cookieName: TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME,
-    hasToken: !!token,
-    tokenLength: token?.length,
-    allCookies: document.cookie.split('; ').map(c => c.split('=')[0])
-  });
+
   
   return token;
 }
@@ -48,11 +43,7 @@ function getTokenFromCookie(): string | null {
 // Lấy token từ localStorage
 function getTokenFromStorage(): string | null {
   const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-  console.log('🔍 fetchWithAuth - Token from storage:', {
-    key: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
-    hasToken: !!token,
-    tokenLength: token?.length
-  });
+
   return token;
 }
 
@@ -60,11 +51,7 @@ function getTokenFromStorage(): string | null {
 function updateToken(token: string): void {
   localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, token);
   document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${token}; path=/; max-age=86400; SameSite=Lax; Secure`;
-  console.log('💾 fetchWithAuth - Token updated:', {
-    storageKey: TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY,
-    cookieName: TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME,
-    tokenLength: token.length
-  });
+
 }
 
 // Xóa token khỏi cả cookie và localStorage

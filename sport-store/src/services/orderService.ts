@@ -10,7 +10,7 @@ import { API_URL } from '@/utils/api';
  */
 export const deleteOrder = async (orderId: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+    const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
  */
 export const bulkDeleteOrders = async (orderIds: string[]): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL}/orders/bulk-delete`, {
+    const response = await fetch(`${API_URL}/api/orders/bulk-delete`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

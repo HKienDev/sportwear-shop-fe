@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function PUT(
   request: NextRequest,
@@ -31,9 +32,9 @@ export async function PUT(
       );
     }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-    console.log('Calling backend PUT:', `${API_URL}/categories/${decodedCategoryId}`);
-    const response = await fetch(`${API_URL}/categories/${decodedCategoryId}`, {
+    const API_URL = getBackendBaseUrl();
+
+    const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -84,9 +85,9 @@ export async function DELETE(
       );
     }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-    console.log('Calling backend DELETE:', `${API_URL}/categories/${decodedCategoryId}`);
-    const response = await fetch(`${API_URL}/categories/${decodedCategoryId}`, {
+    const API_URL = getBackendBaseUrl();
+
+    const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader?.replace('Bearer ', '');
     
     if (!token) {
-      console.log('❌ No token found');
+  
       return NextResponse.json(
         { success: false, message: 'Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng' },
         { status: 401 }
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Gọi API backend để xóa sản phẩm khỏi giỏ hàng
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/cart/remove`;
+    const apiUrl = getBackendUrl("/cart/remove");
     console.log('🌐 Calling backend API:', apiUrl);
     
     const response = await fetch(apiUrl, {
@@ -51,11 +52,11 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ sku, color, size })
     });
     
-    console.log('📡 Backend response status:', response.status);
+
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('❌ Backend error:', errorData);
+  
       return NextResponse.json(
         { success: false, message: errorData.message || 'Không thể xóa sản phẩm khỏi giỏ hàng' },
         { status: response.status }
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('✅ Backend success:', data);
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error removing from cart:', error);

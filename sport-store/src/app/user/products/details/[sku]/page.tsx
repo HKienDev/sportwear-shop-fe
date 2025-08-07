@@ -84,7 +84,7 @@ export default function ProductDetail() {
         setLoading(true);
         setError(null);
         
-        const decodedSku = decodeURIComponent(params.id as string);
+        const decodedSku = decodeURIComponent(params.sku as string);
         console.log('Đang gọi API với SKU:', decodedSku);
         const response = await fetch(`/api/products/sku/${decodedSku}`, {
           method: 'GET',
@@ -134,10 +134,10 @@ export default function ProductDetail() {
       }
     };
 
-    if (params.id) {
+    if (params.sku) {
       fetchProduct();
     }
-  }, [params.id, refreshKey]);
+  }, [params.sku, refreshKey]);
 
   const handleColorSelect = (color: string): void => {
     setSelectedColor(color);

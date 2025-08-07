@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(
   request: NextRequest,
@@ -11,10 +12,10 @@ export async function GET(
     const limit = searchParams.get('limit') || '10';
     const status = searchParams.get('status') || 'approved';
 
-    console.log('🔍 Product Questions API called for product:', productSku);
+
     
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -35,7 +36,7 @@ export async function GET(
       },
     });
 
-    console.log('📡 Backend response status:', response.status);
+
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -48,7 +49,7 @@ export async function GET(
     }
 
     const data = await response.json();
-    console.log('✅ Backend response data received');
+
 
     return NextResponse.json(data);
 

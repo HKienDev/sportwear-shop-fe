@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Users API called');
+
     
     // Lấy token từ header
     const authHeader = request.headers.get('authorization');
     console.log('🔑 Auth header:', authHeader ? 'Present' : 'Missing');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No valid authorization header');
+  
       return NextResponse.json(
         { success: false, message: 'Token không hợp lệ' },
         { status: 401 }
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     console.log('🔑 Token extracted:', token ? 'Present' : 'Missing');
 
     // Lấy URL từ environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getBackendBaseUrl();
     if (!apiUrl) {
       console.error('❌ NEXT_PUBLIC_API_URL not configured');
       return NextResponse.json(
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log('📡 Backend response status:', response.status);
+
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('✅ Backend response data received');
+
 
     return NextResponse.json(data);
 

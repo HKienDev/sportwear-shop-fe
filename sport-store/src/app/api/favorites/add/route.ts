@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Gọi API backend để thêm vào danh sách yêu thích
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/favorites/add`;
+    const apiUrl = getBackendUrl("/favorites/add");
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {

@@ -265,9 +265,14 @@ export const authService = {
 // Helper functions for cookies and storage
 function setAuthCookies(accessToken: string, refreshToken: string, userStr: string): void {
   if (typeof document !== 'undefined') {
-    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; secure; samesite=strict`;
-    document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; secure; samesite=strict`;
-    document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; secure; samesite=strict`;
+    // Sử dụng cấu hình cookie phù hợp với môi trường development
+    const isSecure = process.env.NODE_ENV === 'production';
+    const sameSite = isSecure ? 'strict' : 'lax';
+    const secureFlag = isSecure ? '; secure' : '';
+    
+    document.cookie = `${TOKEN_CONFIG.ACCESS_TOKEN.COOKIE_NAME}=${accessToken}; path=/; samesite=${sameSite}${secureFlag}`;
+    document.cookie = `${TOKEN_CONFIG.REFRESH_TOKEN.COOKIE_NAME}=${refreshToken}; path=/; samesite=${sameSite}${secureFlag}`;
+    document.cookie = `${TOKEN_CONFIG.USER.COOKIE_NAME}=${userStr}; path=/; samesite=${sameSite}${secureFlag}`;
   }
 }
 

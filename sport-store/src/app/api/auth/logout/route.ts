@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function POST() {
   try {
@@ -15,11 +16,9 @@ export async function POST() {
       );
     }
 
-    // Lấy URL từ environment variable và fix duplicate /api
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
-    const backendUrl = `${cleanBaseUrl}/api/auth/logout`;
-    console.log('🔍 Logout API - Calling backend:', backendUrl);
+    // Gọi API backend để logout
+    const backendUrl = getBackendUrl('/auth/logout');
+
     
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -29,7 +28,7 @@ export async function POST() {
       }
     });
 
-    console.log('🔍 Logout API - Backend response status:', response.status);
+
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -37,7 +36,7 @@ export async function POST() {
       
       // If token is expired, that's actually fine for logout
       if (response.status === 401 && errorData.message?.includes('Token đã hết hạn')) {
-        console.log('🔍 Logout API - Token expired, but logout is still successful');
+  
         return NextResponse.json(
           { success: true, message: 'Đăng xuất thành công' },
           { status: 200 }
@@ -48,7 +47,7 @@ export async function POST() {
     }
 
     const data = await response.json();
-    console.log('🔍 Logout API - Backend response:', data);
+
 
     // Tạo response với cookies cleared
     const responseData = NextResponse.json(data);

@@ -104,8 +104,7 @@ export const getToken = () => {
 
 export const verifyAccessToken = async (token: string) => {
   try {
-    console.log('🔍 Auth - Verifying token with backend...');
-    console.log('🔍 Auth - Backend URL:', `${process.env.NEXT_PUBLIC_API_URL}/api/auth/profile`);
+
     
     // Simple token verification by calling profile endpoint
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/profile`, {
@@ -115,23 +114,22 @@ export const verifyAccessToken = async (token: string) => {
       }
     });
 
-    console.log('🔍 Auth - Response status:', response.status);
-    console.log('🔍 Auth - Response ok:', response.ok);
+
 
     if (!response.ok) {
-      console.log('❌ Auth - Token verification failed');
+  
       return null;
     }
 
     const data = await response.json();
-    console.log('🔍 Auth - Response data:', data);
+
     
     if (data.success && data.data) {
-      console.log('✅ Auth - Token verified successfully');
+  
       return data.data;
     }
 
-    console.log('❌ Auth - Invalid response format');
+
     return null;
   } catch (error) {
     console.error('❌ Auth - Error verifying token:', error);

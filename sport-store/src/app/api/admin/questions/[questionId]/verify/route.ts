@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function PUT(
   request: NextRequest,
@@ -16,7 +17,7 @@ export async function PUT(
 
     const { questionId } = await params;
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/admin/${questionId}/verify`, {
+    const response = await fetch(getBackendUrl(`/questions/admin/${questionId}/verify`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

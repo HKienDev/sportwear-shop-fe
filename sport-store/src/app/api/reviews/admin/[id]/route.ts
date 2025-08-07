@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
+import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function DELETE(
   request: NextRequest,
@@ -18,11 +19,11 @@ export async function DELETE(
     const { id } = await params;
 
     // Call backend API to delete review
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const baseUrl = getBackendBaseUrl();
     // Remove /api if it's already in the baseUrl
     const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
     const backendUrl = `${cleanBaseUrl}/api/reviews/admin/${id}`;
-    console.log('🔍 Delete API - Calling backend:', backendUrl);
+
     
     const response = await fetch(backendUrl, {
       method: 'DELETE',
@@ -32,15 +33,11 @@ export async function DELETE(
       }
     });
 
-    console.log('🔍 Delete API - Backend response status:', response.status);
-
     if (!response.ok) {
-      console.log('❌ Delete API - Backend error:', response.status, response.statusText);
       throw new Error(`Backend responded with ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('✅ Delete API - Backend data received:', data);
     return NextResponse.json(data);
 
   } catch (error) {

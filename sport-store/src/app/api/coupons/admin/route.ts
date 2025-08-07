@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
             ...(status && { status }),
         });
 
-        console.log('Calling backend GET:', `http://localhost:4000/api/coupons/admin?${params}`);
+    
         const response = await fetch(`http://localhost:4000/api/coupons/admin?${params}`, {
             method: 'GET',
             headers: {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Request body:', body);
 
-    console.log('Calling backend create coupon:', 'http://localhost:4000/api/coupons/admin');
+
     const response = await fetch('http://localhost:4000/api/coupons/admin', {
       method: 'POST',
       headers: {

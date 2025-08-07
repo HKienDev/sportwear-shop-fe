@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Gọi API backend để xóa giỏ hàng
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/cart/clear`;
+    const apiUrl = getBackendUrl("/cart/clear");
     const response = await fetch(apiUrl, {
       method: 'DELETE',
       headers: {

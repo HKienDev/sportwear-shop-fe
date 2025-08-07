@@ -136,10 +136,10 @@ const Footer = ({ className = "" }: FooterProps) => (
             © 2025 Khánh Hoàn Shop – Thời trang nam & thể thao. All rights reserved.
           </p>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6">
-            <a href="#" className="text-xs sm:text-sm text-gray-500 hover:text-purple-600 transition-colors text-center sm:text-left">
+            <a href="/privacy-policy" className="text-xs sm:text-sm text-gray-500 hover:text-purple-600 transition-colors text-center sm:text-left">
               Chính sách bảo mật
             </a>
-            <a href="#" className="text-xs sm:text-sm text-gray-500 hover:text-purple-600 transition-colors text-center sm:text-left">
+            <a href="/terms-of-service" className="text-xs sm:text-sm text-gray-500 hover:text-purple-600 transition-colors text-center sm:text-left">
               Điều khoản sử dụng
             </a>
           </div>

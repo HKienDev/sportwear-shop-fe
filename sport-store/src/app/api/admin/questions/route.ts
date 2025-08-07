@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (productSku) queryParams.append('productSku', productSku);
     if (userId) queryParams.append('userId', userId);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/admin?${queryParams.toString()}`, {
+    const response = await fetch(`${getBackendUrl('/questions/admin')}?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

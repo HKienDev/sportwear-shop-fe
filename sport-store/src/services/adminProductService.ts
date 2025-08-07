@@ -82,7 +82,13 @@ function toAdminProduct(product: unknown): AdminProduct {
 export const adminProductService = {
   // Get all products for admin
   async getProducts(params?: unknown): Promise<ApiResponse<AdminProductsResponse>> {
-    const response = await apiClient.getProducts(params as ProductQueryParams);
+    // Đảm bảo luôn gọi admin endpoint bằng cách set limit >= 1000
+    const adminParams = {
+      ...(params as ProductQueryParams),
+      limit: 1000 // Force admin request
+    };
+    
+    const response = await apiClient.getProducts(adminParams);
     if (response.data && (response.data as unknown as { products?: unknown }).products) {
       const products = (response.data as unknown as { products?: unknown[] }).products?.map(toAdminProduct) || [];
       return {

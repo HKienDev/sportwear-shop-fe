@@ -202,7 +202,7 @@ export default function ReviewListPage() {
         <div className="mb-8 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-emerald-600/10 rounded-3xl transform -rotate-2"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-indigo-600/10 rounded-3xl transform rotate-2"></div>
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-indigo-100/60 overflow-hidden">
+          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-indigo-100/60">
             <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 p-8 sm:p-10">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -226,7 +226,7 @@ export default function ReviewListPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ isolation: 'isolate' }}>
           <ReviewFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
@@ -235,12 +235,12 @@ export default function ReviewListPage() {
         </div>
 
         {/* Status Cards Section */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ isolation: 'isolate' }}>
           <ReviewStatusCards reviews={reviews} stats={stats} />
         </div>
 
         {/* Actions Section */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ isolation: 'isolate' }}>
           <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -279,7 +279,7 @@ export default function ReviewListPage() {
         </div>
 
         {/* Table Section with Enhanced Glass Effect */}
-        <div className="relative">
+        <div className="relative" style={{ isolation: 'isolate' }}>
           {isLoading ? (
             <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl p-12">
               <div className="flex flex-col items-center justify-center">
@@ -373,7 +373,7 @@ export default function ReviewListPage() {
               </div>
             </div>
           ) : (
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl overflow-hidden">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl border border-indigo-100/60 shadow-xl">
               <ReviewListTable
                 reviews={reviews}
                 selectedReviews={selectedReviews}
