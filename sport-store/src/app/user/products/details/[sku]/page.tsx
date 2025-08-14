@@ -294,7 +294,7 @@ export default function ProductDetail() {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
       
       // Xử lý lỗi 401 - chưa đăng nhập
-      if (error instanceof Error && (error.message.includes('401') || error.message.includes('Unauthorized') || (error as any).isAuthError)) {
+      if (error instanceof Error && (error.message.includes('401') || error.message.includes('Unauthorized') || (error as { isAuthError?: boolean }).isAuthError)) {
         console.log('❌ Lỗi 401 - Chưa đăng nhập, mở modal');
         openModal({
           title: 'Đăng nhập để mua hàng',

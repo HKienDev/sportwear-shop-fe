@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_CONFIG } from '@/config/token';
-import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
+import { getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         
         // Calculate real stats from database
         const totalConversations = conversations.length;
-        const activeConversations = conversations.filter((conv: any) => conv.status === 'active').length;
+        const activeConversations = conversations.filter((conv: { status: string }) => conv.status === 'active').length;
         
         // Get total messages from all conversations
         let totalMessages = 0;

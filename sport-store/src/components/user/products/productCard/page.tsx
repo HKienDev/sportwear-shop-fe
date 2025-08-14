@@ -7,6 +7,7 @@ import { ShoppingCart, Heart, Star, Eye, Check } from "lucide-react";
 import { UserProduct } from "@/types/product";
 import { getCategoryById } from "@/services/categoryService";
 import { useCartStore } from "@/stores/cartStore";
+import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
 
 interface ProductCardProps {
@@ -105,7 +106,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { name, categoryId, originalPrice, salePrice, description, mainImage, stock, sku, colors, sizes } = product;
   const [categoryName, setCategoryName] = useState<string>("Đang tải...");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const { addToCart } = useCartStore();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const router = useRouter();
 
   useEffect(() => {
@@ -158,9 +161,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       await addToCart(cartData);
       toast.success("Đã thêm sản phẩm vào giỏ hàng!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 ProductCard - 401 error in handleAddToCart');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi thêm vào giỏ hàng';
+        toast.error(errorMessage);
+      }
     } finally {
       setTimeout(() => setIsAddingToCart(false), 1000);
     }
@@ -169,6 +180,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleProductClick = () => {
     const encodedSku = encodeURIComponent(sku);
     router.push(`/user/products/details/${encodedSku}`);
+  };
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsTogglingWishlist(true);
+    
+    try {
+      if (isInWishlist(product._id)) {
+        await removeFromWishlist(product._id);
+      } else {
+        await addToWishlist(product._id);
+      }
+    } catch (error: any) {
+      console.error('Error toggling wishlist:', error);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 ProductCard - 401 error in handleWishlistToggle');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Không thể thao tác với danh sách yêu thích';
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsTogglingWishlist(false);
+    }
   };
 
   const imageUrl = mainImage || "/default-image.png";
@@ -229,11 +268,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Enhanced Action Buttons - Higher z-index to ensure visibility */}
         <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 flex flex-col gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-30">
           <button
-            className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/50 hover:border-white/80 transition-all duration-200 hover:scale-110 active:scale-95"
-            aria-label="Yêu thích sản phẩm"
-            onClick={(e) => e.stopPropagation()}
+            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 active:scale-95 ${
+              isInWishlist(product._id)
+                ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                : 'bg-white/95 backdrop-blur-sm text-gray-700 border-white/50 hover:border-white/80'
+            }`}
+            aria-label={isInWishlist(product._id) ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+            onClick={handleWishlistToggle}
+            disabled={isTogglingWishlist}
           >
-            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            {isTogglingWishlist ? (
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin border-2 border-current border-t-transparent rounded-full" />
+            ) : (
+              <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isInWishlist(product._id) ? 'fill-white' : ''}`} />
+            )}
           </button>
           <button
             className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/50 hover:border-white/80 transition-all duration-200 hover:scale-110 active:scale-95"

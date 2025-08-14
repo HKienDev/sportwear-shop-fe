@@ -5,6 +5,7 @@ A modern, full-stack e-commerce platform built with Next.js 15+, React 19+, and 
 ## 🏗️ Architecture Overview
 
 ### Frontend Stack
+
 - **Framework**: Next.js 15.3.1 (App Router, SSR, API Routes)
 - **Language**: TypeScript 5.x
 - **UI Library**: React 19.1.0 with modern hooks
@@ -20,6 +21,7 @@ A modern, full-stack e-commerce platform built with Next.js 15+, React 19+, and 
 - **Animations**: Framer Motion 12.7.4
 
 ### Backend Integration
+
 - **API**: RESTful APIs with proper error handling
 - **Database**: MongoDB with Mongoose ODM
 - **Real-time**: Socket.IO Server
@@ -30,6 +32,7 @@ A modern, full-stack e-commerce platform built with Next.js 15+, React 19+, and 
 ## 🚀 Key Features
 
 ### Customer Experience
+
 - **Advanced Search**: Real-time product search with SKU filtering
 - **Shopping Cart**: Persistent cart with real-time updates
 - **Payment Processing**: VNPay integration with secure checkout
@@ -39,6 +42,7 @@ A modern, full-stack e-commerce platform built with Next.js 15+, React 19+, and 
 - **Responsive Design**: Mobile-first approach with modern UI/UX
 
 ### Admin Dashboard
+
 - **Product Management**: CRUD operations with image upload
 - **Order Management**: Real-time order tracking and status updates
 - **Customer Management**: User analytics and profile management
@@ -48,6 +52,7 @@ A modern, full-stack e-commerce platform built with Next.js 15+, React 19+, and 
 - **Coupon System**: Discount management and validation
 
 ### Technical Excellence
+
 - **Type Safety**: Full TypeScript implementation
 - **Performance**: Image optimization, lazy loading, code splitting
 - **SEO**: Meta tags, structured data, server-side rendering
@@ -85,7 +90,8 @@ sport-store/
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 - MongoDB instance
 - Cloudinary account
@@ -94,17 +100,20 @@ sport-store/
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/HKienDev/sport-store-fe-graduation.git
 cd sport-store-fe-graduation/sport-store
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 ```
 
 3. **Environment Configuration**
+
 Create `.env.local` with the following variables:
 
 ```env
@@ -133,11 +142,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 4. **Start development server**
+
 ```bash
 npm run dev
 ```
 
 5. **Build for production**
+
 ```bash
 npm run build
 npm start
@@ -146,24 +157,28 @@ npm start
 ## 🔧 Advanced Features
 
 ### Real-time Chat System
+
 - Socket.IO implementation for live messaging
 - Guest user support with temporary sessions
 - Admin chat interface with conversation management
 - Message persistence and read status tracking
 
 ### Advanced Search
+
 - Real-time product search with debouncing
 - SKU-based filtering and display
 - Responsive search dropdown with keyboard navigation
 - Search result caching and optimization
 
 ### Payment Integration
+
 - VNPay payment gateway integration
 - Secure checkout process with validation
 - Order confirmation and email notifications
 - Payment status tracking and updates
 
 ### Admin Dashboard
+
 - Comprehensive analytics and reporting
 - Real-time order management
 - Customer support interface
@@ -212,12 +227,14 @@ npm start
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 ```bash
 npm run build
 vercel --prod
 ```
 
 ### Docker
+
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -244,8 +261,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Hoàng Kiên**
+
 - Email: hoangtientrungkien2k3@gmail.com
-- LinkedIn: [Hoàng Kiên](https://www.linkedin.com/in/hoang-kien/)
+- LinkedIn: [Hoàng Kiên](https://www.linkedin.com/in/hoangkiendev/)
 - GitHub: [@HKienDev](https://github.com/HKienDev)
 
 ## 🙏 Acknowledgments

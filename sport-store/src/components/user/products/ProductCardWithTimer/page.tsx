@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { useCartOptimized } from "@/hooks/useCartOptimized";
+import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/context/authContext";
 import { useAuthModal } from "@/context/authModalContext";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Heart, Eye, Clock, Star, TrendingUp, Zap } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useCountdown } from "@/hooks/useCountdown";
 import { FeaturedProduct } from "@/types/product";
 
@@ -99,17 +99,12 @@ const ProgressBar = memo(({ sold, total }: { sold: number; total: number }) => {
 ProgressBar.displayName = 'ProgressBar';
 
 // Quick Actions Component
-const QuickActions = memo(({ onViewDetails, onWishlist }: { 
+const QuickActions = memo(({ onViewDetails, onWishlist, isWishlisted, isToggling }: { 
   onViewDetails: () => void;
   onWishlist: () => void;
+  isWishlisted: boolean;
+  isToggling: boolean;
 }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-
-  const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    onWishlist();
-  };
-
   return (
     <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 z-10">
       <button
@@ -119,14 +114,19 @@ const QuickActions = memo(({ onViewDetails, onWishlist }: {
         <Eye className="w-4 h-4 text-gray-700" />
       </button>
       <button
-        onClick={handleWishlist}
+        onClick={onWishlist}
+        disabled={isToggling}
         className={`w-10 h-10 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-white/20 flex items-center justify-center ${
           isWishlisted 
             ? 'bg-red-500 text-white' 
             : 'bg-white/90 backdrop-blur-sm text-gray-700'
         }`}
       >
-        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
+        {isToggling ? (
+          <div className="w-4 h-4 animate-spin border-2 border-current border-t-transparent rounded-full" />
+        ) : (
+          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
+        )}
       </button>
     </div>
   );
@@ -161,7 +161,9 @@ const ProductCardWithTimer = ({
   const { addToCart } = useCartOptimized();
   const { isAuthenticated } = useAuth();
   const { openModal } = useAuthModal();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const router = useRouter();
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
 
   // Countdown calculation
   const countdownConfig = useMemo(() => {
@@ -311,19 +313,60 @@ const ProductCardWithTimer = ({
       await addToCart(cartData);
       // Không cần fetchCart vì addToCart đã tự động sync
       toast.success("Đã thêm vào giỏ hàng!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 ProductCardWithTimer - 401 error in handleAddToCart');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi thêm vào giỏ hàng';
+        toast.error(errorMessage);
+      }
     }
-  }, [isAuthenticated, product, addToCart, router, isComplete, openModal]);
+  }, [isAuthenticated, product, addToCart, isComplete, openModal]);
 
   const handleViewDetails = useCallback(() => {
     router.push(`/user/products/${product.sku}`);
   }, [router, product.sku]);
 
-  const handleWishlist = useCallback(() => {
-    toast.success("Đã thêm vào yêu thích!");
-  }, []);
+  const handleWishlist = useCallback(async () => {
+    if (!isAuthenticated) {
+      openModal({
+        title: 'Đăng nhập để thêm vào yêu thích',
+        description: 'Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích',
+        pendingAction: {
+          type: 'addToWishlist',
+          data: { productId: product.id },
+          callback: () => handleWishlist()
+        }
+      });
+      return;
+    }
+
+    setIsTogglingWishlist(true);
+    try {
+      if (isInWishlist(product.id)) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch (error: any) {
+      console.error('Error toggling wishlist:', error);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 ProductCardWithTimer - 401 error in handleWishlist');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Không thể thao tác với danh sách yêu thích';
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsTogglingWishlist(false);
+    }
+  }, [isAuthenticated, openModal, product.id, isInWishlist, addToWishlist, removeFromWishlist]);
 
   return (
     <div 
@@ -336,6 +379,8 @@ const ProductCardWithTimer = ({
       <QuickActions 
         onViewDetails={handleViewDetails}
         onWishlist={handleWishlist}
+        isWishlisted={isInWishlist(product.id)}
+        isToggling={isTogglingWishlist}
       />
 
       {/* Discount Badge */}

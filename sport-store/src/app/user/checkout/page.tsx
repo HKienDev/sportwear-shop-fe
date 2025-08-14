@@ -345,8 +345,14 @@ export default function Checkout() {
         
         try {
           await Promise.all(promises);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error removing ordered items from cart:', error);
+          
+          // Xử lý lỗi 401 - token hết hạn
+          if (error?.status === 401 || error?.response?.status === 401) {
+            console.log('🔍 CheckoutPage - 401 error in removing cart items');
+            // Không hiển thị toast cho lỗi này vì order đã thành công
+          }
           // Không block order success nếu remove cart fail
         }
         

@@ -36,9 +36,16 @@ export function useCartOptimized() {
     () => debounce(async (data: { sku: string; color?: string; size?: string; quantity: number }) => {
       try {
         await updateCartItem(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to update cart item:', error);
-        toast.error('Không thể cập nhật giỏ hàng');
+        
+        // Xử lý lỗi 401 - token hết hạn
+        if (error?.status === 401 || error?.response?.status === 401) {
+          console.log('🔍 useCartOptimized - 401 error in debouncedUpdate');
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        } else {
+          toast.error('Không thể cập nhật giỏ hàng');
+        }
       }
     }, 500),
     [updateCartItem]
@@ -99,13 +106,20 @@ export function useCartOptimized() {
 
       try {
         await Promise.all(promises);
-      } catch (error) {
+      } catch (error: any) {
         // Revert optimistic updates on error
         useCartStore.setState((state) => {
           if (state.cart) {
             state.cart.items.push(...items);
           }
         });
+        
+        // Xử lý lỗi 401 - token hết hạn
+        if (error?.status === 401 || error?.response?.status === 401) {
+          console.log('🔍 useCartOptimized - 401 error in removeItemsBatch');
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        }
+        
         throw error;
       }
     },
@@ -129,7 +143,13 @@ export function useCartOptimized() {
     const handleFocus = () => {
       if (isAuthenticated && user && cart && !loading) {
         logInfo(`🛒 useCartOptimized - Refreshing cart on window focus at ${new Date().toISOString()}`);
-        fetchCart();
+        fetchCart().catch((error: any) => {
+          // Xử lý lỗi 401 - token hết hạn
+          if (error?.status === 401 || error?.response?.status === 401) {
+            console.log('🔍 useCartOptimized - 401 error in handleFocus, not showing error');
+            // Không hiển thị error cho 401 vì đã được xử lý ở component khác
+          }
+        });
       }
     };
 

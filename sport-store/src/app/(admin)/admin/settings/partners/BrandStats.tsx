@@ -5,12 +5,10 @@ import {
   Trophy, 
   Users2, 
   Target, 
-  Globe2,
   TrendingUp,
   Crown,
   Sparkles,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
 import { adminBrandService } from '@/services/adminBrandService';
 

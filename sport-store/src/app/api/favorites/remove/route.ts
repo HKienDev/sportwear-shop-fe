@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBackendUrl } from '@/utils/backendUrl';
+import { getBackendBaseUrl } from '@/utils/backendUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     
     if (!token) {
       return NextResponse.json(
-        { success: false, message: 'Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích' },
+        { success: false, message: 'Vui lòng đăng nhập để xóa sản phẩm khỏi danh sách yêu thích' },
         { status: 401 }
       );
     }
     
-    // Gọi API backend để thêm vào danh sách yêu thích
-    const apiUrl = getBackendUrl("/favorites/add");
-    const response = await fetch(apiUrl, {
+    // Gọi API backend để xóa khỏi danh sách yêu thích
+    const apiUrl = getBackendBaseUrl();
+    const response = await fetch(`${apiUrl}/api/favorites/remove`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { success: false, message: errorData.message || 'Không thể thêm sản phẩm vào danh sách yêu thích' },
+        { success: false, message: errorData.message || 'Không thể xóa sản phẩm khỏi danh sách yêu thích' },
         { status: response.status }
       );
     }
@@ -40,10 +40,10 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error adding to favorites:', error);
+    console.error('Error removing from favorites:', error);
     return NextResponse.json(
-      { success: false, message: 'Không thể thêm sản phẩm vào danh sách yêu thích' },
+      { success: false, message: 'Không thể xóa sản phẩm khỏi danh sách yêu thích' },
       { status: 500 }
     );
   }
-} 
+}

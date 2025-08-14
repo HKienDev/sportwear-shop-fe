@@ -24,9 +24,15 @@ export function useCart() {
       } else {
         throw new Error(response.data.message || 'Không thể lấy giỏ hàng');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = handleCartError(err, 'fetch');
       setError(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 useCart - 401 error in fetchCart');
+        // Không hiển thị toast cho fetchCart 401 vì có thể là guest user
+      }
     } finally {
       setLoading(false);
     }
@@ -47,9 +53,16 @@ export function useCart() {
       } else {
         throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = handleCartError(err, 'add');
       setError(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 useCart - 401 error in addToCart');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
       throw err;
     } finally {
       setLoading(false);
@@ -71,9 +84,16 @@ export function useCart() {
       } else {
         throw new Error(response.data.message || 'Không thể cập nhật giỏ hàng');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = handleCartError(err, 'update');
       setError(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 useCart - 401 error in updateCartItem');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
       throw err;
     } finally {
       setLoading(false);
@@ -95,9 +115,16 @@ export function useCart() {
       } else {
         throw new Error(response.data.message || 'Không thể xóa sản phẩm khỏi giỏ hàng');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = handleCartError(err, 'remove');
       setError(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 useCart - 401 error in removeFromCart');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
       throw err;
     } finally {
       setLoading(false);
@@ -119,9 +146,16 @@ export function useCart() {
       } else {
         throw new Error(response.data.message || 'Không thể xóa giỏ hàng');
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = handleCartError(err, 'clear');
       setError(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 useCart - 401 error in clearCart');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
       throw err;
     } finally {
       setLoading(false);
@@ -137,7 +171,13 @@ export function useCart() {
   useEffect(() => {
     if (isAuthenticated && user) {
       console.log('🛒 useCart - Fetching cart for authenticated user');
-      fetchCart();
+      fetchCart().catch((error: any) => {
+        // Xử lý lỗi 401 - token hết hạn
+        if (error?.status === 401 || error?.response?.status === 401) {
+          console.log('🔍 useCart - 401 error in useEffect, not showing error');
+          // Không hiển thị error cho 401 vì đã được xử lý ở component khác
+        }
+      });
     } else {
       console.log('👥 useCart - Guest user, skipping cart fetch');
     }

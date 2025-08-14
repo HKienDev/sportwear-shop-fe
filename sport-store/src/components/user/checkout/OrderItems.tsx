@@ -55,9 +55,17 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
       await updateCartItem(itemId, newQuantity);
       
       toast.success('Giỏ hàng đã được cập nhật');
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      toast.error(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 OrderItems - 401 error in updateQuantity');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        toast.error(errorMessage);
+      }
+      
       console.error('Update quantity error:', err);
     } finally {
       setUpdating(false);
@@ -79,9 +87,17 @@ export default function OrderItems({ cartItems, loading = false, onTotalChange }
       });
       
       toast.success('Sản phẩm đã được xóa khỏi giỏ hàng');
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : ERROR_MESSAGES.NETWORK_ERROR;
-      toast.error(errorMessage);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (err?.status === 401 || err?.response?.status === 401) {
+        console.log('🔍 OrderItems - 401 error in removeItem');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        toast.error(errorMessage);
+      }
+      
       console.error('Remove item error:', err);
     } finally {
       setUpdating(false);

@@ -142,7 +142,7 @@ export const getAllCategories = async (): Promise<ApiResponse<Category[]>> => {
  */
 export const getCategoryById = async (categoryId: string): Promise<ApiResponse<Category>> => {
   try {
-    const response = await fetch(`${API_URL}/api/categories/${categoryId}`, {
+    const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

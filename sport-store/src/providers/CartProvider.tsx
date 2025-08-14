@@ -31,10 +31,14 @@ export default function CartProvider({ children }: CartProviderProps) {
         logInfo('🛒 Starting cart sync...');
         await fetchCart();
         logInfo('✅ Cart sync completed');
-      } catch (error) {
+      } catch (error: any) {
         logInfo('❌ Failed to sync cart:', error);
-        // Don't show error toast for 409 conflicts as they're usually temporary
-        if (error instanceof Error && !error.message.includes('409')) {
+        
+        // Xử lý lỗi 401 - token hết hạn
+        if (error?.status === 401 || error?.response?.status === 401 || error?.message?.includes('401')) {
+          console.log('🔍 CartProvider - 401 error in syncCart, not showing error');
+          // Không hiển thị error cho 401 vì đã được xử lý ở component khác
+        } else if (error instanceof Error && !error.message.includes('409')) {
           logDebug('Cart sync failed but continuing...');
         }
       } finally {
@@ -90,7 +94,13 @@ export default function CartProvider({ children }: CartProviderProps) {
     if (error) {
       // Don't show error toast for 409 conflicts as they're usually temporary
       if (!error.includes('409')) {
-        toast.error(error);
+        // Xử lý lỗi 401 - token hết hạn
+        if (error.includes('401') || error.includes('Phiên đăng nhập đã hết hạn')) {
+          console.log('🔍 CartProvider - 401 error detected, not showing toast');
+          // Không hiển thị toast cho lỗi 401 vì đã được xử lý ở component khác
+        } else {
+          toast.error(error);
+        }
       }
       // Auto-reset error after 5 seconds
       const timer = setTimeout(() => {

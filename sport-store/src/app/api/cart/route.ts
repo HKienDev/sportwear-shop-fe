@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logInfo, logDebug, logError } from '@/utils/logger';
+import { logInfo, logError } from '@/utils/logger';
 import { getBackendUrl } from '@/utils/backendUrl';
-
-// Interface cho cart item
-interface CartItem {
-  _id: string;
-  quantity: number;
-  product?: {
-    sku?: string;
-  };
-  color?: string;
-  size?: string;
-}
 
 // Retry function for handling 409 conflicts
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {

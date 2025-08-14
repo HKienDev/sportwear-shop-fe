@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
 import Cart from '@/components/user/cart/Cart';
 import { useCartOptimized } from '@/hooks/useCartOptimized';
@@ -32,8 +32,14 @@ export default function CartPage() {
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     try {
       await updateCartItem(itemId, quantity);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update quantity:', error);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 CartPage - 401 error in handleUpdateQuantity');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
     }
   };
 
@@ -50,8 +56,14 @@ export default function CartPage() {
       
       // Xóa item khỏi selectedItems nếu có
       removeSelectedItem(itemId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to remove item:', error);
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 CartPage - 401 error in handleRemoveItem');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
     }
   };
 

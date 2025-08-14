@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, Search, Filter, Edit, Trash2, Eye, EyeOff, Star, TrendingUp, Crown, Sparkles, Upload, Download, RefreshCw, MoreVertical, CheckCircle, XCircle, X, Target, Users2, Globe2, Trophy } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Filter, Edit, Trash2, Eye, EyeOff, Star, TrendingUp, Crown, Sparkles, CheckCircle, XCircle, X, Trophy, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminBrandService } from '@/services/adminBrandService';
 import { Brand, BrandFilters } from '@/types/brand';
 import BrandForm from './BrandForm';
-
-import BrandStats from './BrandStats';
 
 export default function PartnersPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -16,7 +13,7 @@ export default function PartnersPage() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
-  const [filters, setFilters] = useState<BrandFilters>({});
+  const [filters] = useState<BrandFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalBrands, setTotalBrands] = useState(0);
@@ -24,11 +21,7 @@ export default function PartnersPage() {
   const [statusFilter, setStatusFilter] = useState('');
 
 
-  useEffect(() => {
-    fetchBrands();
-  }, [filters, currentPage]);
-
-  const fetchBrands = async () => {
+  const fetchBrands = useCallback(async () => {
     try {
       setLoading(true);
       console.log('Fetching brands with filters:', filters, 'page:', currentPage);
@@ -49,7 +42,11 @@ export default function PartnersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, currentPage]);
+
+  useEffect(() => {
+    fetchBrands();
+  }, [fetchBrands]);
 
   const handleCreateBrand = () => {
     setEditingBrand(null);
@@ -119,13 +116,7 @@ export default function PartnersPage() {
     }
   };
 
-  const handleSelectAll = () => {
-    if (selectedBrands.length === brands.length) {
-      setSelectedBrands([]);
-    } else {
-      setSelectedBrands(brands.map(brand => brand._id || brand.name));
-    }
-  };
+
 
   const handleSelectBrand = (id: string) => {
     console.log('Selecting brand with id:', id);
@@ -138,7 +129,7 @@ export default function PartnersPage() {
     });
   };
 
-  const handleFormSubmit = async (brandData: any) => {
+  const handleFormSubmit = async (brandData: Brand) => {
     try {
       let response;
       if (editingBrand) {
@@ -204,7 +195,6 @@ export default function PartnersPage() {
 
   // Calculate stats
   const activeBrands = brands.filter(b => b.status === 'active').length;
-  const inactiveBrands = brands.filter(b => b.status === 'inactive').length;
   const premiumBrands = brands.filter(b => b.isPremium).length;
   const featuredBrands = brands.filter(b => b.featured).length;
 
@@ -270,7 +260,7 @@ export default function PartnersPage() {
                 <p className="text-3xl font-bold text-slate-900">{totalBrands}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Globe2 className="w-6 h-6 text-white" />
+                <Globe className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>

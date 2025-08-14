@@ -87,14 +87,8 @@ class ApiClient {
         if (this.isClient) {
           localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
           
-          // Sử dụng logic thông minh thay vì redirect trực tiếp
-          const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-          if (shouldRedirectToLogin(currentPath)) {
-            window.location.href = '/auth/login';
-          } else {
-            // Mở modal cho khách vãng lai
-            handleAuthRedirect();
-          }
+          // Không redirect ngay lập tức, để component xử lý
+          console.log('🔍 apiClient - 401 error detected, token removed');
         }
       }
     }
@@ -136,9 +130,10 @@ class ApiClient {
         localStorage.removeItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
         
         // Tạo custom error với message thân thiện
-        const error = new Error('Vui lòng đăng nhập để thực hiện hành động này');
+        const error = new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         (error as any).status = 401;
         (error as any).isAuthError = true;
+        (error as any).response = { status: 401 };
         throw error;
       }
       throw new Error(`HTTP error! status: ${response.status}`);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/authContext';
 import { useAuthModal } from '@/context/authModalContext';
 import { useCartOptimized } from './useCartOptimized';
+import { useWishlist } from './useWishlist';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/apiClient';
@@ -20,6 +21,7 @@ export function useProductActions(productId?: string) {
   const { isAuthenticated } = useAuth();
   const { openModal } = useAuthModal();
   const { addToCart, fetchCart } = useCartOptimized();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const router = useRouter();
 
   const handleAuthRequired = (action: string, callback: () => void) => {
@@ -87,12 +89,22 @@ export function useProductActions(productId?: string) {
       } else {
         throw new Error(response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding to cart:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      return { success: false, message: errorMessage };
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 useProductActions - 401 error in addToCartAction');
+        const errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      }
     } finally {
       setLoading(false);
     }
@@ -129,64 +141,62 @@ export function useProductActions(productId?: string) {
       } else {
         throw new Error(response.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error buying now:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      return { success: false, message: errorMessage };
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 useProductActions - 401 error in buyNow');
+        const errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const toggleFavorite = async () => {
-    if (handleAuthRequired('addToFavorites', () => toggleFavorite())) {
-      return { success: false, message: 'Vui lòng đăng nhập' };
+    if (!productId) {
+      toast.error('Không tìm thấy sản phẩm');
+      return { success: false, message: 'Không tìm thấy sản phẩm' };
     }
 
     try {
       setLoading(true);
       setError(null);
 
-      const result = await safePromise(
-        fetch('/api/favorites/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId
-          }),
-          credentials: 'include'
-        }),
-        'Không thể thêm sản phẩm vào danh sách yêu thích'
-      );
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Không thể thêm sản phẩm vào danh sách yêu thích');
+      if (isInWishlist(productId)) {
+        // Nếu đã có trong wishlist thì xóa
+        const success = await removeFromWishlist(productId);
+        return { success, message: success ? 'Đã xóa khỏi danh sách yêu thích' : 'Không thể xóa khỏi danh sách yêu thích' };
+      } else {
+        // Nếu chưa có thì thêm vào
+        const success = await addToWishlist(productId);
+        return { success, message: success ? 'Đã thêm vào danh sách yêu thích' : 'Không thể thêm vào danh sách yêu thích' };
       }
-      
-      const response = result.data;
-      
-      if (!response) {
-        throw new Error('Response không hợp lệ từ server');
-      }
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Không thể thêm sản phẩm vào danh sách yêu thích');
-      }
-      
-      toast.success('Đã thêm sản phẩm vào danh sách yêu thích');
-      return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling favorite:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào danh sách yêu thích';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      return { success: false, message: errorMessage };
+      
+      // Xử lý lỗi 401 - token hết hạn
+      if (error?.status === 401 || error?.response?.status === 401) {
+        console.log('🔍 useProductActions - 401 error in toggleFavorite');
+        const errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Không thể thao tác với danh sách yêu thích';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        return { success: false, message: errorMessage };
+      }
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBackendUrl, getBackendBaseUrl } from '@/utils/backendUrl';
+import { getBackendUrl } from '@/utils/backendUrl';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { categoryId: string } }
+) {
+  try {
+    const { categoryId } = params;
+
+    const response = await fetch(
+      getBackendUrl(`/categories/${categoryId}`),
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch category');
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Internal Server Error' 
+      },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(
   request: NextRequest,
@@ -32,7 +67,7 @@ export async function PUT(
       );
     }
 
-    const API_URL = getBackendBaseUrl();
+    const API_URL = getBackendUrl();
 
     const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
       method: 'PUT',
@@ -85,7 +120,7 @@ export async function DELETE(
       );
     }
 
-    const API_URL = getBackendBaseUrl();
+    const API_URL = getBackendUrl();
 
     const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
       method: 'DELETE',

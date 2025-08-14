@@ -13,8 +13,8 @@ interface State {
   error?: Error;
 }
 
-class ErrorBoundary extends Component<Props & { router: any }, State> {
-  constructor(props: Props & { router: any }) {
+class ErrorBoundary extends Component<Props & { router: unknown }, State> {
+  constructor(props: Props & { router: unknown }) {
     super(props);
     this.state = { hasError: false };
   }

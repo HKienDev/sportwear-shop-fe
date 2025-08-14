@@ -82,10 +82,10 @@ const UserMenu = () => {
       disabled: false,
     },
     {
-      label: "Danh sách yêu thích (coming soon)",
+      label: "Danh sách yêu thích",
       icon: <Heart className="w-4 h-4 sm:w-5 sm:h-5" />,
-      href: "#",
-      disabled: true,
+      href: "/user/wishlist",
+      disabled: false,
     },
   ];
 

@@ -251,6 +251,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     console.log('🔐 AuthContext - Updating auth state...');
                     updateAuthState(user, true);
                     
+                    // Đảm bảo token được cập nhật trong apiClient
+                    if (typeof window !== 'undefined') {
+                        // Cập nhật token trong localStorage nếu chưa có
+                        if (!localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY)) {
+                            localStorage.setItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY, accessToken);
+                        }
+                        if (!localStorage.getItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY)) {
+                            localStorage.setItem(TOKEN_CONFIG.REFRESH_TOKEN.STORAGE_KEY, refreshToken);
+                        }
+                    }
+                    
                     // Thêm delay nhỏ để đảm bảo state được cập nhật
                     setTimeout(() => {
                         console.log('🔐 AuthContext - Auth state after login:', {

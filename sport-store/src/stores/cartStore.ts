@@ -171,12 +171,18 @@ export const useCartStore = create<CartState>()(
             } else {
               throw new Error(response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng');
             }
-          } catch (error) {
+          } catch (error: any) {
             // Revert optimistic update by refetching cart
             try {
               await get().fetchCart();
-            } catch (refetchError) {
+            } catch (refetchError: any) {
               console.error('Failed to refetch cart after error:', refetchError);
+              
+              // Xử lý lỗi 401 - token hết hạn
+              if (refetchError?.status === 401 || refetchError?.response?.status === 401) {
+                console.log('🔍 cartStore - 401 error in refetchError for updateCartItem, not showing error');
+                // Không hiển thị error cho 401 vì đã được xử lý ở component khác
+              }
             }
             
             const errorMessage = handleCartError(error, 'add');
@@ -184,6 +190,13 @@ export const useCartStore = create<CartState>()(
               state.error = errorMessage;
               state.loading = false;
             });
+            
+            // Xử lý lỗi 401 - token hết hạn
+            if (error?.status === 401 || error?.response?.status === 401) {
+              console.log('🔍 cartStore - 401 error in addToCart');
+              toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            
             throw error;
           }
         },
@@ -223,7 +236,7 @@ export const useCartStore = create<CartState>()(
             } else {
               throw new Error(response.data.message || 'Không thể cập nhật giỏ hàng');
             }
-          } catch (error) {
+          } catch (error: any) {
             // Revert optimistic update by refetching cart
             try {
               await get().fetchCart();
@@ -236,6 +249,13 @@ export const useCartStore = create<CartState>()(
               state.error = errorMessage;
               state.loading = false;
             });
+            
+            // Xử lý lỗi 401 - token hết hạn
+            if (error?.status === 401 || error?.response?.status === 401) {
+              console.log('🔍 cartStore - 401 error in updateCartItem');
+              toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            
             throw error;
           }
         },
@@ -278,7 +298,7 @@ export const useCartStore = create<CartState>()(
               }
               throw new Error(response.data.message || 'Không thể xóa sản phẩm khỏi giỏ hàng');
             }
-          } catch (error) {
+          } catch (error: any) {
             // Revert optimistic update
             if (item) {
               set((state) => {
@@ -293,6 +313,13 @@ export const useCartStore = create<CartState>()(
               state.error = errorMessage;
               state.loading = false;
             });
+            
+            // Xử lý lỗi 401 - token hết hạn
+            if (error?.status === 401 || error?.response?.status === 401) {
+              console.log('🔍 cartStore - 401 error in removeFromCart');
+              toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            
             throw error;
           }
         },
@@ -316,12 +343,19 @@ export const useCartStore = create<CartState>()(
             } else {
               throw new Error(data.message || 'Không thể xóa giỏ hàng');
             }
-          } catch (error) {
+          } catch (error: any) {
             const errorMessage = handleCartError(error, 'clear');
             set((state) => {
               state.error = errorMessage;
               state.loading = false;
             });
+            
+            // Xử lý lỗi 401 - token hết hạn
+            if (error?.status === 401 || error?.response?.status === 401) {
+              console.log('🔍 cartStore - 401 error in clearCart');
+              toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            
             throw error;
           }
         },

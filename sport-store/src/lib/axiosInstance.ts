@@ -18,7 +18,7 @@ export const axiosInstance: AxiosInstance = axios.create({
 });
 
 // Flag để tránh multiple refresh requests
-let isRefreshing = false;
+const isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;

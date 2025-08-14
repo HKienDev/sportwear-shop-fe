@@ -15,7 +15,7 @@ export default function SessionTimeoutWarning({
   warningThreshold = 2 * 60 * 1000, // 2 phút
   checkInterval = 10000 // 10 giây - kiểm tra thường xuyên hơn
 }: SessionTimeoutWarningProps) {
-  const { logout, checkAuthStatus } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -23,6 +23,39 @@ export default function SessionTimeoutWarning({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Clear countdown timer trước
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      
+      // Clear check interval
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+      
+      // Đóng modal trước
+      setShowWarning(false);
+      
+      // Thực hiện logout
+      await logout();
+      
+      // Redirect về trang chủ
+      router.push('/');
+      
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Có lỗi xảy ra khi đăng xuất');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout, router]);
 
   const checkSessionExpiry = useCallback(() => {
     try {
@@ -62,7 +95,7 @@ export default function SessionTimeoutWarning({
         handleLogout();
       }, 1000);
     }
-  }, [warningThreshold]);
+  }, [warningThreshold, handleLogout]);
 
   const extendSession = useCallback(async () => {
     try {
@@ -124,40 +157,7 @@ export default function SessionTimeoutWarning({
     } finally {
       setIsExtending(false);
     }
-  }, [warningThreshold]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      setIsLoggingOut(true);
-      
-      // Clear countdown timer trước
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-        countdownRef.current = null;
-      }
-      
-      // Clear check interval
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
-      }
-      
-      // Đóng modal trước
-      setShowWarning(false);
-      
-      // Thực hiện logout
-      await logout();
-      
-      // Redirect về trang chủ
-      router.push('/');
-      
-    } catch (error) {
-      console.error('Error during logout:', error);
-      toast.error('Có lỗi xảy ra khi đăng xuất');
-    } finally {
-      setIsLoggingOut(false);
-    }
-  }, [logout, router]);
+  }, [warningThreshold, handleLogout]);
 
   // Kiểm tra session định kỳ
   useEffect(() => {

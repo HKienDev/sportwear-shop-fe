@@ -87,13 +87,8 @@ export function useProducts(options: ProductQueryParams = {}) {
                 return;
             }
             
-            console.log('Fetching categories with token:', token);
-            
             // Sử dụng apiClient thay vì fetch trực tiếp
-            console.log('Calling API to fetch categories...');
             const response = await apiClient.getCategories();
-            console.log('API response for categories:', response);
-            console.log('API response data structure:', JSON.stringify(response.data, null, 2));
             
             if (response.data.success) {
                 // Kiểm tra và đảm bảo data.data.categories là một mảng
@@ -104,7 +99,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                     Array.isArray(responseData.categories) 
                     ? responseData.categories 
                     : [];
-                console.log('Processed categories data:', categoriesData);
+    
                 
                 // Định nghĩa interface tạm thời cho dữ liệu từ API
                 interface ApiCategory {
@@ -117,11 +112,8 @@ export function useProducts(options: ProductQueryParams = {}) {
                 
                 // Chuyển đổi dữ liệu categories thành ProductCategory[]
                 const productCategories: ProductCategory[] = categoriesData.map((category: ApiCategory) => {
-                    console.log('Processing category:', category);
-                    
-                    // Đảm bảo categoryId luôn có giá trị
-                    const categoryId = category.categoryId || category._id;
-                    console.log(`Category ${category.name} has categoryId: ${categoryId}`);
+                                    // Đảm bảo categoryId luôn có giá trị
+                const categoryId = category.categoryId || category._id;
                     
                     return {
                         _id: category._id,
@@ -132,8 +124,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                     };
                 });
                 
-                // Log để debug
-                console.log('Transformed categories:', productCategories);
+
                 
                 setFormState(prev => ({ 
                     ...prev, 
@@ -215,10 +206,10 @@ export function useProducts(options: ProductQueryParams = {}) {
 
     // Update form data
     const updateFormData = useCallback((field: keyof ProductFormData, value: unknown) => {
-        console.log('Updating form data:', { field, value });
+
         setFormState(prev => {
             const newData = { ...prev.data, [field]: value };
-            console.log('New form data:', newData);
+
             return {
                 ...prev,
                 data: newData,
@@ -238,28 +229,28 @@ export function useProducts(options: ProductQueryParams = {}) {
 
     // Handle form submission
     const handleSubmit = useCallback(async () => {
-        console.log('Starting handleSubmit function...');
+
         
         if (formState.categories.length === 0) {
             toast.error('Vui lòng chờ tải danh mục xong trước khi tạo sản phẩm!');
             return false;
         }
         if (!validateForm()) {
-            console.log('Form validation failed:', formState.errors);
+
             toast.error('Vui lòng kiểm tra lại thông tin sản phẩm');
             return false;
         }
 
-        console.log('Form validation passed, setting isSubmitting to true');
+        
         setFormState(prev => ({ ...prev, isSubmitting: true }));
 
         try {
             // Kiểm tra xác thực
-            console.log('Checking authentication status:', isAuthenticated);
+
             if (!isAuthenticated) {
                 // Kiểm tra token trong localStorage
                 const token = localStorage.getItem(TOKEN_CONFIG.ACCESS_TOKEN.STORAGE_KEY);
-                console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+
                 
                 if (!token) {
                     toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
@@ -268,8 +259,7 @@ export function useProducts(options: ProductQueryParams = {}) {
             }
 
             // Tìm category đã chọn
-            console.log('Finding selected category with categoryId:', formState.data.categoryId);
-            console.log('Available categories:', formState.categories);
+            
             
             // Tìm danh mục dựa trên categoryId hoặc _id
             const selectedCategory = formState.categories.find(
@@ -288,7 +278,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                 return false;
             }
 
-            console.log('Selected category:', selectedCategory);
+            
 
             // Upload ảnh chính
             let mainImageUrl = '';
@@ -384,7 +374,7 @@ export function useProducts(options: ProductQueryParams = {}) {
                 const response = await adminProductService.createProduct(createProductData);
 
                 if (response.success) {
-                    console.log('Product created successfully');
+    
                     toast.success('Thêm sản phẩm thành công');
                     // Reset form
                     resetForm();
@@ -448,13 +438,13 @@ export function useProducts(options: ProductQueryParams = {}) {
                 throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
             }
 
-            console.log('Creating product with data:', data);
+
             
             // Hiển thị toast đang tạo sản phẩm
             toast.loading('Đang tạo sản phẩm...', { id: 'createProduct' });
 
             const response = await adminProductService.createProduct(data);
-            console.log('Create product response:', response);
+            
 
             if (!response.success) {
                 throw new Error(response.message || ERROR_MESSAGES.PRODUCT_NOT_FOUND);
