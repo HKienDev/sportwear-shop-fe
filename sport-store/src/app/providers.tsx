@@ -38,6 +38,10 @@ const AuthModalWrapper = () => {
         title: 'Đăng nhập để thêm vào yêu thích',
         description: 'Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích'
       },
+      addToWishlist: {
+        title: 'Đăng nhập để thêm vào yêu thích',
+        description: 'Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích'
+      },
       checkout: {
         title: 'Đăng nhập để thanh toán',
         description: 'Vui lòng đăng nhập để tiếp tục thanh toán'

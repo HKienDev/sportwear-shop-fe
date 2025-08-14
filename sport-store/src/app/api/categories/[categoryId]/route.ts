@@ -67,9 +67,9 @@ export async function PUT(
       );
     }
 
-    const API_URL = getBackendUrl();
+    const API_URL = getBackendUrl(`/categories/${decodedCategoryId}`);
 
-    const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
+    const response = await fetch(API_URL, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -120,9 +120,9 @@ export async function DELETE(
       );
     }
 
-    const API_URL = getBackendUrl();
+    const API_URL = getBackendUrl(`/categories/${decodedCategoryId}`);
 
-    const response = await fetch(`${API_URL}/api/categories/${decodedCategoryId}`, {
+    const response = await fetch(API_URL, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

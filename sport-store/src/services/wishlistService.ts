@@ -27,7 +27,7 @@ class WishlistService {
   async getWishlist(): Promise<WishlistResponse> {
     try {
       const response = await apiClient.get('/api/favorites');
-      return response.data;
+      return response.data as WishlistResponse;
     } catch (error) {
       console.error('Error fetching wishlist:', error);
       throw new Error('Không thể lấy danh sách yêu thích');
@@ -38,7 +38,7 @@ class WishlistService {
   async addToWishlist(productId: string): Promise<WishlistActionResponse> {
     try {
       const response = await apiClient.post('/api/favorites/add', { productId });
-      return response.data;
+      return response.data as WishlistActionResponse;
     } catch (error) {
       console.error('Error adding to wishlist:', error);
       throw new Error('Không thể thêm sản phẩm vào danh sách yêu thích');
@@ -49,7 +49,7 @@ class WishlistService {
   async removeFromWishlist(productId: string): Promise<WishlistActionResponse> {
     try {
       const response = await apiClient.post('/api/favorites/remove', { productId });
-      return response.data;
+      return response.data as WishlistActionResponse;
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       throw new Error('Không thể xóa sản phẩm khỏi danh sách yêu thích');

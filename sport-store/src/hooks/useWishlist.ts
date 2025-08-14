@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { UserProduct } from '@/types/product';
 import { apiClient } from '@/lib/apiClient';
 import { TOKEN_CONFIG } from '@/config/token';
+import { WishlistResponse, WishlistActionResponse } from '@/services/wishlistService';
 
 interface WishlistItem {
   _id: string;
@@ -55,7 +56,7 @@ export function useWishlist(): UseWishlistReturn {
       }
 
       const response = await apiClient.get('/api/favorites');
-      const data = response.data;
+      const data = response.data as WishlistResponse;
       
       if (data.success) {
         setWishlist(data.data?.favorites || []);
@@ -111,7 +112,7 @@ export function useWishlist(): UseWishlistReturn {
       }
 
       const response = await apiClient.post('/api/favorites/add', { productId });
-      const data = response.data;
+      const data = response.data as WishlistActionResponse;
       
       if (data.success) {
         // Refresh wishlist sau khi thêm
@@ -161,7 +162,7 @@ export function useWishlist(): UseWishlistReturn {
       }
 
       const response = await apiClient.post('/api/favorites/remove', { productId });
-      const data = response.data;
+      const data = response.data as WishlistActionResponse;
       
       if (data.success) {
         // Cập nhật local state

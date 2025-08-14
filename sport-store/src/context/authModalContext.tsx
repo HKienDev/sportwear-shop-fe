@@ -19,7 +19,7 @@ interface AuthModalOptions {
 }
 
 interface PendingAction {
-  type: 'addToCart' | 'buyNow' | 'addToFavorites' | 'checkout' | 'viewCart';
+  type: 'addToCart' | 'buyNow' | 'addToFavorites' | 'addToWishlist' | 'checkout' | 'viewCart';
   data?: any;
   callback?: () => void;
 }
